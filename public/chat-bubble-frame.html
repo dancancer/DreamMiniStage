@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    :root {
+      /* Background colors */
+      --color-canvas: #171717;
+      --color-surface: #1c1c1c;
+      --color-layer: #232323;
+      --color-deep: #1a1816;
+      --color-ember: #1f1c1a;
+      --color-coal: #13100e;
+      --color-muted-surface: #252220;
+      --color-overlay: #2a261f;
+      --color-card: #292929;
+      --color-input: #2a2a2a;
+      
+      /* Borders and lines */
+      --color-stroke: #333333;
+      --color-stroke-strong: #444444;
+      
+      /* Text colors */
+      --color-text: #d0d0d0;
+      --color-text-muted: #8a8a8a;
+      --color-ink: #534741;
+      --color-ink-soft: #a18d6f;
+      
+      /* Theme colors */
+      --color-primary-soft: #c0a480;
+      --color-cream: #f4e8c1;
+      --color-cream-soft: #eae6db;
+      --color-primary: #d1a35c;
+      --color-primary-bright: #f9c86d;
+      --color-highlight: #ffd475;
+      --color-sand: #e0cfa0;
+      
+      /* Status colors */
+      --color-success: #aef6da;
+      --color-info: #c093ff;
+      --color-sky-strong: #3b82f6;
+      --color-sky: #93c5fd;
+      --color-danger: #ef4444;
+    }
+    
+    *, *::before, *::after {
+      box-sizing: border-box;
+      max-width: 100%;
+    }
+    
+    html, body {
+      margin: 0;
+      padding: 0;
+      color: var(--color-cream);
+      font: 16px/1.5 serif;
+      background: transparent;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+      overflow: hidden;
+    }
+    
+    img, video, iframe {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      background: transparent;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow-x: auto;
+      display: block;
+    }
+    
+    code, pre {
+      font-family: monospace;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      background: color-mix(in srgb, var(--color-deep) 80%, transparent);
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid color-mix(in srgb, var(--color-cream) 10%, transparent);
+    }
+    
+    pre {
+      background: color-mix(in srgb, var(--color-deep) 80%, transparent);
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid color-mix(in srgb, var(--color-cream) 10%, transparent);
+      margin: 8px 0;
+    }
+    
+    blockquote {
+      margin: 8px 0;
+      padding: 8px 12px;
+      border-left: 4px solid var(--color-sky);
+      background: color-mix(in srgb, var(--color-sky) 8%, transparent);
+      border-radius: 0 4px 4px 0;
+      font-style: italic;
+      color: var(--color-sky);
+    }
+    
+    strong {
+      color: var(--color-primary-bright);
+      font-weight: bold;
+    }
+    
+    em {
+      color: var(--color-info);
+      font-style: italic;
+    }
+    
+    .dialogue {
+      color: var(--color-primary-soft);
+    }
+    
+    a {
+      color: var(--color-sky);
+    }
+    
+    .tag-styled {
+      white-space: inherit;
+    }
+    
+    /* Slash Runner Styles - will be injected if needed */
+    .slash-runner-embed {
+      margin: 12px 0;
+      border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+      border-radius: 8px;
+      overflow: hidden;
+      background: transparent;
+    }
+    
+    .slash-runner-embed iframe {
+      display: block;
+      width: 100%;
+      border: 0;
+      min-height: 240px;
+      background: transparent !important;
+    }
+    #content-wrapper {
+        padding-bottom: 20px;
+        white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="content-wrapper"></div>
+  
+  <script>
+    // Virtual queue for performance optimization
+    const virtualQueue = {
+      tasks: [],
+      isProcessing: false,
+      batchSize: 2,
+      processInterval: 16,
+      lastProcessTime: 0,
+      
+      enqueue(task) {
+        this.tasks.push(task);
+        this.scheduleProcessing();
+      },
+      
+      scheduleProcessing() {
+        if (this.isProcessing) return;
+        
+        const now = Date.now();
+        const timeSinceLastProcess = now - this.lastProcessTime;
+        
+        if (timeSinceLastProcess < this.processInterval) {
+          setTimeout(() => this.processBatch(), this.processInterval - timeSinceLastProcess);
+        } else {
+          this.processBatch();
+        }
+      },
+      
+      processBatch() {
+        if (this.isProcessing || this.tasks.length === 0) return;
+        
+        this.isProcessing = true;
+        this.lastProcessTime = Date.now();
+        
+        const batch = this.tasks.splice(0, this.batchSize);
+        batch.forEach(task => {
+          try {
+            task();
+          } catch (error) {
+            console.error('Virtual queue task error:', error);
+          }
+        });
+        
+        this.isProcessing = false;
+        
+        if (this.tasks.length > 0) {
+          requestAnimationFrame(() => this.processBatch());
+        }
+      }
+    };
+
+    // Height calculation configuration
+    let lastHeight = 0;
+    let lastWidth = 0;
+    let calculationCount = 0;
+    const MAX_CALCULATIONS = 5;
+    const MAX_CALCULATIONS_PER_SECOND = 3;
+    const DEBOUNCE_TIME = 100;
+    const SIGNIFICANT_CHANGE_THRESHOLD = 5;
+    
+    let calculationsInLastSecond = 0;
+    let lastCalculationTime = 0;
+    let pendingCalculationTimeout = null;
+    let isCalculationThrottled = false;
+    
+    const contentWrapper = document.getElementById('content-wrapper');
+    
+    function getAccurateHeight() {
+      return contentWrapper ? contentWrapper.offsetHeight : Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight,
+        document.documentElement.offsetHeight,
+        document.body.offsetHeight
+      );
+    }
+    
+    // Throttle function
+    function throttleCalculation(fn) {
+      const now = Date.now();
+      if (now - lastCalculationTime > 1000) {
+        calculationsInLastSecond = 0;
+        lastCalculationTime = now;
+      }
+      
+      if (calculationsInLastSecond >= MAX_CALCULATIONS_PER_SECOND) {
+        if (!isCalculationThrottled) {
+          isCalculationThrottled = true;
+          setTimeout(() => {
+            isCalculationThrottled = false;
+            calculationsInLastSecond = 0;
+          }, 1000);
+        }
+        return;
+      }
+      
+      calculationsInLastSecond++;
+      lastCalculationTime = now;
+      virtualQueue.enqueue(fn);
+    }
+    
+    // Debounce function
+    function debounceCalculation(fn) {
+      if (pendingCalculationTimeout) {
+        clearTimeout(pendingCalculationTimeout);
+      }
+      pendingCalculationTimeout = setTimeout(() => {
+        pendingCalculationTimeout = null;
+        throttleCalculation(fn);
+      }, DEBOUNCE_TIME);
+    }
+    
+    function checkSizeChanges() {
+      try {
+        if (calculationCount >= MAX_CALCULATIONS) return;
+        calculationCount++;
+        
+        const w = document.body.clientWidth;
+        const h = getAccurateHeight();
+
+        if (Math.abs(h - lastHeight) > SIGNIFICANT_CHANGE_THRESHOLD || 
+            Math.abs(w - lastWidth) > SIGNIFICANT_CHANGE_THRESHOLD) {
+          lastHeight = h;
+          lastWidth = w;
+          parent.postMessage({__chatBubbleHeight: h + 20, __chatBubbleWidth: w}, '*');
+        }
+      } catch(e) {
+        console.error('Height calculation error:', e);
+      }
+    }
+    
+    function delayedChecks() {
+      virtualQueue.enqueue(() => {
+        setTimeout(() => debounceCalculation(checkSizeChanges), 100);
+        setTimeout(() => debounceCalculation(checkSizeChanges), 500);
+      });
+    }
+    
+    // Event listeners
+    window.addEventListener('load', function() {
+      calculationCount = 0;
+      virtualQueue.enqueue(() => {
+        checkSizeChanges();
+        delayedChecks();
+      });
+    });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      calculationCount = 0;
+      virtualQueue.enqueue(checkSizeChanges);
+    });
+    
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        calculationCount = 0;
+        virtualQueue.enqueue(() => throttleCalculation(checkSizeChanges));
+      }, 100);
+    });
+    
+    const resizeObserver = new ResizeObserver(function() {
+      debounceCalculation(() => {
+        calculationCount = 0;
+        virtualQueue.enqueue(checkSizeChanges);
+      });
+    });
+    
+    resizeObserver.observe(document.body);
+    if (contentWrapper) {
+      resizeObserver.observe(contentWrapper);
+    }
+    
+    // Slash Runner Embed handling
+    const slashRunnerEmbeds = new Set();
+    function resizeSlashRunnerEmbeds() {
+      document.querySelectorAll('iframe[data-embedded-html]').forEach((frame) => {
+        try {
+          const doc = frame.contentDocument;
+          if (!doc) return;
+          const h = doc.documentElement.scrollHeight || doc.body.scrollHeight || 0;
+          if (h > 0) {
+            frame.style.height = Math.max(240, Math.min(h + 10, 1600)) + 'px';
+          }
+        } catch (_) {}
+      });
+    }
+    
+    function bindSlashRunnerEmbeds() {
+      document.querySelectorAll('iframe[data-embedded-html]').forEach((frame) => {
+        if (slashRunnerEmbeds.has(frame)) return;
+        slashRunnerEmbeds.add(frame);
+        frame.addEventListener('load', () => {
+          resizeSlashRunnerEmbeds();
+          debounceCalculation(checkSizeChanges);
+        });
+      });
+      resizeSlashRunnerEmbeds();
+    }
+    
+    bindSlashRunnerEmbeds();
+    const slashRunnerObserver = new MutationObserver(() => bindSlashRunnerEmbeds());
+    slashRunnerObserver.observe(document.body, { childList: true, subtree: true });
+    
+    // Handle parent window recalculate requests
+    let lastRecalculateRequest = 0;
+    window.addEventListener('message', function(e) {
+      if (e.data && e.data.__recalculateHeight) {
+        const now = Date.now();
+        if (now - lastRecalculateRequest < 300) return;
+        lastRecalculateRequest = now;
+        
+        calculationCount = 0;
+        virtualQueue.enqueue(() => {
+          debounceCalculation(checkSizeChanges);
+          delayedChecks();
+        });
+      }
+      
+      // Handle CSS variable updates
+      if (e.data && e.data.__cssVars) {
+        const vars = e.data.__cssVars;
+        for (const [name, value] of Object.entries(vars)) {
+          document.documentElement.style.setProperty(name, value);
+        }
+      }
+      
+      // Handle content updates
+      if (e.data && e.data.__updateContent) {
+        const { html, enableStreaming, cssVars } = e.data;
+        
+        // Apply CSS variables if provided
+        if (cssVars) {
+          for (const [name, value] of Object.entries(cssVars)) {
+            document.documentElement.style.setProperty(name, value);
+          }
+        }
+        
+        if (enableStreaming) {
+          // Streaming mode
+          const wrap = document.getElementById('content-wrapper');
+          let i = 0;
+          let streamingQueue = [];
+          let isStreaming = false;
+          
+          function processStreamingQueue() {
+            if (streamingQueue.length === 0 || isStreaming) return;
+            isStreaming = true;
+            
+            const batch = streamingQueue.splice(0, 3);
+            batch.forEach(() => {
+              if (i > html.length) return;
+              wrap.innerHTML = html.slice(0, i);
+              i += 2;
+            });
+            
+            isStreaming = false;
+            checkSizeChanges();
+            
+            if (streamingQueue.length > 0) {
+              requestAnimationFrame(processStreamingQueue);
+            }
+          }
+          
+          function step() {
+            if (i > html.length) return;
+            streamingQueue.push(true);
+            processStreamingQueue();
+            requestAnimationFrame(step);
+          }
+          step();
+        } else {
+          // Direct update
+          contentWrapper.innerHTML = html;
+          calculationCount = 0;
+          virtualQueue.enqueue(() => {
+            checkSizeChanges();
+            delayedChecks();
+          });
+        }
+      }
+
+      // ╔══════════════════════════════════════════════════════════════════╗
+      // ║  双向消息转发：确保上行和下行通道对称                              ║
+      // ╚══════════════════════════════════════════════════════════════════╝
+      
+      // 上行：嵌套 iframe → 父窗口
+      if (e.data && (e.data.type === 'API_CALL' || e.data.type === 'EVENT_EMIT' || e.data.type === 'CONSOLE_LOG')) {
+        window.parent.postMessage(e.data, '*');
+      }
+      
+      // 下行：父窗口 → 嵌套 iframe（API_RESPONSE 回传）
+      if (e.data && e.data.type === 'API_RESPONSE') {
+        document.querySelectorAll('iframe[data-embedded-html]').forEach((frame) => {
+          try {
+            frame.contentWindow.postMessage(e.data, '*');
+          } catch (_) {}
+        });
+      }
+
+      // ╔══════════════════════════════════════════════════════════════════╗
+      // ║  监听内嵌 slash-runner-embed 的高度变化                           ║
+      // ║  当内嵌 iframe 内容异步加载完成后，重新计算外层气泡高度            ║
+      // ╚══════════════════════════════════════════════════════════════════╝
+      if (e.data && e.data.type === 'HEIGHT_UPDATE') {
+        resizeSlashRunnerEmbeds();
+        calculationCount = 0;
+        debounceCalculation(checkSizeChanges);
+      }
+
+      // Handle broadcast messages from parent to nested iframes
+      if (e.data && e.data.type === 'BROADCAST_TO_EMBEDS') {
+        const payload = e.data.payload;
+        document.querySelectorAll('iframe[data-embedded-html]').forEach((frame) => {
+          try {
+            frame.contentWindow.postMessage(payload, '*');
+          } catch (_) {}
+        });
+      }
+    });
+
+    // Notify parent that we are ready to receive content
+    window.parent.postMessage({ type: 'READY' }, '*');
+  </script>
+</body>
+</html>

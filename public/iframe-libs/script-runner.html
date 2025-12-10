@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" 
+        content="default-src 'none'; 
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval'; 
+                 style-src 'self' 'unsafe-inline';
+                 img-src 'self' data: https:;
+                 font-src 'self' data:;
+                 connect-src 'self';">
+  <title>Script Runner - DreamMiniStage</title>
+  
+  <!-- 
+    ════════════════════════════════════════════════════════════════════════
+    API Shim 必须在 <head> 中最先加载（Requirements 9.5）
+    确保 TavernHelper/SillyTavern API 在任何用户脚本执行前可用
+    ════════════════════════════════════════════════════════════════════════
+  -->
+  <script src="/iframe-libs/slash-runner-shim.js"></script>
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333;
+      background: transparent;
+      overflow-x: hidden;
+    }
+    #root { min-height: 100vh; padding: 8px; }
+    .error {
+      padding: 12px;
+      background: #fee;
+      border-left: 4px solid #c33;
+      color: #c33;
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <!-- 脚本执行器扩展 -->
+  <script>
+    (function() {
+      "use strict";
+
+      // ════════════════════════════════════════════════════════════════════
+      //  脚本执行器（扩展 slash-runner-shim 的能力）
+      // ════════════════════════════════════════════════════════════════════
+
+      var parentOrigin = null;
+
+      function sendMessage(type, payload, id) {
+        window.parent.postMessage({
+          type: type,
+          payload: payload,
+          id: id,
+          timestamp: Date.now(),
+          origin: window.location.origin
+        }, "*");
+      }
+
+      function log() {
+        var args = Array.prototype.slice.call(arguments);
+        console.log("[ScriptRunner]", args.join(" "));
+      }
+
+      // ════════════════════════════════════════════════════════════════════
+      //  执行脚本
+      // ════════════════════════════════════════════════════════════════════
+
+      async function executeScript(code, context, messageId) {
+        var startTime = Date.now();
+
+        try {
+          // 更新 DreamMiniStage context
+          if (window.DreamMiniStage && context) {
+            window.DreamMiniStage.context = context;
+          }
+
+          // 创建异步函数包装器
+          var AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+          var fn = new AsyncFunction("DreamMiniStage", code);
+
+          // 执行
+          var result = await fn(window.DreamMiniStage);
+          var executionTime = Date.now() - startTime;
+
+          sendMessage("SCRIPT_RESULT", {
+            result: result,
+            executionTime: executionTime
+          }, messageId);
+
+        } catch (error) {
+          sendMessage("SCRIPT_ERROR", {
+            error: error.message,
+            stack: error.stack,
+            line: error.lineNumber,
+            column: error.columnNumber
+          }, messageId);
+        }
+      }
+
+      // ════════════════════════════════════════════════════════════════════
+      //  消息监听（扩展）
+      // ════════════════════════════════════════════════════════════════════
+
+      window.addEventListener("message", async function(event) {
+        if (!parentOrigin) parentOrigin = event.origin;
+        if (event.origin !== parentOrigin) return;
+
+        var message = event.data;
+        if (!message || typeof message !== "object" || !message.type) return;
+
+        if (message.type === "SCRIPT_EXECUTE") {
+          var payload = message.payload;
+          await executeScript(payload.code, payload.context, message.id);
+        }
+      });
+
+      // ════════════════════════════════════════════════════════════════════
+      //  初始化
+      // ════════════════════════════════════════════════════════════════════
+
+      window.addEventListener("DOMContentLoaded", function() {
+        log("Script runner initialized");
+        sendMessage("READY", {
+          version: "1.0.0",
+          userAgent: navigator.userAgent
+        });
+      });
+
+    })();
+  </script>
+</body>
+</html>

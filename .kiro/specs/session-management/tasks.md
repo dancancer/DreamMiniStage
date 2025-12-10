@@ -1,0 +1,118 @@
+# Implementation Plan
+
+- [x] 1. Set up data layer foundation
+  - [x] 1.1 Create Session type definitions
+    - Create `types/session.ts` with Session and SessionWithCharacter interfaces
+    - _Requirements: 2.2, 2.3, 4.1_
+  - [x] 1.2 Write property test for session serialization round-trip
+    - **Property 7: Session serialization round-trip**
+    - **Validates: Requirements 7.5**
+  - [x] 1.3 Add sessions_record store to IndexedDB configuration
+    - Update `lib/data/local-storage.ts` to include SESSIONS_RECORD_FILE
+    - Add to STORE_NAMES and RECORD_STORES arrays
+    - Update BackupSchema to include sessions
+    - _Requirements: 7.1, 7.2, 7.3, 7.4_
+  - [x] 1.4 Implement SessionOperations class
+    - Create `lib/data/roleplay/session-operation.ts`
+    - Implement createSession, getAllSessions, getSessionById, updateSession, deleteSession
+    - _Requirements: 2.2, 4.3, 5.2_
+  - [x] 1.5 Write property tests for session operations
+    - **Property 1: Session retrieval completeness**
+    - **Validates: Requirements 1.1, 3.2**
+  - [x] 1.6 Write property test for multiple sessions per character
+    - **Property 3: Multiple sessions per character independence**
+    - **Validates: Requirements 3.1**
+  - [x] 1.7 Write property test for session name validation
+    - **Property 5: Session name validation**
+    - **Validates: Requirements 4.2, 4.3**
+
+- [x] 2. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 3. Extend dialogue operations for session support
+  - [x] 3.1 Modify CharacterDialogueOperations to use sessionId
+    - Update createDialogueTree to accept sessionId parameter
+    - Update getDialogueTreeById to query by sessionId
+    - Update deleteDialogueTree to cascade from session deletion
+    - _Requirements: 3.3, 5.2, 6.2_
+  - [x] 3.2 Write property test for session-dialogue isolation
+    - **Property 4: Session-dialogue isolation**
+    - **Validates: Requirements 3.3, 6.2**
+  - [x] 3.3 Write property test for deletion cascade
+    - **Property 6: Session deletion cascade**
+    - **Validates: Requirements 5.2**
+
+- [x] 4. Implement session state management
+  - [x] 4.1 Create useSessionStore Zustand store
+    - Create `lib/store/session-store.ts`
+    - Implement sessions state, isLoading state
+    - Implement fetchAllSessions, createSession, updateSessionName, deleteSession, getSessionById
+    - _Requirements: 1.1, 2.2, 4.3, 5.2_
+
+- [x] 5. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 6. Build UI components
+  - [x] 6.1 Create SessionCard component
+    - Create `components/home/SessionCard.tsx`
+    - Display session name, character name, avatar, last activity time
+    - Add click, edit, delete action handlers
+    - _Requirements: 1.2_
+  - [x] 6.2 Write property test for session card rendering
+    - **Property 9: Session card rendering completeness**
+    - **Validates: Requirements 1.2**
+  - [x] 6.3 Create SessionList component
+    - Create `components/home/SessionList.tsx`
+    - Render list of SessionCard components
+    - Handle empty state display
+    - _Requirements: 1.1, 1.3_
+  - [x] 6.4 Create SessionEditModal component
+    - Create `components/home/SessionEditModal.tsx`
+    - Use Radix Dialog primitive
+    - Implement name input with validation
+    - _Requirements: 4.2, 4.3_
+  - [x] 6.5 Create SessionDeleteModal component
+    - Create `components/home/SessionDeleteModal.tsx`
+    - Use Radix AlertDialog primitive
+    - Implement confirmation flow
+    - _Requirements: 5.1, 5.4_
+
+- [x] 7. Refactor HomeContent for session management
+  - [x] 7.1 Update HomeContent to display session list
+    - Replace static content with SessionList
+    - Add "New Session" button
+    - Wire up session click, edit, delete handlers
+    - _Requirements: 1.1, 1.3, 2.1_
+  - [x] 7.2 Implement new session creation flow
+    - Navigate to character-cards on "New Session" click
+    - Handle character selection callback
+    - Create session and navigate to chat
+    - _Requirements: 2.1, 2.2, 2.4_
+
+- [x] 8. Update character selection and chat pages
+  - [x] 8.1 Update character-cards page for session creation
+    - Add mode parameter to distinguish browsing vs creating session
+    - On character select in create mode, create session and redirect
+    - _Requirements: 2.2, 2.4_
+  - [x] 8.2 Update character chat page to use sessionId
+    - Accept sessionId as route parameter
+    - Load dialogue by sessionId instead of characterId
+    - _Requirements: 6.1, 6.2, 6.3_
+
+- [x] 9. Implement data migration and export/import
+  - [x] 9.1 Add migration logic for existing dialogues
+    - On first load, create Session records for existing dialogue trees
+    - Map old characterId-based dialogues to new sessionId-based structure
+    - _Requirements: 7.2_
+  - [x] 9.2 Update exportAllData to include sessions
+    - Add sessions_record to export payload
+    - _Requirements: 7.3_
+  - [x] 9.3 Update importAllData to restore sessions
+    - Handle sessions_record in import payload
+    - _Requirements: 7.4_
+  - [x] 9.4 Write property test for export-import round-trip
+    - **Property 8: Export-import round-trip**
+    - **Validates: Requirements 7.3, 7.4**
+
+- [x] 10. Final Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.

@@ -1,0 +1,14 @@
+# DreamMiniStage 项目概览
+- 目的：AI 驱动的互动故事/角色扮演与研究代理平台，提供角色卡管理、对话流水线、世界书/正则/记忆增强，以及插件、脚本运行能力；主要在浏览器侧运行并导出 PWA/桌面包。
+- 技术栈：Next.js 15 App Router + React 19 + TypeScript（strict，paths @/*），Tailwind v4 + Radix/shadcn UI，LangChain(OpenAI/Ollama/Gemini/Tavily/Jina/FAL)、zustand，PWA 导出（next-pwa），Vitest+jsdom 测试。
+- 数据与存储：全部落在浏览器 IndexedDB（local-storage.ts 抽象）；角色卡、对话树、记忆、世界书、正则、代理会话等通过对应 *Operations 封装；无后端 DB，LLM/Embedding 在前端调用外部 API。
+- 主要业务流：
+  - 角色聊天：`function/dialogue/chat.ts` 创建 DialogueWorkflow（UserInput→PluginMessage→Preset→Context→WorldBook→LLM→Regex→Plugin→Output），写入 LocalCharacterDialogueOperations。
+  - 角色卡：`app/character-cards/page.tsx` 管理导入/编辑/删除/下载，底层 LocalCharacterRecordOperations（IndexedDB）。
+  - 记忆/RAG：`lib/core/memory-manager.ts` + LocalMemoryOperations 生成/检索记忆（前端嵌入）。
+  - 研究代理：`lib/data/agent/agent-conversation-operations.ts` 管理多轮研究会话、任务队列。
+  - 插件/脚本：`lib/plugins/*` 发现注册插件，`lib/script-runner/*` 运行安全沙箱脚本，提供全局 `DreamMiniStage` API。
+- 目录速览：app(页面/layout)、components(共享 UI + model-sidebar 等)、contexts/hooks/lib/utils/types、function(服务端 actions/workflow 节点)、public/assets(静态资源)、docs(指南/架构评审)、scripts(build-pwa、verify-zustand-migration)。
+- 运行/输出：`next.config.ts` 采用 `output: "export"`、PWA 集成，`dev` 默认 3303 端口（turbopack），`images.unoptimized`，dist `.next`。
+- 部署与打包：支持 Vercel 一键部署（docs/VERCEL_DEPLOYMENT.md），PWA 构建+`pake-*` 桌面封装，`docker-compose up --build` 容器运行。
+- 已知注意点：IndexedDB 无迁移机制；部分组件/文件超 400 行（见 docs/reports/architecture-review.md 诊断），Prompt 体积大且敏感文案直接下发；插件执行安全与 postMessage origin 需关注。
