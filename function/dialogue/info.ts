@@ -1,6 +1,7 @@
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import { Character } from "@/lib/core/character";
+import { generateMessageId } from "@/utils/message-id";
 
 /**
  * 获取角色对话信息
@@ -42,7 +43,7 @@ export async function getCharacterDialogue(
       for (const node of currentPath) {
         if (node.userInput) {
           messages.push({
-            id: node.nodeId,
+            id: generateMessageId({ nodeId: node.nodeId, role: "user" }),
             role: "user",
             thinkingContent: node.thinkingContent || "",
             content: node.userInput,
@@ -51,18 +52,19 @@ export async function getCharacterDialogue(
         }
 
         if (node.assistantResponse) {
+          const assistantId = generateMessageId({ nodeId: node.nodeId, role: "assistant" });
+          
           if (node.parsedContent?.regexResult) {
             messages.push({
-              id: node.nodeId,
+              id: assistantId,
               role: "assistant",
               thinkingContent: node.thinkingContent || "",
               content: node.parsedContent.regexResult,
               parsedContent: node.parsedContent,
             });
-          }
-          else {
+          } else {
             messages.push({
-              id: node.nodeId,
+              id: assistantId,
               role: "assistant",
               thinkingContent: node.thinkingContent || "",
               content: node.assistantResponse,

@@ -112,7 +112,7 @@ export default function MessageList({
 
   return (
     <div
-      className="flex-grow overflow-y-auto pt-6 px-6 pb-2 -mb-4"
+      className="grow overflow-y-auto pt-6 px-6 pb-2 -mb-4"
       ref={scrollRef}
     >
       <div className="max-w-4xl mx-auto">

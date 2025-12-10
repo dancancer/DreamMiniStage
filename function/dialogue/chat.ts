@@ -50,6 +50,7 @@ export async function handleCharacterChatRequest(payload: {
 
       const workflow = new DialogueWorkflow();
       const workflowParams: DialogueWorkflowParams = {
+        dialogueKey: treeId,  // 会话隔离：使用 treeId 而非 characterId
         characterId,
         userInput: message,
         language,
@@ -154,7 +155,7 @@ async function processPostResponseAsync({
       dialogueId,
       parentNodeId,
       message,
-      screenContent,
+      fullResponse,      // 存储原始响应，正则处理后的内容在 parsed.regexResult 中
       fullResponse,
       thinkingContent,
       parsed,

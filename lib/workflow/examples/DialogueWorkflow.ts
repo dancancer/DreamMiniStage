@@ -12,6 +12,7 @@ import { OutputNode } from "@/lib/nodeflow/OutputNode/OutputNode";
 import { PromptKey } from "@/lib/prompts/preset-prompts";
 
 export interface DialogueWorkflowParams {
+  dialogueKey?: string;  // 会话 ID（用于隔离不同会话的历史）
   characterId: string;
   userInput: string;
   number?: number;
@@ -78,9 +79,9 @@ export class DialogueWorkflow extends BaseWorkflow {
           name: "userInput",
           category: NodeCategory.ENTRY,
           next: ["plugin-message-1"],
-          initParams: ["characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "fastModel", "systemPresetType", "streaming", "streamUsage"],
+          initParams: ["dialogueKey", "characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "fastModel", "systemPresetType", "streaming", "streamUsage"],
           inputFields: [],
-          outputFields: ["characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "fastModel", "systemPresetType", "streaming", "streamUsage"],
+          outputFields: ["dialogueKey", "characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "fastModel", "systemPresetType", "streaming", "streamUsage"],
         },
         {
           id: "plugin-message-1",
@@ -88,8 +89,8 @@ export class DialogueWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["preset-1"],
           initParams: [],
-          inputFields: ["characterId", "userInput"],
-          outputFields: ["characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "fastModel", "systemPresetType", "streaming", "streamUsage"],
+          inputFields: ["dialogueKey", "characterId", "userInput"],
+          outputFields: ["dialogueKey", "characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "fastModel", "systemPresetType", "streaming", "streamUsage"],
         },
         {
           id: "preset-1",
@@ -106,7 +107,7 @@ export class DialogueWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["world-book-1"],
           initParams: [],
-          inputFields: ["userMessage", "characterId", "userInput"],
+          inputFields: ["userMessage", "dialogueKey", "characterId", "userInput"],
           outputFields: ["userMessage"],
         },
         {
@@ -115,7 +116,7 @@ export class DialogueWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["llm-1"],
           initParams: [],
-          inputFields: ["systemMessage", "userMessage", "characterId", "language", "username", "userInput"],
+          inputFields: ["systemMessage", "userMessage", "dialogueKey", "characterId", "language", "username", "userInput"],
           outputFields: ["systemMessage", "userMessage"],
           inputMapping: {
             "userInput": "currentUserInput",
@@ -127,7 +128,7 @@ export class DialogueWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["regex-1"],
           initParams: [],
-          inputFields: ["systemMessage", "userMessage", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "language", "streaming", "streamUsage"],
+          inputFields: ["systemMessage", "userMessage", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "language", "streaming", "streamUsage", "dialogueKey", "characterId"],
           outputFields: ["llmResponse"],
         },
         {

@@ -23,16 +23,18 @@ export interface LLMConfig {
   baseUrl?: string;
   llmType: "openai" | "ollama" | "gemini";
   temperature?: number;
-  maxTokens?:number;
-  maxRetries?: number,
-  topP?: number,
-  frequencyPenalty?: number,
-  presencePenalty?: number,
-  topK?: number,
-  repeatPenalty?: number,
+  maxTokens?: number;
+  maxRetries?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  topK?: number;
+  repeatPenalty?: number;
   streaming?: boolean;
   streamUsage?: boolean;
   language?: "zh" | "en";
+  dialogueKey?: string;
+  characterId?: string;
 }
 
 const DEFAULT_LLM_SETTINGS = {
@@ -83,6 +85,34 @@ export class LLMNodeTools extends NodeTool {
   ): Promise<string> {
     try {
       console.log("invokeLLM");
+      
+      // ═══════════════════════════════════════════════════════════════════════
+      // 广播实际发送的提示词数据，供提示词查看器捕获
+      // ═══════════════════════════════════════════════════════════════════════
+      if (typeof window !== "undefined" && config.dialogueKey) {
+        console.log("[LLMNodeTools:invokeLLM] 广播 llm-prompt-captured 事件:", {
+          dialogueKey: config.dialogueKey,
+          characterId: config.characterId,
+          systemMessageLength: systemMessage.length,
+          userMessageLength: userMessage.length,
+        });
+        const promptEvent = new CustomEvent("llm-prompt-captured", {
+          detail: {
+            dialogueKey: config.dialogueKey,
+            characterId: config.characterId,
+            systemMessage,
+            userMessage,
+            modelName: config.modelName,
+            timestamp: Date.now(),
+          },
+        });
+        window.dispatchEvent(promptEvent);
+      } else {
+        console.log("[LLMNodeTools:invokeLLM] 未广播事件:", {
+          hasWindow: typeof window !== "undefined",
+          dialogueKey: config.dialogueKey,
+        });
+      }
       
       // 为了获取真实的token usage，我们需要直接调用LLM而不是使用chain
       if (config.llmType === "openai") {

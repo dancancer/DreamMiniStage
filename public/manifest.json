@@ -42,7 +42,7 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/icon.png",
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -51,18 +51,12 @@
       "src": "/icon.ico",
       "sizes": "16x16 32x32 48x48",
       "type": "image/x-icon"
-    },
-    {
-      "src": "/logo_circle.png",
-      "sizes": "256x256",
-      "type": "image/png",
-      "purpose": "any"
     }
   ],
   "screenshots": [
     {
-      "src": "/banner.png",
-      "sizes": "1280x720",
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "form_factor": "wide"
     }

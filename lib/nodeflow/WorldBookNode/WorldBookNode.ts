@@ -21,6 +21,7 @@ export class WorldBookNode extends NodeBase {
   protected async _call(input: NodeInput): Promise<NodeOutput> {
     const systemMessage = input.systemMessage;
     const userMessage = input.userMessage;
+    const dialogueKey = input.dialogueKey;
     const characterId = input.characterId;
     const language = input.language || "zh";
     const username = input.username;
@@ -45,6 +46,7 @@ export class WorldBookNode extends NodeBase {
       contextWindow,
       username,
       charName,
+      dialogueKey,  // 会话隔离
     ) as { systemMessage: string; userMessage: string };
 
     return {

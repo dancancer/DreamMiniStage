@@ -41,6 +41,7 @@ export class WorldBookNodeTools extends NodeTool {
     contextWindow: number = 5,
     username?: string,
     charName?: string,
+    dialogueKey?: string,  // 会话隔离
   ): Promise<{ systemMessage: string; userMessage: string }> {
     try {
       const characterRecord = await LocalCharacterRecordOperations.getCharacterById(characterId);
@@ -49,7 +50,9 @@ export class WorldBookNodeTools extends NodeTool {
       }
       const character = new Character(characterRecord);
 
-      const chatHistory = await this.getChatHistory(characterId, contextWindow);
+      // 优先使用 dialogueKey（会话隔离），回退到 characterId
+      const historyKey = dialogueKey || characterId;
+      const chatHistory = await this.getChatHistory(historyKey, contextWindow);
       
       const promptAssembler = new PromptAssembler({
         language,
@@ -71,15 +74,15 @@ export class WorldBookNodeTools extends NodeTool {
     }
   }
 
-  private static async getChatHistory(characterId: string, contextWindow: number = 5): Promise<DialogueMessage[]> {
+  private static async getChatHistory(dialogueKey: string, contextWindow: number = 5): Promise<DialogueMessage[]> {
     try {
-      const dialogueTree = await LocalCharacterDialogueOperations.getDialogueTreeById(characterId);
+      const dialogueTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueKey);
       if (!dialogueTree) {
         return [];
       }
 
       const nodePath = dialogueTree.current_nodeId !== "root"
-        ? await LocalCharacterDialogueOperations.getDialoguePathToNode(characterId, dialogueTree.current_nodeId)
+        ? await LocalCharacterDialogueOperations.getDialoguePathToNode(dialogueKey, dialogueTree.current_nodeId)
         : [];
       
       const messages: DialogueMessage[] = [];

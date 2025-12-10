@@ -28,7 +28,9 @@ export class LLMNode extends NodeBase {
     const temperature = input.temperature;
     const language = input.language || "zh";
     const streaming = input.streaming || false;
-    const streamUsage = input.streamUsage ?? true; // 默认启用token usage追踪
+    const streamUsage = input.streamUsage ?? true;
+    const dialogueKey = input.dialogueKey;
+    const characterId = input.characterId;
 
     if (!systemMessage) {
       throw new Error("System message is required for LLMNode");
@@ -51,6 +53,8 @@ export class LLMNode extends NodeBase {
         language,
         streaming,
         streamUsage,
+        dialogueKey,
+        characterId,
       },
     ) as string;
 

@@ -13,6 +13,7 @@ import { useState, useCallback } from "react";
 import { trackButtonClick } from "@/utils/google-analytics";
 import { ArrowRight, Globe, Grid, User, ChevronUp, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PromptViewerButton from "@/components/prompt-viewer/PromptViewerButton";
 
 // ============================================================================
 //                              类型定义
@@ -36,6 +37,9 @@ interface ControlPanelProps {
   onOpenUserNameModal: () => void;
   onOpenScriptDebug: () => void;
   t: (key: string) => string;
+  // 提示词查看器所需参数
+  dialogueKey?: string;
+  characterId?: string;
 }
 
 // ============================================================================
@@ -48,6 +52,8 @@ export default function ControlPanel({
   onOpenUserNameModal,
   onOpenScriptDebug,
   t,
+  dialogueKey,
+  characterId,
 }: ControlPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -129,6 +135,14 @@ export default function ControlPanel({
             icon={<User size={12} className="mr-1" />}
             label={t("characterChat.userNameSetting")}
           />
+
+          {/* 提示词查看器 */}
+          {dialogueKey && characterId && (
+            <PromptViewerButton
+              dialogueKey={dialogueKey}
+              characterId={characterId}
+            />
+          )}
         </div>
       </div>
 

@@ -74,6 +74,8 @@ interface Props {
   activeModes: Record<string, unknown>;
   setActiveModes: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
   language: "zh" | "en";
+  // ─── 提示词查看器参数 ───
+  dialogueKey?: string;
   // ─── Slash Command 回调 ───
   onSendMessage?: (text: string, options?: SendOptions) => void | Promise<void>;
   onTriggerGeneration?: () => void | Promise<void>;
@@ -109,6 +111,7 @@ export default function CharacterChatPanel({
   activeModes,
   setActiveModes,
   language,
+  dialogueKey,
   onSendMessage,
   onTriggerGeneration,
   onSendAs,
@@ -338,6 +341,8 @@ export default function CharacterChatPanel({
           onOpenUserNameModal={() => setShowUserNameModal(true)}
           onOpenScriptDebug={() => setShowScriptDebugPanel(true)}
           t={t}
+          dialogueKey={dialogueKey}
+          characterId={character?.id}
         />
       </ChatInput>
 

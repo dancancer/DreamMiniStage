@@ -308,6 +308,7 @@ export default function SessionPage() {
             activeModes={activeModes}
             setActiveModes={setActiveModes}
             language={language as "zh" | "en"}
+            dialogueKey={sessionId}
             onSendMessage={dialogue.addUserMessage}
             onTriggerGeneration={dialogue.triggerGeneration}
             onSendAs={(role, text) => dialogue.addRoleMessage(role, text)}
