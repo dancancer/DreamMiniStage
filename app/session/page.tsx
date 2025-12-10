@@ -304,17 +304,17 @@ export default function SessionPage() {
             onOpeningNavigate={dialogue.handleOpeningNavigate}
             fontClass={fontClass}
             serifFontClass={serifFontClass}
-          t={t}
-          activeModes={activeModes}
-          setActiveModes={setActiveModes}
-          language={language as "zh" | "en"}
-          onSendMessage={dialogue.addUserMessage}
-          onTriggerGeneration={dialogue.triggerGeneration}
-          onSendAs={(role, text) => dialogue.addRoleMessage(role, text)}
-          onSendSystem={(text) => dialogue.addRoleMessage("system", text)}
-          onImpersonate={(text) => dialogue.addRoleMessage("assistant", text)}
-          onContinue={dialogue.triggerGeneration}
-        />
+            t={t}
+            activeModes={activeModes}
+            setActiveModes={setActiveModes}
+            language={language as "zh" | "en"}
+            onSendMessage={dialogue.addUserMessage}
+            onTriggerGeneration={dialogue.triggerGeneration}
+            onSendAs={(role, text) => dialogue.addRoleMessage(role, text)}
+            onSendSystem={(text) => dialogue.addRoleMessage("system", text)}
+            onImpersonate={(text) => dialogue.addRoleMessage("assistant", text)}
+            onContinue={dialogue.triggerGeneration}
+          />
         ) : characterView === "worldbook" ? (
           <WorldBookEditor
             onClose={() => setCharacterView("chat")}

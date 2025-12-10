@@ -41,7 +41,7 @@ describe("P2 utility commands", () => {
   });
 
   it("/trim 去除首尾空白", async () => {
-    const parsed = parseSlashCommands(`/echo "  hi  "|/trim`);
+    const parsed = parseSlashCommands("/echo \"  hi  \"|/trim");
     const ctx = createMinimalContext();
     const result = await executeSlashCommands(parsed.commands, ctx);
 
