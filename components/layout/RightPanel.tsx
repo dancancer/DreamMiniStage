@@ -8,7 +8,6 @@
 "use client";
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { X } from "lucide-react";
 import { useUiLayout, type PanelId } from "@/contexts/ui-layout";
 import { cn } from "@/lib/utils";
@@ -84,9 +83,7 @@ export default function RightPanel() {
           )}
         >
           {/* ═══════════════════ 无障碍标题（屏幕阅读器可见） ═══════════════════ */}
-          <VisuallyHidden.Root asChild>
-            <DialogPrimitive.Title>{meta?.title}</DialogPrimitive.Title>
-          </VisuallyHidden.Root>
+          <DialogPrimitive.Title className="sr-only">{meta?.title}</DialogPrimitive.Title>
 
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div className="min-w-0">
