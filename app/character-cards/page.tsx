@@ -9,7 +9,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Aperture, LayoutGrid, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,12 +20,11 @@ import CharacterCardGrid from "@/components/CharacterCardGrid";
 import CharacterCardCarousel from "@/components/CharacterCardCarousel";
 import { getAllCharacters } from "@/function/character/list";
 import { deleteCharacter } from "@/function/character/delete";
-import { handleCharacterUpload } from "@/function/character/import";
 import { trackButtonClick } from "@/utils/google-analytics";
 import { moveToTop } from "@/function/character/move-to-top";
 import { toast } from "@/lib/store/toast-store";
 import { useSessionStore } from "@/lib/store/session-store";
-import { getBoolean, getString, setBoolean, setString } from "@/lib/storage/client-storage";
+import { getBoolean, getString, setString } from "@/lib/storage/client-storage";
 
 /**
  * Interface defining the structure of a character object
@@ -43,12 +42,12 @@ interface Character {
 
 /**
  * 角色卡页面主组件
- * 
+ *
  * 支持两种模式：
  * 1. 默认模式：浏览角色卡，点击直接进入聊天
  * 2. 创建会话模式（mode=create-session）：点击角色卡创建新会话
  */
-export default function CharacterCards() {
+function CharacterCardsContent() {
   const { t, fontClass } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,8 +68,6 @@ export default function CharacterCards() {
   const [mounted, setMounted] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isDownloadingPresets, setIsDownloadingPresets] = useState(false);
-  const [hasAttemptedPresetDownload, setHasAttemptedPresetDownload] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   useEffect(() => {
@@ -245,71 +242,6 @@ export default function CharacterCards() {
     [isCreateSessionMode, isCreatingSession, createSession, router, t],
   );
 
-  /**
-   * Downloads preset character cards for first-time users or when character list is empty
-   * Fetches available characters from GitHub and downloads specific preset characters
-   */
-  const downloadPresetCharacters = useCallback(async () => {
-    setHasAttemptedPresetDownload(true);
-    setIsDownloadingPresets(true);
-    try {
-      // Fetch available character files from GitHub
-      const response = await fetch("https://api.github.com/repos/DreamMiniStage/Character-Card/contents");
-      const data = await response.json();
-      
-      if (!Array.isArray(data)) {
-        console.error("Failed to fetch character files from GitHub");
-        toast.error(t("characterCardsPage.downloadError") || "Failed to fetch preset characters");
-        return;
-      }
-
-      // Define specific preset character files to download
-      const presetCharacterNames = [
-        "《致炽焰以战歌》(二次元)(同人、二创).png",
-        "为美好的世界献上祝福恋爱角色扮演--纯爱，同人二创(同人、二创).png",
-        "在地下城寻求邂逅是否搞错了什么（拓展神明扮演）--纯爱，系统工具(玄幻、同人、二创).png",
-      ];
-
-      // Filter and find the specific preset characters
-      const pngFiles = data.filter((item: any) => 
-        item.name.endsWith(".png") && presetCharacterNames.includes(item.name),
-      );
-
-      // Download and import each preset character
-      for (const file of pngFiles) {
-        try {
-          const fileResponse = await fetch(file.download_url || `https://raw.githubusercontent.com/DreamMiniStage/Character-Card/main/${file.name}`);
-          if (!fileResponse.ok) {
-            console.error(`Failed to download ${file.name}`);
-            toast.error(`Failed to download ${file.name}`);
-            continue;
-          }
-          
-          const blob = await fileResponse.blob();
-          const fileObj = new File([blob], file.name, { type: blob.type });
-          
-          await handleCharacterUpload(fileObj);
-        } catch (error) {
-          console.error(`Failed to import ${file.name}:`, error);
-        }
-      }
-
-      // Refresh character list after importing
-      await fetchCharacters();
-      
-      // Only mark as not first time if it was actually the first visit
-      const isFirstVisit = !getBoolean("characterCardsFirstVisit", false);
-      if (isFirstVisit) {
-        setBoolean("characterCardsFirstVisit", false);
-      }
-      
-    } catch (error) {
-      console.error("Error downloading preset characters:", error);
-    } finally {
-      setIsDownloadingPresets(false);
-    }
-  }, [fetchCharacters, t]);
-
   useEffect(() => {
     const initializeData = async () => {
       // First run data structure migration if needed
@@ -320,24 +252,6 @@ export default function CharacterCards() {
     
     initializeData();
   }, [fetchCharacters, migrateDataStructure]);
-
-  // Check if this is the first visit and auto-download preset characters
-  useEffect(() => {
-    const isFirstVisit = !getBoolean("characterCardsFirstVisit", false);
-    
-    // Auto-download preset characters if:
-    // 1. It's the first visit, OR
-    // 2. Character list is empty (regardless of first visit status)
-    if (
-      !hasAttemptedPresetDownload &&
-      (isFirstVisit || characters.length === 0) &&
-      characters.length === 0 &&
-      !isLoading &&
-      !isDownloadingPresets
-    ) {
-      downloadPresetCharacters();
-    }
-  }, [characters.length, downloadPresetCharacters, hasAttemptedPresetDownload, isDownloadingPresets, isLoading]);
 
   if (!mounted) return null;
 
@@ -397,7 +311,7 @@ export default function CharacterCards() {
                   <div className="absolute inset-0 rounded-full border-2 border-t-primary-bright border-r-primary-soft border-b-ink-soft border-l-transparent animate-spin"></div>
                   <div className="absolute inset-2 rounded-full border-2 border-t-ink-soft border-r-primary-bright border-b-primary-soft border-l-transparent animate-spin-slow"></div>
                   <div className={`absolute w-full text-center top-20 text-primary-soft ${fontClass}`}>
-                    {isDownloadingPresets ? t("characterCardsPage.downloadingPresets") : t("characterCardsPage.loading")}
+                    {t("characterCardsPage.loading")}
                   </div>
                 </div>
               </div>
@@ -461,5 +375,30 @@ export default function CharacterCards() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Suspense 包装组件
+ */
+export default function CharacterCards() {
+  const { t } = useLanguage();
+
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center h-64 animate-in fade-in duration-300">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 rounded-full border-2 border-t-primary-bright border-r-primary-soft border-b-ink-soft border-l-transparent animate-spin"></div>
+            <div className="absolute inset-2 rounded-full border-2 border-t-ink-soft border-r-primary-bright border-b-primary-soft border-l-transparent animate-spin-slow"></div>
+            <div className="absolute w-full text-center top-20 text-primary-soft">
+              {t("characterCardsPage.loading")}
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <CharacterCardsContent />
+    </Suspense>
   );
 }

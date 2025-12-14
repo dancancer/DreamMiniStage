@@ -85,18 +85,19 @@ export const COMPONENT_STYLES = {
     content: cn(
       "fixed left-[50%] top-[50%] z-50",
       "translate-x-[-50%] translate-y-[-50%]",
-      "w-[90vw] max-w-4xl max-h-[85vh]",
+      "w-[90vw] max-w-4xl h-[80vh]", // 固定高度 80vh
       "sm:max-w-3xl md:max-w-4xl lg:max-w-5xl",
       "p-0 gap-0 rounded-lg",
+      "flex flex-col", // 使用 flex 布局
       THEME_COLORS.background,
       THEME_COLORS.border,
       "border shadow-lg",
     ),
     header: cn(
-      "px-6 py-4 border-b",
+      "px-6 py-4 border-b flex-shrink-0", // 防止 header 被压缩
       THEME_COLORS.divider,
     ),
-    body: "flex flex-col h-full min-h-0",
+    body: "flex flex-col flex-1 min-h-0 overflow-hidden", // flex-1 填充剩余空间
   },
 
   // 搜索工具栏样式

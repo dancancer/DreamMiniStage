@@ -38,9 +38,11 @@ export default function MainShell({ children }: MainShellProps) {
         await pluginRegistry.initialize();
         await pluginDiscovery.discoverPlugins();
 
-        (window as any).pluginRegistry = pluginRegistry;
-        (window as any).pluginDiscovery = pluginDiscovery;
-        (window as any).toolRegistry = ToolRegistry;
+        // ═══════════════════════════════════════════════════════════════════
+        // 挂载到 window 对象用于调试
+        // ═══════════════════════════════════════════════════════════════════
+        window.pluginRegistry = pluginRegistry;
+        window.pluginDiscovery = pluginDiscovery;
       } catch (error) {
         console.error("Failed to initialize plugin system:", error);
       }

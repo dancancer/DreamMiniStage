@@ -1,0 +1,779 @@
+/**
+ * ╔═══════════════════════════════════════════════════════════════════════════╗
+ * ║                         Slash Command 注册表                               ║
+ * ║                                                                            ║
+ * ║  好品味：用 Map 消灭 switch/case                                            ║
+ * ║  新增命令只需在 COMMAND_REGISTRY 添加一行                                    ║
+ * ╚═══════════════════════════════════════════════════════════════════════════╝
+ */
+
+import type { CommandHandler, ExecutionContext } from "./types";
+
+// ============================================================================
+//                              核心命令实现
+// ============================================================================
+
+/** /send <text> - 发送消息（支持 at/name/compact/return） */
+const handleSend: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const text = (args.join(" ") || pipe || "").toString();
+  const at = normalizeIndex(parseNumber(namedArgs.at), ctx.messages?.length ?? 0);
+  const name = namedArgs.name;
+  const compact = parseBoolean(namedArgs.compact);
+  const returnType = namedArgs["return"];
+
+  await ctx.onSend(text, { at, name, compact, returnType });
+  return buildSendReturn(returnType, text, pipe, at);
+};
+
+/** /trigger - 触发 AI 生成，支持 await 与群组成员选择 */
+const TRIGGER_LOCKS: Map<string, Promise<void>> = new Map();
+
+const handleTrigger: CommandHandler = async (args, namedArgs, ctx, _pipe) => {
+  const member = args[0] ?? namedArgs.member;
+  const shouldAwait = parseBoolean(namedArgs["await"], true);
+  const lockKey = ctx.characterId || "__default__";
+
+  const pending = TRIGGER_LOCKS.get(lockKey);
+  if (pending) {
+    await pending.catch(() => {});
+  }
+
+  const triggerPromise = (async () => {
+    await ctx.onTrigger(member);
+  })();
+
+  TRIGGER_LOCKS.set(lockKey, triggerPromise);
+
+  try {
+    if (shouldAwait) {
+      await triggerPromise;
+    } else {
+      triggerPromise.catch(() => {});
+    }
+    return "";
+  } finally {
+    triggerPromise.finally(() => {
+      if (TRIGGER_LOCKS.get(lockKey) === triggerPromise) {
+        TRIGGER_LOCKS.delete(lockKey);
+      }
+    });
+  }
+};
+
+/** /setvar key=value 或 /setvar key value - 设置变量 */
+const handleSetVar: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  // 优先使用命名参数
+  if (Object.keys(namedArgs).length > 0) {
+    for (const [key, value] of Object.entries(namedArgs)) {
+      ctx.setVariable(key, value);
+    }
+    return pipe;
+  }
+  
+  // 位置参数: /setvar key value
+  if (args.length >= 2) {
+    const [key, ...rest] = args;
+    ctx.setVariable(key, rest.join(" "));
+    return rest.join(" ");
+  }
+  
+  // 单参数带等号: /setvar key=value
+  if (args.length === 1 && args[0].includes("=")) {
+    const eqIndex = args[0].indexOf("=");
+    const key = args[0].slice(0, eqIndex);
+    const value = args[0].slice(eqIndex + 1);
+    ctx.setVariable(key, value);
+    return value;
+  }
+
+  // 使用 pipe 作为值
+  if (args.length === 1 && pipe) {
+    ctx.setVariable(args[0], pipe);
+    return pipe;
+  }
+
+  return pipe;
+};
+
+/** /getvar key - 获取变量 */
+const handleGetVar: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (args.length === 0) return pipe;
+  const value = ctx.getVariable(args[0]);
+  return value !== undefined ? String(value) : "";
+};
+
+/** /delvar key - 删除变量 */
+const handleDelVar: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (args.length === 0) return pipe;
+  ctx.deleteVariable(args[0]);
+  return pipe;
+};
+
+/** /listvar - 列出所有变量 */
+const handleListVar: CommandHandler = async (_args, _namedArgs, ctx, pipe) => {
+  if (!ctx.listVariables) return pipe;
+  const vars = ctx.listVariables();
+  return JSON.stringify(vars);
+};
+
+/** /flushvar - 清空所有变量 */
+const handleFlushVar: CommandHandler = async (_args, _namedArgs, ctx, pipe) => {
+  if (!ctx.flushVariables) return pipe;
+  ctx.flushVariables();
+  return pipe;
+};
+
+/** /dumpvar - 导出所有变量为 JSON */
+const handleDumpVar: CommandHandler = async (_args, _namedArgs, ctx, pipe) => {
+  if (!ctx.dumpVariables) return pipe;
+  const dump = ctx.dumpVariables();
+  return JSON.stringify(dump, null, 2);
+};
+
+/** /incvar key [amount] - 增加数值变量 */
+const handleIncVar: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (args.length === 0) return pipe;
+  const key = args[0];
+  const amount = args.length > 1 ? parseFloat(args[1]) : 1;
+  const current = ctx.getVariable(key);
+  const newValue = (typeof current === "number" ? current : 0) + amount;
+  ctx.setVariable(key, newValue);
+  return String(newValue);
+};
+
+/** /decvar key [amount] - 减少数值变量 */
+const handleDecVar: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (args.length === 0) return pipe;
+  const key = args[0];
+  const amount = args.length > 1 ? parseFloat(args[1]) : 1;
+  const current = ctx.getVariable(key);
+  const newValue = (typeof current === "number" ? current : 0) - amount;
+  ctx.setVariable(key, newValue);
+  return String(newValue);
+};
+
+/** /echo <text> - 回显文本（用于调试） */
+const handleEcho: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  return args.length > 0 ? args.join(" ") : pipe;
+};
+
+/** /pass - 透传 pipe 值 */
+const handlePass: CommandHandler = async (_args, _namedArgs, _ctx, pipe) => {
+  return pipe;
+};
+
+/** /return <value?> - 返回一个值并中止执行链 */
+const handleReturn: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  return args[0] ?? pipe;
+};
+
+/** /sendas <role> <text> - 以指定角色发送 */
+const handleSendAs: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (args.length === 0) return pipe;
+  const [role, ...rest] = args;
+  const text = rest.join(" ") || pipe;
+  if (!text) return pipe;
+
+  if (ctx.onSendAs) {
+    await ctx.onSendAs(role, text);
+    return text;
+  }
+
+  await ctx.onSend(`[${role}] ${text}`);
+  return text;
+};
+
+/** /sys <text> - 发送系统/旁白消息 */
+const handleSys: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  const text = args.join(" ") || pipe;
+  if (!text) return pipe;
+  if (ctx.onSendSystem) {
+    await ctx.onSendSystem(text);
+    return text;
+  }
+  await ctx.onSend(`[SYS] ${text}`);
+  return text;
+};
+
+/** /impersonate <text> - AI 扮演用户回复 */
+const handleImpersonate: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  const text = args.join(" ") || pipe;
+  if (!text) return pipe;
+  if (ctx.onImpersonate) {
+    await ctx.onImpersonate(text);
+  } else {
+    await ctx.onSend(`[impersonate] ${text}`);
+    await ctx.onTrigger();
+  }
+  return text;
+};
+
+/** /continue - 继续生成 */
+const handleContinue: CommandHandler = async (_args, _namedArgs, ctx, pipe) => {
+  if (ctx.onContinue) {
+    await ctx.onContinue();
+  } else {
+    await ctx.onTrigger();
+  }
+  return pipe;
+};
+
+/** /swipe - 切换回复 swipe（占位实现） */
+const handleSwipe: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (ctx.onSwipe) {
+    await ctx.onSwipe(args[0]);
+  }
+  return pipe;
+};
+
+// ============================================================================
+//                              消息管理命令
+// ============================================================================
+
+/** /getmessage <index> - 获取指定索引的消息 */
+const handleGetMessage: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.getMessage) return pipe;
+  const index = args.length > 0 ? parseInt(args[0], 10) : -1;
+  const msg = ctx.getMessage(index);
+  return msg ? JSON.stringify({ role: msg.role, content: msg.content }) : "";
+};
+
+/** /editmessage <index> <content> - 编辑指定索引的消息 */
+const handleEditMessage: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.editMessage) return pipe;
+  if (args.length < 2) return pipe;
+  const index = parseInt(args[0], 10);
+  const content = args.slice(1).join(" ") || pipe;
+  await ctx.editMessage(index, content);
+  return content;
+};
+
+/** /delmessage <index> - 删除指定索引的消息 */
+const handleDelMessage: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.deleteMessage) return pipe;
+  if (args.length === 0) return pipe;
+  const index = parseInt(args[0], 10);
+  await ctx.deleteMessage(index);
+  return pipe;
+};
+
+/** /messagecount - 获取消息数量 */
+const handleMessageCount: CommandHandler = async (_args, _namedArgs, ctx, pipe) => {
+  if (!ctx.getMessageCount) return String(ctx.messages?.length ?? 0);
+  return String(ctx.getMessageCount());
+};
+
+// ============================================================================
+//                              World Book 命令
+// ============================================================================
+
+/** /getentry <id> - 获取 World Book 条目 */
+const handleGetEntry: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.getWorldBookEntry) return pipe;
+  if (args.length === 0) return pipe;
+  const entry = ctx.getWorldBookEntry(args[0]);
+  return entry ? JSON.stringify(entry) : "";
+};
+
+/** /searchentry <query> - 搜索 World Book 条目 */
+const handleSearchEntry: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.searchWorldBook) return pipe;
+  const query = args.join(" ") || pipe;
+  if (!query) return "[]";
+  const entries = ctx.searchWorldBook(query);
+  return JSON.stringify(entries);
+};
+
+/** /setentry <id> key=value ... - 设置 World Book 条目属性 */
+const handleSetEntry: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.setWorldBookEntry) return pipe;
+  if (args.length === 0) return pipe;
+  const id = args[0];
+  const data: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(namedArgs)) {
+    if (key === "enabled") {
+      data[key] = value.toLowerCase() === "true" || value === "1";
+    } else if (key === "priority" || key === "depth") {
+      data[key] = parseInt(value, 10);
+    } else if (key === "keys") {
+      data[key] = value.split(",").map((k) => k.trim());
+    } else {
+      data[key] = value;
+    }
+  }
+  await ctx.setWorldBookEntry(id, data);
+  return pipe;
+};
+
+/** /createentry key=value ... - 创建新的 World Book 条目 */
+const handleCreateEntry: CommandHandler = async (_args, namedArgs, ctx, pipe) => {
+  if (!ctx.createWorldBookEntry) return pipe;
+  const data: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(namedArgs)) {
+    if (key === "enabled") {
+      data[key] = value.toLowerCase() === "true" || value === "1";
+    } else if (key === "priority" || key === "depth") {
+      data[key] = parseInt(value, 10);
+    } else if (key === "keys") {
+      data[key] = value.split(",").map((k) => k.trim());
+    } else {
+      data[key] = value;
+    }
+  }
+  const newEntry = await ctx.createWorldBookEntry(data);
+  return newEntry ? JSON.stringify(newEntry) : pipe;
+};
+
+/** /deleteentry <id> - 删除 World Book 条目 */
+const handleDeleteEntry: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.deleteWorldBookEntry) return pipe;
+  if (args.length === 0) return pipe;
+  await ctx.deleteWorldBookEntry(args[0]);
+  return pipe;
+};
+
+/** /activateentry <id> - 手动激活 World Book 条目 */
+const handleActivateEntry: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.activateWorldBookEntry) return pipe;
+  if (args.length === 0) return pipe;
+  await ctx.activateWorldBookEntry(args[0]);
+  return pipe;
+};
+
+/** /listentries [book] - 列出 World Book 所有条目 */
+const handleListEntries: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.listWorldBookEntries) return pipe;
+  const bookName = args[0];
+  const entries = ctx.listWorldBookEntries(bookName);
+  return JSON.stringify(entries);
+};
+
+/** /worldbook <action> [args] - 世界书管理命令 */
+const handleWorldBook: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (args.length === 0) return pipe;
+  const action = args[0].toLowerCase();
+  const rest = args.slice(1);
+
+  if (action === "list") {
+    if (!ctx.listWorldBookEntries) return pipe;
+    return JSON.stringify(ctx.listWorldBookEntries(rest[0]));
+  }
+  if (action === "get") {
+    if (!ctx.getWorldBookEntry || rest.length === 0) return pipe;
+    const entry = ctx.getWorldBookEntry(rest[0]);
+    return entry ? JSON.stringify(entry) : "";
+  }
+  if (action === "search") {
+    if (!ctx.searchWorldBook) return pipe;
+    return JSON.stringify(ctx.searchWorldBook(rest.join(" ") || pipe));
+  }
+  if (action === "enable") {
+    if (!ctx.setWorldBookEntry || rest.length === 0) return pipe;
+    await ctx.setWorldBookEntry(rest[0], { enabled: true });
+    return pipe;
+  }
+  if (action === "disable") {
+    if (!ctx.setWorldBookEntry || rest.length === 0) return pipe;
+    await ctx.setWorldBookEntry(rest[0], { enabled: false });
+    return pipe;
+  }
+  if (action === "delete") {
+    if (!ctx.deleteWorldBookEntry || rest.length === 0) return pipe;
+    await ctx.deleteWorldBookEntry(rest[0]);
+    return pipe;
+  }
+  return pipe;
+};
+
+// ============================================================================
+//                              Preset 命令
+// ============================================================================
+
+/** /preset [name] - 切换或获取当前预设 */
+const handlePreset: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.getPreset && !ctx.setPreset) return pipe;
+  
+  // 无参数时返回当前预设
+  if (args.length === 0 && Object.keys(namedArgs).length === 0) {
+    if (!ctx.getPreset) return pipe;
+    const current = ctx.getPreset();
+    return current ? JSON.stringify(current) : "";
+  }
+  
+  // 设置预设
+  if (!ctx.setPreset) return pipe;
+  const presetName = args[0] || namedArgs.name;
+  if (presetName) {
+    await ctx.setPreset(presetName);
+  }
+  return pipe;
+};
+
+/** /listpresets - 列出所有可用预设 */
+const handleListPresets: CommandHandler = async (_args, _namedArgs, ctx, pipe) => {
+  if (!ctx.listPresets) return pipe;
+  const presets = ctx.listPresets();
+  return JSON.stringify(presets);
+};
+
+// ============================================================================
+//                              Regex 命令
+// ============================================================================
+
+/** /regex <action> [args] - 正则脚本管理 */
+const handleRegex: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (args.length === 0) return pipe;
+  const action = args[0].toLowerCase();
+  const rest = args.slice(1);
+
+  if (action === "list") {
+    if (!ctx.listRegexScripts) return pipe;
+    return JSON.stringify(ctx.listRegexScripts());
+  }
+  if (action === "get") {
+    if (!ctx.getRegexScript || rest.length === 0) return pipe;
+    const script = ctx.getRegexScript(rest[0]);
+    return script ? JSON.stringify(script) : "";
+  }
+  if (action === "enable") {
+    if (!ctx.setRegexScriptEnabled || rest.length === 0) return pipe;
+    await ctx.setRegexScriptEnabled(rest[0], true);
+    return pipe;
+  }
+  if (action === "disable") {
+    if (!ctx.setRegexScriptEnabled || rest.length === 0) return pipe;
+    await ctx.setRegexScriptEnabled(rest[0], false);
+    return pipe;
+  }
+  if (action === "run") {
+    if (!ctx.runRegexScript) return pipe;
+    const scriptName = rest[0];
+    const input = rest.slice(1).join(" ") || pipe;
+    return await ctx.runRegexScript(scriptName, input);
+  }
+  return pipe;
+};
+
+// ============================================================================
+//                              Audio 命令
+// ============================================================================
+
+/** /audio <action> [args] - 音频播放控制 */
+const handleAudio: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (args.length === 0) return pipe;
+  const action = args[0].toLowerCase();
+  const rest = args.slice(1);
+
+  if (action === "play") {
+    if (!ctx.playAudio) return pipe;
+    const url = rest[0] || namedArgs.url || pipe;
+    const volume = namedArgs.volume ? parseFloat(namedArgs.volume) : undefined;
+    const loop = namedArgs.loop === "true" || namedArgs.loop === "1";
+    await ctx.playAudio(url, { volume, loop });
+    return pipe;
+  }
+  if (action === "stop") {
+    if (!ctx.stopAudio) return pipe;
+    await ctx.stopAudio();
+    return pipe;
+  }
+  if (action === "pause") {
+    if (!ctx.pauseAudio) return pipe;
+    await ctx.pauseAudio();
+    return pipe;
+  }
+  if (action === "resume") {
+    if (!ctx.resumeAudio) return pipe;
+    await ctx.resumeAudio();
+    return pipe;
+  }
+  if (action === "volume") {
+    if (!ctx.setAudioVolume || rest.length === 0) return pipe;
+    const volume = parseFloat(rest[0]);
+    await ctx.setAudioVolume(volume);
+    return pipe;
+  }
+  return pipe;
+};
+
+/** /play <url> - 播放音频的快捷命令 */
+const handlePlay: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.playAudio) return pipe;
+  const url = args[0] || pipe;
+  if (!url) return pipe;
+  const volume = namedArgs.volume ? parseFloat(namedArgs.volume) : undefined;
+  const loop = namedArgs.loop === "true" || namedArgs.loop === "1";
+  await ctx.playAudio(url, { volume, loop });
+  return pipe;
+};
+
+/** /stop - 停止音频播放 */
+const handleStop: CommandHandler = async (_args, _namedArgs, ctx, pipe) => {
+  if (!ctx.stopAudio) return pipe;
+  await ctx.stopAudio();
+  return pipe;
+};
+
+// ============================================================================
+//                              生成命令
+// ============================================================================
+
+/** /gen <prompt> - 生成文本（显示结果） */
+const handleGen: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.generate) return pipe;
+  const prompt = args.join(" ") || pipe;
+  if (!prompt) return pipe;
+  const options = {
+    maxTokens: namedArgs.max ? parseInt(namedArgs.max, 10) : undefined,
+    temperature: namedArgs.temp ? parseFloat(namedArgs.temp) : undefined,
+  };
+  return await ctx.generate(prompt, options);
+};
+
+/** /genq <prompt> - 静默生成文本（不显示） */
+const handleGenQuiet: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.generateQuiet && !ctx.generate) return pipe;
+  const prompt = args.join(" ") || pipe;
+  if (!prompt) return pipe;
+  const options = {
+    maxTokens: namedArgs.max ? parseInt(namedArgs.max, 10) : undefined,
+    temperature: namedArgs.temp ? parseFloat(namedArgs.temp) : undefined,
+  };
+  const generator = ctx.generateQuiet || ctx.generate;
+  return await generator!(prompt, options);
+};
+
+/** /inject <prompt> - 临时注入提示词到下一次生成 */
+const handleInject: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.injectPrompt) return pipe;
+  const prompt = args.join(" ") || pipe;
+  if (!prompt) return pipe;
+  const options = {
+    position: namedArgs.position as "before" | "after" | undefined,
+    depth: namedArgs.depth ? parseInt(namedArgs.depth, 10) : undefined,
+    role: namedArgs.role as "system" | "user" | "assistant" | undefined,
+    ephemeral: parseBoolean(namedArgs.ephemeral, true),
+  };
+  await ctx.injectPrompt(prompt, options);
+  return pipe;
+};
+
+/** /activatelore <name> - 手动激活 World Info 条目 */
+const handleActivateLore: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.activateWorldInfoEntry) return pipe;
+  const name = args[0] || namedArgs.name || pipe;
+  if (!name) return pipe;
+  const duration = namedArgs.duration ? parseInt(namedArgs.duration, 10) : undefined;
+  await ctx.activateWorldInfoEntry(name, { duration });
+  return pipe;
+};
+
+// ============================================================================
+//                              P2 基础算子
+// ============================================================================
+
+/** /add a b ... - 数值求和，pipe 也参与计算 */
+const handleAdd: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  const nums = collectNumbers(args, pipe, 0);
+  const sum = nums.reduce((acc, n) => acc + n, 0);
+  return String(sum);
+};
+
+/** /sub a b ... - 依次相减，默认以 pipe 作为首项 */
+const handleSub: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  const nums = collectNumbers(args, pipe, 0);
+  const [head, ...rest] = nums;
+  const result = rest.reduce((acc, n) => acc - n, head);
+  return String(result);
+};
+
+/** /len text - 返回文本长度（默认使用 pipe） */
+const handleLen: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  const target = pickText(args, pipe);
+  return String(target.length);
+};
+
+/** /trim text - 去除首尾空白（默认使用 pipe） */
+const handleTrim: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  const target = pickText(args, pipe);
+  return target.trim();
+};
+
+/** /push key value? - 将值压入变量数组，默认用 pipe 作为值 */
+const handlePush: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (args.length === 0) return pipe;
+  const [key, ...rest] = args;
+  const values = rest.length > 0 ? rest : (pipe ? [pipe] : []);
+  if (values.length === 0) return pipe;
+
+  const current = ctx.getVariable(key);
+  const base = Array.isArray(current) ? [...current] : [];
+  base.push(...values);
+  ctx.setVariable(key, base);
+  return JSON.stringify(base);
+};
+
+// ============================================================================
+//                              命令注册表
+// ============================================================================
+
+export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
+  // 核心消息命令
+  ["send", handleSend],
+  ["trigger", handleTrigger],
+  ["sendas", handleSendAs],
+  ["sys", handleSys],
+  ["impersonate", handleImpersonate],
+  ["continue", handleContinue],
+  ["cont", handleContinue],
+  ["swipe", handleSwipe],
+
+  // 变量命令
+  ["setvar", handleSetVar],
+  ["getvar", handleGetVar],
+  ["delvar", handleDelVar],
+  ["listvar", handleListVar],
+  ["flushvar", handleFlushVar],
+  ["dumpvar", handleDumpVar],
+  ["incvar", handleIncVar],
+  ["decvar", handleDecVar],
+
+  // 消息管理命令
+  ["getmessage", handleGetMessage],
+  ["getmes", handleGetMessage],
+  ["editmessage", handleEditMessage],
+  ["editmes", handleEditMessage],
+  ["delmessage", handleDelMessage],
+  ["delmes", handleDelMessage],
+  ["messagecount", handleMessageCount],
+  ["mescount", handleMessageCount],
+
+  // World Book 命令
+  ["getentry", handleGetEntry],
+  ["searchentry", handleSearchEntry],
+  ["setentry", handleSetEntry],
+  ["createentry", handleCreateEntry],
+  ["deleteentry", handleDeleteEntry],
+  ["delentry", handleDeleteEntry],
+  ["activateentry", handleActivateEntry],
+  ["listentries", handleListEntries],
+  ["worldbook", handleWorldBook],
+  ["wb", handleWorldBook],
+
+  // 生成命令
+  ["gen", handleGen],
+  ["generate", handleGen],
+  ["genq", handleGenQuiet],
+  ["generatequiet", handleGenQuiet],
+  ["inject", handleInject],
+
+  // Lore 激活命令
+  ["activatelore", handleActivateLore],
+
+  // Preset 命令
+  ["preset", handlePreset],
+  ["listpresets", handleListPresets],
+
+  // Regex 命令
+  ["regex", handleRegex],
+
+  // Audio 命令
+  ["audio", handleAudio],
+  ["play", handlePlay],
+  ["stop", handleStop],
+
+  // 工具命令
+  ["echo", handleEcho],
+  ["pass", handlePass],
+  ["return", handleReturn],
+
+  // 算子命令
+  ["add", handleAdd],
+  ["sub", handleSub],
+  ["len", handleLen],
+  ["trim", handleTrim],
+  ["push", handlePush],
+]);
+
+// ============================================================================
+//                              注册表操作
+// ============================================================================
+
+/** 获取命令处理器 */
+export function getCommandHandler(name: string): CommandHandler | undefined {
+  return COMMAND_REGISTRY.get(name.toLowerCase());
+}
+
+/** 注册新命令 */
+export function registerCommand(name: string, handler: CommandHandler): void {
+  COMMAND_REGISTRY.set(name.toLowerCase(), handler);
+}
+
+/** 检查命令是否存在 */
+export function hasCommand(name: string): boolean {
+  return COMMAND_REGISTRY.has(name.toLowerCase());
+}
+
+/** 获取所有已注册命令名 */
+export function getRegisteredCommands(): string[] {
+  return Array.from(COMMAND_REGISTRY.keys());
+}
+
+// ============================================================================
+//                              工具函数
+// ============================================================================
+
+function collectNumbers(args: string[], pipe: string, fallback: number): number[] {
+  const sources = (pipe ? [pipe] : []).concat(args);
+  const list = sources.length === 0 ? [String(fallback)] : sources;
+  return list.map(toNumber);
+}
+
+function toNumber(raw: string): number {
+  const value = Number(raw);
+  if (Number.isNaN(value)) {
+    throw new Error(`Invalid number: ${raw}`);
+  }
+  return value;
+}
+
+function pickText(args: string[], pipe: string): string {
+  if (args.length > 0) return args.join(" ");
+  return pipe;
+}
+
+function parseNumber(raw?: string): number | undefined {
+  if (raw === undefined) return undefined;
+  const n = Number(raw);
+  if (Number.isNaN(n)) return undefined;
+  return n;
+}
+
+function parseBoolean(raw?: string, defaultValue?: boolean): boolean | undefined {
+  if (raw === undefined) return defaultValue;
+  const lowered = raw.toLowerCase();
+  if (lowered === "false" || lowered === "0" || lowered === "off") return false;
+  if (lowered === "true" || lowered === "1" || lowered === "on") return true;
+  return defaultValue;
+}
+
+function normalizeIndex(raw: number | undefined, length: number): number | undefined {
+  if (raw === undefined || Number.isNaN(raw)) return raw;
+  if (raw < 0) return Math.max(length + raw, 0);
+  if (raw > length) return length;
+  return raw;
+}
+
+function buildSendReturn(
+  returnType: string | undefined,
+  text: string,
+  pipe: string,
+  at?: number,
+): string {
+  const normalized = returnType?.toLowerCase();
+  if (!normalized) return text;
+  if (normalized === "none") return "";
+  if (normalized === "pipe") return pipe ?? "";
+  if (normalized === "object") return JSON.stringify({ text, at });
+  return text;
+}

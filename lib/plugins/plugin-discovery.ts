@@ -117,10 +117,17 @@ export class PluginDiscovery {
       };
 
       // Create plugin instance
+      const pluginModuleObj = pluginModule as Record<string, unknown>;
       const plugin: Plugin = {
         manifest,
         context,
-        ...pluginModule,
+        onLoad: pluginModuleObj.onLoad as Plugin["onLoad"],
+        onEnable: pluginModuleObj.onEnable as Plugin["onEnable"],
+        onDisable: pluginModuleObj.onDisable as Plugin["onDisable"],
+        onMessage: pluginModuleObj.onMessage as Plugin["onMessage"],
+        onResponse: pluginModuleObj.onResponse as Plugin["onResponse"],
+        onSettingsChange: pluginModuleObj.onSettingsChange as Plugin["onSettingsChange"],
+        onUnload: pluginModuleObj.onUnload as Plugin["onUnload"],
       };
 
       // Call onLoad hook
@@ -272,7 +279,7 @@ export class PluginDiscovery {
   /**
    * Load plugin module using fetch and dynamic execution
    */
-  private async loadPluginModule(manifest: PluginManifest): Promise<any> {
+  private async loadPluginModule(manifest: PluginManifest): Promise<unknown> {
     const modulePath = `${this.pluginPath}/${manifest.id}/${manifest.main}`;
     
     try {

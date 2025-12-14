@@ -19,8 +19,8 @@ export async function updateCharacter(
       success: true,
       character: updatedCharacter,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to update character:", error);
-    throw new Error(`Failed to update character: ${error.message}`);
+    throw new Error(`Failed to update character: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }

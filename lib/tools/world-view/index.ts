@@ -31,7 +31,7 @@ export class WorldViewTool extends BaseTool {
     },
   ];
 
-  protected async doWork(parameters: Record<string, any>, context: ExecutionContext): Promise<ExecutionResult> {
+  protected async doWork(parameters: Record<string, unknown>, context: ExecutionContext): Promise<ExecutionResult> {
     const content = parameters.content;
     const comment = parameters.comment;
     
@@ -39,7 +39,7 @@ export class WorldViewTool extends BaseTool {
       return this.createFailureResult("WORLD_VIEW tool requires 'content' parameter as a string.");
     }
 
-    if (!comment || comment.toUpperCase() !== "WORLD_VIEW") {
+    if (!comment || typeof comment !== "string" || comment.toUpperCase() !== "WORLD_VIEW") {
       return this.createFailureResult("WORLD_VIEW tool requires 'comment' parameter to be exactly 'WORLD_VIEW'.");
     }
 

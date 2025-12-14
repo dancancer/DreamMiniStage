@@ -146,9 +146,10 @@ export default function ImportWorldBookModal({ isOpen, characterId, onClose, onI
         toast.success(result.message);
         onImportSuccess();
       } else toast.error(result.message);
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       console.error("Import from global failed:", error);
-      toast.error(`Import failed: ${error.message}`);
+      toast.error(`Import failed: ${errorMessage}`);
     } finally {
       setIsImporting(false);
     }
@@ -169,9 +170,10 @@ export default function ImportWorldBookModal({ isOpen, characterId, onClose, onI
         loadGlobalWorldBooks();
         if (selectedGlobalId === globalId) setSelectedGlobalId("");
       } else toast.error(result.message || t("worldBook.failedToDeleteGlobalWorldBook"));
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       console.error("Failed to delete global world book:", error);
-      toast.error(`${t("worldBook.failedToDeleteGlobalWorldBook")}: ${error.message}`);
+      toast.error(`${t("worldBook.failedToDeleteGlobalWorldBook")}: ${errorMessage}`);
     } finally {
       setDeletingId(null);
     }

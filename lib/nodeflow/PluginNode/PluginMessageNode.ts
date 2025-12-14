@@ -21,8 +21,8 @@ export class PluginMessageNode extends NodeBase {
   }
 
   protected async _call(input: NodeInput): Promise<NodeOutput> {
-    const userInput = input.userInput;
-    const characterId = input.characterId;
+    const userInput = input.userInput as string | undefined;
+    const characterId = input.characterId as string;
 
     console.log("🔌 PluginMessageNode: Processing user input", {
       userInputLength: userInput?.length || 0,

@@ -52,8 +52,8 @@ export async function bulkToggleWorldBookEntries(
       updatedCount,
       message: `${updatedCount} entries ${enabled ? "enabled" : "disabled"}`,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to bulk toggle world book entries:", error);
-    throw new Error(`Failed to bulk toggle world book entries: ${error.message}`);
+    throw new Error(`Failed to bulk toggle world book entries: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 } 

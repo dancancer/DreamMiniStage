@@ -16,8 +16,10 @@ export interface NodeConfig {
   inputMapping?: Record<string, string>;
 }
 
-export type NodeInput = Record<string, any>;
-export type NodeOutput = Record<string, any>;
+export type NodeValue = unknown;
+
+export type NodeInput = Record<string, NodeValue>;
+export type NodeOutput = Record<string, NodeValue>;
 
 export enum NodeExecutionStatus {
   PENDING = "pending",
@@ -47,13 +49,13 @@ export interface WorkflowExecutionResult {
   workflowId: string;
   status: NodeExecutionStatus;
   results: NodeExecutionResult[];
-  outputData?: Record<string, any>;
+  outputData?: Record<string, unknown>;
   startTime: Date;
   endTime?: Date;
 }
 
 export interface NodeRegistryEntry {
-  nodeClass: any;
+  nodeClass: new (config: NodeConfig) => unknown;
 }
 
 export type NodeRegistry = Record<string, NodeRegistryEntry>;

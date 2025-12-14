@@ -320,6 +320,219 @@ export function cleanupMeta(data: unknown): void {
 }
 
 // ============================================================================
+//                              Schema 类型推断增强
+// ============================================================================
+
+/** 推断值的精确类型 */
+export function inferType(value: unknown): SchemaNode {
+  if (value === null) return { type: "any" };
+  if (Array.isArray(value)) {
+    if (value.length === 0) return { type: "array", elementType: { type: "any" }, extensible: true };
+    const elementTypes = value.map(inferType);
+    const unified = unifyTypes(elementTypes);
+    return { type: "array", elementType: unified, extensible: true };
+  }
+  if (isPlainObject(value)) {
+    const properties: ObjectSchemaNode["properties"] = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (k === "$meta") continue;
+      properties[k] = { ...inferType(v), required: true };
+    }
+    return { type: "object", properties, extensible: false };
+  }
+  const t = typeof value;
+  if (t === "string" || t === "number" || t === "boolean") return { type: t };
+  return { type: "any" };
+}
+
+/** 统一多个类型为一个兼容类型 */
+function unifyTypes(types: SchemaNode[]): SchemaNode {
+  if (types.length === 0) return { type: "any" };
+  if (types.length === 1) return types[0];
+
+  const typeSet = new Set(types.map((t) => t.type));
+  if (typeSet.size === 1) {
+    const first = types[0];
+    if (isObjectSchema(first)) {
+      return mergeObjectSchemas(types.filter(isObjectSchema));
+    }
+    if (isArraySchema(first)) {
+      const elementTypes = types.filter(isArraySchema).map((t) => t.elementType);
+      return { type: "array", elementType: unifyTypes(elementTypes), extensible: true };
+    }
+    return first;
+  }
+
+  return { type: "any" };
+}
+
+/** 合并多个对象 Schema */
+function mergeObjectSchemas(schemas: ObjectSchemaNode[]): ObjectSchemaNode {
+  const allKeys = new Set<string>();
+  schemas.forEach((s) => Object.keys(s.properties).forEach((k) => allKeys.add(k)));
+
+  const properties: ObjectSchemaNode["properties"] = {};
+  for (const key of allKeys) {
+    const keySchemas = schemas
+      .filter((s) => key in s.properties)
+      .map((s) => s.properties[key]);
+
+    if (keySchemas.length === 0) continue;
+
+    const unified = unifyTypes(keySchemas);
+    const required = keySchemas.length === schemas.length && keySchemas.every((s) => s.required);
+    properties[key] = { ...unified, required };
+  }
+
+  return { type: "object", properties, extensible: true };
+}
+
+/** 检查值是否符合 Schema */
+export function validateValue(value: unknown, schema: SchemaNode): ValidationResult {
+  if (schema.type === "any") return { valid: true };
+
+  if (schema.type === "string") {
+    return typeof value === "string"
+      ? { valid: true }
+      : { valid: false, error: `期望 string，实际 ${typeof value}` };
+  }
+  if (schema.type === "number") {
+    return typeof value === "number"
+      ? { valid: true }
+      : { valid: false, error: `期望 number，实际 ${typeof value}` };
+  }
+  if (schema.type === "boolean") {
+    return typeof value === "boolean"
+      ? { valid: true }
+      : { valid: false, error: `期望 boolean，实际 ${typeof value}` };
+  }
+
+  if (isArraySchema(schema)) {
+    if (!Array.isArray(value)) {
+      return { valid: false, error: `期望 array，实际 ${typeof value}` };
+    }
+    for (let i = 0; i < value.length; i++) {
+      const result = validateValue(value[i], schema.elementType);
+      if (!result.valid) {
+        return { valid: false, error: `数组索引 ${i}: ${result.error}` };
+      }
+    }
+    return { valid: true };
+  }
+
+  if (isObjectSchema(schema)) {
+    if (!isPlainObject(value)) {
+      return { valid: false, error: `期望 object，实际 ${typeof value}` };
+    }
+    const obj = value as Record<string, unknown>;
+
+    for (const [key, propSchema] of Object.entries(schema.properties)) {
+      if (propSchema.required && !(key in obj)) {
+        return { valid: false, error: `缺少必需属性 '${key}'` };
+      }
+      if (key in obj) {
+        const result = validateValue(obj[key], propSchema);
+        if (!result.valid) {
+          return { valid: false, error: `属性 '${key}': ${result.error}` };
+        }
+      }
+    }
+
+    if (!schema.extensible) {
+      for (const key of Object.keys(obj)) {
+        if (!(key in schema.properties) && key !== "$meta") {
+          return { valid: false, error: `不允许的属性 '${key}'` };
+        }
+      }
+    }
+
+    return { valid: true };
+  }
+
+  return { valid: true };
+}
+
+/** 生成 Schema 的 JSON Schema 格式 (用于 AI 函数调用) */
+export function toJsonSchema(schema: SchemaNode): Record<string, unknown> {
+  if (schema.type === "string" || schema.type === "number" || schema.type === "boolean") {
+    return { type: schema.type };
+  }
+
+  if (schema.type === "any") {
+    return {};
+  }
+
+  if (isArraySchema(schema)) {
+    return {
+      type: "array",
+      items: toJsonSchema(schema.elementType),
+    };
+  }
+
+  if (isObjectSchema(schema)) {
+    const properties: Record<string, unknown> = {};
+    const required: string[] = [];
+
+    for (const [key, propSchema] of Object.entries(schema.properties)) {
+      properties[key] = toJsonSchema(propSchema);
+      if (propSchema.required) {
+        required.push(key);
+      }
+    }
+
+    return {
+      type: "object",
+      properties,
+      ...(required.length > 0 && { required }),
+      ...(schema.extensible && { additionalProperties: true }),
+    };
+  }
+
+  return {};
+}
+
+/** 从 JSON Schema 创建 SchemaNode */
+export function fromJsonSchema(jsonSchema: Record<string, unknown>): SchemaNode {
+  const type = jsonSchema.type as string;
+
+  if (type === "string" || type === "number" || type === "boolean") {
+    return { type };
+  }
+
+  if (type === "array") {
+    const items = jsonSchema.items as Record<string, unknown> | undefined;
+    return {
+      type: "array",
+      elementType: items ? fromJsonSchema(items) : { type: "any" },
+      extensible: true,
+    };
+  }
+
+  if (type === "object") {
+    const properties: ObjectSchemaNode["properties"] = {};
+    const jsonProps = jsonSchema.properties as Record<string, Record<string, unknown>> | undefined;
+    const requiredKeys = (jsonSchema.required as string[]) || [];
+
+    if (jsonProps) {
+      for (const [key, propSchema] of Object.entries(jsonProps)) {
+        properties[key] = {
+          ...fromJsonSchema(propSchema),
+          required: requiredKeys.includes(key),
+        };
+      }
+    }
+
+    return {
+      type: "object",
+      properties,
+      extensible: jsonSchema.additionalProperties !== false,
+    };
+  }
+
+  return { type: "any" };
+}
+
+// ============================================================================
 //                              工具函数
 // ============================================================================
 

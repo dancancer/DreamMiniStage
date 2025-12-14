@@ -17,20 +17,12 @@ import { Button } from "@/components/ui/button";
 import { PluginFilter, type FilterValue } from "./plugin-manager/PluginFilter";
 import { PluginList } from "./plugin-manager/PluginList";
 import { PluginStats } from "./plugin-manager/PluginStats";
+import type { PluginEntry } from "@/types/global";
 
 // ============================================================================
 //                              类型定义
 // ============================================================================
-
-interface PluginEntry {
-  plugin: any;
-  manifest: any;
-  enabled: boolean;
-  initialized: boolean;
-  loaded: boolean;
-  error?: string;
-  loadTime?: Date;
-}
+// PluginEntry 类型已在 types/global.d.ts 中定义
 
 interface PluginManagerModalProps {
   isOpen: boolean;
@@ -60,9 +52,9 @@ export default function PluginManagerModal({ isOpen, onClose }: PluginManagerMod
   const loadPlugins = async () => {
     setIsLoading(true);
     try {
-      if (typeof window !== "undefined" && (window as any).pluginRegistry) {
-        await (window as any).pluginRegistry.initialize();
-        const allPlugins = (window as any).pluginRegistry.getPlugins();
+      if (typeof window !== "undefined" && window.pluginRegistry) {
+        await window.pluginRegistry.initialize();
+        const allPlugins = window.pluginRegistry.getPlugins();
         setPlugins(allPlugins);
       }
     } catch (error) {
@@ -76,8 +68,8 @@ export default function PluginManagerModal({ isOpen, onClose }: PluginManagerMod
   const handleRefreshPlugins = async () => {
     setIsRefreshing(true);
     try {
-      if (typeof window !== "undefined" && (window as any).pluginDiscovery) {
-        await (window as any).pluginDiscovery.discoverPlugins();
+      if (typeof window !== "undefined" && window.pluginDiscovery) {
+        await window.pluginDiscovery.discoverPlugins();
       }
       await loadPlugins();
     } catch (error) {
@@ -89,11 +81,11 @@ export default function PluginManagerModal({ isOpen, onClose }: PluginManagerMod
 
   const handleTogglePlugin = async (pluginId: string, enabled: boolean) => {
     try {
-      if (typeof window !== "undefined" && (window as any).pluginRegistry) {
+      if (typeof window !== "undefined" && window.pluginRegistry) {
         if (enabled) {
-          await (window as any).pluginRegistry.enablePlugin(pluginId);
+          await window.pluginRegistry.enablePlugin(pluginId);
         } else {
-          await (window as any).pluginRegistry.disablePlugin(pluginId);
+          await window.pluginRegistry.disablePlugin(pluginId);
         }
         await loadPlugins();
       }

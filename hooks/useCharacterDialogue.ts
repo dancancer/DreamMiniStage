@@ -5,14 +5,16 @@
  * ║  基于 Zustand Store 的对话管理 - 消除不稳定依赖                              ║
  * ║  设计原则：数据驱动、引用稳定、性能优化                                        ║
  * ║  【重构】从 useState 迁移到 Zustand Store                                   ║
+ * ║  【重构】使用 resolveDialogueKey 统一解析对话标识                             ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useDialogueStore } from "@/lib/store/dialogue-store";
 import { useDialoguePreferences } from "@/hooks/character-dialogue/useDialoguePreferences";
+import { resolveDialogueKey } from "@/lib/core/dialogue-key";
 import type { SendOptions } from "@/lib/slash-command/types";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -51,9 +53,13 @@ export function useCharacterDialogue({
   // ═══════════════════════════════════════════════════════════════
   // 计算实际的对话索引 Key
   // 
-  // 【设计】优先使用 sessionId，回退到 characterId（兼容旧链接）
+  // 【设计】使用统一的 resolveDialogueKey 解析器
+  // 优先级：dialogueKey > sessionId > characterId
   // ═══════════════════════════════════════════════════════════════
-  const storeKey = dialogueKey || sessionId || characterId;
+  const storeKey = useMemo(
+    () => resolveDialogueKey({ dialogueKey, sessionId, characterId }),
+    [dialogueKey, sessionId, characterId]
+  );
 
   // ═══════════════════════════════════════════════════════════════
   // 从 Store 订阅状态
@@ -148,9 +154,11 @@ export function useCharacterDialogue({
         baseUrl,
         apiKey,
         llmType,
+        responseLength,
+        fastModel: fastModelEnabled,
       });
     },
-    [language, readLlmConfig, initializeNewDialogue]
+    [language, readLlmConfig, initializeNewDialogue, responseLength, fastModelEnabled]
   );
 
   const handleSendMessage = useCallback(

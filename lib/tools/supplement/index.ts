@@ -43,11 +43,11 @@ export class SupplementTool extends BaseTool {
     },
   ];
 
-  protected async doWork(parameters: Record<string, any>, context: ExecutionContext): Promise<ExecutionResult> {
+  protected async doWork(parameters: Record<string, unknown>, context: ExecutionContext): Promise<ExecutionResult> {
     const keys = parameters.keys;
     const content = parameters.content;
     const comment = parameters.comment;
-    const insertOrder = parameters.insert_order || 10;
+    const insertOrder = typeof parameters.insert_order === "number" ? parameters.insert_order : 10;
     
     if (!keys || !Array.isArray(keys) || keys.length === 0) {
       return this.createFailureResult("SUPPLEMENT tool requires 'keys' parameter as a non-empty array of trigger keywords.");

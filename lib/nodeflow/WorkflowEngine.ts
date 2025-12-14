@@ -8,6 +8,7 @@ import {
   NodeExecutionStatus,
   WorkflowExecutionResult,
   NodeCategory,
+  NodeValue,
 } from "@/lib/nodeflow/types";
 
 export interface WorkflowExecutionOptions {
@@ -33,10 +34,11 @@ export class WorkflowEngine {
     this.initializeNodes(context);
   }
 
-  private initializeNodes(context: NodeContext): void {
+  private initializeNodes(_context: NodeContext): void {
     for (const nodeConfig of this.config.nodes) {
       const registryEntry = this.registry[nodeConfig.name];
-      const node = new registryEntry.nodeClass(nodeConfig);
+      const NodeClass = registryEntry.nodeClass;
+      const node = new NodeClass(nodeConfig) as NodeBase;
       this.nodes.set(nodeConfig.id, node);
     }
   }
@@ -118,7 +120,7 @@ export class WorkflowEngine {
     try {
       // Set initial input
       for (const key in initialWorkflowInput) {
-        ctx.setInput(key, initialWorkflowInput[key]);
+        ctx.setInput(key, initialWorkflowInput[key] as NodeValue);
       }
 
       // Execute main workflow (ENTRY -> MIDDLE -> EXIT)
@@ -144,6 +146,7 @@ export class WorkflowEngine {
       }
 
     } catch (error) {
+      console.error(error);
       result.status = NodeExecutionStatus.FAILED;
     } finally {
       result.endTime = new Date();
@@ -157,7 +160,7 @@ export class WorkflowEngine {
    */
   private async executeMainWorkflow(context: NodeContext): Promise<{
     status: NodeExecutionStatus;
-    outputData: Record<string, any>;
+    outputData: Record<string, unknown>;
   }> {
     const entryNodes = this.getEntryNodes();
     if (entryNodes.length === 0) {
@@ -227,7 +230,7 @@ export class WorkflowEngine {
 
     return {
       status: NodeExecutionStatus.COMPLETED,
-      outputData: context.toJSON().outputStore,
+      outputData: context.toJSON().outputStore as Record<string, unknown>,
     };
   }
 
@@ -268,7 +271,7 @@ export class WorkflowEngine {
 
     try {
       for (const key in initialWorkflowInput) {
-        ctx.setInput(key, initialWorkflowInput[key]);
+        ctx.setInput(key, initialWorkflowInput[key] as NodeValue);
       }
 
       const entryNodes = this.getEntryNodes();
@@ -325,7 +328,7 @@ export class WorkflowEngine {
       result.status = NodeExecutionStatus.FAILED;
     } finally {
       result.endTime = new Date();
-      result.outputData = ctx.toJSON().outputStore;
+      result.outputData = ctx.toJSON().outputStore as Record<string, unknown> | undefined;
     }
 
     return result;

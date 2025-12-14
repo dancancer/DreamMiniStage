@@ -68,9 +68,9 @@ export async function cleanupAll(): Promise<void> {
     await resourceManager.destroy();
 
     // 4. 清理全局清理函数
-    if (typeof window !== "undefined" && (window as any).__promptInterceptorCleanup) {
-      (window as any).__promptInterceptorCleanup();
-      delete (window as any).__promptInterceptorCleanup;
+    if (typeof window !== "undefined" && (window as unknown as Record<string, unknown>).__promptInterceptorCleanup) {
+      ((window as unknown as Record<string, unknown>).__promptInterceptorCleanup as () => void)();
+      delete (window as unknown as Record<string, unknown>).__promptInterceptorCleanup;
     }
 
     console.log("[PromptViewerCleanup] 所有资源清理完成");
@@ -184,7 +184,7 @@ export function enableCleanupMonitoring(): void {
   }
 
   // 添加全局清理函数到 window 对象，便于调试
-  (window as any).__promptViewerCleanup = {
+  (window as unknown as Record<string, unknown>).__promptViewerCleanup = {
     cleanupDialogue,
     cleanupAll,
     cleanupExpired,

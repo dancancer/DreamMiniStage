@@ -4,15 +4,17 @@
  * ║                                                                            ║
  * ║  对话树数据管理：全量加载 / 增量更新 / 路径高亮 / 节点处理                    ║
  * ║  从 DialogueTreeModal.tsx 提取的数据逻辑                                    ║
+ * ║  【重构】使用 resolveDialogueKey 统一解析对话标识                             ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { Node, Edge } from "reactflow";
 import { getCharacterDialogue } from "@/function/dialogue/info";
 import { getIncrementalDialogue } from "@/function/dialogue/incremental-info";
+import { resolveDialogueKey } from "@/lib/core/dialogue-key";
 import type { DialogueNodeData } from "@/components/dialogue-tree/DialogueNodeComponent";
 
 // ============================================================================
@@ -122,8 +124,16 @@ export function useDialogueTreeData({
   const [lastUpdateTime, setLastUpdateTime] = useState<string>("");
   const nodesRef = useRef<DialogueNode[]>([]);
 
-  // 使用 dialogueKey（sessionId）或回退到 characterId
-  const treeId = dialogueKey || characterId;
+  // ═══════════════════════════════════════════════════════════════
+  // 计算对话树 ID
+  // 
+  // 【设计】使用统一的 resolveDialogueKey 解析器
+  // 优先级：dialogueKey > characterId
+  // ═══════════════════════════════════════════════════════════════
+  const treeId = useMemo(
+    () => resolveDialogueKey({ dialogueKey, characterId }),
+    [dialogueKey, characterId]
+  );
 
   // ========== 处理原始节点数据 ==========
   const processRawNodes = useCallback(
@@ -258,11 +268,11 @@ export function useDialogueTreeData({
 
   // ========== 增量加载 ==========
   const fetchIncrementalData = useCallback(async (): Promise<{ nodes: DialogueNode[]; edges: Edge[] } | null> => {
-    if (!characterId) return null;
+    if (!treeId) return null;
 
     try {
       const incrementalResponse = await getIncrementalDialogue({
-        characterId,
+        dialogueId: treeId,
         lastKnownNodeIds: Array.from(lastKnownNodeIds),
         lastUpdateTime: lastUpdateTime || undefined,
       });

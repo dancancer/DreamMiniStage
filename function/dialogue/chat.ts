@@ -2,10 +2,40 @@ import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-
 import { ParsedResponse } from "@/lib/models/parsed-response";
 import { DialogueWorkflow, DialogueWorkflowParams } from "@/lib/workflow/examples/DialogueWorkflow";
 import { getCurrentSystemPresetType } from "@/function/preset/download";
+import { getVectorMemoryManager } from "@/lib/vector-memory/manager";
+import { prepareOpeningGreeting, type OpeningPayload } from "@/function/dialogue/opening";
+
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║                  Dialogue Workflow Result Interface                       ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
+ */
+interface DialogueWorkflowResult {
+  outputData: {
+    thinkingContent?: string;
+    screenContent: string;
+    fullResponse: string;
+    nextPrompts?: string[];
+    event?: unknown;
+  };
+}
+
+/**
+ * 类型守卫：检查 workflow 结果是否符合预期结构
+ */
+function isDialogueWorkflowResult(result: unknown): result is DialogueWorkflowResult {
+  return (
+    typeof result === "object" &&
+    result !== null &&
+    "outputData" in result &&
+    typeof (result as DialogueWorkflowResult).outputData === "object" &&
+    (result as DialogueWorkflowResult).outputData !== null
+  );
+}
 
 export async function handleCharacterChatRequest(payload: {
   username?: string;
-  dialogueId?: string;  // 对话树 ID（sessionId 或 characterId）
+  dialogueId: string;  // 对话树 ID（sessionId）
   characterId: string;
   message: string;
   modelName: string;
@@ -17,6 +47,7 @@ export async function handleCharacterChatRequest(payload: {
   number?: number;
   nodeId: string;
   fastModel: boolean;
+  openingMessage?: OpeningPayload;
 }): Promise<Response> {
   try {
     const {
@@ -33,24 +64,25 @@ export async function handleCharacterChatRequest(payload: {
       nodeId,
       fastModel = false,
       streaming = false,
+      openingMessage,
     } = payload;
 
-    // 使用 dialogueId（sessionId）或回退到 characterId
-    const treeId = dialogueId || characterId;
-
-    if (!characterId || !message) {
+    if (!dialogueId || !characterId || !message) {
       return new Response(JSON.stringify({ error: "Missing required parameters" }), { status: 400 });
     }
 
     try {
-      const existingTree = await LocalCharacterDialogueOperations.getDialogueTreeById(treeId);
-      if (!existingTree) {
-        await LocalCharacterDialogueOperations.createDialogueTree(treeId, characterId);
-      }
+      await ensureDialogueTreeWithOpening({
+        dialogueId,
+        characterId,
+        language,
+        username,
+        openingMessage,
+      });
 
       const workflow = new DialogueWorkflow();
       const workflowParams: DialogueWorkflowParams = {
-        dialogueKey: treeId,  // 会话隔离：使用 treeId 而非 characterId
+        dialogueKey: dialogueId,  // 会话隔离：使用 sessionId
         characterId,
         userInput: message,
         language,
@@ -67,8 +99,11 @@ export async function handleCharacterChatRequest(payload: {
         systemPresetType: getCurrentSystemPresetType(),
       };
       const workflowResult = await workflow.execute(workflowParams);
-      
-      if (!workflowResult || !workflowResult.outputData) {
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // 类型守卫：确保 workflow 返回符合预期的结构
+      // ═══════════════════════════════════════════════════════════════════════════
+      if (!isDialogueWorkflowResult(workflowResult)) {
         throw new Error("No response returned from workflow");
       }
 
@@ -80,7 +115,19 @@ export async function handleCharacterChatRequest(payload: {
         event,
       } = workflowResult.outputData;
 
-      await processPostResponseAsync({ dialogueId: treeId, characterId, message, thinkingContent, fullResponse, screenContent, event, nextPrompts, nodeId })
+      // ═══════════════════════════════════════════════════════════════════════════
+      // 后处理：提供默认值以满足下游函数的类型要求
+      // ═══════════════════════════════════════════════════════════════════════════
+      await processPostResponseAsync({
+        dialogueId,
+        message,
+        thinkingContent: thinkingContent ?? "",
+        fullResponse,
+        screenContent,
+        event: typeof event === "string" ? event : "",
+        nextPrompts: nextPrompts ?? [],
+        nodeId
+      })
         .catch((e) => console.error("Post-processing error:", e));
 
       return new Response(JSON.stringify({
@@ -96,13 +143,14 @@ export async function handleCharacterChatRequest(payload: {
         },
       });
 
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       console.error("Processing error:", error);
       return new Response(JSON.stringify({
         type: "error",
-        message: error.message || "Unknown error",
+        message: errorMessage,
         success: false,
-      }), { 
+      }), {
         status: 500,
         headers: {
           "Content-Type": "application/json",
@@ -110,9 +158,10 @@ export async function handleCharacterChatRequest(payload: {
       });
     }
 
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Fatal error:", error);
-    return new Response(JSON.stringify({ error: `Failed to process request: ${error.message}`, success: false }), { 
+    return new Response(JSON.stringify({ error: `Failed to process request: ${errorMessage}`, success: false }), { 
       status: 500,
       headers: {
         "Content-Type": "application/json",
@@ -121,9 +170,44 @@ export async function handleCharacterChatRequest(payload: {
   }
 }
 
+async function ensureDialogueTreeWithOpening(params: {
+  dialogueId: string;
+  characterId: string;
+  language: "zh" | "en";
+  username?: string;
+  openingMessage?: OpeningPayload;
+}) {
+  const { dialogueId, characterId, language, username, openingMessage } = params;
+  const existingTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueId);
+  if (existingTree) return;
+
+  await LocalCharacterDialogueOperations.createDialogueTree(dialogueId, characterId);
+  const opening = openingMessage || await prepareOpeningGreeting({
+    dialogueId,
+    characterId,
+    language,
+    username,
+  });
+
+  const parsedOpening: ParsedResponse = {
+    regexResult: opening.content,
+    nextPrompts: [],
+  };
+
+  await LocalCharacterDialogueOperations.addNodeToDialogueTree(
+    dialogueId,
+    "root",
+    "",
+    opening.content,
+    opening.fullContent,
+    "",
+    parsedOpening,
+    opening.id,
+  );
+}
+
 async function processPostResponseAsync({
   dialogueId,
-  characterId,
   message,
   thinkingContent,
   fullResponse,
@@ -132,8 +216,7 @@ async function processPostResponseAsync({
   nextPrompts,
   nodeId,
 }: {
-  dialogueId: string;  // 对话树 ID（sessionId 或 characterId）
-  characterId: string;
+  dialogueId: string;  // 对话树 ID（sessionId）
   message: string;
   thinkingContent: string;
   fullResponse: string;
@@ -162,9 +245,33 @@ async function processPostResponseAsync({
       nodeId,
     );
 
-    // 处理 MVU 变量更新（仍使用 characterId 作为 ownerId）
+    // 向量记忆异步写入，不阻塞主流程
+    const vectorManager = getVectorMemoryManager();
+    const now = Date.now();
+    vectorManager.ingest(dialogueId, [
+      {
+        id: `user_${nodeId}`,
+        role: "user",
+        source: "user_message",
+        content: message,
+        createdAt: now,
+      },
+      {
+        id: `assistant_${nodeId}`,
+        role: "assistant",
+        source: "assistant_response",
+        content: screenContent || fullResponse,
+        createdAt: now,
+      },
+    ]).catch((error) => console.warn("[VectorMemory] ingest failed:", error));
+
+    // 处理 MVU 变量更新：仅使用 dialogueId 会话作用域
     const { processMessageVariables } = await import("@/lib/mvu");
-    await processMessageVariables(characterId, nodeId, fullResponse);
+    await processMessageVariables({
+      dialogueKey: dialogueId,
+      nodeId,
+      messageContent: fullResponse,
+    });
 
     if (event) {
       await LocalCharacterDialogueOperations.updateNodeInDialogueTree(

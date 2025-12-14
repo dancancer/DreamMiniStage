@@ -11,20 +11,21 @@ export class MemoryNodeTools extends NodeTool {
     return this.toolType;
   }
 
-  static async executeMethod(methodName: string, ...params: any[]): Promise<any> {
-    const method = (this as any)[methodName];
+  static async executeMethod(methodName: string, ...params: unknown[]): Promise<unknown> {
+    const classObj = this as unknown as Record<string, unknown>;
+    const method = classObj[methodName];
     
     if (typeof method !== "function") {
       console.error(`Method lookup failed: ${methodName} not found in MemoryNodeTools`);
       console.log("Available methods:", Object.getOwnPropertyNames(this).filter(name => 
-        typeof (this as any)[name] === "function" && !name.startsWith("_"),
+        typeof classObj[name] === "function" && !name.startsWith("_"),
       ));
       throw new Error(`Method ${methodName} not found in ${this.getToolType()}Tool`);
     }
 
     try {
       this.logExecution(methodName, params);
-      return await (method as Function).apply(this, params);
+      return await (method as (...args: unknown[]) => Promise<unknown>).apply(this, params);
     } catch (error) {
       this.handleError(error as Error, methodName);
     }
@@ -41,7 +42,7 @@ export class MemoryNodeTools extends NodeTool {
     topK: number = 5,
     includeTypes?: MemoryType[],
     useSemanticSearch: boolean = true,
-  ): Promise<any> {
+  ): Promise<{ success: boolean; results: unknown[]; count: number; error?: string }> {
     try {
       const memoryManager = new MemoryManager(apiKey, baseUrl);
 
@@ -110,8 +111,8 @@ export class MemoryNodeTools extends NodeTool {
     baseUrl?: string,
     tags: string[] = [],
     importance: number = 0.5,
-    metadata: any = {},
-  ): Promise<any> {
+    metadata: Record<string, unknown> = {},
+  ): Promise<{ success: boolean; memory?: unknown; error?: string }> {
     try {
       const memoryManager = new MemoryManager(apiKey, baseUrl);
       
@@ -147,7 +148,7 @@ export class MemoryNodeTools extends NodeTool {
   /**
    * Clear all memories for a character
    */
-  static async clearMemories(characterId: string): Promise<any> {
+  static async clearMemories(characterId: string): Promise<unknown> {
     try {
       await LocalMemoryOperations.clearCharacterMemories(characterId);
       
@@ -178,7 +179,7 @@ export class MemoryNodeTools extends NodeTool {
   ): Promise<{
     enhancedSystemMessage: string;
     memoryPrompt: string;
-    retrievedMemories: any[];
+    retrievedMemories: unknown[];
     memoryCount: number;
   }> {
     try {
@@ -231,7 +232,7 @@ export class MemoryNodeTools extends NodeTool {
   ): Promise<{
     success: boolean;
     extractedCount: number;
-    extractedMemories?: any[];
+    extractedMemories?: unknown[];
     confidence?: number;
     reasoning?: string;
     error?: string;
@@ -246,7 +247,7 @@ export class MemoryNodeTools extends NodeTool {
         const name = nameMatch[1] || nameMatch[2] || nameMatch[3];
         const result = await this.createMemory(
           characterId,
-          "fact" as any,
+          MemoryType.FACT,
           `用户的名字是 ${name.trim()}`,
           apiKey,
           baseUrl,
@@ -273,7 +274,7 @@ export class MemoryNodeTools extends NodeTool {
       if (hasPreference) {
         const result = await this.createMemory(
           characterId,
-          "preference" as any,
+          MemoryType.PREFERENCE,
           `对话中提到了用户偏好相关内容: ${userInput.substring(0, 100)}...`,
           apiKey,
           baseUrl,
@@ -312,15 +313,16 @@ export class MemoryNodeTools extends NodeTool {
   /**
    * Private helper: Format retrieved memories for prompt injection
    */
-  private static formatMemoriesForPrompt(memories: any[], language: "zh" | "en"): string {
+  private static formatMemoriesForPrompt(memories: unknown[], language: "zh" | "en"): string {
     if (!memories || memories.length === 0) {
       return language === "zh" ? "无相关记忆" : "No relevant memories";
     }
 
     const header = language === "zh" ? "相关记忆：" : "Relevant memories:";
     const memoryTexts = memories.map((memory, index) => {
-      const typeLabel = language === "zh" ? this.getChineseTypeLabel(memory.type) : memory.type;
-      return `${index + 1}. [${typeLabel}] ${memory.content}`;
+      const m = memory as { type?: string; content?: string };
+      const typeLabel = language === "zh" ? this.getChineseTypeLabel(m.type || "") : (m.type || "");
+      return `${index + 1}. [${typeLabel}] ${m.content || ""}`;
     });
 
     return `${header}\n${memoryTexts.join("\n")}`;

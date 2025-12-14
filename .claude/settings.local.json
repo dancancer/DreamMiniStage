@@ -8,7 +8,21 @@
       "Bash(pnpm lint:*)",
       "Bash(wc:*)",
       "Bash(mkdir:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(xargs:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm vitest:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.sillytavern.app)",
+      "Bash(find:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm lint:fix:*)",
+      "Bash(awk:*)",
+      "Bash(pnpm add:*)",
+      "Bash(tee:*)",
+      "Bash(pnpm typecheck:*)"
     ],
     "deny": [],
     "ask": []

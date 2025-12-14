@@ -1,12 +1,42 @@
 /**
  * Plugin System Types - Enhanced with SillyTavern-like features
- * 
+ *
  * Comprehensive type definitions for the plugin system with:
  * - Lifecycle hooks (onLoad, onEnable, onDisable, onMessage)
  * - UI injection capabilities
  * - Dynamic plugin discovery
  * - Hot-reloading support
  */
+
+// ========================================
+// 基础类型定义
+// ========================================
+
+/**
+ * 插件配置值类型
+ */
+export type PluginConfigValue = string | number | boolean | null | undefined | PluginConfigValue[] | { [key: string]: PluginConfigValue };
+
+/**
+ * 插件配置对象
+ */
+export type PluginConfig = Record<string, PluginConfigValue>;
+
+/**
+ * JSON 可序列化的值类型
+ */
+export type JSONValue = string | number | boolean | null | JSONValue[] | { [key: string]: JSONValue };
+
+/**
+ * 插件工具基础接口
+ */
+export interface PluginTool {
+  id: string;
+  name: string;
+  description: string;
+  category?: string;
+  execute: (params: PluginConfig) => unknown | Promise<unknown>;
+}
 
 export enum PluginCategory {
   TOOL = "tool",
@@ -71,7 +101,7 @@ export interface PluginContext {
   pluginPath: string;
   manifest: PluginManifest;
   api: PluginAPI;
-  config: Record<string, any>;
+  config: PluginConfig;
   enabled: boolean;
 }
 
@@ -84,27 +114,48 @@ export interface MessageContext {
   content: string;
   timestamp: Date;
   characterId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, JSONValue>;
 }
 
 /**
  * UI injection types
  */
+
+/**
+ * UI 组件通用 props
+ */
+export interface UIComponentProps {
+  pluginId: string;
+  context?: PluginContext;
+  [key: string]: unknown;
+}
+
 export interface UIComponent {
   id: string;
   type: "button" | "panel" | "modal" | "toolbar" | "sidebar";
   position: "header" | "footer" | "sidebar" | "chat" | "settings";
-  component: React.ComponentType<any>;
-  props?: Record<string, any>;
+  component: React.ComponentType<UIComponentProps>;
+  props?: Record<string, JSONValue>;
   order?: number;
   visible?: boolean;
+}
+
+/**
+ * 按钮点击上下文
+ */
+export interface ButtonClickContext {
+  pluginId: string;
+  characterId?: string;
+  conversationId?: string;
+  messageId?: string;
+  timestamp: Date;
 }
 
 export interface CustomButton {
   id: string;
   text: string;
   icon?: string;
-  onClick: (context: any) => void;
+  onClick: (context: ButtonClickContext) => void;
   position: "toolbar" | "message" | "input" | "settings";
   tooltip?: string;
   disabled?: boolean;
@@ -115,7 +166,7 @@ export interface SettingsTab {
   id: string;
   title: string;
   icon?: string;
-  component: React.ComponentType<any>;
+  component: React.ComponentType<UIComponentProps>;
   order?: number;
 }
 
@@ -124,7 +175,7 @@ export interface SettingsTab {
  */
 export interface WSHookContext {
   type: "send" | "receive";
-  data: any;
+  data: JSONValue;
   timestamp: Date;
   characterId?: string;
 }
@@ -139,32 +190,32 @@ export interface PluginLifecycleHooks {
    * Called when plugin is first loaded
    */
   onLoad?: (context: PluginContext) => void | Promise<void>;
-  
+
   /**
    * Called when plugin is enabled
    */
   onEnable?: (context: PluginContext) => void | Promise<void>;
-  
+
   /**
    * Called when plugin is disabled
    */
   onDisable?: (context: PluginContext) => void | Promise<void>;
-  
+
   /**
    * Called when user sends a message
    */
   onMessage?: (message: MessageContext, context: PluginContext) => MessageContext | Promise<MessageContext>;
-  
+
   /**
    * Called when AI assistant responds
    */
   onResponse?: (message: MessageContext, context: PluginContext) => MessageContext | Promise<MessageContext>;
-  
+
   /**
    * Called when plugin settings are changed
    */
-  onSettingsChange?: (settings: Record<string, any>, context: PluginContext) => void | Promise<void>;
-  
+  onSettingsChange?: (settings: PluginConfig, context: PluginContext) => void | Promise<void>;
+
   /**
    * Called when plugin is unloaded
    */
@@ -175,52 +226,72 @@ export interface PluginLifecycleHooks {
  * Plugin API for interaction with the system
  */
 export interface PluginAPI {
+  // ========================================
   // Tool registration
-  registerTool: (toolId: string, tool: any) => void;
+  // ========================================
+  registerTool: (toolId: string, tool: PluginTool) => void;
   unregisterTool: (toolId: string) => void;
-  
+
+  // ========================================
   // UI injection
+  // ========================================
   registerButton: (button: CustomButton) => void;
   unregisterButton: (buttonId: string) => void;
   registerUIComponent: (component: UIComponent) => void;
   unregisterUIComponent: (componentId: string) => void;
   registerSettingsTab: (tab: SettingsTab) => void;
   unregisterSettingsTab: (tabId: string) => void;
-  
+
+  // ========================================
   // WebSocket hooks
+  // ========================================
   addWSHookBeforeSend: (hook: WSHook) => void;
   addWSHookAfterReceive: (hook: WSHook) => void;
   removeWSHook: (hookId: string) => void;
-  
+
+  // ========================================
   // Message modification
+  // ========================================
   addChatMessageModifier: (modifier: (message: MessageContext) => MessageContext) => void;
   removeChatMessageModifier: (modifierId: string) => void;
-  
+
+  // ========================================
   // Configuration
-  getConfig: () => Record<string, any>;
-  setConfig: (config: Record<string, any>) => void;
-  updateConfig: (updates: Record<string, any>) => void;
-  
+  // ========================================
+  getConfig: () => PluginConfig;
+  setConfig: (config: PluginConfig) => void;
+  updateConfig: (updates: PluginConfig) => void;
+
+  // ========================================
   // Notifications
+  // ========================================
   showNotification: (message: string, type?: "info" | "success" | "warning" | "error") => void;
-  
+
+  // ========================================
   // Logging
+  // ========================================
   log: (message: string, level?: "debug" | "info" | "warn" | "error") => void;
-  
-  // Storage
-  getStorage: (key: string) => any;
-  setStorage: (key: string, value: any) => void;
+
+  // ========================================
+  // Storage (使用 unknown 强制类型检查)
+  // ========================================
+  getStorage: (key: string) => unknown;
+  setStorage: (key: string, value: JSONValue) => void;
   removeStorage: (key: string) => void;
-  
+
+  // ========================================
   // System integration
-  getSystemInfo: () => Record<string, any>;
-  getCurrentCharacter: () => any;
-  getCurrentConversation: () => any;
-  
+  // ========================================
+  getSystemInfo: () => Record<string, JSONValue>;
+  getCurrentCharacter: () => unknown;
+  getCurrentConversation: () => unknown;
+
+  // ========================================
   // Event system
-  emit: (event: string, data?: any) => void;
-  on: (event: string, callback: (data: any) => void) => void;
-  off: (event: string, callback: (data: any) => void) => void;
+  // ========================================
+  emit: (event: string, data?: unknown) => void;
+  on: (event: string, callback: (data?: unknown) => void) => void;
+  off: (event: string, callback: (data?: unknown) => void) => void;
 }
 
 /**
@@ -229,7 +300,7 @@ export interface PluginAPI {
 export interface Plugin extends PluginLifecycleHooks {
   manifest: PluginManifest;
   context?: PluginContext;
-  tools?: any[];
+  tools?: PluginTool[];
   components?: UIComponent[];
   buttons?: CustomButton[];
   settingsTabs?: SettingsTab[];
@@ -242,9 +313,8 @@ export interface Plugin extends PluginLifecycleHooks {
 export interface PluginEventData {
   pluginId?: string;
   event?: PluginEvent;
-  data?: any;
-  timestamp?: Date;
-  [key: string]: any;
+  data?: unknown;
+  timestamp?: string;
 }
 
 /**
@@ -289,7 +359,7 @@ export interface PluginOperationResult {
   success: boolean;
   message?: string;
   error?: string;
-  data?: any;
+  data?: JSONValue;
 }
 
 /**
@@ -298,10 +368,10 @@ export interface PluginOperationResult {
 export interface PluginConfigSchema {
   [key: string]: {
     type: "string" | "number" | "boolean" | "array" | "object";
-    default?: any;
+    default?: PluginConfigValue;
     description?: string;
     required?: boolean;
-    enum?: any[];
+    enum?: PluginConfigValue[];
     min?: number;
     max?: number;
     pattern?: string;

@@ -31,13 +31,26 @@ export class LocalCharacterDialogueOperations {
   }
   
   static async getDialogueTreeById(dialogueId: string): Promise<DialogueTree | null> {
-    const dialogue = await getRecordByKey<any>(CHARACTER_DIALOGUES_FILE, dialogueId);
+    const dialogue = await getRecordByKey<{
+      id: string;
+      character_id: string;
+      current_nodeId: string;
+      nodes?: Array<{
+        nodeId: string;
+        parentNodeId: string;
+        userInput: string;
+        assistantResponse: string;
+        fullResponse: string;
+        thinkingContent: string;
+        parsedContent?: ParsedResponse;
+      }>;
+    }>(CHARACTER_DIALOGUES_FILE, dialogueId);
     if (!dialogue) return null;
-    
+
     return new DialogueTree(
       dialogue.id,
       dialogue.character_id,
-      dialogue.nodes?.map((node: any) => new DialogueNode(
+      dialogue.nodes?.map((node) => new DialogueNode(
         node.nodeId,
         node.parentNodeId,
         node.userInput,
@@ -127,12 +140,14 @@ export class LocalCharacterDialogueOperations {
     const dialogueTree = await this.getDialogueTreeById(dialogueId);
     
     if (!dialogueTree) {
+      console.error(`[switchBranch] Dialogue tree not found: ${dialogueId}`);
       return null;
     }
     
     const node = dialogueTree.nodes.find(n => n.nodeId === nodeId);
     
     if (!node) {
+      console.error(`[switchBranch] Node not found: ${nodeId} in dialogue ${dialogueId}. Available nodes:`, dialogueTree.nodes.map(n => n.nodeId));
       return null;
     }
     

@@ -78,11 +78,19 @@ export class MemoryManager {
      记忆创建
      ───────────────────────────────────────────────────────────────────────── */
 
+  /* ═══════════════════════════════════════════════════════════════════════════
+     创建记忆条目
+
+     metadata 参数：使用 Record<string, unknown> 替代 any
+     - 表达任意 JSON 可序列化的元数据
+     - 防止类型污染，保持类型系统完整性
+     设计理念：在公共 API 边界使用精确的类型
+     ═══════════════════════════════════════════════════════════════════════════ */
   async createMemory(
     characterId: string,
     type: MemoryType,
     content: string,
-    metadata: any = {},
+    metadata: Record<string, unknown> = {},
     tags: string[] = [],
     importance: number = 0.5,
   ): Promise<MemoryEntry> {
@@ -344,9 +352,17 @@ export class MemoryManager {
     }));
   }
 
+  /* ═══════════════════════════════════════════════════════════════════════════
+     存储提取的记忆
+
+     extractedMemories 参数：使用 unknown[] 替代 any[]
+     - 来自 LLM 返回的 JSON，结构不可完全信任
+     - 内部通过类型守卫和断言安全访问
+     设计理念：输入边界用 unknown，内部逻辑负责验证
+     ═══════════════════════════════════════════════════════════════════════════ */
   private async storeExtractedMemories(
     characterId: string,
-    extractedMemories: any[],
+    extractedMemories: unknown[],
     context: string | undefined,
     userMessage: string,
     assistantMessage: string,
@@ -354,20 +370,40 @@ export class MemoryManager {
     const memories: MemoryEntry[] = [];
 
     for (const memoryData of extractedMemories) {
-      if (memoryData.confidence >= 0.6) {
+      // 类型守卫：确保 memoryData 是对象且具有必需的字段
+      if (
+        typeof memoryData !== "object" ||
+        memoryData === null ||
+        !("confidence" in memoryData) ||
+        !("type" in memoryData) ||
+        !("content" in memoryData)
+      ) {
+        console.warn("Skipping invalid memory data:", memoryData);
+        continue;
+      }
+
+      const mem = memoryData as {
+        confidence: number;
+        type: MemoryType;
+        content: string;
+        tags?: string[];
+        importance?: number;
+      };
+
+      if (mem.confidence >= 0.6) {
         const memory = await this.createMemory(
           characterId,
-          memoryData.type,
-          memoryData.content,
+          mem.type,
+          mem.content,
           {
             source: "dialogue_extraction",
-            confidence: memoryData.confidence,
+            confidence: mem.confidence,
             context,
             originalUserMessage: userMessage,
             originalAssistantMessage: assistantMessage,
           },
-          memoryData.tags,
-          memoryData.importance,
+          mem.tags ?? [],
+          mem.importance ?? 0.5,
         );
         memories.push(memory);
       }

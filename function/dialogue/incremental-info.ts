@@ -1,11 +1,9 @@
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
-import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 
 interface IncrementalDialogueParams {
-  characterId: string;
+  dialogueId: string;
   lastKnownNodeIds?: string[];
   lastUpdateTime?: string;
-  language?: "en" | "zh";
 }
 
 interface IncrementalDialogueResponse {
@@ -25,17 +23,16 @@ interface IncrementalDialogueResponse {
  * @returns Only new or updated dialogue nodes
  */
 export async function getIncrementalDialogue(params: IncrementalDialogueParams): Promise<IncrementalDialogueResponse> {
-  const { characterId, lastKnownNodeIds = [], lastUpdateTime, language = "zh" } = params;
+  const { dialogueId, lastKnownNodeIds = [], lastUpdateTime } = params;
 
-  if (!characterId) {
-    throw new Error("Character ID is required");
+  if (!dialogueId || !dialogueId.trim()) {
+    throw new Error("dialogueId is required for incremental dialogue");
   }
 
   try {
-    // Get current dialogue tree
-    const dialogueTree = await LocalCharacterDialogueOperations.getDialogueTreeById(characterId);
-    
-    if (!dialogueTree) {
+    const resolvedTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueId);
+
+    if (!resolvedTree) {
       return {
         success: true,
         hasNewData: false,
@@ -48,7 +45,7 @@ export async function getIncrementalDialogue(params: IncrementalDialogueParams):
       };
     }
 
-    const allNodes = dialogueTree.nodes || [];
+    const allNodes = resolvedTree.nodes || [];
     const lastKnownNodeIdsSet = new Set(lastKnownNodeIds);
     
     // Find new nodes (not in lastKnownNodeIds)
@@ -76,14 +73,14 @@ export async function getIncrementalDialogue(params: IncrementalDialogueParams):
       newNodes,
       updatedNodes,
       deletedNodeIds,
-      currentNodeId: dialogueTree.current_nodeId || "root",
+      currentNodeId: resolvedTree.current_nodeId || "root",
       totalNodeCount: allNodes.length,
       lastUpdateTime: new Date().toISOString(),
     };
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to get incremental dialogue:", error);
-    throw new Error(`Failed to get incremental dialogue: ${error.message}`);
+    throw new Error(`Failed to get incremental dialogue: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
 
@@ -93,15 +90,21 @@ export async function getIncrementalDialogue(params: IncrementalDialogueParams):
  * @param lastKnownNodeCount - Last known number of nodes
  * @returns Whether new dialogue nodes exist
  */
-export async function hasNewDialogueNodes(characterId: string, lastKnownNodeCount: number): Promise<boolean> {
+export async function hasNewDialogueNodes(
+  dialogueId: string,
+  lastKnownNodeCount: number,
+): Promise<boolean> {
   try {
-    const dialogueTree = await LocalCharacterDialogueOperations.getDialogueTreeById(characterId);
-    
-    if (!dialogueTree) {
+    if (!dialogueId || !dialogueId.trim()) {
+      throw new Error("dialogueId is required to check dialogue nodes");
+    }
+    const resolvedTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueId);
+
+    if (!resolvedTree) {
       return false;
     }
 
-    const currentNodeCount = dialogueTree.nodes?.length || 0;
+    const currentNodeCount = resolvedTree.nodes?.length || 0;
     return currentNodeCount > lastKnownNodeCount;
 
   } catch (error) {

@@ -15,19 +15,9 @@ import { useApiConfig } from "@/hooks/useApiConfig";
 import { useScriptBridge } from "@/hooks/useScriptBridge";
 import type { SendOptions } from "@/lib/slash-command/types";
 import { useLocalStorageBoolean } from "@/hooks/useLocalStorage";
-import { usePresetManager } from "@/hooks/usePresetManager";
 import UserNameSettingModal from "@/components/UserNameSettingModal";
 import ScriptDebugPanel from "@/components/ScriptDebugPanel";
 import type { TavernHelperScript } from "@/lib/models/character-model";
-import PresetDropdown from "@/components/character-sidebar/PresetDropdown";
-import PresetInfoModal from "@/components/PresetInfoModal";
-import { getPresetDisplayName } from "@/function/preset/download";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 
 import {
   ApiSelector,
@@ -124,13 +114,10 @@ export default function CharacterChatPanel({
   const [streamingTarget, setStreamingTarget] = useState(-1);
   const [showUserNameModal, setShowUserNameModal] = useState(false);
   const [showScriptDebugPanel, setShowScriptDebugPanel] = useState(false);
-  const [showPresetInfoModal, setShowPresetInfoModal] = useState(false);
-  const [presetInfoName, setPresetInfoName] = useState("");
   const [lastSwipeTarget, setLastSwipeTarget] = useState<string | null>(null);
   const [currentDisplayName, setCurrentDisplayName] = useState("");
   const { value: streamingEnabled, setValue: setStreamingEnabled } = useLocalStorageBoolean("streamingEnabled", true);
   const { value: fastModelEnabled, setValue: setFastModelEnabled } = useLocalStorageBoolean("fastModelEnabled", true);
-  const presetManager = usePresetManager({ language });
 
   // ========== 自定义 Hooks ==========
   const apiConfig = useApiConfig();
@@ -317,24 +304,6 @@ export default function CharacterChatPanel({
         fontClass={fontClass}
         t={t}
       >
-        <PresetQuickSelector
-          presetName={getPresetDisplayName(presetManager.selectedPreset, language)}
-          presetsOpen={presetManager.isDropdownOpen}
-          presets={presetManager.presets}
-          selectedPreset={presetManager.selectedPreset}
-          language={language}
-          fontClass={fontClass}
-          onToggle={presetManager.toggleDropdown}
-          onClose={presetManager.closeDropdown}
-          onSelect={(name) => {
-            presetManager.selectPreset(name);
-            presetManager.closeDropdown();
-          }}
-          onShowInfo={(name) => {
-            setPresetInfoName(name);
-            setShowPresetInfoModal(true);
-          }}
-        />
         <ControlPanel
           activeModes={activeModes as { "story-progress": boolean; perspective: { active: boolean; mode: "novel" | "protagonist" }; "scene-setting": boolean }}
           setActiveModes={setActiveModes}
@@ -359,83 +328,6 @@ export default function CharacterChatPanel({
         onClose={() => setShowScriptDebugPanel(false)}
         scripts={scriptBridge.scriptStatuses}
       />
-
-      <PresetInfoModal
-        isOpen={showPresetInfoModal}
-        onClose={() => setShowPresetInfoModal(false)}
-        presetName={presetInfoName}
-      />
     </div>
-  );
-}
-
-interface PresetQuickSelectorProps {
-  presetName: string;
-  presetsOpen: boolean;
-  presets: Array<{
-    name: string;
-    displayName: { zh: string; en: string };
-    description: { zh: string; en: string };
-    filename: string;
-  }>;
-  selectedPreset: string;
-  language: "zh" | "en";
-  fontClass: string;
-  onToggle: () => void;
-  onClose: () => void;
-  onSelect: (name: string) => void;
-  onShowInfo: (name: string) => void;
-}
-
-function PresetQuickSelector({
-  presetName,
-  presetsOpen,
-  presets,
-  selectedPreset,
-  language,
-  fontClass,
-  onToggle,
-  onClose,
-  onSelect,
-  onShowInfo,
-}: PresetQuickSelectorProps) {
-  const handleOpenChange = (open: boolean) => {
-    if (open && !presetsOpen) {
-      onToggle();
-    }
-    if (!open && presetsOpen) {
-      onClose();
-    }
-  };
-
-  return (
-    <DropdownMenu open={presetsOpen} onOpenChange={handleOpenChange}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          className="h-auto gap-2 border-border bg-overlay px-3 py-1.5 text-xs text-foreground hover:border-primary hover:text-primary"
-        >
-          <span className="text-2xs sm:text-xs">预设</span>
-          <span className={`text-2xs sm:text-xs text-muted-foreground ${fontClass}`}>{presetName}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        side="top"
-        align="start"
-        sideOffset={8}
-        className="w-72 p-0 border-border bg-background"
-      >
-        <PresetDropdown
-          presets={presets}
-          selectedPreset={selectedPreset}
-          language={language}
-          fontClass={fontClass}
-          onSelect={onSelect}
-          onShowInfo={onShowInfo}
-          emptyText="暂无预设"
-          floating
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }

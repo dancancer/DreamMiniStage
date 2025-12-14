@@ -3,7 +3,7 @@ import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-re
 import { setBlob } from "@/lib/data/local-storage";
 import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
 import { RegexScriptOperations } from "@/lib/data/roleplay/regex-script-operation";
-import { RegexScript } from "@/lib/models/regex-script-model";
+import { importRegexScripts, canImportRegexScripts } from "@/lib/adapters/import";
 import { v4 as uuidv4 } from "uuid";
 
 export async function handleCharacterUpload(file: File) {
@@ -22,30 +22,29 @@ export async function handleCharacterUpload(file: File) {
       await WorldBookOperations.updateWorldBook(characterId, characterJson.data.character_book.entries);
     }
 
-    if (characterJson.data?.extensions?.regex_scripts) {
-      const regexScripts = characterJson.data.extensions.regex_scripts;
+    /* ═══════════════════════════════════════════════════════════════════════════
+       使用导入适配器处理正则脚本
 
-      if (Array.isArray(regexScripts)) {
-        regexScripts.forEach(script => {
+       适配器自动处理多种格式：
+       - 数组格式: RegexScript[]
+       - 对象格式: Record<string, RegexScript>
+       - scripts 包装格式: { scripts: [] }
+       - regexScripts 包装格式: { regexScripts: [] }
+       ═══════════════════════════════════════════════════════════════════════════ */
+    if (characterJson.data?.extensions?.regex_scripts) {
+      const rawRegexScripts = characterJson.data.extensions.regex_scripts;
+
+      if (canImportRegexScripts(rawRegexScripts)) {
+        const normalizedScripts = importRegexScripts(rawRegexScripts);
+
+        // 确保每个脚本都有 scriptKey
+        normalizedScripts.forEach(script => {
           if (!script.scriptKey) {
             script.scriptKey = `script_${uuidv4()}`;
           }
         });
-        await RegexScriptOperations.updateRegexScripts(characterId, regexScripts);
-      } 
-      else if (typeof regexScripts === "object") {
-        const scriptsArray = Object.values(regexScripts).filter(script => 
-          script && typeof script === "object",
-        ) as RegexScript[];
-        
-        if (scriptsArray.length > 0) {
-          scriptsArray.forEach(script => {
-            if (!script.scriptKey) {
-              script.scriptKey = `script_${uuidv4()}`;
-            }
-          });
-          await RegexScriptOperations.updateRegexScripts(characterId, scriptsArray);
-        }
+
+        await RegexScriptOperations.updateRegexScripts(characterId, normalizedScripts);
       }
     }
 
@@ -65,8 +64,9 @@ export async function handleCharacterUpload(file: File) {
       hasWorldBook: !!characterJson.data?.character_book?.entries,
       hasRegexScripts: !!characterJson.data?.extensions?.regex_scripts,
     };
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Failed to parse character data:", error);
-    throw new Error(`Failed to parse character data: ${error.message}`);
+    throw new Error(`Failed to parse character data: ${errorMessage}`);
   }
 }

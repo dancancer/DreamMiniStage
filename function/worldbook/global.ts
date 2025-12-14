@@ -105,11 +105,11 @@ export async function saveAsGlobalWorldBook(
       globalId,
       worldBook: metadata,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to save as global world book:", error);
     return {
       success: false,
-      message: `Failed to save as global world book: ${error.message}`,
+      message: `Failed to save as global world book: ${error instanceof Error ? error.message : "Unknown error"}`,
     };
   }
 }
@@ -136,12 +136,12 @@ export async function listGlobalWorldBooks(): Promise<ListGlobalWorldBooksResult
       success: true,
       globalWorldBooks,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to list global world books:", error);
     return {
       success: false,
       globalWorldBooks: [],
-      message: `Failed to list global world books: ${error.message}`,
+      message: `Failed to list global world books: ${error instanceof Error ? error.message : "Unknown error"}`,
     };
   }
 }
@@ -175,11 +175,11 @@ export async function getGlobalWorldBook(globalId: string): Promise<{
       worldBook,
       metadata: settings.metadata as GlobalWorldBook,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to get global world book:", error);
     return {
       success: false,
-      message: `Failed to get global world book: ${error.message}`,
+      message: `Failed to get global world book: ${error instanceof Error ? error.message : "Unknown error"}`,
     };
   }
 }
@@ -237,11 +237,11 @@ export async function importFromGlobalWorldBook(
       message: `Successfully imported ${importedCount} entries from global world book "${globalResult.metadata?.name}"`,
       importedCount,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to import from global world book:", error);
     return {
       success: false,
-      message: `Failed to import from global world book: ${error.message}`,
+      message: `Failed to import from global world book: ${error instanceof Error ? error.message : "Unknown error"}`,
       importedCount: 0,
     };
   }
@@ -271,11 +271,11 @@ export async function deleteGlobalWorldBook(globalId: string): Promise<{
       success: true,
       message: "Global world book deleted successfully",
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to delete global world book:", error);
     return {
       success: false,
-      message: `Failed to delete global world book: ${error.message}`,
+      message: `Failed to delete global world book: ${error instanceof Error ? error.message : "Unknown error"}`,
     };
   }
 } 

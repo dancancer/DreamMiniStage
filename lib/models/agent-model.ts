@@ -45,12 +45,17 @@ export interface TaskAdjustment {
   newSubproblems?: string[]; // New sub-problems (max 2, cannot exceed current count)
 }
 
-/**
- * Real-time tool decision - inspired by DeepResearch action types
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   工具决策结构 - 受 DeepResearch action types 启发
+
+   parameters 字段：工具参数，使用 Record<string, unknown>
+   - 不同工具接受不同的参数结构
+   - unknown 强制调用方在使用前进行验证
+   设计理念：通用接口使用 unknown，具体工具实现负责类型转换
+   ═══════════════════════════════════════════════════════════════════════════ */
 export interface ToolDecision {
   tool: ToolType;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   reasoning: string;
   priority: number;
   taskAdjustment?: TaskAdjustment; // Optional task adjustment from planning analysis
@@ -105,12 +110,17 @@ export interface ResearchState {
   knowledge_base: KnowledgeEntry[];
 }
 
-/**
- * Tool execution result
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   工具执行结果
+
+   result 字段：工具返回的任意数据
+   - 不同工具返回不同结构的结果
+   - 使用 unknown 强制调用方进行类型检查
+   设计理念：边界处保持类型安全，避免 any 污染
+   ═══════════════════════════════════════════════════════════════════════════ */
 export interface ExecutionResult {
   success: boolean;
-  result?: any;
+  result?: unknown;
   error?: string;
 }
 
@@ -200,9 +210,14 @@ export interface SupplementEntry extends BaseWorldbookEntry {
 // COMMUNICATION STRUCTURES
 // ============================================================================
 
-/**
- * Communication message structure - enhanced with UI metadata
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   通信消息结构 - 增强的 UI 元数据
+
+   metadata 字段：消息元数据
+   - 包含工具调用信息、推理过程、优先级等
+   - 使用明确的已知字段 + 索引签名(unknown)扩展
+   设计理念：明确常用字段，保留扩展性但保持类型安全
+   ═══════════════════════════════════════════════════════════════════════════ */
 export interface Message {
   id: string;
   role: "user" | "agent" | "system";
@@ -211,19 +226,23 @@ export interface Message {
   timestamp?: string | Date; // Timestamp for message ordering
   metadata?: {
     tool?: string;
-    parameters?: any;
-    result?: any;
+    parameters?: unknown;
+    result?: unknown;
     reasoning?: string;
     priority?: number;
     actions?: string[]; // For completion_actions type
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
-/**
- * Generation output (specific to character creation application)
- * Worldbook data is now separated into 4 specialized categories
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   生成输出结构 - 角色创建应用的输出格式
+
+   character_data 字段：角色数据
+   - 定义了已知的标准字段
+   - 索引签名(unknown)允许自定义扩展字段
+   设计理念：平衡结构化与灵活性，保持类型安全
+   ═══════════════════════════════════════════════════════════════════════════ */
 export interface GenerationOutput {
   character_data?: {
     name: string;
@@ -236,7 +255,7 @@ export interface GenerationOutput {
     avatar?: string;
     alternate_greetings?: string[];
     tags?: string[];
-    [key: string]: any;
+    [key: string]: unknown;
   };
   
   // Separated worldbook data structures

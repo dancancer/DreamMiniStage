@@ -209,9 +209,9 @@ async function importPreset(args: unknown[]) {
     typeof jsonContent === "string" ? jsonContent : JSON.stringify(jsonContent || {});
   const result = await importPresetFromJson(parsedJson, customName);
   if (!result.success) {
-    return { success: false, error: result.error || "Import failed" };
+    return { success: false, error: (result as { error?: string }).error || "Import failed" };
   }
-  return { success: true, presetId: result.presetId };
+  return { success: true, presetId: (result as { presetId?: string }).presetId };
 }
 
 // ============================================================================

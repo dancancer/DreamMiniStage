@@ -11,6 +11,20 @@ import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-
 import type { MvuData, StatData } from "../types";
 import { updateVariablesFromMessage } from "../core/executor";
 
+/** 对话范围参数：使用 sessionId（dialogueKey） */
+interface DialogueScope {
+  dialogueKey: string;
+}
+
+/** 强制获取对话树主键，缺失即报错 */
+function requireDialogueKey(scope: DialogueScope): string {
+  const dialogueKey = scope.dialogueKey?.trim();
+  if (!dialogueKey) {
+    throw new Error("dialogueKey is required for MVU persistence");
+  }
+  return dialogueKey;
+}
+
 // ============================================================================
 //                              变量获取
 // ============================================================================
@@ -19,13 +33,14 @@ import { updateVariablesFromMessage } from "../core/executor";
  * 获取角色当前的变量状态
  * 从对话树的当前节点向上回溯，找到最近的变量快照
  */
-export async function getCharacterVariables(characterId: string): Promise<MvuData | null> {
-  const tree = await LocalCharacterDialogueOperations.getDialogueTreeById(characterId);
+export async function getCharacterVariables(scope: DialogueScope): Promise<MvuData | null> {
+  const dialogueKey = requireDialogueKey(scope);
+  const tree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueKey);
   if (!tree || !tree.nodes.length) return null;
 
   // 从当前节点向上回溯找变量
   const path = await LocalCharacterDialogueOperations.getDialoguePathToNode(
-    characterId,
+    dialogueKey,
     tree.current_nodeId,
   );
 
@@ -44,10 +59,11 @@ export async function getCharacterVariables(characterId: string): Promise<MvuDat
  * 获取指定消息节点的变量快照
  */
 export async function getNodeVariables(
-  characterId: string,
+  scope: DialogueScope,
   nodeId: string,
 ): Promise<MvuData | null> {
-  const tree = await LocalCharacterDialogueOperations.getDialogueTreeById(characterId);
+  const dialogueKey = requireDialogueKey(scope);
+  const tree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueKey);
   if (!tree) return null;
 
   const node = tree.nodes.find((n) => n.nodeId === nodeId);
@@ -66,12 +82,12 @@ export async function getNodeVariables(
  * 4. 保存到节点
  */
 export async function processMessageVariables(
-  characterId: string,
-  nodeId: string,
-  messageContent: string,
+  scope: DialogueScope & { nodeId: string; messageContent: string },
 ): Promise<MvuData | null> {
+  const { nodeId, messageContent } = scope;
+
   // 获取当前变量
-  const currentVars = await getCharacterVariables(characterId);
+  const currentVars = await getCharacterVariables(scope);
   if (!currentVars) return null;
 
   // 执行更新
@@ -79,7 +95,11 @@ export async function processMessageVariables(
 
   if (result.modified) {
     // 保存到节点
-    await saveNodeVariables(characterId, nodeId, result.variables);
+    await saveNodeVariables({
+      dialogueKey: scope.dialogueKey,
+      nodeId,
+      variables: result.variables,
+    });
   }
 
   return result.variables;
@@ -89,17 +109,17 @@ export async function processMessageVariables(
  * 保存变量到指定节点
  */
 export async function saveNodeVariables(
-  characterId: string,
-  nodeId: string,
-  variables: MvuData,
+  scope: DialogueScope & { nodeId: string; variables: MvuData },
 ): Promise<boolean> {
-  const tree = await LocalCharacterDialogueOperations.getDialogueTreeById(characterId);
+  const { nodeId, variables } = scope;
+  const dialogueKey = requireDialogueKey(scope);
+  const tree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueKey);
   if (!tree) return false;
 
   const node = tree.nodes.find((n) => n.nodeId === nodeId);
   if (!node) return false;
 
-  await LocalCharacterDialogueOperations.updateNodeInDialogueTree(characterId, nodeId, {
+  await LocalCharacterDialogueOperations.updateNodeInDialogueTree(dialogueKey, nodeId, {
     parsedContent: {
       ...node.parsedContent,
       variables,
@@ -118,9 +138,10 @@ export async function saveNodeVariables(
  * 在开场白节点保存初始变量
  */
 export async function initCharacterVariables(
-  characterId: string,
-  initialData: StatData,
+  scope: DialogueScope & { initialData: StatData },
 ): Promise<MvuData> {
+  const dialogueKey = requireDialogueKey(scope);
+  const { initialData } = scope;
   const variables: MvuData = {
     stat_data: initialData,
     display_data: JSON.parse(JSON.stringify(initialData)),
@@ -128,12 +149,11 @@ export async function initCharacterVariables(
     initialized_lorebooks: {},
   };
 
-  // 找到 root 的第一个子节点（开场白）
-  const tree = await LocalCharacterDialogueOperations.getDialogueTreeById(characterId);
+  const tree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueKey);
   if (tree && tree.nodes.length > 0) {
     const firstNode = tree.nodes.find((n) => n.parentNodeId === "root");
     if (firstNode) {
-      await saveNodeVariables(characterId, firstNode.nodeId, variables);
+      await saveNodeVariables({ dialogueKey, nodeId: firstNode.nodeId, variables });
     }
   }
 

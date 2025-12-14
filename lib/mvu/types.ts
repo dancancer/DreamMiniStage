@@ -14,8 +14,40 @@
 /** JSON 原始类型 */
 export type JSONPrimitive = string | number | boolean | null;
 
-/** 带描述的值 - [实际值, 更新条件描述] */
-export type ValueWithDescription<T> = [T, string];
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ValueWithDescription 格式兼容性说明
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * MagVarUpdate 使用数组格式：[value, description]
+ * 例如：["03月15日", "今天的日期，格式为 mm月dd日"]
+ *
+ * 为了完全兼容 MagVarUpdate，我们支持两种格式：
+ * 1. 数组格式（MagVarUpdate 原生）：[value, description]
+ * 2. 对象格式（可选）：{ value, description }
+ *
+ * 数组格式检查：Array.isArray(v) && v.length === 2 && typeof v[1] === 'string'
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+/** 带描述的值 - 对象格式（可选） */
+export interface ValueWithDescription<T = unknown> {
+  value: T;
+  description: string;
+}
+
+/**
+ * 带描述的值 - 数组格式（MagVarUpdate 兼容）
+ * [value, description]
+ */
+export type ValueWithDescriptionArray<T = unknown> = [T, string];
+
+/**
+ * 统一类型：支持两种格式
+ */
+export type ValueWithDescriptionUnion<T = unknown> =
+  | ValueWithDescription<T>
+  | ValueWithDescriptionArray<T>;
 
 // ============================================================================
 //                              状态数据类型
@@ -126,8 +158,62 @@ export type MvuEventName = typeof MVU_EVENTS[keyof typeof MVU_EVENTS];
 //                              类型守卫
 // ============================================================================
 
-export function isValueWithDescription(value: unknown): value is ValueWithDescription<unknown> {
-  return Array.isArray(value) && value.length === 2 && typeof value[1] === "string";
+/**
+ * 检查是否为 ValueWithDescription（数组格式 - MagVarUpdate 兼容）
+ * 格式：[value, description]
+ */
+export function isValueWithDescriptionArray(value: unknown): value is ValueWithDescriptionArray<unknown> {
+  return (
+    Array.isArray(value) &&
+    value.length === 2 &&
+    typeof value[1] === "string" &&
+    // 确保不是空数组或特殊数组，value[0] 不能是 object（避免误判普通数组）
+    (typeof value[0] !== "object" || value[0] === null || value[0] instanceof Date)
+  );
+}
+
+/**
+ * 检查是否为 ValueWithDescription（对象格式）
+ */
+export function isValueWithDescriptionObject(value: unknown): value is ValueWithDescription<unknown> {
+  if (value === null || typeof value !== "object") return false;
+  const candidate = value as Record<string, unknown>;
+  return "value" in candidate && "description" in candidate && typeof candidate.description === "string";
+}
+
+/**
+ * 检查是否为 ValueWithDescription（任意格式）
+ * 优先检查数组格式（MagVarUpdate 主要格式）
+ */
+export function isValueWithDescription(value: unknown): value is ValueWithDescriptionUnion<unknown> {
+  return isValueWithDescriptionArray(value) || isValueWithDescriptionObject(value);
+}
+
+/**
+ * 获取 ValueWithDescription 的实际值（兼容两种格式）
+ */
+export function getVWDValue(vwd: ValueWithDescriptionUnion<unknown>): unknown {
+  if (Array.isArray(vwd)) return vwd[0];
+  return vwd.value;
+}
+
+/**
+ * 获取 ValueWithDescription 的描述（兼容两种格式）
+ */
+export function getVWDDescription(vwd: ValueWithDescriptionUnion<unknown>): string {
+  if (Array.isArray(vwd)) return vwd[1];
+  return vwd.description;
+}
+
+/**
+ * 设置 ValueWithDescription 的值（兼容两种格式）
+ */
+export function setVWDValue(vwd: ValueWithDescriptionUnion<unknown>, newValue: unknown): void {
+  if (Array.isArray(vwd)) {
+    vwd[0] = newValue;
+  } else {
+    vwd.value = newValue;
+  }
 }
 
 export function isArraySchema(node: SchemaNode): node is ArraySchemaNode {

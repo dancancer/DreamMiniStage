@@ -32,16 +32,16 @@ export class SearchTool extends BaseTool {
     super();
     this.configManager = ConfigManager.getInstance();
     // Note: Tavily Search will be initialized with API key from ConfigManager in doWork method
-    this.tavilySearch = null as any; // Will be initialized with API key from ConfigManager
+    this.tavilySearch = null as unknown as TavilySearch; // Will be initialized with API key from ConfigManager
   }
 
-  protected async doWork(parameters: Record<string, any>, context: ExecutionContext): Promise<ExecutionResult> {
+  protected async doWork(parameters: Record<string, unknown>, context: ExecutionContext): Promise<ExecutionResult> {
     const query = parameters.query;
-    
+
     // Support both array and string formats for backward compatibility
     let queries: string[];
     if (Array.isArray(query)) {
-      queries = query.filter((q: any) => q && typeof q === "string" && q.trim().length > 0);
+      queries = query.filter((q: unknown) => q && typeof q === "string" && q.trim().length > 0);
     } else if (typeof query === "string" && query.trim().length > 0) {
       queries = [query.trim()];
     } else {
@@ -96,8 +96,17 @@ export class SearchTool extends BaseTool {
             continue;
           }
     
+          // Define Tavily search result interface
+          interface TavilySearchResult {
+            title?: string;
+            content?: string;
+            snippet?: string;
+            url?: string;
+            score?: number;
+          }
+
           // Convert Tavily results to knowledge entries
-          const knowledgeEntries = searchData.results.map((result: any) => 
+          const knowledgeEntries = searchData.results.map((result: TavilySearchResult) =>
             this.createKnowledgeEntry(
               `${result.title || "Search Result"} (Query: ${singleQuery})`,
               result.content || result.snippet || "",
@@ -107,7 +116,7 @@ export class SearchTool extends BaseTool {
           );
 
           allKnowledgeEntries.push(...knowledgeEntries);
-          allSources.push(...searchData.results.map((r: any) => r.title || r.url));
+          allSources.push(...searchData.results.map((r: TavilySearchResult) => r.title || r.url));
           totalResponseTime += searchData.response_time || 0;
 
           console.log(`✅ Search completed for "${singleQuery}": ${knowledgeEntries.length} results`);

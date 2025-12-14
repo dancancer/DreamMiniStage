@@ -9,6 +9,7 @@
 
 import { create } from "zustand";
 import type { MvuData, StatData } from "../types";
+import { isValueWithDescription, getVWDValue } from "../types";
 import { updateVariablesFromMessage, updateSingleVariable } from "../core/executor";
 
 // ============================================================================
@@ -235,8 +236,8 @@ export function getSessionKey(characterId: string, sessionId?: string): string {
 
 export function safeGetValue<T = unknown>(value: unknown, defaultValue: T | null = null): T | null {
   if (value === undefined || value === null) return defaultValue;
-  if (Array.isArray(value) && value.length === 2 && typeof value[1] === "string") {
-    return value[0] as T;
+  if (isValueWithDescription(value)) {
+    return getVWDValue(value) as T;
   }
   return value as T;
 }

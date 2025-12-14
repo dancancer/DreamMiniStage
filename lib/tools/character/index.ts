@@ -72,17 +72,29 @@ export class CharacterTool extends BaseTool {
     },
   ];
 
-  protected async doWork(parameters: Record<string, any>, context: ExecutionContext): Promise<ExecutionResult> {
+  protected async doWork(parameters: Record<string, unknown>, context: ExecutionContext): Promise<ExecutionResult> {
     // Filter out undefined/null parameters and build character data
-    const characterUpdates: any = {};
-    
-    if (parameters.name) characterUpdates.name = parameters.name;
-    if (parameters.description) characterUpdates.description = parameters.description;
-    if (parameters.personality) characterUpdates.personality = parameters.personality;
-    if (parameters.scenario) characterUpdates.scenario = parameters.scenario;
-    if (parameters.first_mes) characterUpdates.first_mes = parameters.first_mes;
-    if (parameters.mes_example) characterUpdates.mes_example = parameters.mes_example;
-    if (parameters.creator_notes) characterUpdates.creator_notes = parameters.creator_notes;
+    interface CharacterUpdates {
+      name?: string;
+      description?: string;
+      personality?: string;
+      scenario?: string;
+      first_mes?: string;
+      mes_example?: string;
+      creator_notes?: string;
+      alternate_greetings?: string[];
+      tags?: string[];
+    }
+
+    const characterUpdates: CharacterUpdates = {};
+
+    if (parameters.name) characterUpdates.name = parameters.name as string;
+    if (parameters.description) characterUpdates.description = parameters.description as string;
+    if (parameters.personality) characterUpdates.personality = parameters.personality as string;
+    if (parameters.scenario) characterUpdates.scenario = parameters.scenario as string;
+    if (parameters.first_mes) characterUpdates.first_mes = parameters.first_mes as string;
+    if (parameters.mes_example) characterUpdates.mes_example = parameters.mes_example as string;
+    if (parameters.creator_notes) characterUpdates.creator_notes = parameters.creator_notes as string;
     if (parameters.alternate_greetings) {
       // Support both array and comma-separated string formats
       if (Array.isArray(parameters.alternate_greetings)) {

@@ -40,9 +40,22 @@ interface WorldBookEditorProps {
   onClose: () => void;
   characterName: string;
   characterId: string;
+  /** 可选：对话键（用于会话级世界书） */
+  dialogueKey?: string;
+  /** 可选：初始层级（默认为 character） */
+  initialBookLevel?: "character" | "dialogue" | "global";
+  /** 可选：全局世界书键（用于编辑全局世界书） */
+  globalKey?: string;
 }
 
-export default function WorldBookEditor({ onClose, characterName, characterId }: WorldBookEditorProps) {
+export default function WorldBookEditor({
+  onClose,
+  characterName,
+  characterId,
+  dialogueKey,
+  initialBookLevel = "character",
+  globalKey,
+}: WorldBookEditorProps) {
   const { t, fontClass, serifFontClass } = useLanguage();
   const [entries, setEntries] = useState<WorldBookEntryData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,6 +63,20 @@ export default function WorldBookEditor({ onClose, characterName, characterId }:
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<EditingEntry | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // ════════════════════════════════════════════════════════════════════════
+  // 层级管理（新增）
+  // ════════════════════════════════════════════════════════════════════════
+  const [bookLevel, setBookLevel] = useState<"character" | "dialogue" | "global">(
+    initialBookLevel,
+  );
+
+  // 计算存储键（好品味：无 if-else）
+  const storageKey = useMemo(() => {
+    if (bookLevel === "global" && globalKey) return globalKey;
+    if (bookLevel === "dialogue" && dialogueKey) return `dialogue:${dialogueKey}`;
+    return `character:${characterId}`;
+  }, [bookLevel, characterId, dialogueKey, globalKey]);
 
   const { sortBy, sortOrder, handleSortByChange, handleSortOrderToggle } = useTableSort({
     storageKey: `worldbook_sort_${characterId}`,
@@ -86,24 +113,31 @@ export default function WorldBookEditor({ onClose, characterName, characterId }:
   );
 
   const formatEntry = useCallback(
-    (entry: any): WorldBookEntryData => {
-      const extensions = entry.extensions || {};
-      const keys = entry.keys || [];
-      const secondaryKeys = entry.secondary_keys || [];
-      const updated = extensions.updatedAt || entry.updated_at || entry.created_at || Date.now();
+    (entry: unknown): WorldBookEntryData => {
+      // 运行时类型检查（好品味：防御性编程）
+      if (typeof entry !== "object" || entry === null) {
+        throw new Error("Invalid entry format");
+      }
+
+      const rawEntry = entry as Record<string, unknown>;
+      const extensions = (rawEntry.extensions as Record<string, unknown>) || {};
+      const keys = (Array.isArray(rawEntry.keys) ? rawEntry.keys : []) as string[];
+      const secondaryKeys = (Array.isArray(rawEntry.secondary_keys) ? rawEntry.secondary_keys : []) as string[];
+      const updated = extensions.updatedAt || rawEntry.updated_at || rawEntry.created_at || Date.now();
+
       return {
-        ...entry,
+        ...rawEntry,
         keys,
         secondary_keys: secondaryKeys,
         primaryKey: keys[0] || t("worldBook.noKeyword"),
         keyCount: keys.length,
         secondaryKeyCount: secondaryKeys.length,
-        contentLength: (entry.content || "").length,
-        isActive: entry.enabled !== false,
-        lastUpdated: typeof updated === "number" ? updated : new Date(updated).getTime(),
+        contentLength: (String(rawEntry.content || "")).length,
+        isActive: rawEntry.enabled !== false,
+        lastUpdated: typeof updated === "number" ? updated : new Date(String(updated)).getTime(),
         isImported: Boolean(extensions.importedAt),
         importedAt: extensions.importedAt || null,
-      };
+      } as WorldBookEntryData;
     },
     [t],
   );
@@ -111,7 +145,8 @@ export default function WorldBookEditor({ onClose, characterName, characterId }:
   const loadEntries = useCallback(async () => {
     setIsLoading(true);
     try {
-      const result = await getWorldBookEntries(characterId);
+      // 使用 storageKey 而不是 characterId（支持多层级）
+      const result = await getWorldBookEntries(storageKey);
       if (result.success) {
         setEntries((result.entries || []).map(formatEntry));
       } else {
@@ -123,7 +158,7 @@ export default function WorldBookEditor({ onClose, characterName, characterId }:
     } finally {
       setIsLoading(false);
     }
-  }, [characterId, formatEntry, t]);
+  }, [storageKey, formatEntry, t]);
 
   // ========== 使用 ref 稳定回调引用 ==========
   const entriesLengthRef = useRef(entries.length);
@@ -175,7 +210,8 @@ export default function WorldBookEditor({ onClose, characterName, characterId }:
 
     setIsSaving(true);
     try {
-      await saveAdvancedWorldBookEntry(characterId, {
+      // 使用 storageKey 而不是 characterId（支持多层级）
+      await saveAdvancedWorldBookEntry(storageKey, {
         entry_id: editingEntry.entry_id,
         content: editingEntry.content,
         keys: editingEntry.keys.filter((k) => k.trim()),
@@ -199,12 +235,12 @@ export default function WorldBookEditor({ onClose, characterName, characterId }:
     } finally {
       setIsSaving(false);
     }
-  }, [characterId, editingEntry, loadEntries, t]);
+  }, [storageKey, editingEntry, loadEntries, t]);
 
   const handleDeleteEntry = useCallback(
     async (entryId: string) => {
       try {
-        const result = await deleteWorldBookEntry(characterId, entryId);
+        const result = await deleteWorldBookEntry(storageKey, entryId);
         if (result.success) {
           toast.success(t("worldBook.deleteSuccess"));
           setEntries((prev) => prev.filter((entry) => entry.entry_id !== entryId));
@@ -214,16 +250,16 @@ export default function WorldBookEditor({ onClose, characterName, characterId }:
         toast.error(t("worldBook.deleteFailed") || "Failed to delete entry");
       }
     },
-    [characterId, t],
+    [storageKey, t],
   );
 
   const handleToggleEntry = useCallback(
     async (entryId: string, enabled: boolean) => {
       // 乐观更新：立即更新 UI
       setEntries((prev) => prev.map((entry) => (entry.entry_id === entryId ? { ...entry, isActive: enabled, enabled } : entry)));
-      
+
       try {
-        const result = await bulkToggleWorldBookEntries(characterId, [entryId], enabled);
+        const result = await bulkToggleWorldBookEntries(storageKey, [entryId], enabled);
         if (result.success) {
           toast.success(enabled ? t("worldBook.enabled") : t("worldBook.disabled"));
           // 不需要重新加载全部数据，已经乐观更新了
@@ -239,7 +275,7 @@ export default function WorldBookEditor({ onClose, characterName, characterId }:
         toast.error(t("worldBook.toggleFailed") || "Failed to toggle entry");
       }
     },
-    [characterId, t],
+    [storageKey, t],
   );
 
   const handleBulkToggle = useCallback(
@@ -256,7 +292,7 @@ export default function WorldBookEditor({ onClose, characterName, characterId }:
       );
 
       try {
-        const result = await bulkToggleWorldBookEntries(characterId, entryIds, enabled);
+        const result = await bulkToggleWorldBookEntries(storageKey, entryIds, enabled);
         if (result.success) {
           toast.success(enabled ? t("worldBook.enabledAll") : t("worldBook.disabledAll"));
           // 不需要重新加载全部数据，已经乐观更新了
@@ -276,7 +312,7 @@ export default function WorldBookEditor({ onClose, characterName, characterId }:
         toast.error(t("worldBook.bulkOperationFailed") || "Bulk operation failed");
       }
     },
-    [characterId, entries, filterBy, filterMap, t],
+    [storageKey, entries, filterBy, filterMap, t],
   );
 
   useEffect(() => {
@@ -322,6 +358,33 @@ export default function WorldBookEditor({ onClose, characterName, characterId }:
         onClose={onClose}
       />
 
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* 层级选择器（仅在支持多层级时显示） */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {(dialogueKey || globalKey) && (
+        <div className="px-6 py-3 border-b border-cream-soft/20 bg-cream-soft/5">
+          <div className="flex items-center gap-3">
+            <span className={`text-sm text-cream-soft/70 ${fontClass}`}>
+              世界书层级：
+            </span>
+            <select
+              value={bookLevel}
+              onChange={(e) => setBookLevel(e.target.value as "character" | "dialogue" | "global")}
+              className={`px-3 py-1.5 rounded bg-ink-soft/30 border border-cream-soft/20 text-cream-soft ${fontClass} hover:bg-ink-soft/40 transition-colors`}
+            >
+              <option value="character">角色级（所有会话共享）</option>
+              {dialogueKey && <option value="dialogue">会话级（仅当前会话）</option>}
+              {globalKey && <option value="global">全局级（编辑中）</option>}
+            </select>
+            <span className={`text-xs text-cream-soft/50 ${fontClass}`}>
+              {bookLevel === "character" && "此层级的世界书在该角色的所有会话中生效"}
+              {bookLevel === "dialogue" && "此层级的世界书仅在当前会话中生效"}
+              {bookLevel === "global" && "此层级的世界书在所有会话中生效"}
+            </span>
+          </div>
+        </div>
+      )}
+
       <WorldBookControls
         sortBy={sortBy}
         sortOrder={sortOrder}
@@ -351,7 +414,7 @@ export default function WorldBookEditor({ onClose, characterName, characterId }:
       {isImportModalOpen && (
         <ImportWorldBookModal
           isOpen={isImportModalOpen}
-          characterId={characterId}
+          characterId={storageKey}
           onClose={() => setIsImportModalOpen(false)}
           onImportSuccess={() => {
             setIsImportModalOpen(false);

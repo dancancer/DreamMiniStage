@@ -23,6 +23,16 @@ export interface PromptImage {
 }
 
 /**
+ * 单条消息数据（用于消息卡片展示）
+ * 与 LLM API 格式对应
+ */
+export interface PromptMessage {
+  readonly id: string;
+  readonly role: "system" | "user" | "assistant";
+  readonly content: string;
+}
+
+/**
  * 提示词完整数据
  * 包含所有必要信息，无特殊情况处理
  */
@@ -39,6 +49,8 @@ export interface PromptData {
     readonly modelName: string;
     readonly temperature?: number;
   };
+  /** 消息列表（用于卡片展示，与 LLM API 格式对应） */
+  readonly messages: readonly PromptMessage[];
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -136,10 +148,16 @@ export interface PromptViewerModalProps {
  * 内容显示组件属性
  */
 export interface PromptContentProps {
+  /** 消息列表（用于卡片展示，新版UI） */
+  readonly messages?: readonly PromptMessage[];
+  /** 完整内容（用于搜索和兼容旧版显示） */
   readonly content: string;
   readonly searchResult: SearchResult | null;
   readonly expandedRegions: ReadonlySet<string>;
   readonly onToggleRegion: (regionId: string) => void;
+  /** 消息折叠状态（key: message id, value: is expanded） */
+  readonly expandedMessages?: ReadonlySet<string>;
+  readonly onToggleMessage?: (messageId: string) => void;
   readonly images?: readonly PromptImage[];
   readonly imageGalleryExpanded?: boolean;
   readonly onToggleImageGallery?: () => void;

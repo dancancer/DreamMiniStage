@@ -114,8 +114,10 @@ const EditCharacterModal: React.FC<EditCharacterModalProps> = ({
 
       onSave();
       onClose();
-    } catch (err: any) {
-      toast.error(err.message || "An error occurred");
+    } catch (err: unknown) {
+      // 类型守卫：安全地提取错误信息
+      const message = err instanceof Error ? err.message : "An error occurred";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

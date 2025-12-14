@@ -52,7 +52,7 @@ export class MemoryRetrievalNode extends NodeBase {
     ) as {
       enhancedSystemMessage: string;
       memoryPrompt: string;
-      retrievedMemories: any[];
+      retrievedMemories: unknown[];
       memoryCount: number;
     };
 

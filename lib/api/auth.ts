@@ -1,10 +1,20 @@
-// Authentication API service for connecting to backend
+/* ═══════════════════════════════════════════════════════════════════════════
+   Authentication API - 后端认证服务接口
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 import { getString, removeItem } from "@/lib/storage/client-storage";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// API Response types
-interface APIResponse<T = any> {
+/* ───────────────────────────────────────────────────────────────────────────
+   API 响应类型定义
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * 通用 API 响应包装器
+ * 使用 unknown 作为默认泛型参数，确保类型安全
+ */
+interface APIResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T;

@@ -24,12 +24,12 @@ export class PluginNode extends NodeBase {
   }
 
   protected async _call(input: NodeInput): Promise<NodeOutput> {
-    const screenContent = input.screenContent;
-    const fullResponse = input.fullResponse;
-    const thinkingContent = input.thinkingContent;
-    const nextPrompts = input.nextPrompts;
-    const event = input.event;
-    const characterId = input.characterId;
+    const screenContent = input.screenContent as string | undefined;
+    const fullResponse = input.fullResponse as string | undefined;
+    const thinkingContent = input.thinkingContent as string | undefined;
+    const nextPrompts = input.nextPrompts as string[] | undefined;
+    const event = input.event as string | undefined;
+    const characterId = input.characterId as string;
 
     console.log("🔌 PluginNode: Processing content", {
       screenContentLength: screenContent?.length || 0,
@@ -57,7 +57,7 @@ export class PluginNode extends NodeBase {
         characterId,
       ) as {
         processedContent: string;
-        toolResults: any[];
+        toolResults: unknown[];
         hasPluginCalls: boolean;
       };
 
@@ -67,7 +67,14 @@ export class PluginNode extends NodeBase {
       if (pluginResult.hasPluginCalls) {
         console.log("🔌 PluginNode: Plugin tools detected and processed:", {
           toolCount: pluginResult.toolResults.length,
-          tools: pluginResult.toolResults.map(r => r.toolName).join(", "),
+          tools: pluginResult.toolResults
+            .map((result) => {
+              if (typeof result === "object" && result && "toolName" in result) {
+                return String((result as { toolName: unknown }).toolName);
+              }
+              return "unknown";
+            })
+            .join(", "),
         });
         
         // 格式化工具结果为用户友好的输出

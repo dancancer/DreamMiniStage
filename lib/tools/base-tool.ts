@@ -40,7 +40,7 @@ export interface SimpleTool {
   readonly toolType: ToolType;
   readonly parameters: ToolParameter[];
   
-  execute(context: ExecutionContext, parameters: Record<string, any>): Promise<ExecutionResult>;
+  execute(context: ExecutionContext, parameters: Record<string, unknown>): Promise<ExecutionResult>;
 }
 
 /**
@@ -56,7 +56,7 @@ export abstract class BaseTool implements SimpleTool {
   /**
    * Pure execution method - no LLM calls, just execute with given parameters
    */
-  async execute(context: ExecutionContext, parameters: Record<string, any>): Promise<ExecutionResult> {
+  async execute(context: ExecutionContext, parameters: Record<string, unknown>): Promise<ExecutionResult> {
     try {
       
       // Direct execution with provided parameters
@@ -64,7 +64,7 @@ export abstract class BaseTool implements SimpleTool {
       
       console.log(`✅ [${this.name}] Execution completed`);
       
-      return result;
+      return result as ExecutionResult;
       
     } catch (error) {
       console.error(`❌ [${this.name}] Execution failed:`, error);
@@ -76,7 +76,7 @@ export abstract class BaseTool implements SimpleTool {
    * Core work logic - implement this in your tool
    * This should be pure execution without any LLM calls
    */
-  protected abstract doWork(parameters: Record<string, any>, context: ExecutionContext): Promise<any>;
+  protected abstract doWork(parameters: Record<string, unknown>, context: ExecutionContext): Promise<unknown>;
 
   // ============================================================================
   // HELPER METHODS - Pure utilities without LLM calls
@@ -104,19 +104,19 @@ export abstract class BaseTool implements SimpleTool {
    * Create success result
    */
   protected createSuccessResult(
-    result: any,
+    result: unknown,
   ): ExecutionResult {
     return {
       success: true,
       result,
-    };  
+    };
   }
 
   /**
    * Create failure result
    */
   protected createFailureResult(
-    error: any,
+    error: unknown,
   ): ExecutionResult {
     const errorMessage = error instanceof Error ? error.message : String(error);
 

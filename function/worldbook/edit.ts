@@ -50,8 +50,8 @@ export async function saveAdvancedWorldBookEntry(
       entryId,
       entry: updatedEntry,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to save advanced world book entry:", error);
-    throw new Error(`Failed to save advanced world book entry: ${error.message}`);
+    throw new Error(`Failed to save advanced world book entry: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 } 

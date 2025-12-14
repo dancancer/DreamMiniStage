@@ -27,8 +27,8 @@ export default function TopBar({ onToggleNav }: TopBarProps) {
   const { headerContent } = useHeaderContent();
 
   const title = useMemo(() => {
-    // 会话页面（新路由 /session 或旧路由 /character）不显示标题
-    if (pathname.startsWith("/session") || pathname === "/character") return "";
+    // 会话页面不显示标题
+    if (pathname.startsWith("/session")) return "";
     if (pathname.startsWith("/character-cards")) return "角色卡";
     if (pathname === "/") return "首页";
     return "工作区";

@@ -56,7 +56,7 @@ function applyStep(text: string, step: Step): string {
     log(step.name, `内容: ${JSON.stringify(matches.slice(0, 3))}${matches.length > 3 ? "..." : ""}`);
   }
 
-  const after = text.replace(step.pattern, step.replacer as any);
+  const after = text.replace(step.pattern, step.replacer as (...args: string[]) => string);
 
   if (before !== after) {
     log(step.name, `✓ 生效，长度: ${before.length} → ${after.length}`);

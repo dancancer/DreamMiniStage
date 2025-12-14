@@ -17,7 +17,7 @@ export const pluginConfigStorage = {
   /**
    * 获取配置
    */
-  get(): Record<string, any> {
+  get(): Record<string, unknown> {
     try {
       const config = localStorage.getItem(STORAGE_KEY);
       return config ? JSON.parse(config) : {};
@@ -30,7 +30,7 @@ export const pluginConfigStorage = {
   /**
    * 设置配置
    */
-  set(config: Record<string, any>): void {
+  set(config: Record<string, unknown>): void {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
     } catch (error) {
@@ -41,7 +41,7 @@ export const pluginConfigStorage = {
   /**
    * 更新配置（合并）
    */
-  update(updates: Record<string, any>): void {
+  update(updates: Record<string, unknown>): void {
     const config = this.get();
     Object.assign(config, updates);
     this.set(config);

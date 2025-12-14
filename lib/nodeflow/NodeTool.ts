@@ -10,7 +10,7 @@ export abstract class NodeTool {
     return this.version;
   }
 
-  protected static logExecution(methodName: string, params?: any): void {
+  protected static logExecution(methodName: string, params?: unknown): void {
     console.log(`[${this.getToolType()}Tool] Executing ${methodName}`, params);
   }
 
@@ -29,8 +29,8 @@ export abstract class NodeTool {
     return methods;
   }
 
-  static async executeMethod(methodName: string, ...params: any[]): Promise<any> {
-    const method = (this as any)[methodName];
+  static async executeMethod(methodName: string, ...params: unknown[]): Promise<unknown> {
+    const method = (this as unknown as Record<string, unknown>)[methodName];
     
     if (typeof method !== "function") {
       console.error(`方法查找失败: ${methodName} 在 ${this.getToolType()}Tool 中不存在`);
@@ -39,7 +39,7 @@ export abstract class NodeTool {
 
     try {
       this.logExecution(methodName, params);
-      return await (method as Function).apply(this, params);
+      return await (method as (...args: unknown[]) => Promise<unknown>).apply(this, params);
     } catch (error) {
       this.handleError(error as Error, methodName);
     }
@@ -64,11 +64,11 @@ export interface ToolParameterDescriptor {
   type: string;
   required: boolean;
   description?: string;
-  defaultValue?: any;
+  defaultValue?: unknown;
 }
 
 export function ToolMethod(description: string, parameters: ToolParameterDescriptor[] = []) {
-  return function(target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
+  return function(target: unknown, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
     let methodName: string;
     
     if (typeof propertyKey === "string") {
@@ -79,11 +79,12 @@ export function ToolMethod(description: string, parameters: ToolParameterDescrip
       methodName = "unknownMethod";
       console.warn("ToolMethod: Unable to determine method name");
     }
-    const constructor = target.constructor || target;
-    if (!constructor._toolMethods) {
-      constructor._toolMethods = new Map();
+    const constructor = (target as { constructor?: unknown })?.constructor || target;
+    const constructorWithMethods = constructor as { _toolMethods?: Map<string, ToolMethodDescriptor> };
+    if (!constructorWithMethods._toolMethods) {
+      constructorWithMethods._toolMethods = new Map();
     }
-    constructor._toolMethods.set(methodName, {
+    constructorWithMethods._toolMethods.set(methodName, {
       name: methodName,
       description,
       parameters,

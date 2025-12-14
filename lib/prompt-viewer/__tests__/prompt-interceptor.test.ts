@@ -4,6 +4,9 @@
  * ║                                                                            ║
  * ║  测试提示词拦截器的核心功能：拦截控制、数据构建、缓存管理                      ║
  * ║  验证拦截器的正确性和可靠性                                                ║
+ * ║                                                                            ║
+ * ║  整改后：使用 HistoryPreNodeTools 替代 ContextNodeTools                    ║
+ * ║  Requirements: 5.1                                                         ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -29,19 +32,35 @@ vi.mock("@/lib/store/dialogue-store", () => ({
 
 vi.mock("@/lib/nodeflow/PresetNode/PresetNodeTools", () => ({
   PresetNodeTools: {
+    // 整改后：buildPromptFramework 接收 chatHistoryMessages 参数
+    // STPromptManager 内部展开 chatHistory marker，返回已展开的 messages
     buildPromptFramework: vi.fn(() => Promise.resolve({
-      systemMessage: "测试系统消息 {{worldInfoBefore}} {{worldInfoAfter}}",
-      userMessage: "测试用户消息 {{chatHistory}}",
+      systemMessage: "测试系统消息（含世界书）",
+      userMessage: "测试用户消息",
+      // messages 已由 STPromptManager 展开 chatHistory marker
+      messages: [
+        { role: "system", content: "测试系统消息" },
+        { role: "user", content: "历史用户消息" },
+        { role: "assistant", content: "历史助手消息" },
+        { role: "user", content: "测试消息" },  // 当前用户输入
+      ],
+      presetId: "mock-preset",
     })),
   },
 }));
 
-vi.mock("@/lib/nodeflow/ContextNode/ContextNodeTools", () => ({
-  ContextNodeTools: {
-    assembleChatHistory: vi.fn(() => Promise.resolve({
-      userMessage: "测试用户消息（含历史）",
-      messages: [],
-    })),
+/* ═══════════════════════════════════════════════════════════════════════════
+   整改后：使用 HistoryPreNodeTools 替代 ContextNodeTools
+   Requirements: 5.1 - ContextNode 不再负责获取聊天历史
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+vi.mock("@/lib/nodeflow/HistoryPreNode/HistoryPreNodeTools", () => ({
+  HistoryPreNodeTools: {
+    getChatHistoryMessages: vi.fn(() => Promise.resolve([
+      { role: "user", content: "历史用户消息" },
+      { role: "assistant", content: "历史助手消息" },
+    ])),
+    getChatHistoryText: vi.fn(() => Promise.resolve("历史文本摘要")),
   },
 }));
 
@@ -97,6 +116,15 @@ describe("PromptInterceptorImpl", () => {
       expect(promptData.timestamp).toBeGreaterThan(0);
       expect(promptData.metadata.dialogueKey).toBe(testDialogueKey);
       expect(promptData.metadata.characterId).toBe(testCharacterId);
+      // messages 应该与工作流一致：展开 chatHistory，但不合并相邻同角色
+      // messages 已由 STPromptManager 展开 chatHistory marker
+      // 包含：system + 历史消息 + 当前用户输入
+      expect(promptData.messages.map((m: { role: string }) => m.role)).toEqual([
+        "system",
+        "user",
+        "assistant",
+        "user",
+      ]);
     });
 
     it("应该缓存最新的提示词", async () => {

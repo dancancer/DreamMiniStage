@@ -36,7 +36,7 @@ export class MemoryStorageNode extends NodeBase {
       nextPrompts: input.nextPrompts,
       event: input.event,
       presetId: input.presetId,
-      memoryStorageResult: null as any,
+      memoryStorageResult: null as unknown,
       characterId,
       userInput,
       language,
@@ -84,7 +84,7 @@ export class MemoryStorageNode extends NodeBase {
       ) as {
         success: boolean;
         extractedCount: number;
-        extractedMemories?: any[];
+        extractedMemories?: unknown[];
         confidence?: number;
         reasoning?: string;
         error?: string;

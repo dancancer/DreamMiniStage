@@ -1,3 +1,22 @@
+<!-- OPENSPEC:START -->
+# OpenSpec Instructions
+
+These instructions are for AI assistants working in this project.
+
+Always open `@/openspec/AGENTS.md` when the request:
+- Mentions planning or proposals (words like proposal, spec, change, plan)
+- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
+- Sounds ambiguous and you need the authoritative spec before coding
+
+Use `@/openspec/AGENTS.md` to learn:
+- How to create and apply change proposals
+- Spec format and conventions
+- Project structure and guidelines
+
+Keep this managed block so 'openspec update' can refresh the instructions.
+
+<!-- OPENSPEC:END -->
+
 # Repository Guidelines
 
 ## Project Structure & Module Organization
@@ -72,6 +91,7 @@ import { cn } from "@/lib/utils";
 ## Testing Guidelines
 - Vitest + jsdom; tests are `.test.ts[x]` (see `components/__tests__/ChatHtmlBubble.test.ts`).
 - Add or extend tests for new logic and edge cases (string parsing, provider selection, state transitions). Run `pnpm test` locally before submitting.
+- **AI 执行测试时必须使用 `pnpm vitest run <test-file>` 而非 `pnpm test`**，因为 `pnpm test` 会启动 watch 模式，导致进程不会自动退出，AI 会陷入长时间等待。`vitest run` 会在测试完成后自动退出。
 
 ## Commit & Pull Request Guidelines
 - Follow conventional commits seen in history (`feat:`, `fix:`, `docs:`, `refactor:`). Keep messages concise and scoped.

@@ -15,6 +15,10 @@ import {
 } from "@/lib/models/memory-model";
 import { v4 as uuidv4 } from "uuid";
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   类型定义
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 export interface MemoryRecord {
   id: string;
   characterId: string;
@@ -76,10 +80,10 @@ export class LocalMemoryOperations {
    * Create a new memory entry for a character
    */
   static async createMemoryEntry(
-    characterId: string, 
+    characterId: string,
     type: MemoryType,
     content: string,
-    metadata: any = {},
+    metadata: Record<string, unknown> = {},
     tags: string[] = [],
     importance: number = 0.5,
   ): Promise<MemoryEntry> {
@@ -94,7 +98,7 @@ export class LocalMemoryOperations {
       metadata: {
         source: "manual",
         confidence: 1.0,
-        ...metadata,
+        ...(metadata as object),
       },
       tags,
       importance,

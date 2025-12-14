@@ -20,7 +20,7 @@ export interface WorkflowNode {
 }
 
 export interface WorkflowParams {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export class ValidationError extends Error {
@@ -32,7 +32,7 @@ export class ValidationError extends Error {
 
 export abstract class BaseWorkflow {
   protected config: WorkflowConfig;
-  protected registry: { [key: string]: any };
+  protected registry: { [key: string]: unknown };
   protected context: NodeContext;
 
   constructor() {
@@ -42,7 +42,7 @@ export abstract class BaseWorkflow {
     this.validateWorkflowConfig();
   }
 
-  protected abstract getNodeRegistry(): { [key: string]: any };
+  protected abstract getNodeRegistry(): { [key: string]: unknown };
   protected abstract getWorkflowConfig(): WorkflowConfig;
 
   protected validateWorkflowConfig(): void {
@@ -130,9 +130,13 @@ export abstract class BaseWorkflow {
     }
   }
 
-  public async execute(params: WorkflowParams): Promise<any> {
+  public async execute(params: WorkflowParams): Promise<unknown> {
     try {
-      const engine = new WorkflowEngine(this.config, this.registry, this.context);
+      const engine = new WorkflowEngine(
+        this.config,
+        this.registry as import("../nodeflow/types").NodeRegistry,
+        this.context,
+      );
       const result = await engine.execute(params, this.context);
       return result;
     } catch (error) {

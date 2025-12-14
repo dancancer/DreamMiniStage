@@ -21,7 +21,7 @@ import type {
 /**
  * Message handler function type
  */
-type MessageHandler<T = any> = (data: MessageBridgeData<T>) => void | Promise<void>;
+type MessageHandler<T = unknown> = (data: MessageBridgeData<T>) => void | Promise<void>;
 
 /**
  * Message Bridge Configuration
@@ -71,8 +71,8 @@ export class MessageBridge {
   private timeout: number;
   private handlers: Map<MessageType, Set<MessageHandler>>;
   private pendingRequests: Map<string, {
-    resolve: (value: any) => void;
-    reject: (error: any) => void;
+    resolve: (value: unknown) => void;
+    reject: (error: unknown) => void;
     timeout: NodeJS.Timeout;
   }>;
   private messageListener: ((event: MessageEvent) => void) | null = null;
@@ -158,13 +158,13 @@ export class MessageBridge {
   /**
    * Parse and validate message data
    */
-  private parseMessage(data: any): MessageBridgeData | null {
+  private parseMessage(data: unknown): MessageBridgeData | null {
     try {
       // If already an object with type, return it
       if (typeof data === "object" && data !== null && "type" in data) {
         return data as MessageBridgeData;
       }
-      
+
       // Try to parse as JSON string
       if (typeof data === "string") {
         const parsed = JSON.parse(data);
@@ -172,7 +172,7 @@ export class MessageBridge {
           return parsed as MessageBridgeData;
         }
       }
-      
+
       return null;
     } catch (error) {
       return null;
@@ -230,7 +230,7 @@ export class MessageBridge {
   /**
    * Send a message to the target window
    */
-  public send<T = any>(type: MessageType, payload?: T, id?: string): void {
+  public send<T = unknown>(type: MessageType, payload?: T, id?: string): void {
     const message: MessageBridgeData<T> = {
       type,
       payload,
@@ -238,11 +238,11 @@ export class MessageBridge {
       timestamp: Date.now(),
       origin: window.location.origin,
     };
-    
+
     if (this.debug) {
       console.log("[MessageBridge] Sending:", type, message);
     }
-    
+
     try {
       const targetOrigin = this.allowedOrigins.includes("*")
         ? "*"
@@ -253,11 +253,11 @@ export class MessageBridge {
       throw error;
     }
   }
-  
+
   /**
    * Send a message and wait for a response
    */
-  public async request<TRequest = any, TResponse = any>(
+  public async request<TRequest = unknown, TResponse = unknown>(
     type: MessageType,
     payload?: TRequest,
     timeoutMs?: number,
@@ -268,36 +268,40 @@ export class MessageBridge {
         this.pendingRequests.delete(id);
         reject(new Error(`Request timeout: ${type}`));
       }, timeoutMs || this.timeout);
-      
-      this.pendingRequests.set(id, { resolve, reject, timeout });
+
+      this.pendingRequests.set(id, {
+        resolve: resolve as (value: unknown) => void,
+        reject,
+        timeout,
+      });
       this.send(type, payload, id);
     });
   }
-  
+
   /**
    * Register a message handler
    */
-  public on<T = any>(type: MessageType, handler: MessageHandler<T>): () => void {
+  public on<T = unknown>(type: MessageType, handler: MessageHandler<T>): () => void {
     if (!this.handlers.has(type)) {
       this.handlers.set(type, new Set());
     }
-    
-    this.handlers.get(type)!.add(handler as MessageHandler);
-    
+
+    this.handlers.get(type)!.add(handler as MessageHandler<unknown>);
+
     // Return unsubscribe function
-    return () => this.off(type, handler);
+    return () => this.off(type, handler as MessageHandler<unknown>);
   }
-  
+
   /**
    * Register a one-time message handler
    */
-  public once<T = any>(type: MessageType, handler: MessageHandler<T>): () => void {
-    const wrappedHandler = (data: MessageBridgeData<T>) => {
-      handler(data);
+  public once<T = unknown>(type: MessageType, handler: MessageHandler<T>): () => void {
+    const wrappedHandler: MessageHandler<unknown> = (data: MessageBridgeData<unknown>) => {
+      handler(data as MessageBridgeData<T>);
       this.off(type, wrappedHandler);
     };
-    
-    return this.on(type, wrappedHandler);
+
+    return this.on(type, wrappedHandler as MessageHandler<T>);
   }
   
   /**

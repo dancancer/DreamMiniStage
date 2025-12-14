@@ -6,7 +6,7 @@
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
-type EventCallback = (data?: any) => void;
+type EventCallback = (data?: unknown) => void;
 
 export class PluginEventEmitter {
   private listeners: Map<string, EventCallback[]> = new Map();
@@ -18,7 +18,7 @@ export class PluginEventEmitter {
     this.listeners.get(event)!.push(callback);
   }
 
-  emit(event: string, data?: any): void {
+  emit(event: string, data?: unknown): void {
     const callbacks = this.listeners.get(event);
     if (!callbacks) return;
 

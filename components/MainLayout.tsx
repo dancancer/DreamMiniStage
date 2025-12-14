@@ -57,15 +57,16 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       try {
         const pluginRegistry = PluginRegistry.getInstance();
         const pluginDiscovery = PluginDiscovery.getInstance();
-        
+
         await pluginRegistry.initialize();
         await pluginDiscovery.discoverPlugins();
-        
-        // Expose plugin system to global scope for testing and debugging
-        (window as any).pluginRegistry = pluginRegistry;
-        (window as any).pluginDiscovery = pluginDiscovery;
-        (window as any).toolRegistry = ToolRegistry;
-        
+
+        // ═══════════════════════════════════════════════════════════════════
+        // 挂载到 window 对象用于调试
+        // ═══════════════════════════════════════════════════════════════════
+        window.pluginRegistry = pluginRegistry;
+        window.pluginDiscovery = pluginDiscovery;
+
         console.log("🔌 Enhanced plugin system initialized and exposed to window object");
       } catch (error) {
         console.error("❌ Failed to initialize enhanced plugin system:", error);

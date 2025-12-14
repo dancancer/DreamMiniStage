@@ -6,13 +6,13 @@ export function adaptText(text: string, language: "en" | "zh", username?: string
   return parsed;
 }
   
-export function adaptCharacterData(
-  characterData: any,
+export function adaptCharacterData<T extends Record<string, unknown>>(
+  characterData: T,
   language: "en" | "zh",
   username?: string,
-): any {
-  const result = { ...characterData };
-  const charReplacement = characterData.name || "";
+): T {
+  const result = { ...characterData } as Record<string, unknown>;
+  const charReplacement = (characterData.name as string) || "";
   
   const fieldsToProcess = [
     "description", "personality", "first_mes", "scenario",
@@ -20,28 +20,25 @@ export function adaptCharacterData(
   ];
   
   for (const field of fieldsToProcess) {
-    if (result[field]) {
-      let processed = adaptText(result[field], language, username, charReplacement);
-      result[field] = processed;
+    if (result[field] && typeof result[field] === "string") {
+      result[field] = adaptText(result[field] as string, language, username, charReplacement);
     }
   }
   
   if (result.character_book) {
-    const bookEntries = Array.isArray(result.character_book)
-      ? result.character_book
-      : (result.character_book.entries || []);
+    const book = result.character_book as { entries?: unknown[] } | unknown[];
+    const bookEntries = Array.isArray(book) ? book : (book.entries || []);
   
-    result.character_book = bookEntries.map((entry: any) => {
-      const processedEntry = { ...entry };
+    result.character_book = bookEntries.map((entry: unknown) => {
+      const e = entry as Record<string, unknown>;
+      const processedEntry = { ...e };
   
-      if (processedEntry.comment) {
-        let processed = adaptText(processedEntry.comment, language, username, charReplacement);
-        processedEntry.comment = processed;
+      if (processedEntry.comment && typeof processedEntry.comment === "string") {
+        processedEntry.comment = adaptText(processedEntry.comment, language, username, charReplacement);
       }
   
-      if (processedEntry.content) {
-        let processed = adaptText(processedEntry.content, language, username, charReplacement);
-        processedEntry.content = processed;
+      if (processedEntry.content && typeof processedEntry.content === "string") {
+        processedEntry.content = adaptText(processedEntry.content, language, username, charReplacement);
       }
   
       return processedEntry;
@@ -49,13 +46,11 @@ export function adaptCharacterData(
   }
   
   if (Array.isArray(result.alternate_greetings)) {
-    for (let i = 0; i < result.alternate_greetings.length; i++) {
-      let greeting = result.alternate_greetings[i];
-      greeting = adaptText(greeting, language, username, charReplacement);
-      result.alternate_greetings[i] = greeting;
-    }
+    result.alternate_greetings = result.alternate_greetings.map((greeting: unknown) =>
+      typeof greeting === "string" ? adaptText(greeting, language, username, charReplacement) : greeting,
+    );
   }
   
-  return result;
+  return result as T;
 }
   

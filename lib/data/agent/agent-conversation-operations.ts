@@ -6,6 +6,10 @@ import {
   KnowledgeEntry,
   GenerationOutput,
   TaskEntry,
+  StatusEntry,
+  UserSettingEntry,
+  WorldViewEntry,
+  SupplementEntry,
 } from "../../models/agent-model";
 import { 
   AGENT_CONVERSATIONS_FILE, 
@@ -355,7 +359,7 @@ export class ResearchSessionOperations {
       id: msg.id,
       role: msg.role as "agent" | "user",
       content: msg.content,
-      type: msg.type || "agent_action" as any,
+      type: msg.type || "agent_action" as unknown,
       timestamp: new Date(msg.timestamp || Date.now()),
       metadata: msg.metadata,
     }));
@@ -442,10 +446,10 @@ export class ResearchSessionOperations {
   static async appendWorldbookData(
     sessionId: string,
     worldbookData: {
-      status_data?: any;
-      user_setting_data?: any;
-      world_view_data?: any;
-      supplement_data?: any[];
+      status_data?: StatusEntry;
+      user_setting_data?: UserSettingEntry;
+      world_view_data?: WorldViewEntry;
+      supplement_data?: SupplementEntry[];
     },
   ): Promise<void> {
     const session = await this.getSessionById(sessionId);
@@ -520,9 +524,9 @@ export class ResearchSessionOperations {
   /**
    * Get current sub-problem from the first task in queue
    */
-  static async getCurrentSubProblem(sessionId: string): Promise<{ 
-    task?: TaskEntry, 
-    subProblem?: any 
+  static async getCurrentSubProblem(sessionId: string): Promise<{
+    task?: TaskEntry,
+    subProblem?: unknown
   }> {
     const session = await this.getSessionById(sessionId);
     if (!session || !session.research_state.task_queue || session.research_state.task_queue.length === 0) {

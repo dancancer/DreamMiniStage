@@ -1,0 +1,776 @@
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║                        useRegexScripts Hook                              ║
+ * ║                                                                          ║
+ * ║  正则脚本管理核心逻辑：CRUD 操作、设置管理、数据加载                         ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
+ */
+
+"use client";
+
+import { useState, useCallback, useEffect } from "react";
+import { 
+  RegexScript, 
+  RegexScriptSettings,
+  ScriptSource,
+} from "@/lib/models/regex-script-model";
+import { getRegexScripts } from "@/function/regex/get";
+import { getRegexScriptSettings } from "@/function/regex/get-setting";
+import { addRegexScript } from "@/function/regex/add";
+import { updateRegexScript } from "@/function/regex/update";
+import { deleteRegexScript } from "@/function/regex/delete";
+import { updateRegexScriptSettings } from "@/function/regex/update-setting";
+import { RegexScriptOperations } from "@/lib/data/roleplay/regex-script-operation";
+import { RegexPresetOperations } from "@/lib/data/roleplay/regex-preset-operation";
+import { AllowListOperations } from "@/lib/data/roleplay/regex-allow-list-operation";
+import { listGlobalRegexScripts, getGlobalRegexScript, GlobalRegexScript, exportToGlobalRegexScripts } from "@/function/regex/global";
+import { PresetOperations } from "@/lib/data/roleplay/preset-operation";
+import { normalizeRegexScript } from "@/lib/models/regex-script-model";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   类型定义
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+export type SortField = "priority" | "name";
+export type SortOrder = "asc" | "desc";
+export type FilterType = "all" | "enabled" | "disabled" | "imported";
+
+export interface ScriptWithKey extends Partial<RegexScript> {
+  scriptKey?: string;
+}
+
+export interface SourceScripts {
+  ownerId: string;
+  name?: string;
+  scripts: Record<string, RegexScript>;
+  metadata?: GlobalRegexScript;
+  source: ScriptSource;
+  readOnly?: boolean;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   工具函数 - 纯函数，无副作用
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+export function filterScripts(
+  scripts: Record<string, RegexScript>,
+  filterBy: FilterType
+): [string, RegexScript][] {
+  const entries = Object.entries(scripts);
+  if (filterBy === "all") return entries;
+
+  const filterMap: Record<FilterType, (s: RegexScript) => boolean> = {
+    all: () => true,
+    enabled: s => !s.disabled,
+    disabled: s => !!s.disabled,
+    imported: s => s.extensions?.imported === true,
+  };
+
+  return entries.filter(([, script]) => filterMap[filterBy](script));
+}
+
+export function sortScripts(
+  entries: [string, RegexScript][],
+  sortBy: SortField,
+  sortOrder: SortOrder
+): [string, RegexScript][] {
+  const sorted = [...entries].sort(([, a], [, b]) => {
+    const comparison = sortBy === "name"
+      ? (a.scriptName || "").localeCompare(b.scriptName || "")
+      : (a.placement?.[0] || 999) - (b.placement?.[0] || 999);
+    return sortOrder === "desc" ? -comparison : comparison;
+  });
+  return sorted;
+}
+
+export function truncateText(text: string, maxLength = 50): string {
+  return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   主 Hook
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+interface UseRegexScriptsOptions {
+  characterId: string;
+}
+
+const DEFAULT_SETTINGS: RegexScriptSettings = {
+  enabled: true,
+  applyToPrompt: false,
+  applyToResponse: true,
+};
+
+export function useRegexScripts({ characterId }: UseRegexScriptsOptions) {
+  // 数据状态
+  const [scripts, setScripts] = useState<Record<string, RegexScript>>({});
+  const [settings, setSettings] = useState<RegexScriptSettings>(DEFAULT_SETTINGS);
+  const [globalSources, setGlobalSources] = useState<SourceScripts[]>([]);
+  const [presetSource, setPresetSource] = useState<SourceScripts | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 加载数据
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [scriptsData, settingsData] = await Promise.all([
+        getRegexScripts(characterId),
+        getRegexScriptSettings(characterId),
+      ]);
+      setScripts(scriptsData || {});
+      setSettings(settingsData);
+    } catch (error) {
+      console.error("Error loading regex scripts:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [characterId]);
+
+  // 加载全局脚本（所有 global_regex_*）
+  const loadGlobalSources = useCallback(async () => {
+    try {
+      const result = await listGlobalRegexScripts();
+      if (!result.success) {
+        setGlobalSources([]);
+        return;
+      }
+
+      const bundles: SourceScripts[] = [];
+      for (const meta of result.globalRegexScripts) {
+        const detail = await getGlobalRegexScript(meta.id);
+        const rawScripts = detail.scripts || {};
+        const normalized = Object.fromEntries(
+          Object.entries(rawScripts).map(([key, script]) => {
+            const scriptKey = script.scriptKey || key;
+            return [scriptKey, normalizeRegexScript({
+              ...script,
+              scriptKey,
+              source: ScriptSource.GLOBAL,
+              sourceId: meta.id,
+            })];
+          }),
+        );
+
+        bundles.push({
+          ownerId: meta.id,
+          name: meta.name,
+          metadata: meta,
+          scripts: normalized,
+          source: ScriptSource.GLOBAL,
+        });
+      }
+
+      setGlobalSources(bundles);
+    } catch (error) {
+      console.error("Error loading global regex scripts:", error);
+      setGlobalSources([]);
+    }
+  }, []);
+
+  // 加载预设正则（从启用的预设 extensions.regex_scripts 提取）
+  const loadPresetSource = useCallback(async () => {
+    try {
+      const presets = await PresetOperations.getAllPresets();
+      const enabled = presets.find(p => p.enabled !== false);
+      if (!enabled) {
+        setPresetSource(null);
+        return;
+      }
+
+      const ext = (enabled as any).extensions?.regex_scripts || (enabled as any).regex_scripts || [];
+      const scriptsRecord: Record<string, RegexScript> = {};
+
+      // 1) 解析 extensions.regex_scripts
+      if (Array.isArray(ext)) {
+        ext.forEach((script: any, idx: number) => {
+          if (!script || !script.findRegex) return;
+          const key = script.scriptKey || script.id || `preset_${idx}`;
+          scriptsRecord[key] = normalizeRegexScript({
+            ...script,
+            scriptKey: key,
+            source: ScriptSource.PRESET,
+            sourceId: enabled.id || "preset",
+          });
+        });
+      }
+
+      // 2) 解析 Prompt 内容中的 RegexBinding.regexes（SillyTavern 兼容）
+      if (Array.isArray((enabled as any).prompts)) {
+        (enabled as any).prompts.forEach((prompt: any, idx: number) => {
+          if (!prompt?.content || typeof prompt.content !== "string") return;
+          try {
+            const parsed = JSON.parse(prompt.content);
+            const regexes = parsed?.RegexBinding?.regexes;
+            if (!Array.isArray(regexes)) return;
+            regexes.forEach((script: any, rIdx: number) => {
+              if (!script?.findRegex) return;
+              const key = script.scriptKey || script.id || `preset_${idx}_${rIdx}`;
+              scriptsRecord[key] = normalizeRegexScript({
+                ...script,
+                scriptKey: key,
+                source: ScriptSource.PRESET,
+                sourceId: enabled.id || "preset",
+              });
+            });
+          } catch {
+            // 非 JSON prompt 忽略
+          }
+        });
+      }
+
+      if (Object.keys(scriptsRecord).length === 0) {
+        setPresetSource(null);
+        return;
+      }
+
+      setPresetSource({
+        ownerId: enabled.id || "preset",
+        name: enabled.name,
+        scripts: scriptsRecord,
+        source: ScriptSource.PRESET,
+        readOnly: true,
+      });
+    } catch (error) {
+      console.error("Error loading preset regex scripts:", error);
+      setPresetSource(null);
+    }
+  }, []);
+
+  // 保存脚本
+  const saveScript = useCallback(async (script: ScriptWithKey) => {
+    setIsSaving(true);
+    try {
+      const { scriptKey } = script;
+      if (scriptKey) {
+        await updateRegexScript(characterId, scriptKey, script);
+        setScripts(prev => ({
+          ...prev,
+          [scriptKey]: { ...prev[scriptKey], ...script },
+        }));
+      } else {
+        const newKey = await addRegexScript(characterId, script as RegexScript);
+        if (newKey) {
+          setScripts(prev => ({
+            ...prev,
+            [newKey]: { ...script as RegexScript, scriptKey: newKey },
+          }));
+        } else {
+          await loadData();
+        }
+      }
+    } catch (error) {
+      console.error("Error saving script:", error);
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [characterId, loadData]);
+
+  // 保存到指定 owner（支持全局/角色）
+  const saveScriptForOwner = useCallback(async (ownerId: string, script: ScriptWithKey) => {
+    setIsSaving(true);
+    try {
+      const scriptKey = script.scriptKey;
+      if (scriptKey) {
+        await updateRegexScript(ownerId, scriptKey, script);
+      } else {
+        await addRegexScript(ownerId, script as RegexScript);
+      }
+      if (ownerId === characterId) {
+        await loadData();
+      } else {
+        await loadGlobalSources();
+      }
+    } catch (error) {
+      console.error("Error saving script for owner:", error);
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [characterId, loadData, loadGlobalSources]);
+
+  // 删除脚本
+  const deleteScript = useCallback(async (scriptId: string) => {
+    try {
+      await deleteRegexScript(characterId, scriptId);
+      setScripts(prev => {
+        const next = { ...prev };
+        delete next[scriptId];
+        return next;
+      });
+      return true;
+    } catch (error) {
+      console.error("Error deleting script:", error);
+      return false;
+    }
+  }, [characterId]);
+
+  const deleteScriptForOwner = useCallback(async (ownerId: string, scriptId: string) => {
+    try {
+      await deleteRegexScript(ownerId, scriptId);
+      if (ownerId === characterId) {
+        setScripts(prev => {
+          const next = { ...prev };
+          delete next[scriptId];
+          return next;
+        });
+      } else {
+        await loadGlobalSources();
+      }
+      return true;
+    } catch (error) {
+      console.error("Error deleting script for owner:", error);
+      return false;
+    }
+  }, [characterId, loadGlobalSources]);
+
+  // 切换脚本启用状态
+  const toggleScript = useCallback(async (scriptId: string) => {
+    const script = scripts[scriptId];
+    if (!script) return;
+
+    const newDisabled = !script.disabled;
+
+    // 乐观更新
+    setScripts(prev => ({
+      ...prev,
+      [scriptId]: { ...prev[scriptId], disabled: newDisabled },
+    }));
+
+    try {
+      await updateRegexScript(characterId, scriptId, { disabled: newDisabled });
+    } catch (error) {
+      // 回滚
+      setScripts(prev => ({
+        ...prev,
+        [scriptId]: { ...prev[scriptId], disabled: !newDisabled },
+      }));
+      console.error("Error toggling script:", error);
+    }
+  }, [characterId, scripts]);
+
+  const toggleScriptForOwner = useCallback(async (ownerId: string, scriptId: string, currentScripts: Record<string, RegexScript>) => {
+    const script = currentScripts[scriptId];
+    if (!script) return;
+
+    const newDisabled = !script.disabled;
+
+    try {
+      await updateRegexScript(ownerId, scriptId, { disabled: newDisabled });
+      if (ownerId === characterId) {
+        setScripts(prev => ({
+          ...prev,
+          [scriptId]: { ...prev[scriptId], disabled: newDisabled },
+        }));
+      } else {
+        await loadGlobalSources();
+      }
+    } catch (error) {
+      console.error("Error toggling script for owner:", error);
+    }
+  }, [characterId, loadGlobalSources]);
+
+  // 更新设置
+  const updateSettings = useCallback(async (updates: Partial<RegexScriptSettings>) => {
+    try {
+      const newSettings = await updateRegexScriptSettings(characterId, updates);
+      setSettings(newSettings);
+    } catch (error) {
+      console.error("Error updating settings:", error);
+    }
+  }, [characterId]);
+
+  const exportSelectedToGlobal = useCallback(async (
+    ownerId: string,
+    scriptIds: string[],
+    options?: { name?: string; description?: string; sourceCharacterName?: string },
+  ) => {
+    if (scriptIds.length === 0) return { success: false, message: "No scripts selected" };
+    try {
+      const result = await exportToGlobalRegexScripts(ownerId, scriptIds, options);
+      await loadGlobalSources();
+      return result;
+    } catch (error: any) {
+      console.error("Error exporting to global:", error);
+      return { success: false, message: error?.message || "Export failed" };
+    }
+  }, [loadGlobalSources]);
+
+  // 初始化加载
+  useEffect(() => {
+    loadData();
+    loadGlobalSources();
+    loadPresetSource();
+  }, [loadData, loadGlobalSources, loadPresetSource]);
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     批量操作方法
+     
+     设计理念：
+     - 乐观更新 UI，失败时回滚
+     - 操作完成后重新加载数据，确保一致性
+     ───────────────────────────────────────────────────────────────────────── */
+  
+  const bulkEnable = useCallback(async (scriptIds: string[]) => {
+    if (scriptIds.length === 0) return false;
+    
+    // 乐观更新
+    setScripts(prev => {
+      const next = { ...prev };
+      scriptIds.forEach(id => {
+        if (next[id]) {
+          next[id] = { ...next[id], disabled: false };
+        }
+      });
+      return next;
+    });
+    
+    try {
+      const success = await RegexScriptOperations.bulkEnable(characterId, scriptIds);
+      if (!success) {
+        await loadData(); // 回滚
+      }
+      return success;
+    } catch (error) {
+      console.error("Error bulk enabling scripts:", error);
+      await loadData(); // 回滚
+      return false;
+    }
+  }, [characterId, loadData]);
+  
+  const bulkDisable = useCallback(async (scriptIds: string[]) => {
+    if (scriptIds.length === 0) return false;
+    
+    // 乐观更新
+    setScripts(prev => {
+      const next = { ...prev };
+      scriptIds.forEach(id => {
+        if (next[id]) {
+          next[id] = { ...next[id], disabled: true };
+        }
+      });
+      return next;
+    });
+    
+    try {
+      const success = await RegexScriptOperations.bulkDisable(characterId, scriptIds);
+      if (!success) {
+        await loadData(); // 回滚
+      }
+      return success;
+    } catch (error) {
+      console.error("Error bulk disabling scripts:", error);
+      await loadData(); // 回滚
+      return false;
+    }
+  }, [characterId, loadData]);
+  
+  const bulkDelete = useCallback(async (scriptIds: string[]) => {
+    if (scriptIds.length === 0) return false;
+    
+    // 乐观更新
+    setScripts(prev => {
+      const next = { ...prev };
+      scriptIds.forEach(id => {
+        delete next[id];
+      });
+      return next;
+    });
+    
+    try {
+      const success = await RegexScriptOperations.bulkDelete(characterId, scriptIds);
+      if (!success) {
+        await loadData(); // 回滚
+      }
+      return success;
+    } catch (error) {
+      console.error("Error bulk deleting scripts:", error);
+      await loadData(); // 回滚
+      return false;
+    }
+  }, [characterId, loadData]);
+
+  const bulkEnableForOwner = useCallback(async (ownerId: string, scriptIds: string[], currentScripts: Record<string, RegexScript>) => {
+    if (scriptIds.length === 0) return false;
+    if (ownerId === characterId) return bulkEnable(scriptIds);
+    try {
+      const success = await RegexScriptOperations.bulkEnable(ownerId, scriptIds);
+      if (!success) return false;
+      await loadGlobalSources();
+      return true;
+    } catch (error) {
+      console.error("Error bulk enabling scripts for owner:", error);
+      await loadGlobalSources();
+      return false;
+    }
+  }, [bulkEnable, characterId, loadGlobalSources]);
+  
+  const bulkDisableForOwner = useCallback(async (ownerId: string, scriptIds: string[], currentScripts: Record<string, RegexScript>) => {
+    if (scriptIds.length === 0) return false;
+    if (ownerId === characterId) return bulkDisable(scriptIds);
+    try {
+      const success = await RegexScriptOperations.bulkDisable(ownerId, scriptIds);
+      if (!success) return false;
+      await loadGlobalSources();
+      return true;
+    } catch (error) {
+      console.error("Error bulk disabling scripts for owner:", error);
+      await loadGlobalSources();
+      return false;
+    }
+  }, [bulkDisable, characterId, loadGlobalSources]);
+  
+  const bulkDeleteForOwner = useCallback(async (ownerId: string, scriptIds: string[], currentScripts: Record<string, RegexScript>) => {
+    if (scriptIds.length === 0) return false;
+    if (ownerId === characterId) return bulkDelete(scriptIds);
+    try {
+      const success = await RegexScriptOperations.bulkDelete(ownerId, scriptIds);
+      if (!success) return false;
+      await loadGlobalSources();
+      return true;
+    } catch (error) {
+      console.error("Error bulk deleting scripts for owner:", error);
+      await loadGlobalSources();
+      return false;
+    }
+  }, [bulkDelete, characterId, loadGlobalSources]);
+  
+  const bulkMove = useCallback(async (
+    scriptIds: string[],
+    targetSource: ScriptSource,
+    targetOwnerId?: string,
+  ) => {
+    if (scriptIds.length === 0) return false;
+    
+    try {
+      const success = await RegexScriptOperations.bulkMove(
+        characterId,
+        scriptIds,
+        targetSource,
+        targetOwnerId,
+      );
+      
+      if (success) {
+        await loadData(); // 重新加载以反映变更
+      }
+      
+      return success;
+    } catch (error) {
+      console.error("Error bulk moving scripts:", error);
+      return false;
+    }
+  }, [characterId, loadData]);
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     预设操作方法
+     
+     设计理念：
+     - 预设是脚本状态的快照，不是脚本副本
+     - 保存时捕获当前所有脚本的启用/禁用状态
+     - 加载时应用状态到当前脚本集合
+     ───────────────────────────────────────────────────────────────────────── */
+  
+  const savePreset = useCallback(async (
+    name: string,
+    description?: string,
+  ) => {
+    try {
+      // 捕获当前所有脚本的状态
+      const scriptStates: Record<string, boolean> = {};
+      Object.entries(scripts).forEach(([key, script]) => {
+        scriptStates[key] = !script.disabled;
+      });
+      
+      await RegexPresetOperations.savePreset(name, {
+        description,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        scriptStates,
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error saving preset:", error);
+      return false;
+    }
+  }, [scripts]);
+  
+  const loadPreset = useCallback(async (name: string) => {
+    try {
+      const preset = await RegexPresetOperations.loadPreset(name);
+      if (!preset) {
+        return null;
+      }
+      return preset;
+    } catch (error) {
+      console.error("Error loading preset:", error);
+      return null;
+    }
+  }, []);
+  
+  const applyPreset = useCallback(async (name: string) => {
+    try {
+      await RegexPresetOperations.applyPreset(name, characterId);
+      await loadData(); // 重新加载以反映变更
+      return true;
+    } catch (error) {
+      console.error("Error applying preset:", error);
+      return false;
+    }
+  }, [characterId, loadData]);
+  
+  const deletePreset = useCallback(async (name: string) => {
+    try {
+      await RegexPresetOperations.deletePreset(name);
+      return true;
+    } catch (error) {
+      console.error("Error deleting preset:", error);
+      return false;
+    }
+  }, []);
+  
+  const listPresets = useCallback(async () => {
+    try {
+      const presets = await RegexPresetOperations.listPresets();
+      return presets;
+    } catch (error) {
+      console.error("Error listing presets:", error);
+      return [];
+    }
+  }, []);
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     授权控制方法
+     
+     设计理念：
+     - 白名单机制，默认拒绝，显式允许
+     - 提供简单的添加/移除接口
+     - 角色级别的授权控制
+     ───────────────────────────────────────────────────────────────────────── */
+  
+  const allowCharacter = useCallback(async (characterId: string) => {
+    try {
+      await AllowListOperations.allowCharacter(characterId);
+      return true;
+    } catch (error) {
+      console.error("Error allowing character:", error);
+      return false;
+    }
+  }, []);
+  
+  const disallowCharacter = useCallback(async (characterId: string) => {
+    try {
+      await AllowListOperations.disallowCharacter(characterId);
+      return true;
+    } catch (error) {
+      console.error("Error disallowing character:", error);
+      return false;
+    }
+  }, []);
+  
+  const isCharacterAllowed = useCallback(async (characterId: string) => {
+    try {
+      return await AllowListOperations.isCharacterAllowed(characterId);
+    } catch (error) {
+      console.error("Error checking character allowance:", error);
+      return false;
+    }
+  }, []);
+  
+  const allowPreset = useCallback(async (apiId: string, presetName: string) => {
+    try {
+      await AllowListOperations.allowPreset(apiId, presetName);
+      return true;
+    } catch (error) {
+      console.error("Error allowing preset:", error);
+      return false;
+    }
+  }, []);
+  
+  const disallowPreset = useCallback(async (apiId: string, presetName: string) => {
+    try {
+      await AllowListOperations.disallowPreset(apiId, presetName);
+      return true;
+    } catch (error) {
+      console.error("Error disallowing preset:", error);
+      return false;
+    }
+  }, []);
+  
+  const isPresetAllowed = useCallback(async (apiId: string, presetName: string) => {
+    try {
+      return await AllowListOperations.isPresetAllowed(apiId, presetName);
+    } catch (error) {
+      console.error("Error checking preset allowance:", error);
+      return false;
+    }
+  }, []);
+  
+  const getAllowList = useCallback(async () => {
+    try {
+      return await AllowListOperations.getAllowList();
+    } catch (error) {
+      console.error("Error getting allow list:", error);
+      return { characters: [], presets: {} };
+    }
+  }, []);
+
+  // 统计信息
+  const stats = {
+    total: Object.keys(scripts).length,
+    enabled: Object.values(scripts).filter(s => !s.disabled).length,
+    disabled: Object.values(scripts).filter(s => s.disabled).length,
+  };
+
+  return {
+    // 数据
+    scopedScripts: scripts,
+    settings,
+    stats,
+    globalSources,
+    presetSource,
+
+    // 状态
+    isLoading,
+    isSaving,
+
+    // 操作
+    saveScript,
+    saveScriptForOwner,
+    deleteScript,
+    deleteScriptForOwner,
+    toggleScript,
+    toggleScriptForOwner,
+    updateSettings,
+    reload: loadData,
+    reloadGlobals: loadGlobalSources,
+    reloadPreset: loadPresetSource,
+    exportSelectedToGlobal,
+    
+    // 批量操作
+    bulkEnable,
+    bulkDisable,
+    bulkDelete,
+    bulkEnableForOwner,
+    bulkDisableForOwner,
+    bulkDeleteForOwner,
+    bulkMove,
+    
+    // 预设操作
+    savePreset,
+    loadPreset,
+    applyPreset,
+    deletePreset,
+    listPresets,
+    
+    // 授权控制
+    allowCharacter,
+    disallowCharacter,
+    isCharacterAllowed,
+    allowPreset,
+    disallowPreset,
+    isPresetAllowed,
+    getAllowList,
+  };
+}

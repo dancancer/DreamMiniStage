@@ -1,7 +1,7 @@
 import { importPresetFromJson } from "@/function/preset/import";
 import { PresetOperations } from "@/lib/data/roleplay/preset-operation";
-import { PromptKey } from "@/lib/prompts/preset-prompts";
-import { getJSON, getString, setJSON } from "@/lib/storage/client-storage";
+import { getJSON, setJSON } from "@/lib/storage/client-storage";
+import type { SystemPresetType } from "@/lib/nodeflow/PresetNode/PresetNodeTools";
 
 interface GithubPreset {
   name: string;
@@ -19,68 +19,7 @@ interface GithubPreset {
 const GITHUB_API_URL = "https://api.github.com/repos/DreamMiniStage/Preset/contents";
 const GITHUB_REPO_URL = "https://raw.githubusercontent.com/DreamMiniStage/Preset/main";
 
-const AVAILABLE_PRESETS: GithubPreset[] = [
-  {
-    name: "mirror_realm",
-    displayName: {
-      zh: "灵镜之境",
-      en: "Mirror Realm",
-    },
-    description: {
-      zh: "多面灵魂角色协议，情感互动专家",
-      en: "Multi-faceted soul character protocol, emotional interaction expert",
-    },
-    filename: "system_preset",
-  },
-  {
-    name: "novel_king",
-    displayName: {
-      zh: "小说之王",
-      en: "Novel King",
-    },
-    description: {
-      zh: "史诗织梦叙事大师，故事推进专家",
-      en: "Epic narrative master, story progression expert",
-    },
-    filename: "system_preset",
-  },
-  {
-    name: "professional_heart",
-    displayName: {
-      zh: "这个杀手不太冷",
-      en: "This Killer Isn't So Cold",
-    },
-    description: {
-      zh: "严酷现实反差叙事，外冷内热情感专家",
-      en: "Harsh reality contrast narrative, cold exterior warm heart expert",
-    },
-    filename: "system_preset",
-  },
-  {
-    name: "magician",
-    displayName: {
-      zh: "魔术师",
-      en: "Magician",
-    },
-    description: {
-      zh: "魔术师织机之约，编织现实与幻想的边界",
-      en: "Magician's weaving of reality and fantasy",
-    },
-    filename: "system_preset",
-  },
-  {
-    name: "whisperer",
-    displayName: {
-      zh: "低语者",
-      en: "Whisperer",
-    },
-    description: {
-      zh: "被遗忘者的证言，边缘叙事的守护者",
-      en: "Testimonies of the forgotten, guardian of edge narratives",
-    },
-    filename: "system_preset",
-  },
-];
+const AVAILABLE_PRESETS: GithubPreset[] = [];
 
 export function getAvailableGithubPresets(): GithubPreset[] {
   return AVAILABLE_PRESETS;
@@ -259,22 +198,8 @@ function markPresetAsDownloaded(presetName: string): void {
   }
 }
 
-export function getCurrentSystemPresetType(): PromptKey {
-  try {
-    const presetType = getString("system_preset_type");
-    if (presetType === "novel_king") {
-      return "novel_king";
-    } else if (presetType === "professional_heart") {
-      return "professional_heart";
-    } else if (presetType === "magician") {
-      return "magician";
-    } else {
-      return "mirror_realm";
-    }
-  } catch (error) {
-    console.error("Error getting system preset type:", error);
-    return "mirror_realm";
-  }
+export function getCurrentSystemPresetType(): SystemPresetType {
+  return "none";
 }
 
 // export function getCurrentSystemPresetName(): string | null {

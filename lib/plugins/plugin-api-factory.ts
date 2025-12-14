@@ -7,10 +7,12 @@
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
-import { PluginAPI, CustomButton, UIComponent, SettingsTab, WSHook, MessageContext } from "./plugin-types";
+import { PluginAPI, CustomButton, UIComponent, SettingsTab, WSHook, MessageContext, PluginTool, PluginConfig, JSONValue } from "./plugin-types";
 import { ToolRegistry } from "../tools/tool-registry";
 import { PluginEventEmitter } from "./plugin-event-emitter";
 import { pluginConfigStorage } from "./plugin-config-storage";
+import { ToolType, ExecutionContext, ExecutionResult } from "../models/agent-model";
+import type { SimpleTool } from "../tools/base-tool";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    类型定义
@@ -48,17 +50,28 @@ export function createPluginAPI(pluginId: string, ctx: PluginAPIContext): Plugin
     /* ─────────────────────────────────────────────────────────────────────────
        工具注册
        ───────────────────────────────────────────────────────────────────────── */
-    registerTool: (toolId: string, tool: any) => {
-      const simpleTool = {
+    registerTool: (toolId: string, tool: PluginTool) => {
+      const simpleTool: SimpleTool = {
         name: tool.name || toolId,
         description: tool.description || "Plugin tool",
-        toolType: tool.toolType || "SUPPLEMENT" as any,
-        parameters: tool.parameters || [],
-        execute: tool.execute || (async () => ({ success: false, error: "Tool not implemented" })),
+        toolType: ToolType.SUPPLEMENT,
+        parameters: [],
+        async execute(_context: ExecutionContext, parameters: Record<string, unknown>): Promise<ExecutionResult> {
+          try {
+            const executePlugin = tool.execute || (async () => ({ success: false, error: "Tool not implemented" }));
+            const pluginResult = await executePlugin(parameters as PluginConfig);
+            if (typeof pluginResult === "object" && pluginResult !== null && "success" in pluginResult) {
+              return pluginResult as ExecutionResult;
+            }
+            return { success: true, result: pluginResult };
+          } catch (error) {
+            return { success: false, error: error instanceof Error ? error.message : String(error) };
+          }
+        },
       };
 
       Object.defineProperty(simpleTool, "constructor", { value: { name: toolId } });
-      ToolRegistry.registerDynamicTool(simpleTool as any);
+      ToolRegistry.registerDynamicTool(simpleTool);
     },
 
     unregisterTool: (toolId: string) => {
@@ -113,9 +126,9 @@ export function createPluginAPI(pluginId: string, ctx: PluginAPIContext): Plugin
     /* ─────────────────────────────────────────────────────────────────────────
        配置管理
        ───────────────────────────────────────────────────────────────────────── */
-    getConfig: () => pluginConfigStorage.get(),
-    setConfig: (config: Record<string, any>) => pluginConfigStorage.set(config),
-    updateConfig: (updates: Record<string, any>) => pluginConfigStorage.update(updates),
+    getConfig: () => pluginConfigStorage.get() as PluginConfig,
+    setConfig: (config: PluginConfig) => pluginConfigStorage.set(config as Record<string, unknown>),
+    updateConfig: (updates: PluginConfig) => pluginConfigStorage.update(updates as Record<string, unknown>),
 
     /* ─────────────────────────────────────────────────────────────────────────
        通知与日志
@@ -132,7 +145,7 @@ export function createPluginAPI(pluginId: string, ctx: PluginAPIContext): Plugin
        存储
        ───────────────────────────────────────────────────────────────────────── */
     getStorage: (key: string) => localStorage.getItem(`plugin_${key}`),
-    setStorage: (key: string, value: any) => localStorage.setItem(`plugin_${key}`, JSON.stringify(value)),
+    setStorage: (key: string, value: unknown) => localStorage.setItem(`plugin_${key}`, JSON.stringify(value)),
     removeStorage: (key: string) => localStorage.removeItem(`plugin_${key}`),
 
     /* ─────────────────────────────────────────────────────────────────────────
@@ -149,8 +162,8 @@ export function createPluginAPI(pluginId: string, ctx: PluginAPIContext): Plugin
     /* ─────────────────────────────────────────────────────────────────────────
        事件系统
        ───────────────────────────────────────────────────────────────────────── */
-    emit: (event: string, data?: any) => eventEmitter.emit(event, data),
-    on: (event: string, callback: (data: any) => void) => eventEmitter.on(event, callback),
-    off: (event: string, callback: (data: any) => void) => eventEmitter.off(event, callback),
+    emit: (event: string, data?: unknown) => eventEmitter.emit(event, data),
+    on: (event: string, callback: (data?: unknown) => void) => eventEmitter.on(event, callback),
+    off: (event: string, callback: (data?: unknown) => void) => eventEmitter.off(event, callback),
   };
 }

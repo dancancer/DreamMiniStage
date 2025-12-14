@@ -51,9 +51,9 @@ export class PluginRegistry {
       console.log("✅ Enhanced Plugin Registry initialized");
 
       // 调试用全局暴露
-      (window as any).enhancedPluginRegistry = this;
-      (window as any).pluginRegistry = this;
-      (window as any).ToolRegistry = ToolRegistry;
+      (window as unknown as Record<string, unknown>).enhancedPluginRegistry = this;
+      (window as unknown as Record<string, unknown>).pluginRegistry = this;
+      (window as unknown as Record<string, unknown>).ToolRegistry = ToolRegistry;
     } catch (error) {
       console.error("❌ Failed to initialize Enhanced Plugin Registry:", error);
       throw error;
@@ -90,7 +90,7 @@ export class PluginRegistry {
       this.eventEmitter.emit(PluginEvent.LOAD, {
         pluginId,
         event: PluginEvent.LOAD,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       });
     }
 
@@ -120,7 +120,7 @@ export class PluginRegistry {
       this.eventEmitter.emit(PluginEvent.ENABLE, {
         pluginId,
         event: PluginEvent.ENABLE,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       });
 
       console.log(`✅ Plugin enabled: ${pluginId}`);
@@ -150,7 +150,7 @@ export class PluginRegistry {
       this.eventEmitter.emit(PluginEvent.DISABLE, {
         pluginId,
         event: PluginEvent.DISABLE,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       });
 
       console.log(`✅ Plugin disabled: ${pluginId}`);
@@ -299,7 +299,7 @@ export class PluginRegistry {
      ───────────────────────────────────────────────────────────────────────── */
 
   on(event: PluginEvent | string, callback: (data?: PluginEventData) => void): void {
-    this.eventEmitter.on(event, callback);
+    this.eventEmitter.on(event, callback as (data: unknown) => void);
   }
 
   emit(event: PluginEvent | string, data?: PluginEventData): void {
@@ -310,7 +310,7 @@ export class PluginRegistry {
      工具执行（向后兼容）
      ───────────────────────────────────────────────────────────────────────── */
 
-  async executeTool(toolName: string, params: Record<string, any>): Promise<any> {
+  async executeTool(toolName: string, params: Record<string, unknown>): Promise<unknown> {
     try {
       const tool = ToolRegistry.getTool(toolName);
       if (!tool) {
@@ -338,7 +338,7 @@ export class PluginRegistry {
   }
 
   private savePluginStates(): void {
-    const config: Record<string, any> = {};
+    const config: Record<string, unknown> = {};
     for (const [pluginId, entry] of this.plugins) {
       config[pluginId] = {
         enabled: entry.enabled,

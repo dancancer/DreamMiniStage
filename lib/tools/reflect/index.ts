@@ -34,7 +34,7 @@ export class ReflectTool extends BaseTool {
     };
   }
 
-  protected async doWork(parameters: Record<string, any>, context: ExecutionContext): Promise<ExecutionResult> {
+  protected async doWork(parameters: Record<string, unknown>, context: ExecutionContext): Promise<ExecutionResult> {
     const newTasksParam = parameters.new_tasks;
     
     if (!newTasksParam || typeof newTasksParam !== "string") {

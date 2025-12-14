@@ -8,4 +8,3 @@
 
 export { default as SidebarMenuItem } from "./SidebarMenuItem";
 export { default as ResponseLengthSlider } from "./ResponseLengthSlider";
-export { default as PresetDropdown } from "./PresetDropdown";

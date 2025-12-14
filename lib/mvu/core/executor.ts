@@ -8,10 +8,10 @@
  */
 
 import type { MvuData, MvuCommand, CommandResult, StatData } from "../types";
-import { isValueWithDescription } from "../types";
+import { isValueWithDescription, getVWDValue, setVWDValue } from "../types";
 import { extractCommands, parseCommandValue, fixPath, trimQuotes } from "./parser";
 import { getSchemaForPath, validateInsert, validateDelete, reconcileSchema } from "./schema";
-import { applyTemplate } from "../data/template";
+import { applyTemplate, type ApplyTemplateOptions } from "../data/template";
 
 // ============================================================================
 //                              工具函数
@@ -78,19 +78,14 @@ function executeSet(
   const oldValue = path === "" ? deepClone(data) : getByPath(data, path);
   let newValue = parseCommandValue(args[args.length - 1]);
 
-  // 处理 ValueWithDescription
-  if (isValueWithDescription(oldValue) && !Array.isArray(newValue)) {
-    const oldActual = (oldValue as [unknown, string])[0];
+  // 处理 ValueWithDescription（兼容数组和对象格式）
+  if (isValueWithDescription(oldValue)) {
+    const oldActual = getVWDValue(oldValue);
     if (typeof oldActual === "number" && newValue !== null) {
       newValue = Number(newValue);
     }
-    (oldValue as [unknown, string])[0] = newValue;
-    return {
-      success: true,
-      path,
-      oldValue: oldActual,
-      newValue,
-    };
+    setVWDValue(oldValue, newValue);
+    return { success: true, path, oldValue: oldActual, newValue };
   }
 
   // 数字类型转换
@@ -107,7 +102,7 @@ function executeSet(
   return {
     success: true,
     path,
-    oldValue: isValueWithDescription(oldValue) ? (oldValue as [unknown, string])[0] : oldValue,
+    oldValue,
     newValue,
   };
 }
@@ -125,20 +120,21 @@ function executeAdd(
   const currentValue = getByPath(data, path);
   const delta = args.length >= 2 ? parseCommandValue(args[1]) : 1;
 
-  // ValueWithDescription
+  // ValueWithDescription（兼容数组和对象格式）
   if (isValueWithDescription(currentValue)) {
-    const arr = currentValue as [unknown, string];
-    const oldActual = arr[0];
+    const oldActual = getVWDValue(currentValue);
     if (typeof oldActual === "number" && typeof delta === "number") {
-      arr[0] = parseFloat((oldActual + delta).toPrecision(12));
-      return { success: true, path, oldValue: oldActual, newValue: arr[0] };
+      const newValue = parseFloat((oldActual + delta).toPrecision(12));
+      setVWDValue(currentValue, newValue);
+      return { success: true, path, oldValue: oldActual, newValue };
     }
     // 日期处理
     if (typeof oldActual === "string" && typeof delta === "number") {
       const date = new Date(oldActual);
       if (!isNaN(date.getTime())) {
-        arr[0] = new Date(date.getTime() + delta).toISOString();
-        return { success: true, path, oldValue: oldActual, newValue: arr[0] };
+        const newValue = new Date(date.getTime() + delta).toISOString();
+        setVWDValue(currentValue, newValue);
+        return { success: true, path, oldValue: oldActual, newValue };
       }
     }
   }
@@ -232,13 +228,19 @@ function executeInsert(
   const target = path === "" ? data : getByPath(data, path);
   const targetSchema = getSchemaForPath(schema, path);
 
+  // 从根 Schema 读取模板配置
+  const templateOptions: ApplyTemplateOptions = {
+    strictArrayCast: (schema as SchemaWithTemplateConfig)?.strictTemplate ?? false,
+    concatArray: (schema as SchemaWithTemplateConfig)?.concatTemplateArray ?? true,
+  };
+
   // 两参数：合并对象或追加数组
   if (args.length === 2) {
     let valueToInsert = parseCommandValue(args[1]);
 
     // 应用模板
     if (targetSchema && "template" in targetSchema) {
-      valueToInsert = applyTemplate(valueToInsert, targetSchema.template);
+      valueToInsert = applyTemplate(valueToInsert, targetSchema.template, templateOptions);
     }
 
     if (Array.isArray(target)) {
@@ -274,7 +276,7 @@ function executeInsert(
 
     // 应用模板
     if (targetSchema && "template" in targetSchema) {
-      valueToInsert = applyTemplate(valueToInsert, targetSchema.template);
+      valueToInsert = applyTemplate(valueToInsert, targetSchema.template, templateOptions);
     }
 
     if (Array.isArray(target) && typeof keyOrIndex === "number") {
@@ -290,6 +292,13 @@ function executeInsert(
 
   return { success: false, path, error: "insert 参数不足" };
 }
+
+// Schema 扩展类型，包含模板配置
+type SchemaWithTemplateConfig = {
+  strictTemplate?: boolean;
+  concatTemplateArray?: boolean;
+  strictSet?: boolean;
+};
 
 // ============================================================================
 //                              命令分发
@@ -383,11 +392,10 @@ export function updateSingleVariable(
   const oldValue = getByPath(variables.stat_data, fixedPath);
   const reasonStr = reason ? `(${reason})` : "";
 
-  // ValueWithDescription
+  // ValueWithDescription（兼容数组和对象格式）
   if (isValueWithDescription(oldValue)) {
-    const arr = oldValue as [unknown, string];
-    const oldActual = arr[0];
-    arr[0] = newValue;
+    const oldActual = getVWDValue(oldValue);
+    setVWDValue(oldValue, newValue);
 
     const displayStr = `${JSON.stringify(oldActual)}->${JSON.stringify(newValue)} ${reasonStr}`;
     if (variables.display_data) setByPath(variables.display_data, fixedPath, displayStr);

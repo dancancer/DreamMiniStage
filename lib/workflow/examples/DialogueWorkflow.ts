@@ -1,6 +1,7 @@
-import { BaseWorkflow, WorkflowConfig } from "@/lib/workflow/BaseWorkflow";
+import { BaseWorkflow, WorkflowConfig, WorkflowParams } from "@/lib/workflow/BaseWorkflow";
 import { NodeCategory } from "@/lib/nodeflow/types";
 import { UserInputNode } from "@/lib/nodeflow/UserInputNode/UserInputNode";
+import { HistoryPreNode } from "@/lib/nodeflow/HistoryPreNode/HistoryPreNode";
 import { ContextNode } from "@/lib/nodeflow/ContextNode/ContextNode";
 import { WorldBookNode } from "@/lib/nodeflow/WorldBookNode/WorldBookNode";
 import { PresetNode } from "@/lib/nodeflow/PresetNode/PresetNode";
@@ -9,9 +10,16 @@ import { RegexNode } from "@/lib/nodeflow/RegexNode/RegexNode";
 import { PluginNode } from "@/lib/nodeflow/PluginNode/PluginNode";
 import { PluginMessageNode } from "@/lib/nodeflow/PluginNode/PluginMessageNode";
 import { OutputNode } from "@/lib/nodeflow/OutputNode/OutputNode";
-import { PromptKey } from "@/lib/prompts/preset-prompts";
+import type { SystemPresetType } from "@/lib/nodeflow/PresetNode/PresetNodeTools";
 
-export interface DialogueWorkflowParams {
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║                   Dialogue Workflow Parameters                            ║
+ * ║                                                                           ║
+ * ║  对话工作流参数 - 扩展 WorkflowParams 以满足索引签名要求                      ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
+ */
+export interface DialogueWorkflowParams extends WorkflowParams {
   dialogueKey?: string;  // 会话 ID（用于隔离不同会话的历史）
   characterId: string;
   userInput: string;
@@ -33,7 +41,7 @@ export interface DialogueWorkflowParams {
   streaming?: boolean;
   streamUsage?: boolean;
   fastModel?: boolean;
-  systemPresetType?: PromptKey;
+  systemPresetType?: SystemPresetType;
 }
 
 export class DialogueWorkflow extends BaseWorkflow {
@@ -44,6 +52,9 @@ export class DialogueWorkflow extends BaseWorkflow {
       },
       "pluginMessage": {
         nodeClass: PluginMessageNode,
+      },
+      "historyPre": {
+        nodeClass: HistoryPreNode,
       },
       "context": {
         nodeClass: ContextNode,
@@ -74,6 +85,9 @@ export class DialogueWorkflow extends BaseWorkflow {
       id: "complete-dialogue-workflow",
       name: "Complete Dialogue Processing Workflow",
       nodes: [
+        /* ═══════════════════════════════════════════════════════════════════
+           入口节点：接收用户输入和配置参数
+           ═══════════════════════════════════════════════════════════════════ */
         {
           id: "user-input-1",
           name: "userInput",
@@ -83,32 +97,68 @@ export class DialogueWorkflow extends BaseWorkflow {
           inputFields: [],
           outputFields: ["dialogueKey", "characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "fastModel", "systemPresetType", "streaming", "streamUsage"],
         },
+
+        /* ═══════════════════════════════════════════════════════════════════
+           插件消息节点：处理插件对用户输入的修改
+           ═══════════════════════════════════════════════════════════════════ */
         {
           id: "plugin-message-1",
           name: "pluginMessage",
           category: NodeCategory.MIDDLE,
-          next: ["preset-1"],
+          next: ["history-pre-1"],
           initParams: [],
           inputFields: ["dialogueKey", "characterId", "userInput"],
           outputFields: ["dialogueKey", "characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "fastModel", "systemPresetType", "streaming", "streamUsage"],
         },
+
+        /* ═══════════════════════════════════════════════════════════════════
+           历史数据前置节点：在 PresetNode 之前提供结构化历史数据
+           Requirements: 2.1 - DialogueWorkflow 执行时，系统应在 PresetNode 之前运行 HistoryPreNode
+           
+           输出：
+           - chatHistoryMessages: 结构化历史消息数组 → PresetNode
+           - chatHistoryText: 压缩历史文本 → ContextNode
+           - conversationContext: 短上下文 → memory/RAG 子系统
+           ═══════════════════════════════════════════════════════════════════ */
+        {
+          id: "history-pre-1",
+          name: "historyPre",
+          category: NodeCategory.MIDDLE,
+          next: ["preset-1"],
+          initParams: [],
+          inputFields: ["dialogueKey", "characterId", "userInput"],
+          outputFields: ["chatHistoryMessages", "chatHistoryText", "conversationContext", "userInput"],
+        },
+
+        /* ═══════════════════════════════════════════════════════════════════
+           预设节点：根据 preset 配置构建 messages[] 数组
+           Requirements: 2.6 - PresetNode 构建 MacroEnv 时应包含来自 HistoryPreNode 的 chatHistoryMessages
+           ═══════════════════════════════════════════════════════════════════ */
         {
           id: "preset-1",
           name: "preset",
           category: NodeCategory.MIDDLE,
           next: ["context-1"],
           initParams: [],
-          inputFields: ["characterId", "language", "username", "number", "fastModel", "systemPresetType"],
-          outputFields: ["systemMessage", "userMessage", "presetId"],
+          inputFields: ["characterId", "language", "username", "number", "fastModel", "systemPresetType", "dialogueKey", "userInput", "chatHistoryMessages"],
+          outputFields: ["systemMessage", "userMessage", "messages", "presetId"],
+          inputMapping: {
+            "userInput": "currentUserInput",
+          },
         },
+
+        /* ═══════════════════════════════════════════════════════════════════
+           上下文节点：UI/兼容层，处理 userMessage 中的 {{chatHistory}} 文本替换
+           接收 chatHistoryText 用于兼容旧 preset 的文本替换
+           ═══════════════════════════════════════════════════════════════════ */
         {
           id: "context-1",
           name: "context",
           category: NodeCategory.MIDDLE,
           next: ["world-book-1"],
           initParams: [],
-          inputFields: ["userMessage", "dialogueKey", "characterId", "userInput"],
-          outputFields: ["userMessage"],
+          inputFields: ["userMessage", "dialogueKey", "characterId", "userInput", "messages", "chatHistoryText"],
+          outputFields: ["userMessage", "messages"],
         },
         {
           id: "world-book-1",
@@ -116,8 +166,8 @@ export class DialogueWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["llm-1"],
           initParams: [],
-          inputFields: ["systemMessage", "userMessage", "dialogueKey", "characterId", "language", "username", "userInput"],
-          outputFields: ["systemMessage", "userMessage"],
+          inputFields: ["systemMessage", "userMessage", "dialogueKey", "characterId", "language", "username", "userInput", "messages"],
+          outputFields: ["systemMessage", "userMessage", "messages"],
           inputMapping: {
             "userInput": "currentUserInput",
           },
@@ -128,7 +178,7 @@ export class DialogueWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["regex-1"],
           initParams: [],
-          inputFields: ["systemMessage", "userMessage", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "language", "streaming", "streamUsage", "dialogueKey", "characterId"],
+          inputFields: ["systemMessage", "userMessage", "messages", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "language", "streaming", "streamUsage", "dialogueKey", "characterId"],
           outputFields: ["llmResponse"],
         },
         {
@@ -137,7 +187,7 @@ export class DialogueWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["plugin-1"],
           initParams: [],
-          inputFields: ["llmResponse", "characterId"],
+          inputFields: ["llmResponse", "characterId", "presetId"],
           outputFields: ["thinkingContent", "screenContent", "fullResponse", "nextPrompts", "event"],
         },
         {

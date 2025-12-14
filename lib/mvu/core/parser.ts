@@ -4,10 +4,12 @@
  * ║                                                                            ║
  * ║  从 LLM 输出中提取变量更新命令                                               ║
  * ║  设计原则：状态机解析，精确匹配括号配对                                        ║
+ * ║  MagVarUpdate 完全兼容：支持 _.set() 和 <jsonpatch> 格式                     ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
 import type { MvuCommand, CommandName } from "../types";
+import { extractJsonPatch, patchToMvuCommands } from "../json-patch";
 
 // ============================================================================
 //                              字符串工具
@@ -171,9 +173,22 @@ function parseParameters(paramsString: string): string[] {
 //                              命令提取
 // ============================================================================
 
-/** 从文本中提取所有 MVU 命令 */
+/** 从文本中提取所有 MVU 命令（MagVarUpdate 完全兼容） */
 export function extractCommands(inputText: string): MvuCommand[] {
   const results: MvuCommand[] = [];
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 步骤1：提取 JSON Patch 并转换为命令（MagVarUpdate 兼容）
+  // ═══════════════════════════════════════════════════════════════════════════
+  const jsonPatch = extractJsonPatch(inputText);
+  if (jsonPatch) {
+    const patchCommands = patchToMvuCommands(jsonPatch);
+    results.push(...patchCommands as MvuCommand[]);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 步骤2：提取 _.set() 等函数调用格式的命令
+  // ═══════════════════════════════════════════════════════════════════════════
   let i = 0;
 
   while (i < inputText.length) {

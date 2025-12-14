@@ -77,8 +77,8 @@ describe("PromptViewerStore", () => {
       const { openModal, uiStates } = usePromptViewerStore.getState();
 
       openModal("");
-      openModal(null as any);
-      openModal(undefined as any);
+      openModal(null as unknown);
+      openModal(undefined as unknown);
 
       expect(Object.keys(uiStates)).toHaveLength(0);
     });
@@ -285,8 +285,8 @@ describe("PromptViewerStore", () => {
       const { getUIState, getPrompt, isIntercepting } = usePromptViewerStore.getState();
 
       expect(getPrompt("")).toBe(null);
-      expect(getPrompt(null as any)).toBe(null);
-      expect(getPrompt(undefined as any)).toBe(null);
+      expect(getPrompt(null as unknown)).toBe(null);
+      expect(getPrompt(undefined as unknown)).toBe(null);
 
       expect(getUIState("")).toBeTruthy(); // 应该返回默认状态
       expect(isIntercepting("")).toBe(false);

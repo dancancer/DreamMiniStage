@@ -125,22 +125,31 @@ export interface APIResponsePayload {
 export interface ScriptContext {
   /** Character ID associated with this script execution */
   characterId?: string;
-  
+
   /** Chat session ID */
   sessionId?: string;
-  
+
   /** Message ID that triggered this script */
   messageId?: string;
-  
+
   /** User-defined variables accessible to the script */
   variables?: Record<string, any>;
-  
+
   /** Read-only metadata */
   metadata?: {
     userName?: string;
     characterName?: string;
     timestamp?: number;
   };
+
+  /** LLM Configuration (optional, for generation control) */
+  language?: "zh" | "en";
+  modelName?: string;
+  baseUrl?: string;
+  apiKey?: string;
+  llmType?: "openai" | "ollama" | "gemini";
+  responseLength?: number;
+  fastModel?: boolean;
 }
 
 /**
@@ -174,6 +183,18 @@ export interface ScriptExecutorOptions {
   /** CSP policy override */
   cspPolicy?: string;
 }
+
+/**
+ * Script variable value type
+ */
+export type ScriptValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | ScriptValue[]
+  | { [key: string]: ScriptValue };
 
 /**
  * Script execution result
@@ -210,29 +231,29 @@ export interface ScriptExecutionResult {
 export interface SandboxAPI {
   /** Variable access API */
   variables: {
-    get: (key: string) => any;
-    set: (key: string, value: any) => void;
+    get: (key: string) => ScriptValue | undefined;
+    set: (key: string, value: ScriptValue) => void;
     delete: (key: string) => void;
     list: () => string[];
   };
   
   /** Event system API */
   events: {
-    on: (eventName: string, handler: Function) => void;
-    once: (eventName: string, handler: Function) => void;
-    off: (eventName: string, handler?: Function) => void;
-    emit: (eventName: string, data?: any) => void;
+    on: (eventName: string, handler: EventHandler) => void;
+    once: (eventName: string, handler: EventHandler) => void;
+    off: (eventName: string, handler?: EventHandler) => void;
+    emit: (eventName: string, data?: unknown) => void;
   };
   
   /** World book access API (placeholder) */
   worldbook?: {
-    get: (id: string) => any;
-    search: (query: string) => any[];
+    get: (id: string) => unknown;
+    search: (query: string) => unknown[];
   };
   
   /** Utility functions */
   utils: {
-    log: (...args: any[]) => void;
+    log: (...args: unknown[]) => void;
     waitFor: (ms: number) => Promise<void>;
     getContext: () => ScriptContext;
   };
@@ -248,7 +269,7 @@ export interface SandboxAPI {
 /**
  * Event handler function type
  */
-export type EventHandler<T = any> = (data: T) => void | Promise<void>;
+export type EventHandler = (...args: unknown[]) => void | Promise<void>;
 
 /**
  * Event unsubscribe function

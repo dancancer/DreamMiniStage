@@ -25,7 +25,8 @@ export interface DialogueNodeData {
   fullContent: string;
   userInput: string;
   assistantResponse: string;
-  parsedContent: any;
+  /** 解析后的内容（格式取决于外部解析器） */
+  parsedContent: unknown;
   onEditClick: (id: string) => void;
   onJumpClick: (id: string) => void;
   isCurrentPath: boolean;

@@ -64,6 +64,101 @@ export interface ExecutionContext {
   getVariable: (key: string) => unknown;
   setVariable: (key: string, value: unknown) => void;
   deleteVariable: (key: string) => void;
+  listVariables?: () => string[];
+  flushVariables?: () => void;
+  dumpVariables?: () => Record<string, unknown>;
+
+  // 扩展操作 - 消息管理
+  getMessage?: (index: number) => DialogueMessage | undefined;
+  editMessage?: (index: number, content: string) => void | Promise<void>;
+  deleteMessage?: (index: number) => void | Promise<void>;
+  getMessageCount?: () => number;
+
+  // 扩展操作 - World Book
+  getWorldBookEntry?: (id: string) => WorldBookEntryData | undefined;
+  searchWorldBook?: (query: string) => WorldBookEntryData[];
+  setWorldBookEntry?: (id: string, data: Partial<WorldBookEntryData>) => void | Promise<void>;
+  createWorldBookEntry?: (data: Partial<WorldBookEntryData>) => WorldBookEntryData | Promise<WorldBookEntryData | undefined>;
+  deleteWorldBookEntry?: (id: string) => void | Promise<void>;
+  activateWorldBookEntry?: (id: string) => void | Promise<void>;
+  listWorldBookEntries?: (bookName?: string) => WorldBookEntryData[];
+
+  // 扩展操作 - 生成
+  generate?: (prompt: string, options?: GenerateOptions) => Promise<string>;
+  generateQuiet?: (prompt: string, options?: GenerateOptions) => Promise<string>;
+  injectPrompt?: (prompt: string, options?: InjectOptions) => void | Promise<void>;
+
+  // 扩展操作 - World Info 激活
+  activateWorldInfoEntry?: (name: string, options?: ActivateLoreOptions) => void | Promise<void>;
+
+  // 扩展操作 - Preset
+  getPreset?: () => PresetInfo | undefined;
+  setPreset?: (name: string) => void | Promise<void>;
+  listPresets?: () => PresetInfo[];
+
+  // 扩展操作 - Regex
+  listRegexScripts?: () => RegexScriptInfo[];
+  getRegexScript?: (name: string) => RegexScriptInfo | undefined;
+  setRegexScriptEnabled?: (name: string, enabled: boolean) => void | Promise<void>;
+  runRegexScript?: (name: string, input: string) => string | Promise<string>;
+
+  // 扩展操作 - Audio
+  playAudio?: (url: string, options?: AudioOptions) => void | Promise<void>;
+  stopAudio?: () => void | Promise<void>;
+  pauseAudio?: () => void | Promise<void>;
+  resumeAudio?: () => void | Promise<void>;
+  setAudioVolume?: (volume: number) => void | Promise<void>;
+}
+
+/** Preset 信息 */
+export interface PresetInfo {
+  name: string;
+  type?: "openai" | "context" | "sysprompt";
+}
+
+/** Regex 脚本信息 */
+export interface RegexScriptInfo {
+  name: string;
+  enabled: boolean;
+  pattern?: string;
+  replacement?: string;
+}
+
+/** 音频播放选项 */
+export interface AudioOptions {
+  volume?: number;
+  loop?: boolean;
+}
+
+/** World Book 条目数据 */
+export interface WorldBookEntryData {
+  id: string;
+  keys: string[];
+  content: string;
+  enabled: boolean;
+  comment?: string;
+  priority?: number;
+  depth?: number;
+}
+
+/** 生成选项 */
+export interface GenerateOptions {
+  maxTokens?: number;
+  temperature?: number;
+  stopSequences?: string[];
+}
+
+/** 注入选项 */
+export interface InjectOptions {
+  position?: "before" | "after";
+  depth?: number;
+  role?: "system" | "user" | "assistant";
+  ephemeral?: boolean;
+}
+
+/** 激活 Lore 选项 */
+export interface ActivateLoreOptions {
+  duration?: number;
 }
 
 // ============================================================================

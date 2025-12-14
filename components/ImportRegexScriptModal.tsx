@@ -196,9 +196,10 @@ export default function ImportRegexScriptModal({ isOpen, characterId, onClose, o
         toast.success(result.message);
         onImportSuccess();
       } else toast.error(result.message);
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       console.error("Import from global failed:", error);
-      toast.error(`Import failed: ${error.message}`);
+      toast.error(`Import failed: ${errorMessage}`);
     } finally {
       setIsImporting(false);
     }
@@ -219,9 +220,10 @@ export default function ImportRegexScriptModal({ isOpen, characterId, onClose, o
         loadGlobalScripts();
         if (selectedGlobalId === globalId) setSelectedGlobalId("");
       } else toast.error(result.message || t("regexScriptEditor.failedToDeleteGlobalScript"));
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       console.error("Failed to delete global regex script:", error);
-      toast.error(`${t("regexScriptEditor.failedToDeleteGlobalScript")}: ${error.message}`);
+      toast.error(`${t("regexScriptEditor.failedToDeleteGlobalScript")}: ${errorMessage}`);
     } finally {
       setDeletingId(null);
     }

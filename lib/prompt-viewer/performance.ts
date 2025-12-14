@@ -41,7 +41,7 @@ export const PERFORMANCE_CONFIG = {
 /**
  * 防抖 Hook - 延迟执行函数调用
  */
-export function useDebounce<T extends (...args: any[]) => any>(
+export function useDebounce<T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number,
 ): T {
@@ -83,7 +83,7 @@ export function useDebounce<T extends (...args: any[]) => any>(
 /**
  * 节流 Hook - 限制函数调用频率
  */
-export function useThrottle<T extends (...args: any[]) => any>(
+export function useThrottle<T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number,
 ): T {
@@ -172,9 +172,9 @@ export function useVirtualization(
   const totalHeight = items.length * itemHeight;
   const offsetY = visibleRange.startIndex * itemHeight;
 
-  const handleScroll = useThrottle((event: React.UIEvent<HTMLDivElement>) => {
+  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
     setScrollTop(event.currentTarget.scrollTop);
-  }, PERFORMANCE_CONFIG.SCROLL_DEBOUNCE);
+  }, []);
 
   return {
     visibleItems,

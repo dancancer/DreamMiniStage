@@ -1,7 +1,26 @@
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import { adaptCharacterData } from "@/lib/adapter/tagReplacer";
 
-export async function getAllCharacters(language: "en" | "zh", username?: string) {
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║                     Character List Interface                              ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
+ */
+interface FormattedCharacter {
+  id: string;
+  name: string;
+  description?: string;
+  personality: string;
+  scenario?: string;
+  first_mes?: string;
+  mes_example?: string;
+  creatorcomment?: string;
+  created_at: string;
+  updated_at: string;
+  avatar_path?: string;
+}
+
+export async function getAllCharacters(language: "en" | "zh", username?: string): Promise<FormattedCharacter[]> {
   try {
     const characters = await LocalCharacterRecordOperations.getAllCharacters();
 
@@ -27,8 +46,9 @@ export async function getAllCharacters(language: "en" | "zh", username?: string)
       });
 
     return formattedCharacters;
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Failed to get characters:", error);
-    throw new Error(`Failed to get characters: ${error.message}`);
+    throw new Error(`Failed to get characters: ${errorMessage}`);
   }
 }

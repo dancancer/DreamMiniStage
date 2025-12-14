@@ -132,11 +132,21 @@ export class PromptInterceptorImpl implements PromptInterceptor {
     if (typeof window === "undefined") return;
 
     this.boundEventHandler = (e: Event) => {
-      const { dialogueKey, characterId, systemMessage, userMessage, modelName, timestamp } = 
+      const { dialogueKey, characterId, systemMessage, userMessage, modelName, timestamp, messages } = 
         (e as CustomEvent).detail;
       
       const config = this.interceptors.get(dialogueKey);
       if (!config?.isActive) return;
+
+      // 构建消息列表：优先使用事件中的 messages，否则从 systemMessage/userMessage 构建
+      const promptMessages = messages?.map((m: { role: string; content: string }, i: number) => ({
+        id: generateId("msg"),
+        role: m.role as "system" | "user" | "assistant",
+        content: m.content,
+      })) || [
+        { id: generateId("msg"), role: "system" as const, content: systemMessage },
+        { id: generateId("msg"), role: "user" as const, content: userMessage },
+      ];
 
       const promptData: PromptData = {
         id: generateId("prompt"),
@@ -146,6 +156,7 @@ export class PromptInterceptorImpl implements PromptInterceptor {
         fullPrompt: buildFullPromptText(systemMessage, userMessage, []),
         images: extractImages(systemMessage + userMessage),
         metadata: { characterId, dialogueKey, modelName, temperature: 0.7 },
+        messages: promptMessages,
       };
 
       this.updateAndNotify(dialogueKey, promptData);
@@ -229,7 +240,7 @@ if (typeof window !== "undefined") {
   window.addEventListener("beforeunload", cleanup);
   document.addEventListener("visibilitychange", onVisibilityChange);
 
-  (window as any).__promptInterceptorCleanup = () => {
+  (window as unknown as Record<string, unknown>).__promptInterceptorCleanup = () => {
     window.removeEventListener("beforeunload", cleanup);
     document.removeEventListener("visibilitychange", onVisibilityChange);
     promptInterceptor.destroy();

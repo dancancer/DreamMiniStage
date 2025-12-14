@@ -1,5 +1,6 @@
 import { RegexScriptOperations } from "@/lib/data/roleplay/regex-script-operation";
 import { RegexScript } from "@/lib/models/regex-script-model";
+import { importRegexScripts, canImportRegexScripts, NoAdapterMatchError } from "@/lib/adapters/import";
 import { v4 as uuidv4 } from "uuid";
 
 export interface ImportRegexScriptResult {
@@ -15,7 +16,7 @@ export interface ImportRegexScriptResult {
 
 export async function importRegexScriptFromJson(
   characterId: string,
-  jsonData: any,
+  jsonData: unknown,
   options?: {
     saveAsGlobal?: boolean;
     globalName?: string;
@@ -36,38 +37,48 @@ export async function importRegexScriptFromJson(
   };
 
   try {
-    const validation = validateRegexScriptJson(jsonData);
-    if (!validation.valid) {
-      result.errors = validation.errors;
-      result.message = "Invalid JSON format";
-      return result;
-    }
+    /* ═══════════════════════════════════════════════════════════════════════════
+       使用导入适配器进行格式检测和规范化
 
-    const scripts = await RegexScriptOperations.getRegexScripts(characterId) || {};
-    const now = Date.now();
-    
-    let scriptEntries: any[] = [];
-    
-    if (Array.isArray(jsonData)) {
-      scriptEntries = jsonData;
-    } else if (jsonData.scripts && Array.isArray(jsonData.scripts)) {
-      scriptEntries = jsonData.scripts;
-    } else if (jsonData.regexScripts && Array.isArray(jsonData.regexScripts)) {
-      scriptEntries = jsonData.regexScripts;
-    } else if (typeof jsonData === "object" && !Array.isArray(jsonData) && jsonData.findRegex) {
-      scriptEntries = [jsonData];
-    } else {
+       适配器支持 4 种格式：
+       - 数组格式: RegexScript[]
+       - scripts 包装格式: { scripts: [] }
+       - regexScripts 包装格式: { regexScripts: [] }
+       - 单对象格式: RegexScript
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    if (!canImportRegexScripts(jsonData)) {
       result.errors.push("Unsupported JSON format");
       result.message = "Unsupported JSON format";
       return result;
     }
 
+    let normalizedScripts: RegexScript[];
+    try {
+      normalizedScripts = importRegexScripts(jsonData);
+    } catch (error) {
+      if (error instanceof NoAdapterMatchError) {
+        result.errors.push("Unsupported JSON format");
+        result.message = "Unsupported JSON format";
+        return result;
+      }
+      throw error;
+    }
+
+    if (normalizedScripts.length === 0) {
+      result.errors.push("No valid scripts found");
+      result.message = "No valid scripts found to import";
+      return result;
+    }
+
+    const scripts = await RegexScriptOperations.getRegexScripts(characterId) || {};
+    const now = Date.now();
     const importedScripts: Record<string, RegexScript> = {};
 
-    for (const scriptData of scriptEntries) {
+    for (const scriptData of normalizedScripts) {
       try {
         const scriptId = `script_${uuidv4()}`;
-        
+
         if (!scriptData.findRegex || typeof scriptData.findRegex !== "string") {
           result.skippedCount++;
           result.errors.push("Skipped script: missing or invalid findRegex");
@@ -75,14 +86,11 @@ export async function importRegexScriptFromJson(
         }
 
         const regexScript: RegexScript = {
+          ...scriptData,
           scriptKey: scriptId,
-          scriptName: scriptData.scriptName || scriptData.id || "Imported Script",
-          findRegex: scriptData.findRegex,
-          replaceString: scriptData.replaceString,
-          trimStrings: Array.isArray(scriptData.trimStrings) ? scriptData.trimStrings : [],
-          placement: Array.isArray(scriptData.placement) ? scriptData.placement : [scriptData.placement || 999],
-          disabled: scriptData.disabled === true,
+          scriptName: scriptData.scriptName || "Imported Script",
           extensions: {
+            ...scriptData.extensions,
             imported: true,
             importedAt: now,
           },
@@ -91,8 +99,9 @@ export async function importRegexScriptFromJson(
         scripts[scriptId] = regexScript;
         importedScripts[scriptId] = regexScript;
         result.importedCount++;
-      } catch (error: any) {
-        result.errors.push(`Failed to import script: ${error.message}`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        result.errors.push(`Failed to import script: ${errorMessage}`);
         result.skippedCount++;
       }
     }
@@ -145,8 +154,9 @@ export async function importRegexScriptFromJson(
             
             result.globalId = globalId;
             result.message += ` and saved as global regex script "${options.globalName}"`;
-          } catch (globalError: any) {
-            result.errors.push(`Failed to save as global: ${globalError.message}`);
+          } catch (globalError) {
+            const errorMessage = globalError instanceof Error ? globalError.message : "Unknown error";
+            result.errors.push(`Failed to save as global: ${errorMessage}`);
           }
         }
       } else {
@@ -159,97 +169,25 @@ export async function importRegexScriptFromJson(
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Failed to import regex scripts:", error);
-    result.errors.push(error.message);
-    result.message = `Import failed: ${error.message}`;
+    result.errors.push(errorMessage);
+    result.message = `Import failed: ${errorMessage}`;
     return result;
   }
 }
 
-export function validateRegexScriptJson(jsonData: any): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-
-  if (!jsonData) {
-    errors.push("Invalid JSON: Data is null or undefined");
-    return { valid: false, errors };
-  }
-
-  if (typeof jsonData === "object" && !Array.isArray(jsonData) && jsonData.findRegex) {
-    return { valid: true, errors: [] };
-  }
-
-  if (Array.isArray(jsonData)) {
-    if (jsonData.length === 0) {
-      errors.push("Empty array provided");
-      return { valid: false, errors };
-    }
-
-    let hasValidScript = false;
-    for (const script of jsonData) {
-      if (typeof script === "object" && script !== null && script.findRegex) {
-        hasValidScript = true;
-        break;
-      }
-    }
-
-    if (!hasValidScript) {
-      errors.push("No valid scripts found with findRegex");
-      return { valid: false, errors };
-    }
-
-    return { valid: true, errors: [] };
-  }
-
-  if (typeof jsonData !== "object") {
-    errors.push("Invalid JSON: Root must be an object or array");
-    return { valid: false, errors };
-  }
-
-  if (jsonData.scripts && Array.isArray(jsonData.scripts)) {
-    if (jsonData.scripts.length === 0) {
-      errors.push("No scripts found in scripts array");
-      return { valid: false, errors };
-    }
-    
-    let hasValidScript = false;
-    for (const script of jsonData.scripts) {
-      if (typeof script === "object" && script !== null && script.findRegex) {
-        hasValidScript = true;
-        break;
-      }
-    }
-
-    if (!hasValidScript) {
-      errors.push("No valid scripts found with findRegex");
-      return { valid: false, errors };
-    }
-
-    return { valid: true, errors: [] };
-  }
-
-  if (jsonData.regexScripts && Array.isArray(jsonData.regexScripts)) {
-    if (jsonData.regexScripts.length === 0) {
-      errors.push("No scripts found in regexScripts array");
-      return { valid: false, errors };
-    }
-    
-    let hasValidScript = false;
-    for (const script of jsonData.regexScripts) {
-      if (typeof script === "object" && script !== null && script.findRegex) {
-        hasValidScript = true;
-        break;
-      }
-    }
-
-    if (!hasValidScript) {
-      errors.push("No valid scripts found with findRegex");
-      return { valid: false, errors };
-    }
-
-    return { valid: true, errors: [] };
-  }
-
-  errors.push("Unsupported JSON format: Expected array or object with scripts/regexScripts array");
-  return { valid: false, errors };
+/**
+ * 验证正则脚本 JSON 格式
+ *
+ * @deprecated 使用 canImportRegexScripts 代替
+ * 此函数保留用于向后兼容
+ */
+export function validateRegexScriptJson(jsonData: unknown): { valid: boolean; errors: string[] } {
+  const valid = canImportRegexScripts(jsonData);
+  return {
+    valid,
+    errors: valid ? [] : ["Unsupported JSON format"],
+  };
 }

@@ -1,7 +1,7 @@
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 
 interface DeleteDialogueNodeOptions {
-  dialogueId: string;  // 对话树 ID（sessionId 或 characterId）
+  dialogueId: string;  // 对话树 ID（sessionId）
   nodeId: string;
 }
 
@@ -62,8 +62,8 @@ export async function deleteDialogueNode({ dialogueId, nodeId }: DeleteDialogueN
       message: "Successfully deleted dialogue node",
       dialogue: processedDialogue,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error deleting dialogue node:", error);
-    throw new Error(`Failed to delete dialogue node: ${error.message}`);
+    throw new Error(`Failed to delete dialogue node: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 } 

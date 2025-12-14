@@ -12,18 +12,16 @@ import { useLanguage } from "@/app/i18n";
 import { trackButtonClick } from "@/utils/google-analytics";
 import { CharacterAvatarBackground } from "@/components/CharacterAvatarBackground";
 import AdvancedSettingsEditor from "@/components/AdvancedSettingsEditor";
-import PresetInfoModal from "@/components/PresetInfoModal";
 import { useUIStore } from "@/lib/store/ui-store";
-import { Loader2, ArrowLeft, Edit, Github, Settings, X, ChevronDown, User } from "lucide-react";
+import { Loader2, ArrowLeft, Edit, Settings, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PersonaQuickSwitch } from "@/components/PersonaQuickSwitch";
 
 /* ─── 子组件 & Hooks ─── */
 import {
   SidebarMenuItem,
   ResponseLengthSlider,
-  PresetDropdown,
 } from "@/components/character-sidebar";
-import { usePresetManager } from "@/hooks/usePresetManager";
 import { useResponseLength } from "@/hooks/useResponseLength";
 import { useMobileDetection } from "@/hooks/useMobileDetection";
 
@@ -39,6 +37,8 @@ interface CharacterSidebarProps {
     avatar_path?: string;
     scenario?: string;
   };
+  /** 对话 Key（sessionId 或 characterId） */
+  dialogueKey?: string;
   isCollapsed: boolean;
   toggleSidebar: () => void;
   onViewSwitch?: () => void;
@@ -62,6 +62,7 @@ const Divider: React.FC = () => <div className="mx-4 menu-divider my-2" />;
 
 const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
   character,
+  dialogueKey,
   isCollapsed,
   toggleSidebar,
   onViewSwitch,
@@ -71,11 +72,8 @@ const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
 
   /* ─── 模态框状态 ─── */
   const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false);
-  const [showPresetInfoModal, setShowPresetInfoModal] = useState(false);
-  const [selectedPresetForInfo, setSelectedPresetForInfo] = useState("");
 
   /* ─── 提取的 Hooks ─── */
-  const presetManager = usePresetManager({ language: language as "zh" | "en" });
   const responseLength = useResponseLength();
   const switchToPresetView = useUIStore((state) => state.switchToPresetView);
 
@@ -88,11 +86,6 @@ const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
   const handleToggleSidebar = () => {
     trackButtonClick("CharacterSidebar", "切换角色侧边栏");
     toggleSidebar();
-  };
-
-  const handleShowPresetInfo = (presetName: string) => {
-    setSelectedPresetForInfo(presetName);
-    setShowPresetInfoModal(true);
   };
 
   /* ─── 截断文本的工具函数 ─── */
@@ -194,7 +187,24 @@ const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
         )}
 
         {/* ═══════════════════════════════════════════════════════════════════════
-         * 预设区
+         * Persona 区域
+         * ═══════════════════════════════════════════════════════════════════════ */}
+        {!isCollapsed && (
+          <>
+            <SectionHeader label={language === "zh" ? "用户身份" : "Persona"} isCollapsed={false} />
+            <div className="px-6 my-2">
+              <PersonaQuickSwitch
+                dialogueKey={dialogueKey}
+                characterId={character.id}
+                isCollapsed={false}
+              />
+            </div>
+            <Divider />
+          </>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════════
+         * 预设区 - 仅保留预设编辑器入口
          * ═══════════════════════════════════════════════════════════════════════ */}
         {!isCollapsed && (
           <>
@@ -208,35 +218,6 @@ const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
                   isMobile={isMobile}
                   fontClass={fontClass}
                 />
-              </div>
-              <div className="relative mx-6">
-                <SidebarMenuItem
-                  icon={<Github size={16} />}
-                  label={t("characterChat.systemPresets")}
-                  onClick={presetManager.toggleDropdown}
-                  isMobile={isMobile}
-                  fontClass={fontClass}
-                  accentColor="purple"
-                  isActive={presetManager.isDropdownOpen}
-                  suffix={
-                    <div className="flex items-center justify-center ml-2">
-                      <div className={`transition-transform duration-300 ${presetManager.isDropdownOpen ? "rotate-180" : ""}`}>
-                        <ChevronDown size={12} />
-                      </div>
-                    </div>
-                  }
-                />
-                {presetManager.isDropdownOpen && (
-                  <PresetDropdown
-                    presets={presetManager.presets}
-                    selectedPreset={presetManager.selectedPreset}
-                    language={language as "zh" | "en"}
-                    fontClass={fontClass}
-                    onSelect={presetManager.selectPreset}
-                    onShowInfo={handleShowPresetInfo}
-                    emptyText={t("characterChat.noPresets") || "没有可用的预设"}
-                  />
-                )}
               </div>
             </div>
             <Divider />
@@ -289,11 +270,6 @@ const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
         isOpen={isAdvancedSettingsOpen}
         onClose={() => setIsAdvancedSettingsOpen(false)}
         onViewSwitch={onViewSwitch}
-      />
-      <PresetInfoModal
-        isOpen={showPresetInfoModal}
-        onClose={() => setShowPresetInfoModal(false)}
-        presetName={selectedPresetForInfo}
       />
     </>
   );

@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { ChevronDown, ChevronRight, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,9 @@ import PromptViewerErrorBoundary, { safeExecute } from "./PromptViewerErrorBound
 import type { 
   PromptContentProps, 
   CollapsibleRegion,
-  PromptImage, 
+  PromptImage,
+  PromptMessage,
+  SearchResult,
 } from "@/types/prompt-viewer";
 import { 
   CSS_CLASSES, 
@@ -32,15 +34,18 @@ import {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export function PromptContent({
+  messages,
   content,
   searchResult,
   expandedRegions,
   onToggleRegion,
+  expandedMessages,
+  onToggleMessage,
   images = [],
   imageGalleryExpanded = false,
   onToggleImageGallery,
 }: PromptContentProps) {
-  // ========== 内容处理 ==========
+  // ========== 内容处理（用于搜索和旧版显示） ==========
 
   const processedContent = useMemo(() => {
     return safeExecute(() => {
@@ -67,7 +72,8 @@ export function PromptContent({
 
   // ========== 渲染 ==========
 
-  if (!content) {
+  // 空内容检查
+  if (!content && (!messages || messages.length === 0)) {
     return (
       <EmptyContent message="暂无提示词内容" />
     );
@@ -75,19 +81,28 @@ export function PromptContent({
 
   return (
     <div className={cn(CSS_CLASSES.VIEWER_CONTENT, "space-y-4")}>
-      {/* 主要文本内容 - 使用错误边界保护 */}
+      {/* 消息卡片列表（新版UI）- 使用错误边界保护 */}
       <PromptViewerErrorBoundary
         onError={(error) => {
           console.error("[PromptContent] 内容显示错误:", error);
         }}
         maxRetries={2}
       >
-        <ContentDisplay 
-          content={processedContent}
-          searchResult={searchResult}
-          expandedRegions={expandedRegions}
-          onToggleRegion={onToggleRegion}
-        />
+        {messages && messages.length > 0 ? (
+          <MessageCardList 
+            messages={messages}
+            expandedMessages={expandedMessages}
+            onToggleMessage={onToggleMessage}
+            searchResult={searchResult}
+          />
+        ) : (
+          <ContentDisplay 
+            content={processedContent}
+            searchResult={searchResult}
+            expandedRegions={expandedRegions}
+            onToggleRegion={onToggleRegion}
+          />
+        )}
       </PromptViewerErrorBoundary>
 
       {/* 图片画廊 - 使用错误边界保护 */}
@@ -462,6 +477,144 @@ function buildContentSections(
   }
 
   return sections;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   消息卡片列表组件
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+interface MessageCardListProps {
+  messages: readonly PromptMessage[];
+  expandedMessages?: ReadonlySet<string>;
+  onToggleMessage?: (messageId: string) => void;
+  searchResult: PromptContentProps["searchResult"];
+}
+
+function MessageCardList({
+  messages,
+  expandedMessages: externalExpandedMessages,
+  onToggleMessage: externalOnToggleMessage,
+  searchResult,
+}: MessageCardListProps) {
+  // 使用本地状态管理折叠（如果外部没有提供）
+  const [internalExpandedMessages, setInternalExpandedMessages] = useState<Set<string>>(() => {
+    // 默认所有消息都展开
+    return new Set(messages.map(m => m.id));
+  });
+
+  // 优先使用外部状态，否则使用内部状态
+  const expandedMessages = externalExpandedMessages ?? internalExpandedMessages;
+  
+  const handleToggleMessage = useCallback((messageId: string) => {
+    if (externalOnToggleMessage) {
+      externalOnToggleMessage(messageId);
+    } else {
+      setInternalExpandedMessages(prev => {
+        const next = new Set(prev);
+        if (next.has(messageId)) {
+          next.delete(messageId);
+        } else {
+          next.add(messageId);
+        }
+        return next;
+      });
+    }
+  }, [externalOnToggleMessage]);
+
+  const isExpanded = useCallback((messageId: string) => {
+    return expandedMessages.has(messageId);
+  }, [expandedMessages]);
+
+  return (
+    <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
+      {messages.map((message) => (
+        <MessageCard
+          key={message.id}
+          message={message}
+          isExpanded={isExpanded(message.id)}
+          onToggle={() => handleToggleMessage(message.id)}
+          searchResult={searchResult}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   消息卡片组件
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+interface MessageCardProps {
+  message: PromptMessage;
+  isExpanded: boolean;
+  onToggle: () => void;
+  searchResult: PromptContentProps["searchResult"];
+}
+
+function MessageCard({ message, isExpanded, onToggle, searchResult }: MessageCardProps) {
+  // 角色标签映射
+  const roleLabels: Record<PromptMessage["role"], string> = {
+    system: "系统消息 (System)",
+    user: "用户消息 (User)",
+    assistant: "助手消息 (Assistant)",
+  };
+
+  // 角色颜色映射
+  const roleColors: Record<PromptMessage["role"], string> = {
+    system: "bg-blue-500/10 border-blue-500/30 text-blue-400",
+    user: "bg-green-500/10 border-green-500/30 text-green-400",
+    assistant: "bg-purple-500/10 border-purple-500/30 text-purple-400",
+  };
+
+  // 处理搜索高亮
+  const displayContent = useMemo(() => {
+    if (!searchResult?.hasMatches || !searchResult.highlightedContent) {
+      return message.content;
+    }
+    // 简单的内容匹配检查
+    return message.content;
+  }, [message.content, searchResult]);
+
+  return (
+    <div className={cn(
+      "border rounded-lg overflow-hidden",
+      "bg-overlay",
+      roleColors[message.role].split(" ")[1], // 仅取边框颜色
+    )}>
+      {/* 卡片标题 - 可点击折叠 */}
+      <button
+        onClick={onToggle}
+        className={cn(
+          "w-full flex items-center justify-between p-3",
+          "hover:bg-muted/30 transition-colors duration-200",
+          roleColors[message.role].split(" ")[0], // 仅取背景颜色
+        )}
+      >
+        <span className={cn(
+          "font-medium text-sm",
+          roleColors[message.role].split(" ")[2], // 仅取文字颜色
+        )}>
+          {roleLabels[message.role]}
+        </span>
+        <span className="text-muted-foreground">
+          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </span>
+      </button>
+
+      {/* 卡片内容 */}
+      {isExpanded && (
+        <div className={cn(
+          "p-4 border-t",
+          roleColors[message.role].split(" ")[1], // 边框颜色
+          "font-mono text-sm leading-relaxed",
+          "text-cream whitespace-pre-wrap break-words",
+          "max-h-[40vh] overflow-y-auto",
+        )}>
+          <ContentText content={displayContent} />
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

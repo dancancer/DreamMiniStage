@@ -92,17 +92,31 @@ export default function PresetEditor({ onClose, characterName, characterId }: Pr
     [],
   );
 
-  const formatPreset = useCallback((preset: any): PresetData => {
-    const prompts = preset.prompts || [];
+  const formatPreset = useCallback((preset: unknown): PresetData => {
+    // 类型守卫：确保 preset 是对象类型
+    if (typeof preset !== "object" || preset === null) {
+      throw new Error("Invalid preset data");
+    }
+
+    // 安全地访问属性，使用类型断言
+    const presetObj = preset as Record<string, unknown>;
+    const prompts = Array.isArray(presetObj.prompts) ? presetObj.prompts : [];
+
     return {
-      ...preset,
-      id: preset.id || `preset-${Date.now()}`,
-      enabled: preset.enabled !== false,
+      ...presetObj,
+      id: typeof presetObj.id === "string" ? presetObj.id : `preset-${Date.now()}`,
+      enabled: presetObj.enabled !== false,
       totalPrompts: prompts.length,
-      enabledPrompts: prompts.filter((p: any) => p.enabled !== false).length,
-      lastUpdated: new Date(preset.updated_at || preset.created_at || Date.now()).getTime(),
+      enabledPrompts: prompts.filter((p: unknown) => {
+        return typeof p === "object" && p !== null && (p as Record<string, unknown>).enabled !== false;
+      }).length,
+      lastUpdated: new Date(
+        (presetObj.updated_at as string | number | Date | undefined) ||
+        (presetObj.created_at as string | number | Date | undefined) ||
+        Date.now(),
+      ).getTime(),
       prompts,
-    };
+    } as PresetData;
   }, []);
 
   const refreshPresets = useCallback(async () => {

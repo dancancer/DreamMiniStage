@@ -19,8 +19,9 @@ export class LLMNode extends NodeBase {
   }
 
   protected async _call(input: NodeInput): Promise<NodeOutput> {    
-    const systemMessage = input.systemMessage;
-    const userMessage = input.userMessage;
+    const systemMessage = input.systemMessage || "";
+    const userMessage = input.userMessage || "";
+    const messages = input.messages as Array<{ role: string; content: string }> | undefined;
     const modelName = input.modelName;
     const apiKey = input.apiKey;
     const baseUrl = input.baseUrl;
@@ -32,12 +33,29 @@ export class LLMNode extends NodeBase {
     const dialogueKey = input.dialogueKey;
     const characterId = input.characterId;
 
-    if (!systemMessage) {
-      throw new Error("System message is required for LLMNode");
-    }
+    /* ─────────────────────────────────────────────────────────────────────────
+       后处理选项 (Requirements: 7.1, 8.1)
+       ───────────────────────────────────────────────────────────────────────── */
+    const promptNames = input.promptNames;
+    const postProcessingMode = input.postProcessingMode;
+    const tools = input.tools;
+    const prefill = input.prefill;
+    const placeholder = input.placeholder;
 
-    if (!userMessage) { 
-      throw new Error("User message is required for LLMNode");
+    /* ═══════════════════════════════════════════════════════════════════════
+       messages-only 架构：messages[] 是唯一事实源
+       
+       Requirements 1.1: LLMNode 发送请求时 SHALL 仅使用 messages[] 作为最终内容
+       Requirements 7.2: 若 messages[] 中无 user 消息，SHALL 追加 fallback
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    // 当有 messages[] 时，不再强制要求 systemMessage/userMessage
+    // 它们仅用于 UI 展示和事件广播（Requirements 1.3）
+    if (!messages || messages.length === 0) {
+      // 回退模式：从 systemMessage/userMessage 构建 messages
+      if (!systemMessage && !userMessage) {
+        throw new Error("Either messages[] or systemMessage/userMessage is required for LLMNode");
+      }
     }
 
     const llmResponse = await this.executeTool(
@@ -55,6 +73,13 @@ export class LLMNode extends NodeBase {
         streamUsage,
         dialogueKey,
         characterId,
+        messages,
+        // 后处理选项
+        promptNames,
+        postProcessingMode,
+        tools,
+        prefill,
+        placeholder,
       },
     ) as string;
 

@@ -65,10 +65,10 @@ export class ScriptEventEmitter implements EventEmitter {
    */
   private setupBridgeListener(): void {
     if (!this.messageBridge) return;
-    
+
     this.messageBridge.on("EVENT_EMIT", (message) => {
-      const { eventName, data } = message.payload as { eventName: string; data: any };
-      
+      const { eventName, data } = message.payload as { eventName: string; data: unknown };
+
       // Emit locally without propagating back through bridge
       this.emitLocal(eventName, data);
     });
@@ -77,9 +77,9 @@ export class ScriptEventEmitter implements EventEmitter {
   /**
    * Register an event handler
    */
-  on<T = any>(eventName: string, handler: EventHandler<T>): UnsubscribeFunction {
-    const unsubscribe = this.emitter.on(eventName, handler as any);
-    
+  on(eventName: string, handler: EventHandler): UnsubscribeFunction {
+    const unsubscribe = this.emitter.on(eventName, handler);
+
     // Return unsubscribe function
     return () => {
       unsubscribe();
@@ -89,12 +89,12 @@ export class ScriptEventEmitter implements EventEmitter {
   /**
    * Register a one-time event handler
    */
-  once<T = any>(eventName: string, handler: EventHandler<T>): UnsubscribeFunction {
-    const unsubscribe = this.emitter.once(eventName).then(handler as any);
-    
+  once(eventName: string, handler: EventHandler): UnsubscribeFunction {
+    const unsubscribe = this.emitter.once(eventName).then((payload) => handler(payload));
+
     // Return unsubscribe function (though it will auto-unsubscribe after first trigger)
     return () => {
-      // Emittery doesn't provide a way to cancel .once(), 
+      // Emittery doesn't provide a way to cancel .once(),
       // so we just remove all listeners for this event
       this.emitter.clearListeners(eventName);
     };
@@ -105,7 +105,7 @@ export class ScriptEventEmitter implements EventEmitter {
    */
   off(eventName: string, handler?: EventHandler): void {
     if (handler) {
-      this.emitter.off(eventName, handler as any);
+      this.emitter.off(eventName, handler);
     } else {
       this.emitter.clearListeners(eventName);
     }
@@ -113,17 +113,17 @@ export class ScriptEventEmitter implements EventEmitter {
   
   /**
    * Emit an event
-   * 
+   *
    * @param eventName - Name of the event
    * @param data - Event data to pass to handlers
    */
-  async emit(eventName: string, data?: any): Promise<void> {
+  async emit(eventName: string, data?: unknown): Promise<void> {
     // Check if this should be local only
     const isLocalOnly = this.localOnly.has(eventName);
-    
+
     // Emit locally
     await this.emitLocal(eventName, data);
-    
+
     // Propagate through bridge if enabled and not local-only
     if (
       this.messageBridge &&
@@ -145,7 +145,7 @@ export class ScriptEventEmitter implements EventEmitter {
   /**
    * Emit event locally only (no bridge propagation)
    */
-  private async emitLocal(eventName: string, data?: any): Promise<void> {
+  private async emitLocal(eventName: string, data?: unknown): Promise<void> {
     try {
       await this.emitter.emit(eventName, data);
     } catch (error) {
@@ -178,12 +178,12 @@ export class ScriptEventEmitter implements EventEmitter {
   
   /**
    * Wait for an event to be emitted
-   * 
+   *
    * @param eventName - Name of the event to wait for
    * @param timeout - Timeout in milliseconds (optional)
    * @returns Promise that resolves with event data
    */
-  async waitFor<T = any>(eventName: string, timeout?: number): Promise<T> {
+  async waitFor<T = unknown>(eventName: string, timeout?: number): Promise<T> {
     if (timeout) {
       return Promise.race([
         this.emitter.once(eventName),
@@ -192,7 +192,7 @@ export class ScriptEventEmitter implements EventEmitter {
         ),
       ]) as Promise<T>;
     }
-    
+
     return this.emitter.once(eventName) as Promise<T>;
   }
   
@@ -321,13 +321,19 @@ export function parseEventName(eventName: string): { namespace?: string; event: 
  * }
  * ```
  */
-export function withEventEmitter<T extends { new (...args: any[]): {} }>(constructor: T) {
-  return class extends constructor {
-    events: ScriptEventEmitter = new ScriptEventEmitter();
-    
-    on = this.events.on.bind(this.events);
-    once = this.events.once.bind(this.events);
-    off = this.events.off.bind(this.events);
-    emit = this.events.emit.bind(this.events);
-  };
+export function withEventEmitter<T extends object>(target: T): T & {
+  events: ScriptEventEmitter;
+  on: ScriptEventEmitter["on"];
+  once: ScriptEventEmitter["once"];
+  off: ScriptEventEmitter["off"];
+  emit: ScriptEventEmitter["emit"];
+} {
+  const events = new ScriptEventEmitter();
+  return Object.assign(target, {
+    events,
+    on: events.on.bind(events),
+    once: events.once.bind(events),
+    off: events.off.bind(events),
+    emit: events.emit.bind(events),
+  });
 }

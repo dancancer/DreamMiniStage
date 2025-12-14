@@ -35,6 +35,19 @@ interface PromptViewerErrorBoundaryProps {
   className?: string;
 }
 
+/**
+ * 错误详情上报数据结构
+ */
+interface ErrorReportDetails {
+  message: string;
+  stack: string | undefined;
+  componentStack: string | undefined;
+  errorId: string;
+  timestamp: string;
+  userAgent: string;
+  url: string;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    错误边界组件实现
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -96,12 +109,19 @@ export class PromptViewerErrorBoundary extends Component<
 
   /**
    * 记录错误日志
+   *
+   * ═══════════════════════════════════════════════════════════════════════════
+   * 错误日志处理
+   * - 规范化 componentStack 类型（将 null 转换为 undefined）
+   * - 记录到控制台
+   * - 上报到错误监控服务
+   * ═══════════════════════════════════════════════════════════════════════════
    */
   private logError = (error: Error, errorInfo: ErrorInfo) => {
     const errorDetails = {
       message: error.message,
       stack: error.stack,
-      componentStack: errorInfo.componentStack,
+      componentStack: errorInfo.componentStack ?? undefined,
       errorId: this.state.errorId,
       timestamp: new Date().toISOString(),
       userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "unknown",
@@ -178,7 +198,7 @@ export class PromptViewerErrorBoundary extends Component<
   /**
    * 上报错误到监控服务
    */
-  private reportErrorToService = (errorDetails: any) => {
+  private reportErrorToService = (errorDetails: ErrorReportDetails) => {
     // 这里可以集成错误监控服务
     // 例如 Sentry、LogRocket 等
     try {

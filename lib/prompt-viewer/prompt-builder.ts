@@ -3,16 +3,21 @@
  * ║                     提示词构建工具                                          ║
  * ║                                                                            ║
  * ║  提供提示词数据的构建、格式化、图片提取等功能                                ║
- * ║  设计原则：纯函数、无副作用、可测试                                         ║
+ * ║  使用 STPromptManager 系统构建提示词                                        ║
+ * ║                                                                            ║
+ * ║  整改后：复用 STPromptManager 的 chatHistory 展开逻辑                       ║
+ * ║  移除重复的 expandChatHistoryInMessages 实现                               ║
+ * ║  Requirements: 5.1                                                         ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
-import type { PromptData, PromptImage } from "@/types/prompt-viewer";
+import type { PromptData, PromptImage, PromptMessage } from "@/types/prompt-viewer";
 import { generateId } from "@/lib/prompt-viewer/constants";
 import { useDialogueStore } from "@/lib/store/dialogue-store";
 import { PresetNodeTools } from "@/lib/nodeflow/PresetNode/PresetNodeTools";
-import { ContextNodeTools } from "@/lib/nodeflow/ContextNode/ContextNodeTools";
 import { WorldBookNodeTools } from "@/lib/nodeflow/WorldBookNode/WorldBookNodeTools";
+import { HistoryPreNodeTools } from "@/lib/nodeflow/HistoryPreNode/HistoryPreNodeTools";
+import { getCurrentSystemPresetType } from "@/function/preset/download";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    图片提取工具
@@ -101,39 +106,109 @@ export function buildFullPromptText(
    提示词数据构建
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/** 从对话数据构建提示词（复用实际工作流节点） */
+/**
+ * 从对话数据构建提示词（使用 STPromptManager 系统）
+ *
+ * 整改后的流程：
+ * 1. HistoryPreNode: 获取结构化历史消息
+ * 2. PresetNode: 使用 STPromptManager 构建消息数组（内部展开 chatHistory marker）
+ * 3. WorldBookNode: 注入世界书内容
+ *
+ * 不再使用重复的 expandChatHistoryInMessages 实现
+ */
 export async function buildPromptFromDialogue(
   dialogueKey: string,
   characterId: string,
 ): Promise<PromptData> {
   console.log("[PromptBuilder] 开始构建提示词", { dialogueKey, characterId });
 
-  // 1. 获取对话历史
+  // 1. 获取对话历史（用于推断当前输入与展示）
   const dialogue = useDialogueStore.getState().getDialogue(dialogueKey);
-  const messages = dialogue?.messages || [];
-  const lastUserMsg = messages.filter(m => m.role === "user").pop();
+  const dialogueMessages = dialogue?.messages || [];
+  const lastUserMsg = dialogueMessages.filter(m => m.role === "user").pop();
   const currentUserInput = lastUserMsg?.content || "";
 
-  // 2. PresetNode: 构建基础框架
+  // 2. 获取当前系统预设类型
+  const systemPresetType = getCurrentSystemPresetType();
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Step 1: HistoryPreNode - 获取结构化历史消息
+     复用 HistoryPreNodeTools，不再使用 ContextNodeTools
+     Requirements: 2.2
+     ═══════════════════════════════════════════════════════════════════════════ */
+  const chatHistoryMessages = await HistoryPreNodeTools.getChatHistoryMessages(
+    dialogueKey,
+    10,
+  );
+  const chatHistoryText = await HistoryPreNodeTools.getChatHistoryText(
+    dialogueKey,
+    10,
+  );
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Step 2: PresetNode - 使用 STPromptManager 构建消息数组
+     传入 chatHistoryMessages，让 STPromptManager 内部展开 chatHistory marker
+     Requirements: 2.6, 3.1
+     ═══════════════════════════════════════════════════════════════════════════ */
   const presetResult = await PresetNodeTools.buildPromptFramework(
-    characterId, "zh", "用户", undefined, 200, false, "mirror_realm",
+    characterId,
+    "zh",
+    "用户",
+    undefined,
+    200,
+    false,
+    systemPresetType,
+    dialogueKey,
+    currentUserInput,
+    chatHistoryMessages,  // 传入历史消息，让 STPromptManager 展开
   );
 
-  // 3. ContextNode: 处理对话历史
-  const contextResult = await ContextNodeTools.assembleChatHistory(
-    presetResult.userMessage, dialogueKey, 10,
-  );
-
-  // 4. WorldBookNode: 注入世界书
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Step 3: WorldBookNode - 注入世界书内容
+     Requirements: 4.1
+     ═══════════════════════════════════════════════════════════════════════════ */
   const worldBookResult = await WorldBookNodeTools.assemblePromptWithWorldBook(
-    characterId, presetResult.systemMessage, contextResult.userMessage,
-    currentUserInput, "zh", 5, "用户", undefined, dialogueKey,
+    characterId,
+    presetResult.systemMessage,
+    presetResult.userMessage,
+    currentUserInput,
+    "zh",
+    5,
+    "用户",
+    undefined,
+    dialogueKey,
   );
 
   const { systemMessage, userMessage } = worldBookResult;
-  const fullPrompt = buildFullPromptText(systemMessage, userMessage, messages);
+  const fullPrompt = buildFullPromptText(systemMessage, userMessage, dialogueMessages);
 
-  console.log("[PromptBuilder] 构建完成，长度:", fullPrompt.length);
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Step 4: 构建最终消息数组
+     优先使用 presetResult.messages（已由 STPromptManager 展开 chatHistory）
+     若无则回退为 system + user
+     Requirements: 1.1
+     ═══════════════════════════════════════════════════════════════════════════ */
+  const llmMessages = presetResult.messages && presetResult.messages.length > 0
+    ? presetResult.messages.map(m => ({ role: m.role, content: m.content }))
+    : [
+      { role: "system", content: systemMessage },
+      { role: "user", content: userMessage },
+    ];
+
+  const promptMessages: PromptMessage[] = llmMessages.map(msg => ({
+    id: generateId("msg"),
+    role: msg.role as "system" | "user" | "assistant",
+    content: msg.content,
+  }));
+
+  console.log(
+    "[PromptBuilder] 构建完成，长度:",
+    fullPrompt.length,
+    "消息数:",
+    promptMessages.length,
+    "预设ID:",
+    presetResult.presetId,
+  );
 
   return {
     id: generateId("prompt"),
@@ -143,6 +218,7 @@ export async function buildPromptFromDialogue(
     fullPrompt,
     images: extractImages(fullPrompt),
     metadata: { characterId, dialogueKey, modelName: "unknown", temperature: 0.7 },
+    messages: promptMessages,
   };
 }
 
@@ -159,6 +235,7 @@ export function createPromptDataBuilder() {
     fullPrompt: "",
     images: [] as PromptImage[],
     metadata: { characterId: "", dialogueKey: "", modelName: "" } as PromptData["metadata"],
+    messages: [] as PromptData["messages"],
   };
 
   const builder = {
@@ -170,7 +247,12 @@ export function createPromptDataBuilder() {
       Object.assign(data.metadata, meta); return builder; 
     },
     build(): PromptData { 
-      return { ...data, images: [...data.images], metadata: { ...data.metadata } }; 
+      // 如果没有手动设置 messages，从 systemMessage 和 userMessage 构建
+      const messages = data.messages.length > 0 ? [...data.messages] : [
+        { id: generateId("msg"), role: "system" as const, content: data.systemMessage },
+        { id: generateId("msg"), role: "user" as const, content: data.userMessage },
+      ];
+      return { ...data, images: [...data.images], metadata: { ...data.metadata }, messages }; 
     },
   };
 

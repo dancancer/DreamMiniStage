@@ -17,6 +17,13 @@ export interface DialogueMessage {
 export interface OpeningMessage {
   id: string;
   content: string;
+  fullContent?: string;
+}
+
+export interface OpeningPayload {
+  id: string;
+  content: string;
+  fullContent: string;
 }
 
 export interface Character {

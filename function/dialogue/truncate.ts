@@ -1,7 +1,7 @@
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 
 interface SwitchDialogueBranchOptions {
-  dialogueId: string;  // 对话树 ID（sessionId 或 characterId）
+  dialogueId: string;  // 对话树 ID（sessionId）
   nodeId: string;
 }
 
@@ -75,8 +75,8 @@ export async function switchDialogueBranch({ dialogueId, nodeId }: SwitchDialogu
       message: "成功切换到指定对话节点",
       dialogue: processedDialogue,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error switching dialogue branch:", error);
-    throw new Error(`Failed to switch dialogue branch: ${error.message}`);
+    throw new Error(`Failed to switch dialogue branch: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }

@@ -1,23 +1,28 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Character - 角色核心类
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 import { CharacterRecord } from "@/lib/data/roleplay/character-record-operation";
 import { WorldBookEntry } from "@/lib/models/world-book-model";
 import { CharacterData } from "@/lib/models/character-model";
 import { adaptCharacterData } from "@/lib/adapter/tagReplacer";
+import type { CharacterBookEntry } from "@/lib/models/rawdata-model";
 
 export class Character {
   id: string;
   characterData: CharacterData;
   worldBook: WorldBookEntry[] | Record<string, WorldBookEntry>;
   imagePath: string;
-  
+
   constructor(characterRecord: CharacterRecord) {
     if (!characterRecord) {
       throw new Error("Character record is required");
     }
-    
+
     if (!characterRecord.data) {
       throw new Error("Character data is missing");
     }
-    
+
     this.id = characterRecord.id;
     this.imagePath = characterRecord.imagePath;
     this.characterData = {
@@ -31,24 +36,30 @@ export class Character {
       avatar: characterRecord.data.avatar || "",
       creator_notes: characterRecord.data.data?.creator_notes || "",
       alternate_greetings: characterRecord.data.data?.alternate_greetings || [],
-      extensions: characterRecord.data.data?.extensions || (characterRecord.data as any).extensions,
-    }; 
+      extensions: characterRecord.data.data?.extensions || {},
+    };
     this.worldBook = this.processCharacterBook(characterRecord.data.data?.character_book);
   }
-    
-  private processCharacterBook(characterBook: any): WorldBookEntry[] | Record<string, WorldBookEntry> {
+
+  /**
+   * 处理角色书 - 统一不同来源的数据格式
+   */
+  private processCharacterBook(
+    characterBook: { entries: CharacterBookEntry[] | Record<string, WorldBookEntry> } | undefined,
+  ): WorldBookEntry[] | Record<string, WorldBookEntry> {
     if (!characterBook) return [];
-  
+
     if (characterBook.entries) {
       if (Array.isArray(characterBook.entries)) {
-        return characterBook.entries.map((entry: any, index: number) => ({
+        return characterBook.entries.map((entry: CharacterBookEntry) => ({
           comment: entry.comment || "",
           content: entry.content || "",
-          enabled: entry.enabled || true,
+          enabled: entry.enabled ?? true,
           position: (entry.extensions && typeof entry.extensions.position !== "undefined"
             ? entry.extensions.position
             : (typeof entry.position !== "undefined" ? entry.position : 0)) as 0 | 1 | 2 | 3 | 4,
           constant: entry.constant || false,
+          selective: (entry as { selective?: boolean }).selective ?? false,
           keys: entry.keys || [],
           insertion_order: typeof entry.insertion_order !== "undefined"
             ? entry.insertion_order
@@ -73,11 +84,13 @@ export class Character {
   }
     
   getData(language: "en" | "zh" = "zh", username?: string): CharacterData {
-    return adaptCharacterData(this.characterData, language, username);
+    const adaptedData = adaptCharacterData(this.characterData as unknown as Record<string, unknown>, language, username);
+    return adaptedData as unknown as CharacterData;
   }
-  
+
   getSystemPrompt(language: "en" | "zh" = "zh", username?: string): string {
-    const processedData = adaptCharacterData(this.characterData, language, username);
+    const adaptedData = adaptCharacterData(this.characterData as unknown as Record<string, unknown>, language, username);
+    const processedData = adaptedData as unknown as CharacterData;
     let prompt = "";
     
     if (language === "zh") {

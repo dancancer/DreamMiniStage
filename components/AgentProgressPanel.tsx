@@ -37,6 +37,23 @@ import {
 import { useLanguage } from "@/app/i18n";
 import { Button } from "@/components/ui/button";
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  类型定义
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Agent 生成的结果数据类型
+ * 使用 unknown 而非 any，确保类型安全
+ */
+interface AgentResultData {
+  /** 角色卡数据（格式由外部决定） */
+  character_data?: unknown;
+  /** 状态系统数据 */
+  status_data?: unknown;
+  /** 世界数据 */
+  world_data?: unknown;
+}
+
 interface AgentProgressPanelProps {
   progress: {
   completedTasks: number;
@@ -44,13 +61,10 @@ interface AgentProgressPanelProps {
   knowledgeBaseSize: number;
   };
   status: string;
-  result?: {
-    character_data?: any;
-    status_data?: any;
-    world_data?: any;
-  };
+  result?: AgentResultData;
   sessionId?: string | null;
-  onExport?: (type: string, data: any) => void;
+  /** 导出回调：接受数据类型和实际数据 */
+  onExport?: (type: string, data: unknown) => void;
 }
 
 /**
@@ -82,7 +96,7 @@ const AgentProgressPanel: React.FC<AgentProgressPanelProps> = ({
 
   const statusConfig = getStatusConfig(status);
 
-  const handleExport = async (type: string, data: any) => {
+  const handleExport = async (type: string, data: unknown) => {
     if (!data || isExporting) return;
     
     setIsExporting(true);
@@ -211,13 +225,15 @@ const AgentProgressPanel: React.FC<AgentProgressPanelProps> = ({
                   <div className={`w-1.5 h-1.5 rounded-full fantasy-glow ${
                     result.character_data ? "bg-cream" : "bg-slate-600"
                   }`} />
-                  {result.character_data && (
+                  {result.character_data !== undefined && result.character_data !== null && (
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleExport("character", result.character_data)}
                       disabled={isExporting}
                       className="h-auto w-auto p-0.5 hover:bg-black/30"
+                      aria-label="Export character data"
+                      title="Export character data"
                     >
                       <Download className="w-3 h-3 text-primary-soft/80 hover:text-cream" />
                     </Button>
@@ -235,13 +251,15 @@ const AgentProgressPanel: React.FC<AgentProgressPanelProps> = ({
                   <div className={`w-1.5 h-1.5 rounded-full fantasy-glow ${
                     result.status_data ? "bg-cream" : "bg-slate-600"
                   }`} />
-                  {result.status_data && (
+                  {result.status_data !== undefined && result.status_data !== null && (
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleExport("status", result.status_data)}
                       disabled={isExporting}
                       className="h-auto w-auto p-0.5 hover:bg-black/30"
+                      aria-label="Export status data"
+                      title="Export status data"
                     >
                       <Download className="w-3 h-3 text-primary-soft/80 hover:text-cream" />
                     </Button>
@@ -259,13 +277,15 @@ const AgentProgressPanel: React.FC<AgentProgressPanelProps> = ({
                   <div className={`w-1.5 h-1.5 rounded-full fantasy-glow ${
                     result.world_data ? "bg-cream" : "bg-slate-600"
                   }`} />
-                  {result.world_data && (
+                  {result.world_data !== undefined && result.world_data !== null && (
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleExport("world", result.world_data)}
                       disabled={isExporting}
                       className="h-auto w-auto p-0.5 hover:bg-black/30"
+                      aria-label="Export world data"
+                      title="Export world data"
                     >
                       <Download className="w-3 h-3 text-primary-soft/80 hover:text-cream" />
                     </Button>

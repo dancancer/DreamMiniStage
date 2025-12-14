@@ -1,6 +1,7 @@
 import { BaseWorkflow, WorkflowConfig } from "@/lib/workflow/BaseWorkflow";
 import { NodeCategory } from "@/lib/nodeflow/types";
 import { UserInputNode } from "@/lib/nodeflow/UserInputNode/UserInputNode";
+import { HistoryPreNode } from "@/lib/nodeflow/HistoryPreNode/HistoryPreNode";
 import { PresetNode } from "@/lib/nodeflow/PresetNode/PresetNode";
 import { ContextNode } from "@/lib/nodeflow/ContextNode/ContextNode";
 import { MemoryRetrievalNode } from "@/lib/nodeflow/MemoryNode/MemoryRetrievalNode";
@@ -34,6 +35,7 @@ import { MemoryStorageNode } from "@/lib/nodeflow/MemoryNode/MemoryStorageNode";
  */
 
 export interface CorrectRAGWorkflowParams {
+  dialogueKey?: string;  // 会话 ID（用于隔离不同会话的历史）
   characterId: string;
   userInput: string;
   number?: number;
@@ -64,6 +66,9 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
     return {
       "userInput": {
         nodeClass: UserInputNode,
+      },
+      "historyPre": {
+        nodeClass: HistoryPreNode,
       },
       "preset": {
         nodeClass: PresetNode,
@@ -97,12 +102,16 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
       id: "correct-rag-workflow",
       name: "Correct RAG Workflow - Early return with background AFTER nodes",
       nodes: [
+        /* ═══════════════════════════════════════════════════════════════════
+           入口节点：接收用户输入和配置参数
+           ═══════════════════════════════════════════════════════════════════ */
         {
           id: "user-input-1",
           name: "userInput",
           category: NodeCategory.ENTRY,
-          next: ["preset-1"],
+          next: ["history-pre-1"],
           initParams: [
+            "dialogueKey",
             "characterId", 
             "userInput", 
             "number", 
@@ -116,9 +125,12 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
             "fastModel",
             "maxMemories",
             "enableMemoryStorage",
+            "streaming",
+            "streamUsage",
           ],
           inputFields: [],
           outputFields: [
+            "dialogueKey",
             "characterId", 
             "userInput", 
             "number", 
@@ -132,25 +144,59 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
             "fastModel",
             "maxMemories",
             "enableMemoryStorage",
+            "streaming",
+            "streamUsage",
           ],
         },
+
+        /* ═══════════════════════════════════════════════════════════════════
+           历史数据前置节点：在 PresetNode 之前提供结构化历史数据
+           Requirements: 6.2 - RAGWorkflow 执行时，系统应在其节点链中包含 HistoryPreNode
+           
+           输出：
+           - chatHistoryMessages: 结构化历史消息数组 → PresetNode
+           - chatHistoryText: 压缩历史文本 → ContextNode
+           - conversationContext: 短上下文 → memory/RAG 子系统
+           ═══════════════════════════════════════════════════════════════════ */
+        {
+          id: "history-pre-1",
+          name: "historyPre",
+          category: NodeCategory.MIDDLE,
+          next: ["preset-1"],
+          initParams: [],
+          inputFields: ["dialogueKey", "characterId", "userInput"],
+          outputFields: ["chatHistoryMessages", "chatHistoryText", "conversationContext", "userInput"],
+        },
+
+        /* ═══════════════════════════════════════════════════════════════════
+           预设节点：根据 preset 配置构建 messages[] 数组
+           Requirements: 2.6 - PresetNode 构建 MacroEnv 时应包含来自 HistoryPreNode 的 chatHistoryMessages
+           ═══════════════════════════════════════════════════════════════════ */
         {
           id: "preset-1",
           name: "preset",
           category: NodeCategory.MIDDLE,
           next: ["context-1"],
           initParams: [],
-          inputFields: ["characterId", "language", "username", "number", "fastModel"],
-          outputFields: ["systemMessage", "userMessage", "presetId"],
+          inputFields: ["characterId", "language", "username", "number", "fastModel", "dialogueKey", "userInput", "chatHistoryMessages"],
+          outputFields: ["systemMessage", "userMessage", "messages", "presetId"],
+          inputMapping: {
+            "userInput": "currentUserInput",
+          },
         },
+
+        /* ═══════════════════════════════════════════════════════════════════
+           上下文节点：UI/兼容层，处理 userMessage 中的 {{chatHistory}} 文本替换
+           接收 chatHistoryText 用于兼容旧 preset 的文本替换
+           ═══════════════════════════════════════════════════════════════════ */
         {
           id: "context-1",
           name: "context",
           category: NodeCategory.MIDDLE,
           next: ["memory-retrieval-1"],
           initParams: [],
-          inputFields: ["userMessage", "characterId", "userInput"],
-          outputFields: ["userMessage", "conversationContext"],
+          inputFields: ["userMessage", "dialogueKey", "characterId", "userInput", "messages", "chatHistoryText"],
+          outputFields: ["userMessage", "messages"],
         },
         {
           id: "memory-retrieval-1",
@@ -158,8 +204,8 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["world-book-1"],
           initParams: [],
-          inputFields: ["characterId", "userInput", "systemMessage", "apiKey", "baseUrl", "language", "maxMemories", "username"],
-          outputFields: ["systemMessage", "memoryPrompt"],
+          inputFields: ["characterId", "userInput", "systemMessage", "apiKey", "baseUrl", "language", "maxMemories", "username", "messages"],
+          outputFields: ["systemMessage", "memoryPrompt", "messages"],
         },
         {
           id: "world-book-1",
@@ -167,8 +213,8 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["llm-1"],
           initParams: [],
-          inputFields: ["systemMessage", "userMessage", "characterId", "language", "username", "userInput"],
-          outputFields: ["systemMessage", "userMessage"],
+          inputFields: ["systemMessage", "userMessage", "dialogueKey", "characterId", "language", "username", "userInput", "messages"],
+          outputFields: ["systemMessage", "userMessage", "messages"],
           inputMapping: {
             "userInput": "currentUserInput",
           },
@@ -179,7 +225,7 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["regex-1"],
           initParams: [],
-          inputFields: ["systemMessage", "userMessage", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "language"],
+          inputFields: ["systemMessage", "userMessage", "messages", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "language", "streaming", "streamUsage", "dialogueKey", "characterId"],
           outputFields: ["llmResponse"],
         },
         {

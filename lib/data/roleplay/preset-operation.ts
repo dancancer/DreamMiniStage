@@ -1,22 +1,24 @@
-import { 
-  PRESET_FILE, 
-  clearStore, 
-  getAllEntries, 
-  getRecordByKey, 
-  putRecord, 
+import {
+  PRESET_FILE,
+  clearStore,
+  getAllEntries,
+  getRecordByKey,
+  putRecord,
 } from "@/lib/data/local-storage";
 import { Preset, PresetPrompt } from "@/lib/models/preset-model";
+import { importPreset as normalizePresetData, type NormalizedPreset } from "@/lib/adapters/import/preset-import";
+import { sortPrompts, getPromptsFromBestGroup } from "@/lib/core/prompt/sorting";
 
 export class PresetOperations {
-  static async getPresets(): Promise<Record<string, any>> {
-    const entries = await getAllEntries<any>(PRESET_FILE);
-    return entries.reduce<Record<string, any>>((acc, { key, value }) => {
+  static async getPresets(): Promise<Record<string, Preset>> {
+    const entries = await getAllEntries<Preset>(PRESET_FILE);
+    return entries.reduce<Record<string, Preset>>((acc, { key, value }) => {
       if (key) acc[String(key)] = value;
       return acc;
     }, {});
   }
 
-  private static async savePresets(presets: Record<string, any>): Promise<void> {
+  private static async savePresets(presets: Record<string, Preset>): Promise<void> {
     await clearStore(PRESET_FILE);
     for (const [key, value] of Object.entries(presets)) {
       await putRecord(PRESET_FILE, key, value);
@@ -126,62 +128,21 @@ export class PresetOperations {
   static async importPreset(jsonData: string | object, customName?: string): Promise<string | null> {
     try {
       const presetData = typeof jsonData === "string" ? JSON.parse(jsonData) : jsonData;
-      
+
+      /* ─────────────────────────────────────────────────────────────────────
+         使用导入适配器规范化数据
+         - 转换 legacy 占位符 (<USER> → {{user}})
+         - 转换 prompt_order → group_id/position
+         ───────────────────────────────────────────────────────────────────── */
+      const normalized = normalizePresetData(presetData);
+
       const newPreset: Preset = {
-        name: customName || presetData.name || "Imported Preset",
+        name: customName || normalized.name,
         enabled: true,
-        prompts: [],
+        prompts: normalized.prompts,
+        // 不再保留 prompt_order，只使用 group_id/position
       };
 
-      const addedPrompts = new Map<string, PresetPrompt>();
-      
-      if (Array.isArray(presetData.prompts)) {
-        presetData.prompts
-          .filter((prompt: any) => prompt.identifier && prompt.name)
-          .forEach((prompt: any) => {
-            const newPrompt: PresetPrompt = {
-              identifier: prompt.identifier,
-              name: prompt.name,
-              enabled: prompt.enabled !== false,
-              marker: prompt.marker,
-              role: prompt.role,
-              content: prompt.content,
-              forbid_overrides: prompt.forbid_overrides,
-            };
-            
-            addedPrompts.set(prompt.identifier, newPrompt);
-          });
-      }
-      
-      if (Array.isArray(presetData.prompt_order)) {
-        let groupId = 1;
-        
-        for (const orderItem of presetData.prompt_order) {
-          if (Array.isArray(orderItem.order)) {
-            orderItem.order.forEach((entry: any, index: number) => {
-              let prompt = addedPrompts.get(entry.identifier);
-              
-              if (!prompt) {
-                prompt = {
-                  identifier: entry.identifier,
-                  name: entry.identifier,
-                  enabled: entry.enabled !== false,
-                };
-                addedPrompts.set(entry.identifier, prompt);
-              }
-              
-              prompt.group_id = groupId;
-              prompt.position = index;
-              prompt.enabled = entry.enabled !== false;
-            });
-            
-            groupId++;
-          }
-        }
-      }
-      
-      newPreset.prompts = Array.from(addedPrompts.values());
-      
       return this.createPreset(newPreset);
     } catch (error) {
       console.error("Error importing preset:", error);
@@ -192,34 +153,23 @@ export class PresetOperations {
   static async getOrderedPrompts(presetId: string): Promise<PresetPrompt[]> {
     try {
       const preset = await this.getPreset(presetId);
-      
+      console.log(`[PresetOperations.getOrderedPrompts] presetId=${presetId}, preset=${!!preset}, enabled=${preset?.enabled}`);
+
       if (!preset || preset.enabled === false) {
+        console.log("[PresetOperations.getOrderedPrompts] Preset not found or disabled");
         return [];
       }
 
-      let targetGroupId = 2;
-      let groupPrompts = preset.prompts.filter(
-        prompt => Number(prompt.group_id) === targetGroupId,
-      );
-      
-      if (groupPrompts.length === 0) {
-        targetGroupId = 1;
-        groupPrompts = preset.prompts.filter(
-          prompt => Number(prompt.group_id) === targetGroupId,
-        );
-      }
+      console.log(`[PresetOperations.getOrderedPrompts] prompts count: ${preset.prompts?.length || 0}`);
 
-      if (groupPrompts.length === 0) {
-        return preset.prompts.filter(prompt => 
-          !prompt.group_id && prompt.enabled !== false,
-        );
-      }
-      
-      const orderedPrompts = [...groupPrompts].sort(
-        (a, b) => (a.position || 0) - (b.position || 0),
-      );
-      
-      return orderedPrompts.filter(prompt => prompt.enabled !== false);
+      /* ─────────────────────────────────────────────────────────────────────
+         使用统一排序算法
+         - prompt_order 已在导入时转换为 group_id/position
+         - 运行时只使用单一排序路径
+         ───────────────────────────────────────────────────────────────────── */
+      const orderedPrompts = getPromptsFromBestGroup(preset.prompts, true);
+      console.log(`[PresetOperations.getOrderedPrompts] Returning ${orderedPrompts.length} prompts`);
+      return orderedPrompts;
     } catch (error) {
       console.error("Error getting ordered prompts:", error);
       return [];
@@ -229,32 +179,15 @@ export class PresetOperations {
   static async getPromptsOrderedForDisplay(presetId: string): Promise<PresetPrompt[]> {
     try {
       const preset = await this.getPreset(presetId);
-      
+
       if (!preset) {
         return [];
       }
 
-      let targetGroupId = 2;
-      let groupPrompts = preset.prompts.filter(
-        prompt => Number(prompt.group_id) === targetGroupId,
-      );
-      
-      if (groupPrompts.length === 0) {
-        targetGroupId = 1;
-        groupPrompts = preset.prompts.filter(
-          prompt => Number(prompt.group_id) === targetGroupId,
-        );
-      }
-
-      if (groupPrompts.length === 0) {
-        return preset.prompts;
-      }
-      
-      const orderedPrompts = [...groupPrompts].sort(
-        (a, b) => (a.position || 0) - (b.position || 0),
-      );
-      
-      return orderedPrompts;
+      /* ─────────────────────────────────────────────────────────────────────
+         使用统一排序算法（不过滤禁用项，用于 UI 展示）
+         ───────────────────────────────────────────────────────────────────── */
+      return getPromptsFromBestGroup(preset.prompts, false);
     } catch (error) {
       console.error("Error getting ordered prompts for display:", error);
       return [];
@@ -270,7 +203,7 @@ export class PresetOperations {
       content?: string;
       enabled?: boolean;
       position?: number;
-      [key: string]: any;
+      [key: string]: unknown;
     },
   ): Promise<boolean> {
     try {

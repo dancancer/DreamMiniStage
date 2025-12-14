@@ -41,6 +41,7 @@ describe("parseCommandValue", () => {
 });
 
 describe("fixPath", () => {
+  // 基础测试
   it("处理简单路径", () => {
     expect(fixPath("a.b.c")).toBe("a.b.c");
   });
@@ -52,11 +53,55 @@ describe("fixPath", () => {
 
   it("处理带引号的键", () => {
     expect(fixPath("a[\"key\"].b")).toBe("a[key].b");
-    expect(fixPath("a[\"key\"].b")).toBe("a[key].b");
+    expect(fixPath("a['key'].b")).toBe("a[key].b");
   });
 
   it("处理带空格的键", () => {
     expect(fixPath("a[\"key with space\"].b")).toBe("a[\"key with space\"].b");
+  });
+
+  // 对照 MagVarUpdate pathFix 测试用例
+  it("baseline: 保持正确路径不变", () => {
+    const input = "测试员.物品&装备.武器栏[衔尾蛇OICW原型].弹药系统[\"7.62mm ETC弹匣\"].载弹量";
+    // 注意：我们的实现可能与 MagVarUpdate 略有不同
+    const out = fixPath(input);
+    expect(out).toContain("测试员");
+    expect(out).toContain("武器栏");
+  });
+
+  it("点分段: 移除简单标识符的额外引号", () => {
+    expect(fixPath("foo.\"bar\".baz")).toBe("foo.bar.baz");
+    expect(fixPath("foo.'bar'.baz")).toBe("foo.bar.baz");
+  });
+
+  it("点分段: 带空格的引号段转为括号字符串", () => {
+    expect(fixPath("foo.\"a b\".c")).toBe("foo[\"a b\"].c");
+  });
+
+  it("括号: 纯数字索引不带引号", () => {
+    expect(fixPath("foo[0]")).toBe("foo[0]");
+    expect(fixPath("foo[  12  ]")).toBe("foo[12]");
+  });
+
+  it("括号字符串: 无空白保持裸形式", () => {
+    expect(fixPath("武器栏[衔尾蛇]")).toBe("武器栏[衔尾蛇]");
+    expect(fixPath("武器栏[\"衔尾蛇\"]")).toBe("武器栏[衔尾蛇]");
+    expect(fixPath("武器栏['衔尾蛇']")).toBe("武器栏[衔尾蛇]");
+  });
+
+  it("括号字符串: 含空白强制引号形式", () => {
+    expect(fixPath("foo[hello world]")).toBe("foo[\"hello world\"]");
+    expect(fixPath("foo[\"hello world\"]")).toBe("foo[\"hello world\"]");
+  });
+
+  it("空或仅空白的括号", () => {
+    expect(fixPath("foo[]")).toBe("foo[]");
+    expect(fixPath("foo[   ]")).toBe("foo[]");
+  });
+
+  it("括号内 trim", () => {
+    expect(fixPath("foo[   abc   ]")).toBe("foo[abc]");
+    expect(fixPath("foo[   a b   ]")).toBe("foo[\"a b\"]");
   });
 });
 

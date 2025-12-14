@@ -4,15 +4,17 @@
  * ║                                                                            ║
  * ║  角色加载状态管理：加载角色、初始化对话、错误处理                             ║
  * ║  从 character/page.tsx 提取的加载逻辑                                       ║
+ * ║  【重构】使用 resolveDialogueKey 统一解析对话标识                             ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { getCharacterDialogue } from "@/function/dialogue/info";
 import { getDisplayUsername } from "@/utils/username-helper";
 import { useDialoguePreferences } from "@/hooks/character-dialogue/useDialoguePreferences";
+import { resolveDialogueKey } from "@/lib/core/dialogue-key";
 import type { Character, DialogueMessage, OpeningMessage } from "@/types/character-dialogue";
 
 // ============================================================================
@@ -109,8 +111,16 @@ export function useCharacterLoader({
   const initializationRef = useRef(false);
   const { language } = useDialoguePreferences();
 
-  // 计算实际的对话索引 Key（优先 sessionId）
-  const storeKey = dialogueKey || sessionId || characterId;
+  // ═══════════════════════════════════════════════════════════════
+  // 计算实际的对话索引 Key
+  // 
+  // 【设计】使用统一的 resolveDialogueKey 解析器
+  // 优先级：dialogueKey > sessionId > characterId
+  // ═══════════════════════════════════════════════════════════════
+  const storeKey = useMemo(
+    () => resolveDialogueKey({ dialogueKey, sessionId, characterId }),
+    [dialogueKey, sessionId, characterId]
+  );
 
   useEffect(() => {
     const loadCharacterAndDialogue = async () => {

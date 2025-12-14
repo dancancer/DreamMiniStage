@@ -87,3 +87,22 @@ export function extractRoleFromMessageId(messageId: string): MessageRole | null 
   
   return null;
 }
+
+/**
+ * 从消息ID中提取原始节点ID
+ * 
+ * @param messageId - 消息ID (格式: nodeId-role)
+ * @returns 原始节点ID，如果无法提取则返回原始messageId
+ */
+export function extractNodeIdFromMessageId(messageId: string): string {
+  if (!messageId) return messageId;
+  
+  const roleSuffixes = ["-user", "-assistant", "-system", "-sample"];
+  for (const suffix of roleSuffixes) {
+    if (messageId.endsWith(suffix)) {
+      return messageId.slice(0, -suffix.length);
+    }
+  }
+  
+  return messageId;
+}

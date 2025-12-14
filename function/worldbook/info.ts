@@ -29,7 +29,7 @@ export async function getWorldBookEntries(characterId: string) {
         secondaryKeyCount: Array.isArray(entry.secondary_keys) ? entry.secondary_keys.length : 0,
         contentLength: entry.content ? entry.content.length : 0,
         isActive: entry.enabled !== false,
-        lastUpdated: entry.extensions?.updatedAt || entry.extensions?.createdAt || Date.now(),
+        lastUpdated: Number(entry.extensions?.updatedAt || entry.extensions?.createdAt || Date.now()),
         isImported: entry.extensions?.imported || false,
         importedAt: entry.extensions?.importedAt || null,
       };
@@ -62,8 +62,8 @@ export async function getWorldBookEntries(characterId: string) {
       enabledCount: entries.filter(e => e.isActive).length,
       disabledCount: entries.filter(e => !e.isActive).length,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to get world book entries:", error);
-    throw new Error(`Failed to get world book entries: ${error.message}`);
+    throw new Error(`Failed to get world book entries: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }

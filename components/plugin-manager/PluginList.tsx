@@ -13,20 +13,14 @@ import { Package } from "lucide-react";
 import { useLanguage } from "@/app/i18n";
 import { PluginCard } from "./PluginCard";
 import type { FilterValue } from "./PluginFilter";
+import type { PluginEntry } from "@/types/global";
 
 // ============================================================================
 //                              类型定义
 // ============================================================================
 
-interface PluginEntry {
-  plugin: any;
-  manifest: any;
-  enabled: boolean;
-  initialized: boolean;
-  loaded: boolean;
-  error?: string;
-  loadTime?: Date;
-}
+// PluginEntry 类型定义在 types/global.d.ts 中
+// 此处直接使用全局类型，避免重复定义
 
 interface PluginListProps {
   plugins: PluginEntry[];

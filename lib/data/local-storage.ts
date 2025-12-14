@@ -18,6 +18,10 @@ export const AGENT_CONVERSATIONS_FILE = "agent_conversations";
 export const MEMORY_ENTRIES_FILE = "memory_entries";
 export const MEMORY_EMBEDDINGS_FILE = "memory_embeddings";
 
+// Regex-related storage constants
+export const REGEX_ALLOW_LIST_FILE = "regex_allow_list";
+export const REGEX_PRESETS_FILE = "regex_presets";
+
 // ================================
 // IndexedDB 底座封装
 // ================================
@@ -33,6 +37,8 @@ const STORE_NAMES = [
   AGENT_CONVERSATIONS_FILE,
   MEMORY_ENTRIES_FILE,
   MEMORY_EMBEDDINGS_FILE,
+  REGEX_ALLOW_LIST_FILE,
+  REGEX_PRESETS_FILE,
 ];
 
 // 仍然保持旧的“data”数组模式的仓库
@@ -49,21 +55,25 @@ const RECORD_STORES: Array<string> = [
   WORLD_BOOK_FILE,
   REGEX_SCRIPTS_FILE,
   PRESET_FILE,
+  REGEX_ALLOW_LIST_FILE,
+  REGEX_PRESETS_FILE,
 ];
 
 const IMAGE_BATCH_SIZE = 10;
 const RECORD_BATCH_SIZE = 50;
 
 const BackupSchema = z.object({
-  [WORLD_BOOK_FILE]: z.array(z.any()).optional(),
-  [REGEX_SCRIPTS_FILE]: z.array(z.any()).optional(),
-  [PRESET_FILE]: z.array(z.any()).optional(),
-  [CHARACTERS_RECORD_FILE]: z.array(z.any()).optional(),
-  [CHARACTER_DIALOGUES_FILE]: z.array(z.any()).optional(),
-  [SESSIONS_RECORD_FILE]: z.array(z.any()).optional(),
-  [AGENT_CONVERSATIONS_FILE]: z.array(z.any()).optional(),
-  [MEMORY_ENTRIES_FILE]: z.array(z.any()).optional(),
-  [MEMORY_EMBEDDINGS_FILE]: z.array(z.any()).optional(),
+  [WORLD_BOOK_FILE]: z.array(z.unknown()).optional(),
+  [REGEX_SCRIPTS_FILE]: z.array(z.unknown()).optional(),
+  [PRESET_FILE]: z.array(z.unknown()).optional(),
+  [CHARACTERS_RECORD_FILE]: z.array(z.unknown()).optional(),
+  [CHARACTER_DIALOGUES_FILE]: z.array(z.unknown()).optional(),
+  [SESSIONS_RECORD_FILE]: z.array(z.unknown()).optional(),
+  [AGENT_CONVERSATIONS_FILE]: z.array(z.unknown()).optional(),
+  [MEMORY_ENTRIES_FILE]: z.array(z.unknown()).optional(),
+  [MEMORY_EMBEDDINGS_FILE]: z.array(z.unknown()).optional(),
+  [REGEX_ALLOW_LIST_FILE]: z.array(z.unknown()).optional(),
+  [REGEX_PRESETS_FILE]: z.array(z.unknown()).optional(),
   [CHARACTER_IMAGES_FILE]: z.array(
     z.object({
       key: z.string(),
@@ -150,16 +160,16 @@ async function ensureDataStoresInitialized(): Promise<void> {
   return initPromise;
 }
 
-export async function readData(storeName: string): Promise<any[]> {
+export async function readData(storeName: string): Promise<unknown[]> {
   await ensureDataStoresInitialized();
   const db = await openDB();
   const tx = db.transaction(storeName, "readonly");
   const store = tx.objectStore(storeName);
   const result = await promisify(store.get("data"));
-  return result !== undefined ? (result as any[]) : [];
+  return result !== undefined ? (result as unknown[]) : [];
 }
 
-export async function writeData(storeName: string, data: any[]): Promise<void> {
+export async function writeData(storeName: string, data: unknown[]): Promise<void> {
   await ensureDataStoresInitialized();
   const db = await openDB();
   const tx = db.transaction(storeName, "readwrite");
@@ -267,10 +277,10 @@ export async function clearStore(storeName: string): Promise<void> {
   await promisify(store.clear());
 }
 
-export async function exportAllData(): Promise<Record<string, any>> {
+export async function exportAllData(): Promise<Record<string, unknown>> {
   const db = await openDB();
-  const exportData: Record<string, any> = {};
-  
+  const exportData: Record<string, unknown> = {};
+
   // Handle array-based stores
   for (const storeName of ARRAY_STORES) {
     const data = await readData(storeName);
@@ -279,10 +289,10 @@ export async function exportAllData(): Promise<Record<string, any>> {
 
   // Handle record-based stores
   for (const storeName of RECORD_STORES) {
-    const entries = await getAllEntries<any>(storeName);
+    const entries = await getAllEntries<unknown>(storeName);
     exportData[storeName] = entries.map(({ key, value }) => {
-      if (value && typeof value === "object" && value.id === undefined) {
-        return { ...value, id: key };
+      if (value && typeof value === "object" && (value as Record<string, unknown>).id === undefined) {
+        return { ...(value as Record<string, unknown>), id: key };
       }
       return value;
     });
@@ -318,9 +328,9 @@ export async function exportAllData(): Promise<Record<string, any>> {
   return exportData;
 }
 
-export async function importAllData(data: Record<string, any>): Promise<void> {
+export async function importAllData(data: Record<string, unknown>): Promise<void> {
   const payload = validateBackupPayload(data);
-  
+
   // Array-based stores: full replace
   for (const storeName of ARRAY_STORES) {
     if (Array.isArray(payload[storeName])) {
@@ -335,7 +345,7 @@ export async function importAllData(data: Record<string, any>): Promise<void> {
     await clearStore(storeName);
     for (let i = 0; i < records.length; i += RECORD_BATCH_SIZE) {
       const batch = records.slice(i, i + RECORD_BATCH_SIZE);
-      await putRecords(storeName, batch, (record: any) => selectRecordKey(storeName, record));
+      await putRecords(storeName, batch, (record: unknown) => selectRecordKey(storeName, record));
       if (i > 0 && i % (RECORD_BATCH_SIZE * 2) === 0) {
         await yieldToMain();
       }
@@ -388,7 +398,7 @@ async function yieldToMain(): Promise<void> {
   await new Promise(resolve => setTimeout(resolve, 0));
 }
 
-function validateBackupPayload(payload: Record<string, any>): Record<string, any> {
+function validateBackupPayload(payload: Record<string, unknown>): Record<string, unknown> {
   const parsed = BackupSchema.safeParse(payload);
   if (!parsed.success) {
     throw new Error("Invalid backup payload");
@@ -396,14 +406,20 @@ function validateBackupPayload(payload: Record<string, any>): Record<string, any
   return parsed.data;
 }
 
-function selectRecordKey(storeName: string, record: any): IDBValidKey {
+function selectRecordKey(storeName: string, record: unknown): IDBValidKey {
+  // 运行时类型检查：record 必须是对象
+  if (!record || typeof record !== "object") {
+    throw new Error(`Invalid record type for store ${storeName}`);
+  }
+
+  const recordObj = record as Record<string, unknown>;
   const key =
-    record?.id ||
-    record?.key ||
-    record?.ownerId ||
-    record?.name ||
-    record?.identifier ||
-    record?.characterId;
+    recordObj.id ||
+    recordObj.key ||
+    recordObj.ownerId ||
+    recordObj.name ||
+    recordObj.identifier ||
+    recordObj.characterId;
 
   if (key) {
     return key as IDBValidKey;
@@ -415,22 +431,45 @@ function selectRecordKey(storeName: string, record: any): IDBValidKey {
 // 迁移辅助
 // ================================
 
-type LegacyKeySelector = (record: any) => IDBValidKey | null;
+type LegacyKeySelector = (record: unknown) => IDBValidKey | null;
 
 const LEGACY_KEY_SELECTORS: Record<string, LegacyKeySelector> = {
-  [CHARACTERS_RECORD_FILE]: (record) => record?.id || null,
-  [CHARACTER_DIALOGUES_FILE]: (record) => record?.id || record?.character_id || null,
-  [AGENT_CONVERSATIONS_FILE]: (record) => record?.id || null,
-  [MEMORY_ENTRIES_FILE]: (record) => record?.characterId || record?.id || null,
-  [MEMORY_EMBEDDINGS_FILE]: (record) => record?.id || null,
+  [CHARACTERS_RECORD_FILE]: (record) => {
+    if (!record || typeof record !== "object") return null;
+    return (record as Record<string, unknown>).id as IDBValidKey || null;
+  },
+  [CHARACTER_DIALOGUES_FILE]: (record) => {
+    if (!record || typeof record !== "object") return null;
+    const r = record as Record<string, unknown>;
+    return (r.id || r.character_id) as IDBValidKey || null;
+  },
+  [AGENT_CONVERSATIONS_FILE]: (record) => {
+    if (!record || typeof record !== "object") return null;
+    return (record as Record<string, unknown>).id as IDBValidKey || null;
+  },
+  [MEMORY_ENTRIES_FILE]: (record) => {
+    if (!record || typeof record !== "object") return null;
+    const r = record as Record<string, unknown>;
+    return (r.characterId || r.id) as IDBValidKey || null;
+  },
+  [MEMORY_EMBEDDINGS_FILE]: (record) => {
+    if (!record || typeof record !== "object") return null;
+    return (record as Record<string, unknown>).id as IDBValidKey || null;
+  },
   [WORLD_BOOK_FILE]: () => null,
   [REGEX_SCRIPTS_FILE]: () => null,
   [PRESET_FILE]: () => null,
+  [REGEX_ALLOW_LIST_FILE]: () => null,
+  [REGEX_PRESETS_FILE]: () => null,
 };
 
 async function migrateLegacyArrays(db: IDBDatabase): Promise<void> {
   await Promise.all(
     Object.entries(LEGACY_KEY_SELECTORS).map(async ([storeName, getKey]) => {
+      if (!db.objectStoreNames.contains(storeName)) {
+        console.warn(`[migrateLegacyArrays] skip missing store: ${storeName}`);
+        return;
+      }
       const tx = db.transaction(storeName, "readwrite");
       const store = tx.objectStore(storeName);
 
@@ -449,7 +488,7 @@ async function migrateLegacyArrays(db: IDBDatabase): Promise<void> {
 
       // 特殊：原本以单对象承载所有数据的仓库（world_book/regex_scripts/preset）
       if ((storeName === WORLD_BOOK_FILE || storeName === REGEX_SCRIPTS_FILE || storeName === PRESET_FILE) && first && typeof first === "object") {
-        for (const [key, value] of Object.entries(first as Record<string, any>)) {
+        for (const [key, value] of Object.entries(first as Record<string, unknown>)) {
           await promisify(store.put(value, key));
         }
       } else {
@@ -458,9 +497,12 @@ async function migrateLegacyArrays(db: IDBDatabase): Promise<void> {
           if (key === null) {
             continue;
           }
-          if (storeName === CHARACTERS_RECORD_FILE && record && record.order === undefined) {
-            const timestamp = record.updated_at || record.created_at;
-            record.order = timestamp ? Date.parse(timestamp) : Date.now();
+          if (storeName === CHARACTERS_RECORD_FILE && record && typeof record === "object") {
+            const recordObj = record as Record<string, unknown>;
+            if (recordObj.order === undefined) {
+              const timestamp = recordObj.updated_at || recordObj.created_at;
+              recordObj.order = timestamp ? Date.parse(String(timestamp)) : Date.now();
+            }
           }
           await promisify(store.put(record, key));
         }

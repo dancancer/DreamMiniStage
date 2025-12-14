@@ -1,0 +1,425 @@
+/**
+ * ╔═══════════════════════════════════════════════════════════════════════════╗
+ * ║              Preset Import Property Tests                                ║
+ * ║                                                                           ║
+ * ║  **Feature: compatibility-debt-remediation**                              ║
+ * ║  **Property 2: 导入格式规范化 Round-Trip**                                ║
+ * ║  **Property 9: Preset 排序字段规范化**                                    ║
+ * ║  **Validates: Requirements 3.1, 3.2, 3.5, 4.2, 12.1, 12.2, 12.4**        ║
+ * ╚═══════════════════════════════════════════════════════════════════════════╝
+ */
+
+import { describe, it, expect } from "vitest";
+import * as fc from "fast-check";
+import {
+  importPreset,
+  canImportPreset,
+  convertLegacyPlaceholders,
+  hasLegacyPlaceholders,
+  convertPromptOrder,
+  normalizePreset,
+  type NormalizedPreset,
+  type NormalizedPresetPrompt,
+} from "../import/preset-import";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   生成器定义
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Legacy 占位符列表
+ */
+const LEGACY_PLACEHOLDERS = ["<USER>", "<BOT>", "<CHAR>", "<GROUP>", "<CONTEXT>", "<USERINPUT>"];
+
+/**
+ * 现代占位符列表
+ */
+const MODERN_PLACEHOLDERS = [
+  "{{user}}",
+  "{{char}}",
+  "{{group}}",
+  "{{scenario}}",
+  "{{lastUserMessage}}",
+  "{{persona}}",
+  "{{description}}",
+];
+
+/**
+ * 生成包含 legacy 占位符的内容
+ */
+const legacyContentArb = fc
+  .tuple(
+    fc.string({ minLength: 0, maxLength: 50 }),
+    fc.constantFrom(...LEGACY_PLACEHOLDERS),
+    fc.string({ minLength: 0, maxLength: 50 }),
+  )
+  .map(([before, placeholder, after]) => `${before}${placeholder}${after}`);
+
+/**
+ * 生成包含现代占位符的内容
+ */
+const modernContentArb = fc
+  .tuple(
+    fc.string({ minLength: 0, maxLength: 50 }),
+    fc.constantFrom(...MODERN_PLACEHOLDERS),
+    fc.string({ minLength: 0, maxLength: 50 }),
+  )
+  .map(([before, placeholder, after]) => `${before}${placeholder}${after}`);
+
+/**
+ * 生成有效的 Prompt 标识符
+ */
+const identifierArb = fc.stringMatching(/^[a-zA-Z_][a-zA-Z0-9_]{0,20}$/);
+
+/**
+ * 生成单个原始 Prompt
+ */
+const rawPromptArb = fc.record({
+  identifier: identifierArb,
+  name: fc.option(fc.string({ minLength: 1, maxLength: 50 }), { nil: undefined }),
+  content: fc.option(fc.string({ minLength: 0, maxLength: 200 }), { nil: undefined }),
+  enabled: fc.option(fc.boolean(), { nil: undefined }),
+  marker: fc.option(fc.boolean(), { nil: undefined }),
+  role: fc.option(fc.constantFrom("system", "user", "assistant"), { nil: undefined }),
+});
+
+/**
+ * 生成包含 legacy 占位符的 Prompt
+ */
+const legacyPromptArb = fc.record({
+  identifier: identifierArb,
+  name: fc.option(fc.string({ minLength: 1, maxLength: 50 }), { nil: undefined }),
+  content: fc.option(legacyContentArb, { nil: undefined }),
+  enabled: fc.option(fc.boolean(), { nil: undefined }),
+});
+
+/**
+ * 生成 SillyTavern 格式的 prompt_order 条目
+ */
+const promptOrderEntryArb = fc.record({
+  identifier: identifierArb,
+  enabled: fc.boolean(),
+});
+
+/**
+ * 生成 SillyTavern 格式的 prompt_order 组
+ */
+const promptOrderGroupArb = fc.record({
+  character_id: fc.integer({ min: 1, max: 100 }),
+  order: fc.array(promptOrderEntryArb, { minLength: 1, maxLength: 10 }),
+});
+
+/**
+ * 生成现代格式的 Preset（有 group_id/position）
+ */
+const modernPresetArb = fc.record({
+  name: fc.string({ minLength: 1, maxLength: 50 }),
+  prompts: fc.array(
+    fc.record({
+      identifier: identifierArb,
+      name: fc.string({ minLength: 1, maxLength: 50 }),
+      content: fc.option(modernContentArb, { nil: undefined }),
+      enabled: fc.boolean(),
+      group_id: fc.oneof(fc.integer({ min: 1, max: 10 }), fc.string({ minLength: 1, maxLength: 10 })),
+      position: fc.integer({ min: 0, max: 100 }),
+    }),
+    { minLength: 1, maxLength: 10 },
+  ),
+});
+
+/**
+ * 生成 SillyTavern 格式的 Preset（有 prompt_order）
+ */
+const sillyTavernPresetArb = fc
+  .tuple(
+    fc.string({ minLength: 1, maxLength: 50 }),
+    fc.array(rawPromptArb, { minLength: 1, maxLength: 10 }),
+    fc.array(promptOrderGroupArb, { minLength: 1, maxLength: 3 }),
+  )
+  .map(([name, prompts, prompt_order]) => {
+    // 确保 prompt_order 中的 identifier 引用 prompts 中的项
+    const validIdentifiers = prompts.map((p) => p.identifier);
+    const adjustedOrder = prompt_order.map((group) => ({
+      ...group,
+      order: group.order.map((entry, idx) => ({
+        ...entry,
+        identifier: validIdentifiers[idx % validIdentifiers.length],
+      })),
+    }));
+    return { name, prompts, prompt_order: adjustedOrder };
+  });
+
+/**
+ * 生成包含 legacy 占位符的 Preset
+ */
+const legacyPlaceholderPresetArb = fc.record({
+  name: fc.string({ minLength: 1, maxLength: 50 }),
+  prompts: fc.array(legacyPromptArb, { minLength: 1, maxLength: 10 }),
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Property 2: 导入格式规范化 Round-Trip
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe("Property 2: 导入格式规范化 Round-Trip", () => {
+  /**
+   * **Feature: compatibility-debt-remediation, Property 2**
+   * **Validates: Requirements 3.1, 4.2**
+   *
+   * 所有 legacy 占位符应该被转换为现代格式
+   */
+  it("*For any* content with legacy placeholders, convertLegacyPlaceholders SHALL convert them to modern format", () => {
+    fc.assert(
+      fc.property(legacyContentArb, (content) => {
+        const result = convertLegacyPlaceholders(content);
+
+        // 结果不应该包含 legacy 占位符
+        expect(hasLegacyPlaceholders(result)).toBe(false);
+
+        // 结果应该包含至少一个现代格式占位符（如果原内容有 legacy 占位符）
+        if (hasLegacyPlaceholders(content)) {
+          expect(result.includes("{{")).toBe(true);
+        }
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * **Feature: compatibility-debt-remediation, Property 2**
+   * **Validates: Requirements 3.1**
+   *
+   * 现代格式占位符应该保持不变
+   */
+  it("*For any* content with modern placeholders only, convertLegacyPlaceholders SHALL preserve them", () => {
+    fc.assert(
+      fc.property(modernContentArb, (content) => {
+        const result = convertLegacyPlaceholders(content);
+
+        // 现代格式不应该被修改（除非恰好包含 legacy 格式）
+        if (!hasLegacyPlaceholders(content)) {
+          expect(result).toBe(content);
+        }
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * **Feature: compatibility-debt-remediation, Property 2**
+   * **Validates: Requirements 3.2, 4.2**
+   *
+   * 导入后的 Preset 不应该包含 legacy 占位符
+   */
+  it("*For any* preset with legacy placeholders, after import, prompts SHALL contain only modern format", () => {
+    fc.assert(
+      fc.property(legacyPlaceholderPresetArb, (preset) => {
+        const normalized = normalizePreset(preset);
+
+        // 检查所有 prompt 内容
+        for (const prompt of normalized.prompts) {
+          if (prompt.content) {
+            expect(hasLegacyPlaceholders(prompt.content)).toBe(false);
+          }
+        }
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * **Feature: compatibility-debt-remediation, Property 2**
+   * **Validates: Requirements 3.5**
+   *
+   * 规范化后的数据只存储现代格式
+   */
+  it("*For any* normalized preset, all content SHALL be in modern format only", () => {
+    fc.assert(
+      fc.property(modernPresetArb, (preset) => {
+        const normalized = normalizePreset(preset);
+
+        // 所有 prompt 都应该有 group_id 和 position
+        for (const prompt of normalized.prompts) {
+          expect(prompt.group_id).toBeDefined();
+          expect(prompt.position).toBeDefined();
+          expect(typeof prompt.position).toBe("number");
+
+          // 内容不应该包含 legacy 占位符
+          if (prompt.content) {
+            expect(hasLegacyPlaceholders(prompt.content)).toBe(false);
+          }
+        }
+      }),
+      { numRuns: 100 },
+    );
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Property 9: Preset 排序字段规范化
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe("Property 9: Preset 排序字段规范化", () => {
+  /**
+   * **Feature: compatibility-debt-remediation, Property 9**
+   * **Validates: Requirements 12.1**
+   *
+   * 规范化后的 Preset 应该只使用 group_id/position 排序
+   */
+  it("*For any* normalized preset, sorting SHALL use only group_id/position fields", () => {
+    fc.assert(
+      fc.property(modernPresetArb, (preset) => {
+        const normalized = normalizePreset(preset);
+
+        // 规范化后不应该有 prompt_order
+        expect((normalized as unknown).prompt_order).toBeUndefined();
+
+        // 每个 prompt 都应该有 group_id 和 position
+        for (const prompt of normalized.prompts) {
+          expect(prompt.group_id).toBeDefined();
+          expect(prompt.position).toBeDefined();
+        }
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * **Feature: compatibility-debt-remediation, Property 9**
+   * **Validates: Requirements 12.2**
+   *
+   * SillyTavern 格式的 prompt_order 应该被转换为 group_id/position
+   */
+  it("*For any* preset with prompt_order, import SHALL convert to group_id/position", () => {
+    fc.assert(
+      fc.property(sillyTavernPresetArb, (preset) => {
+        const normalized = normalizePreset(preset);
+
+        // 规范化后不应该有 prompt_order
+        expect((normalized as unknown).prompt_order).toBeUndefined();
+
+        // 每个 prompt 都应该有 group_id 和 position
+        for (const prompt of normalized.prompts) {
+          expect(prompt.group_id).toBeDefined();
+          expect(prompt.position).toBeDefined();
+          expect(typeof prompt.position).toBe("number");
+        }
+
+        // prompt_order 中的所有 identifier 都应该出现在 prompts 中
+        const identifiers = new Set(normalized.prompts.map((p) => p.identifier));
+        for (const group of preset.prompt_order) {
+          for (const entry of group.order) {
+            expect(identifiers.has(entry.identifier)).toBe(true);
+          }
+        }
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * **Feature: compatibility-debt-remediation, Property 9**
+   * **Validates: Requirements 12.4**
+   *
+   * 排序应该产生一致的结果
+   */
+  it("*For any* preset, sorting by group_id/position SHALL produce consistent results", () => {
+    fc.assert(
+      fc.property(modernPresetArb, (preset) => {
+        const normalized = normalizePreset(preset);
+
+        // 按 group_id/position 排序
+        const sorted = [...normalized.prompts].sort((a, b) => {
+          const groupA = String(a.group_id);
+          const groupB = String(b.group_id);
+          if (groupA !== groupB) {
+            return groupA.localeCompare(groupB);
+          }
+          return a.position - b.position;
+        });
+
+        // 再次排序应该得到相同结果
+        const sortedAgain = [...sorted].sort((a, b) => {
+          const groupA = String(a.group_id);
+          const groupB = String(b.group_id);
+          if (groupA !== groupB) {
+            return groupA.localeCompare(groupB);
+          }
+          return a.position - b.position;
+        });
+
+        expect(sorted).toEqual(sortedAgain);
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * **Feature: compatibility-debt-remediation, Property 9**
+   * **Validates: Requirements 12.1, 12.2**
+   *
+   * convertPromptOrder 应该保留所有 prompt
+   */
+  it("*For any* prompts and prompt_order, convertPromptOrder SHALL preserve all prompts", () => {
+    fc.assert(
+      fc.property(sillyTavernPresetArb, (preset) => {
+        const result = convertPromptOrder(preset.prompts, preset.prompt_order);
+
+        // 结果中的每个 identifier 都应该是唯一的
+        const identifiers = result.map((p) => p.identifier);
+        const uniqueIdentifiers = new Set(identifiers);
+        expect(identifiers.length).toBe(uniqueIdentifiers.size);
+
+        // 原始 prompts 中的每个 identifier 都应该在结果中
+        for (const prompt of preset.prompts) {
+          expect(identifiers).toContain(prompt.identifier);
+        }
+      }),
+      { numRuns: 100 },
+    );
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   管道集成测试
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe("Preset Import Pipeline", () => {
+  /**
+   * 管道应该能正确检测有效的 Preset
+   */
+  it("*For any* valid preset, canImportPreset SHALL return true", () => {
+    fc.assert(
+      fc.property(modernPresetArb, (preset) => {
+        expect(canImportPreset(preset)).toBe(true);
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * 管道应该能正确处理空 prompts
+   */
+  it("*For any* preset with empty prompts, import SHALL succeed with empty prompts array", () => {
+    fc.assert(
+      fc.property(fc.string({ minLength: 1, maxLength: 50 }), (name) => {
+        const preset = { name, prompts: [] };
+        const result = importPreset(preset);
+
+        expect(result.name).toBe(name);
+        expect(result.prompts).toEqual([]);
+      }),
+      { numRuns: 50 },
+    );
+  });
+
+  /**
+   * 管道应该为无名 Preset 提供默认名称
+   */
+  it("*For any* preset without name, import SHALL provide default name", () => {
+    const preset = { prompts: [] };
+    const result = importPreset(preset);
+
+    expect(result.name).toBe("Imported Preset");
+  });
+});

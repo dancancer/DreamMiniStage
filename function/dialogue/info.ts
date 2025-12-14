@@ -6,7 +6,7 @@ import { generateMessageId } from "@/utils/message-id";
 /**
  * 获取角色对话信息
  * 
- * @param dialogueKey - 对话索引 Key（sessionId 或 characterId）
+ * @param dialogueKey - 对话索引 Key（sessionId）
  * @param characterId - 角色 ID（用于获取角色信息）
  * @param language - 语言
  * @param username - 用户名
@@ -17,12 +17,12 @@ export async function getCharacterDialogue(
   language: "en" | "zh" = "zh",
   username?: string
 ) {
+  if (!dialogueKey) {
+    throw new Error("dialogueKey is required");
+  }
   if (!characterId) {
     throw new Error("Character ID is required");
   }
-
-  // 使用 dialogueKey 作为对话树的索引（支持 sessionId）
-  const dialogueId = dialogueKey || characterId;
 
   try {
     const characterRecord = await LocalCharacterRecordOperations.getCharacterById(characterId);
@@ -30,12 +30,12 @@ export async function getCharacterDialogue(
       throw new Error(`Character not found: ${characterId}`);
     }
     const character = new Character(characterRecord);
-    const dialogueTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueId);
+    const dialogueTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueKey);
     let processedDialogue = null;
 
     if (dialogueTree) {
       const currentPath = dialogueTree.current_nodeId !== "root"
-        ? await LocalCharacterDialogueOperations.getDialoguePathToNode(dialogueId, dialogueTree.current_nodeId)
+        ? await LocalCharacterDialogueOperations.getDialoguePathToNode(dialogueKey, dialogueTree.current_nodeId)
         : [];
 
       const messages = [];
@@ -95,8 +95,8 @@ export async function getCharacterDialogue(
       },
       dialogue: processedDialogue,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to get character information:", error);
-    throw new Error(`Failed to get character information: ${error.message}`);
+    throw new Error(`Failed to get character information: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }

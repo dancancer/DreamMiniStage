@@ -10,32 +10,32 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface VariableScope {
-  global: Record<string, any>;
-  character: Record<string, Record<string, any>>; // characterId -> variables
-  session: Record<string, Record<string, any>>;   // sessionId -> variables
+  global: Record<string, unknown>;
+  character: Record<string, Record<string, unknown>>; // characterId -> variables
+  session: Record<string, Record<string, unknown>>;   // sessionId -> variables
 }
 
 interface ScriptVariablesState {
   variables: VariableScope;
-  
+
   // Actions
-  setGlobalVariable: (key: string, value: any) => void;
-  getGlobalVariable: (key: string) => any;
+  setGlobalVariable: (key: string, value: unknown) => void;
+  getGlobalVariable: (key: string) => unknown;
   deleteGlobalVariable: (key: string) => void;
-  
-  setCharacterVariable: (characterId: string, key: string, value: any) => void;
-  getCharacterVariable: (characterId: string, key: string) => any;
+
+  setCharacterVariable: (characterId: string, key: string, value: unknown) => void;
+  getCharacterVariable: (characterId: string, key: string) => unknown;
   deleteCharacterVariable: (characterId: string, key: string) => void;
-  
-  setSessionVariable: (sessionId: string, key: string, value: any) => void;
-  getSessionVariable: (sessionId: string, key: string) => any;
+
+  setSessionVariable: (sessionId: string, key: string, value: unknown) => void;
+  getSessionVariable: (sessionId: string, key: string) => unknown;
   deleteSessionVariable: (sessionId: string, key: string) => void;
-  
+
   // Unified access (defaults to global if scope not specified)
-  setVariable: (key: string, value: any, scope?: "global" | "character" | "session", id?: string) => void;
-  getVariable: (key: string, scope?: "global" | "character" | "session", id?: string) => any;
+  setVariable: (key: string, value: unknown, scope?: "global" | "character" | "session", id?: string) => void;
+  getVariable: (key: string, scope?: "global" | "character" | "session", id?: string) => unknown;
   deleteVariable: (key: string, scope?: "global" | "character" | "session", id?: string) => void;
-  
+
   clearAll: () => void;
 }
 

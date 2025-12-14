@@ -103,7 +103,7 @@ export default function MessageList({
     return () => clearTimeout(id);
   }, [messages, scrollToBottom]);
 
-  // 显示开场白导航条件
+  // 显示开场白导航条件（未锁定且仅有开场消息时）
   const showOpeningNav =
     !openingLocked &&
     openingMessages.length > 1 &&
@@ -120,18 +120,6 @@ export default function MessageList({
           <EmptyState serifFontClass={serifFontClass} t={t} />
         ) : (
           <div className="space-y-8">
-            {/* 开场白导航 */}
-            {showOpeningNav && (
-              <OpeningNavigator
-                openingIndex={openingIndex}
-                totalOpenings={openingMessages.length}
-                onNavigate={onOpeningNavigate}
-                isSending={isSending}
-                serifFontClass={serifFontClass}
-                t={t}
-              />
-            )}
-
             {/* 消息列表 - 使用 message.id 作为 key 实现增量更新 */}
             {messages.map((message, index) => {
               if (message.role === "sample") return null;
@@ -158,6 +146,18 @@ export default function MessageList({
                 />
               );
             })}
+
+            {/* 开场白导航（展示在开场消息底部） */}
+            {showOpeningNav && (
+              <OpeningNavigator
+                openingIndex={openingIndex}
+                totalOpenings={openingMessages.length}
+                onNavigate={onOpeningNavigate}
+                isSending={isSending}
+                serifFontClass={serifFontClass}
+                t={t}
+              />
+            )}
 
             {/* 加载指示器 */}
             {isSending && (

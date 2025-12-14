@@ -12,9 +12,9 @@ export async function getWorldBookSettings(characterId: string) {
       success: true,
       settings,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to get world book settings:", error);
-    throw new Error(`Failed to get world book settings: ${error.message}`);
+    throw new Error(`Failed to get world book settings: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
 
@@ -41,8 +41,8 @@ export async function updateWorldBookSettings(
       success: true,
       settings: newSettings,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to update world book settings:", error);
-    throw new Error(`Failed to update world book settings: ${error.message}`);
+    throw new Error(`Failed to update world book settings: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 } 

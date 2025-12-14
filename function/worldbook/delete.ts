@@ -11,8 +11,8 @@ export async function deleteWorldBookEntry(characterId: string, entryId: string)
     return {
       success,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to delete world book entry:", error);
-    throw new Error(`Failed to delete world book entry: ${error.message}`);
+    throw new Error(`Failed to delete world book entry: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }

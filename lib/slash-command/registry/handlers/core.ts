@@ -1,0 +1,143 @@
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║                    Core Command Handlers                                  ║
+ * ║                                                                           ║
+ * ║  核心命令 - send / trigger / echo / pass / return / sendas等              ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
+ */
+
+import type { CommandHandler } from "../types";
+import { normalizeIndex, parseNumber, parseBoolean, buildSendReturn } from "../utils/helpers";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   消息发送命令
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** /send <text> - 发送消息（支持 at/name/compact/return） */
+export const handleSend: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const text = (args.join(" ") || pipe || "").toString();
+  const at = normalizeIndex(parseNumber(namedArgs.at), ctx.messages?.length ?? 0);
+  const name = namedArgs.name;
+  const compact = parseBoolean(namedArgs.compact);
+  const returnType = namedArgs["return"];
+
+  await ctx.onSend(text, { at, name, compact, returnType });
+  return buildSendReturn(returnType, text, pipe, at);
+};
+
+/** /trigger - 触发 AI 生成，支持 await 与群组成员选择 */
+const TRIGGER_LOCKS: Map<string, Promise<void>> = new Map();
+
+export const handleTrigger: CommandHandler = async (args, namedArgs, ctx, _pipe) => {
+  const member = args[0] ?? namedArgs.member;
+  const shouldAwait = parseBoolean(namedArgs["await"], true);
+  const lockKey = ctx.characterId || "__default__";
+
+  const pending = TRIGGER_LOCKS.get(lockKey);
+  if (pending) {
+    await pending.catch(() => {});
+  }
+
+  const triggerPromise = (async () => {
+    await ctx.onTrigger(member);
+  })();
+
+  TRIGGER_LOCKS.set(lockKey, triggerPromise);
+
+  try {
+    if (shouldAwait) {
+      await triggerPromise;
+    } else {
+      triggerPromise.catch(() => {});
+    }
+    return "";
+  } finally {
+    triggerPromise.finally(() => {
+      if (TRIGGER_LOCKS.get(lockKey) === triggerPromise) {
+        TRIGGER_LOCKS.delete(lockKey);
+      }
+    });
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   角色扮演命令
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** /sendas <role> <text> - 以指定角色发送 */
+export const handleSendAs: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (args.length === 0) return pipe;
+  const [role, ...rest] = args;
+  const text = rest.join(" ") || pipe;
+  if (!text) return pipe;
+
+  if (ctx.onSendAs) {
+    await ctx.onSendAs(role, text);
+    return text;
+  }
+
+  await ctx.onSend(`[${role}] ${text}`);
+  return text;
+};
+
+/** /sys <text> - 发送系统/旁白消息 */
+export const handleSys: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  const text = args.join(" ") || pipe;
+  if (!text) return pipe;
+  if (ctx.onSendSystem) {
+    await ctx.onSendSystem(text);
+    return text;
+  }
+  await ctx.onSend(`[SYS] ${text}`);
+  return text;
+};
+
+/** /impersonate <text> - AI 扮演用户回复 */
+export const handleImpersonate: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  const text = args.join(" ") || pipe;
+  if (!text) return pipe;
+  if (ctx.onImpersonate) {
+    await ctx.onImpersonate(text);
+  } else {
+    await ctx.onSend(`[impersonate] ${text}`);
+    await ctx.onTrigger();
+  }
+  return text;
+};
+
+/** /continue - 继续生成 */
+export const handleContinue: CommandHandler = async (_args, _namedArgs, ctx, pipe) => {
+  if (ctx.onContinue) {
+    await ctx.onContinue();
+  } else {
+    await ctx.onTrigger();
+  }
+  return pipe;
+};
+
+/** /swipe - 切换回复 swipe（占位实现） */
+export const handleSwipe: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (ctx.onSwipe) {
+    await ctx.onSwipe(args[0]);
+  }
+  return pipe;
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   工具命令
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** /echo <text> - 回显文本（用于调试） */
+export const handleEcho: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  return args.length > 0 ? args.join(" ") : pipe;
+};
+
+/** /pass - 透传 pipe 值 */
+export const handlePass: CommandHandler = async (_args, _namedArgs, _ctx, pipe) => {
+  return pipe;
+};
+
+/** /return <value?> - 返回一个值并中止执行链 */
+export const handleReturn: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  return args[0] ?? pipe;
+};

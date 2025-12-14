@@ -1,4 +1,4 @@
-import { NodeConfig, NodeInput, NodeOutput, NodeExecutionStatus, NodeExecutionResult, NodeCategory } from "@/lib/nodeflow/types";
+import { NodeConfig, NodeInput, NodeOutput, NodeExecutionStatus, NodeExecutionResult, NodeCategory, NodeValue } from "@/lib/nodeflow/types";
 import { NodeContext } from "@/lib/nodeflow/NodeContext";
 import { NodeTool, NodeToolRegistry } from "@/lib/nodeflow/NodeTool";
 
@@ -8,8 +8,8 @@ export abstract class NodeBase {
   protected category: NodeCategory;
   protected next: string[];
   protected toolClass?: typeof NodeTool;
-  protected params: Record<string, any>;
-  protected state: Record<string, any> = {};
+  protected params: Record<string, unknown>;
+  protected state: Record<string, unknown> = {};
 
   constructor(config: NodeConfig) {
     this.id = config.id;
@@ -79,12 +79,13 @@ export abstract class NodeBase {
       } else {
         console.warn(`找不到节点类型的工具类: ${this.getName()}`);
       }
-    } catch (error: any) {
-      console.warn(`查找工具类失败: ${error?.message || "未知错误"}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "未知错误";
+      console.warn(`查找工具类失败: ${errorMessage}`);
     }
   }
 
-  protected async executeTool(methodName: string, ...params: any[]): Promise<any> {
+  protected async executeTool(methodName: string, ...params: unknown[]): Promise<unknown> {
     if (!this.toolClass) {
       throw new Error(`No tool class available for node type: ${this.getName()}`);
     }
@@ -111,7 +112,7 @@ export abstract class NodeBase {
 
     for (const fieldName of initParams) {
       if (context.hasInput(fieldName)) {
-        resolvedInput[fieldName] = context.getInput(fieldName);
+        resolvedInput[fieldName] = context.getInput(fieldName) as NodeValue;
       } else {
         console.warn(`Node ${this.id}: Required input '${fieldName}' not found in Input`);
       }
@@ -121,7 +122,7 @@ export abstract class NodeBase {
       const nodeFieldName = inputMapping[workflowFieldName] || workflowFieldName;
       
       if (context.hasCache(workflowFieldName)) {
-        resolvedInput[nodeFieldName] = context.getCache(workflowFieldName);
+        resolvedInput[nodeFieldName] = context.getCache(workflowFieldName) as NodeValue;
       } else {
         console.warn(`Node ${this.id}: Required input '${workflowFieldName}' (mapped to node field '${nodeFieldName}') not found in cache`);
       }
@@ -133,13 +134,13 @@ export abstract class NodeBase {
   protected async publishOutput(output: NodeOutput, context: NodeContext): Promise<void> {
     const outputFields = this.getOutputFields();
     
-    const storeData = (key: string, value: any) => {
+    const storeData = (key: string, value: unknown) => {
       switch (this.category) {
       case NodeCategory.EXIT:
-        context.setOutput(key, value);
+        context.setOutput(key, value as NodeValue);
         break;
       default:
-        context.setCache(key, value);
+        context.setCache(key, value as NodeValue);
         break;
       }
     };
@@ -205,7 +206,7 @@ export abstract class NodeBase {
     return output;
   }
 
-  getStatus(): Record<string, any> {
+  getStatus(): Record<string, unknown> {
     return {
       id: this.id,
       name: this.name,

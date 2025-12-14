@@ -69,8 +69,8 @@ describe("Cleanup Functions", () => {
     it("应该处理空的对话键", async () => {
       // 不应该抛出错误
       await expect(cleanupDialogue("")).resolves.toBeUndefined();
-      await expect(cleanupDialogue(null as any)).resolves.toBeUndefined();
-      await expect(cleanupDialogue(undefined as any)).resolves.toBeUndefined();
+      await expect(cleanupDialogue(null as unknown)).resolves.toBeUndefined();
+      await expect(cleanupDialogue(undefined as unknown)).resolves.toBeUndefined();
     });
 
     it("应该处理清理过程中的错误", async () => {

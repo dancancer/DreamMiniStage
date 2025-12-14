@@ -84,8 +84,8 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
   };
 
   const isHomeActive = pathname === "/";
-  // 游戏区域活动状态：/session（新路由）或 /character（兼容旧路由）
-  const isGameAreaActive = pathname.startsWith("/session") || pathname.startsWith("/character");
+  // 游戏区域活动状态
+  const isGameAreaActive = pathname.startsWith("/session");
   const isCreatorAreaActive = pathname.startsWith("/creator-input") || pathname.startsWith("/creator-area");
   const sectionTitleClass = "flex justify-between items-center text-xs text-text-muted uppercase tracking-wider font-medium text-2xs transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap";
   const sectionLabelWrapperClass = "ml-2 transition-all duration-300 ease-in-out overflow-hidden";

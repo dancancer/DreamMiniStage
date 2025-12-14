@@ -29,6 +29,10 @@ async function generate(args: unknown[], ctx: ApiCallContext) {
     if (!ctx.characterId) {
       throw new Error("Character id is required for generation");
     }
+    const dialogueId = config?.dialogue_id as string | undefined;
+    if (!dialogueId) {
+      throw new Error("dialogue_id is required for generation");
+    }
 
     // 从 injects 或 user_input 中提取消息内容
     let message = config?.user_input || "";
@@ -64,6 +68,7 @@ async function generate(args: unknown[], ctx: ApiCallContext) {
 
     const response = await Promise.race([
       handleCharacterChatRequest({
+        dialogueId,
         characterId: ctx.characterId,
         message,
         modelName: effectiveConfig.model,

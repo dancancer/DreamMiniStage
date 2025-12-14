@@ -10,7 +10,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/app/i18n";
@@ -34,7 +34,7 @@ import DialogueTreeModal from "@/components/DialogueTreeModal";
 //                              主组件
 // ============================================================================
 
-export default function SessionPage() {
+function SessionPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const sessionId = searchParams.get("id");
@@ -113,7 +113,19 @@ export default function SessionPage() {
   // ========== 业务状态 ==========
   const [userInput, setUserInput] = useState("");
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [activeModes, setActiveModes] = useState<Record<string, any>>({
+
+  /**
+   * 活动模式配置
+   * 使用明确的类型定义，避免 any
+   */
+  type PerspectiveMode = { active: boolean; mode: "novel" | "screenplay" | "chat" };
+  type ActiveModesConfig = {
+    "story-progress": boolean;
+    perspective: PerspectiveMode;
+    "scene-setting": boolean;
+  };
+
+  const [activeModes, setActiveModes] = useState<ActiveModesConfig>({
     "story-progress": false,
     perspective: { active: false, mode: "novel" },
     "scene-setting": false,
@@ -305,8 +317,8 @@ export default function SessionPage() {
             fontClass={fontClass}
             serifFontClass={serifFontClass}
             t={t}
-            activeModes={activeModes}
-            setActiveModes={setActiveModes}
+            activeModes={activeModes as Record<string, unknown>}
+            setActiveModes={setActiveModes as React.Dispatch<React.SetStateAction<Record<string, unknown>>>}
             language={language as "zh" | "en"}
             dialogueKey={sessionId}
             onSendMessage={dialogue.addUserMessage}
@@ -350,5 +362,25 @@ export default function SessionPage() {
         onDialogueEdit={() => dialogue.fetchLatestDialogue()}
       />
     </div>
+  );
+}
+
+// ============================================================================
+//                              Suspense 包装
+// ============================================================================
+
+export default function SessionPage() {
+  const { t } = useLanguage();
+
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center h-full gap-2">
+          <p className="text-sm text-foreground">{t("characterChat.loading") || "Loading..."}</p>
+        </div>
+      }
+    >
+      <SessionPageContent />
+    </Suspense>
   );
 }

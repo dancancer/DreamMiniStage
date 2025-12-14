@@ -10,9 +10,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AlertCircle, Check, Loader2 } from "lucide-react";
+import { AlertCircle, Check, Loader2, Info } from "lucide-react";
 import { useLanguage } from "@/app/i18n";
-import { RegexScript } from "@/lib/models/regex-script-model";
+import { RegexScript, SubstituteRegexMode } from "@/lib/models/regex-script-model";
 import { toast } from "@/lib/store/toast-store";
 import {
   Dialog,
@@ -55,6 +55,11 @@ export default function RegexScriptEntryEditor({
     placement: [999],
     disabled: false,
     trimStrings: [],
+    substituteRegex: SubstituteRegexMode.NONE,
+    markdownOnly: false,
+    promptOnly: false,
+    minDepth: undefined,
+    maxDepth: undefined,
   });
 
   // ========== 初始化 ==========
@@ -64,6 +69,11 @@ export default function RegexScriptEntryEditor({
       setLocalScript({
         ...editingScript,
         replaceString: editingScript.replaceString || "",
+        substituteRegex: editingScript.substituteRegex ?? SubstituteRegexMode.NONE,
+        markdownOnly: editingScript.markdownOnly ?? false,
+        promptOnly: editingScript.promptOnly ?? false,
+        minDepth: editingScript.minDepth,
+        maxDepth: editingScript.maxDepth,
       });
     } else {
       setLocalScript({
@@ -73,6 +83,11 @@ export default function RegexScriptEntryEditor({
         placement: [999],
         disabled: false,
         trimStrings: [],
+        substituteRegex: SubstituteRegexMode.NONE,
+        markdownOnly: false,
+        promptOnly: false,
+        minDepth: undefined,
+        maxDepth: undefined,
       });
     }
   }, [editingScript]);
@@ -118,8 +133,8 @@ export default function RegexScriptEntryEditor({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden  border-border gap-0">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-500/3 via-transparent to-primary-500/3 opacity-50 pointer-events-none"></div>
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-500/30 to-transparent pointer-events-none"></div>
+        <div className="absolute inset-0 bg-linear-to-r from-primary-500/3 via-transparent to-primary-500/3 opacity-50 pointer-events-none"></div>
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary-500/30 to-transparent pointer-events-none"></div>
         
         <div className="p-5 border-b border-border/60 relative z-10">
           <DialogHeader>
@@ -141,7 +156,7 @@ export default function RegexScriptEntryEditor({
                 type="text"
                 value={localScript.scriptName || ""}
                 onChange={(e) => updateScript({ scriptName: e.target.value })}
-                className="w-full px-3 py-2 bg-gradient-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
+                className="w-full px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
                   focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                   placeholder-ink-soft/70 hover:border-border text-sm"
                 placeholder={t("regexScriptEditor.scriptNamePlaceholder")}
@@ -156,7 +171,7 @@ export default function RegexScriptEntryEditor({
                 type="text"
                 value={localScript.findRegex || ""}
                 onChange={(e) => updateScript({ findRegex: e.target.value })}
-                className="w-full px-3 py-2 bg-gradient-to-br from-deep to-muted-surface border border-border/60 rounded-md text-primary-bright 
+                className="w-full px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-primary-bright 
                   focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                   placeholder-ink-soft/70 hover:border-border font-mono text-sm"
                 placeholder={t("regexScriptEditor.findRegexPlaceholder")}
@@ -171,7 +186,7 @@ export default function RegexScriptEntryEditor({
                 type="text"
                 value={localScript.replaceString || ""}
                 onChange={(e) => updateScript({ replaceString: e.target.value })}
-                className="w-full px-3 py-2 bg-gradient-to-br from-deep to-muted-surface border border-border/60 rounded-md text-sky 
+                className="w-full px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-sky 
                   focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                   placeholder-ink-soft/70 hover:border-border font-mono text-sm"
                 placeholder={t("regexScriptEditor.replaceStringPlaceholder") || "Leave empty to remove matched text"}
@@ -187,8 +202,11 @@ export default function RegexScriptEntryEditor({
               </div>
             </div>
 
+            {/* ═══════════════════════════════════════════════════════════════════
+                基础配置：优先级和禁用状态
+                ═══════════════════════════════════════════════════════════════════ */}
             <div className="flex items-end space-x-4">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <label className={`block text-xs text-ink-soft mb-1.5 font-medium ${fontClass}`}>
                   {t("regexScriptEditor.priority")}
                 </label>
@@ -196,7 +214,7 @@ export default function RegexScriptEntryEditor({
                   type="number"
                   value={localScript.placement?.[0] || 999}
                   onChange={(e) => updateScript({ placement: [parseInt(e.target.value) || 999] })}
-                  className="w-20 px-3 py-2 bg-gradient-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
+                  className="w-20 px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
                     focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                     hover:border-border text-sm text-center"
                   min="0"
@@ -213,8 +231,8 @@ export default function RegexScriptEntryEditor({
                   />
                   <div className={`w-5 h-5 rounded border-2 transition-all duration-300 flex items-center justify-center ${
                     localScript.disabled 
-                      ? "bg-gradient-to-br from-orange-600 to-orange-700 border-orange-500/60" 
-                      : "bg-gradient-to-br from-deep to-muted-surface border-border/60 group-hover:border-primary-500/40"
+                      ? "bg-linear-to-br from-orange-600 to-orange-700 border-orange-500/60" 
+                      : "bg-linear-to-br from-deep to-muted-surface border-border/60 group-hover:border-primary-500/40"
                   }`}>
                     {localScript.disabled && (
                       <Check className="h-3 w-3 text-white" strokeWidth={3} />
@@ -225,6 +243,120 @@ export default function RegexScriptEntryEditor({
                   {t("regexScriptEditor.disabled")}
                 </span>
               </label>
+            </div>
+
+            {/* ═══════════════════════════════════════════════════════════════════
+                宏替换模式选择
+                ═══════════════════════════════════════════════════════════════════ */}
+            <div>
+              <label className={`block text-xs text-ink-soft mb-1.5 font-medium ${fontClass}`}>
+                {t("regexScriptEditor.substituteRegex") || "Macro Substitution"}
+                <span className="ml-1 text-2xs opacity-70">({t("regexScriptEditor.optional") || "optional"})</span>
+              </label>
+              <select
+                value={localScript.substituteRegex ?? SubstituteRegexMode.NONE}
+                onChange={(e) => updateScript({ substituteRegex: parseInt(e.target.value) as SubstituteRegexMode })}
+                className="w-full px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
+                  focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
+                  hover:border-border text-sm"
+              >
+                <option value={SubstituteRegexMode.NONE}>{t("regexScriptEditor.substituteNone") || "None - Use regex as-is"}</option>
+                <option value={SubstituteRegexMode.RAW}>{t("regexScriptEditor.substituteRaw") || "Raw - Replace macros without escaping"}</option>
+                <option value={SubstituteRegexMode.ESCAPED}>{t("regexScriptEditor.substituteEscaped") || "Escaped - Replace and escape special chars"}</option>
+              </select>
+              <div className={`mt-1 text-2xs text-ink-soft/80 flex items-start ${fontClass}`}>
+                <Info className="h-3 w-3 mr-1 mt-0.5 shrink-0" />
+                <span>{t("regexScriptEditor.substituteHint") || "Macros: {{user}}, {{char}}, {{mesId}}, {{depth}}"}</span>
+              </div>
+            </div>
+
+            {/* ═══════════════════════════════════════════════════════════════════
+                应用条件标志
+                ═══════════════════════════════════════════════════════════════════ */}
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center space-x-2 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={localScript.markdownOnly || false}
+                    onChange={(e) => updateScript({ markdownOnly: e.target.checked })}
+                    className="sr-only"
+                  />
+                  <div className={`w-5 h-5 rounded border-2 transition-all duration-300 flex items-center justify-center ${
+                    localScript.markdownOnly 
+                      ? "bg-linear-to-br from-primary-600 to-primary-700 border-primary-500/60" 
+                      : "bg-linear-to-br from-deep to-muted-surface border-border/60 group-hover:border-primary-500/40"
+                  }`}>
+                    {localScript.markdownOnly && (
+                      <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                    )}
+                  </div>
+                </div>
+                <span className={`text-xs text-cream font-medium ${fontClass} group-hover:text-primary-200 transition-colors`}>
+                  {t("regexScriptEditor.markdownOnly") || "Markdown Only"}
+                </span>
+              </label>
+
+              <label className="flex items-center space-x-2 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={localScript.promptOnly || false}
+                    onChange={(e) => updateScript({ promptOnly: e.target.checked })}
+                    className="sr-only"
+                  />
+                  <div className={`w-5 h-5 rounded border-2 transition-all duration-300 flex items-center justify-center ${
+                    localScript.promptOnly 
+                      ? "bg-linear-to-br from-primary-600 to-primary-700 border-primary-500/60" 
+                      : "bg-linear-to-br from-deep to-muted-surface border-border/60 group-hover:border-primary-500/40"
+                  }`}>
+                    {localScript.promptOnly && (
+                      <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                    )}
+                  </div>
+                </div>
+                <span className={`text-xs text-cream font-medium ${fontClass} group-hover:text-primary-200 transition-colors`}>
+                  {t("regexScriptEditor.promptOnly") || "Prompt Only"}
+                </span>
+              </label>
+            </div>
+
+            {/* ═══════════════════════════════════════════════════════════════════
+                深度约束
+                ═══════════════════════════════════════════════════════════════════ */}
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className={`block text-xs text-ink-soft mb-1.5 font-medium ${fontClass}`}>
+                  {t("regexScriptEditor.minDepth") || "Min Depth"}
+                  <span className="ml-1 text-2xs opacity-70">({t("regexScriptEditor.optional") || "optional"})</span>
+                </label>
+                <input
+                  type="number"
+                  value={localScript.minDepth ?? ""}
+                  onChange={(e) => updateScript({ minDepth: e.target.value ? parseInt(e.target.value) : undefined })}
+                  placeholder="No limit"
+                  className="w-full px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
+                    focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
+                    hover:border-border text-sm"
+                  min="0"
+                />
+              </div>
+              <div className="flex-1">
+                <label className={`block text-xs text-ink-soft mb-1.5 font-medium ${fontClass}`}>
+                  {t("regexScriptEditor.maxDepth") || "Max Depth"}
+                  <span className="ml-1 text-2xs opacity-70">({t("regexScriptEditor.optional") || "optional"})</span>
+                </label>
+                <input
+                  type="number"
+                  value={localScript.maxDepth ?? ""}
+                  onChange={(e) => updateScript({ maxDepth: e.target.value ? parseInt(e.target.value) : undefined })}
+                  placeholder="No limit"
+                  className="w-full px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
+                    focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
+                    hover:border-border text-sm"
+                  min="0"
+                />
+              </div>
             </div>
 
             <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-border/30">

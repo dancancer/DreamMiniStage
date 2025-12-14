@@ -84,7 +84,7 @@ describe("SearchProcessor", () => {
     it("应该处理空正则表达式", () => {
       const content = "Test content";
       
-      const result = processor.highlightMatches(content, null as any);
+      const result = processor.highlightMatches(content, null as unknown);
       
       expect(result).toBe(content);
     });
@@ -96,7 +96,7 @@ describe("SearchProcessor", () => {
         [Symbol.replace]: () => {
           throw new Error("Regex error");
         },
-      } as any;
+      } as unknown;
       
       const result = processor.highlightMatches(content, invalidRegex);
       
@@ -243,7 +243,7 @@ describe("SearchProcessor", () => {
           [Symbol.matchAll]: () => {
             throw new Error("Search error");
           },
-        } as any,
+        } as unknown,
         matchedOnly: false,
         isValid: true,
       };

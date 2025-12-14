@@ -39,7 +39,7 @@ export class AskUserTool extends BaseTool {
     };
   }
 
-  protected async doWork(parameters: Record<string, any>, context: ExecutionContext): Promise<ExecutionResult> {
+  protected async doWork(parameters: Record<string, unknown>, context: ExecutionContext): Promise<ExecutionResult> {
     const questionText = parameters.question;
     const options = parameters.options;
     

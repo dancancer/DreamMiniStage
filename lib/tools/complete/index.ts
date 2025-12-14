@@ -33,7 +33,7 @@ export class CompleteTool extends BaseTool {
     };
   }
 
-  protected async doWork(parameters: Record<string, any>, context: ExecutionContext): Promise<ExecutionResult> {
+  protected async doWork(parameters: Record<string, unknown>, context: ExecutionContext): Promise<ExecutionResult> {
     const finished = parameters.finished;
     
     if (typeof finished !== "boolean") {

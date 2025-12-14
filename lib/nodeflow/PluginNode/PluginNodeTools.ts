@@ -15,7 +15,7 @@ export class PluginNodeTools extends NodeTool {
     characterId: string,
   ): Promise<{
     processedContent: string;
-    toolResults: any[];
+    toolResults: unknown[];
     hasPluginCalls: boolean;
   }> {
     console.log("🔧 PluginNodeTools: Processing plugin tools", {
@@ -38,7 +38,7 @@ export class PluginNodeTools extends NodeTool {
       ];
 
       let processedContent = content;
-      let toolResults: any[] = [];
+      let toolResults: unknown[] = [];
       let hasPluginCalls = false;
       
       console.log("🔍 PluginNodeTools: Checking for plugin patterns...", {
@@ -74,7 +74,7 @@ export class PluginNodeTools extends NodeTool {
             console.log(`🔧 PluginNodeTools: Executing tool '${toolName}'...`);
             
             // 解析参数
-            const params = this.parseToolParameters(paramString, toolName);
+            const params = this.parseToolParameters(paramString, toolName) as Record<string, unknown>;
             console.log("📋 PluginNodeTools: Parsed parameters:", params);
             
             // 执行工具
@@ -101,7 +101,7 @@ export class PluginNodeTools extends NodeTool {
               params,
               result: toolResult,
               originalMatch: fullMatch,
-            });
+            } as { toolName: string; params: unknown; result: unknown; originalMatch: string });
 
             // 替换内容中的工具调用为结果
             const formattedResult = this.formatToolResult(toolName, toolResult);
@@ -133,7 +133,11 @@ export class PluginNodeTools extends NodeTool {
         processedLength: processedContent.length,
         toolResultsCount: toolResults.length,
         hasPluginCalls,
-        toolsExecuted: toolResults.map(r => r.toolName).join(", "),
+        toolsExecuted: toolResults
+          .map(result => (typeof result === "object" && result && "toolName" in result
+            ? String((result as { toolName: unknown }).toolName)
+            : "unknown"))
+          .join(", "),
       });
 
       return {
@@ -155,7 +159,7 @@ export class PluginNodeTools extends NodeTool {
    * 格式化插件工具结果为用户友好的输出
    */
   static async formatPluginResults(
-    toolResults: any[],
+    toolResults: unknown[],
     processedContent: string,
   ): Promise<string> {
     try {
@@ -164,7 +168,8 @@ export class PluginNodeTools extends NodeTool {
       }
 
       // 创建工具结果的汇总
-      const resultSummary = toolResults.map(result => {
+      const resultSummary = toolResults.map((r: unknown) => {
+        const result = r as { toolName: string; error?: string; result?: { success?: boolean; result?: unknown; message?: string } };
         if (result.error) {
           return `❌ ${result.toolName}: ${result.error}`;
         }
@@ -189,7 +194,7 @@ export class PluginNodeTools extends NodeTool {
   /**
    * 解析工具参数
    */
-  private static parseToolParameters(paramString: string, toolName: string): any {
+  private static parseToolParameters(paramString: string, toolName: string): unknown {
     if (!paramString || paramString.trim() === "") {
       return {};
     }
@@ -221,7 +226,7 @@ export class PluginNodeTools extends NodeTool {
   /**
    * 解析文本格式化工具参数
    */
-  private static parseTextFormatterParams(paramString: string): any {
+  private static parseTextFormatterParams(paramString: string): unknown {
     const parts = paramString.split(/\s+/);
     const format = parts[0];
     const text = parts.slice(1).join(" ") || "";
@@ -235,7 +240,7 @@ export class PluginNodeTools extends NodeTool {
   /**
    * 解析文本分析工具参数
    */
-  private static parseTextAnalyzerParams(paramString: string): any {
+  private static parseTextAnalyzerParams(paramString: string): unknown {
     const parts = paramString.split(/\s+/);
     const analysis = parts[0];
     const text = parts.slice(1).join(" ") || "";
@@ -249,7 +254,7 @@ export class PluginNodeTools extends NodeTool {
   /**
    * 解析文本生成工具参数
    */
-  private static parseTextGeneratorParams(paramString: string): any {
+  private static parseTextGeneratorParams(paramString: string): unknown {
     const parts = paramString.split(/\s+/);
     const type = parts[0];
     const count = parseInt(parts[1]) || 5;
@@ -263,8 +268,8 @@ export class PluginNodeTools extends NodeTool {
   /**
    * 解析键值对参数
    */
-  private static parseKeyValueParams(paramString: string): any {
-    const params: any = {};
+  private static parseKeyValueParams(paramString: string): Record<string, string> {
+    const params: Record<string, string> = {};
     
     // 分割参数（支持多种分隔符）
     const pairs = paramString.split(/[,;|]/);
@@ -282,12 +287,13 @@ export class PluginNodeTools extends NodeTool {
   /**
    * 格式化单个工具结果
    */
-  private static formatToolResult(toolName: string, toolResult: any): string {
-    if (toolResult.error) {
-      return `[${toolName} 错误: ${toolResult.error}]`;
+  private static formatToolResult(toolName: string, toolResult: unknown): string {
+    const r = toolResult as { error?: string; result?: unknown; message?: string };
+    if (r.error) {
+      return `[${toolName} 错误: ${r.error}]`;
     }
 
-    const result = toolResult.result || toolResult.message || toolResult;
+    const result = r.result || r.message || toolResult;
     
     // 根据工具类型格式化结果
     switch (toolName) {

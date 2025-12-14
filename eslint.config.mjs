@@ -24,6 +24,9 @@ const config = [
       "@typescript-eslint": tseslint,
     },
     rules: {
+      // ==============================
+      // 代码风格规则
+      // ==============================
       "semi": ["error", "always"],
       "quotes": ["error", "double"],
       "indent": ["error", 2],
@@ -31,6 +34,37 @@ const config = [
       "object-curly-spacing": ["error", "always"],
       "no-multiple-empty-lines": ["error", { "max": 1 }],
       "eol-last": ["error", "always"],
+
+      // ==============================
+      // TypeScript 类型安全规则
+      // ==============================
+      "@typescript-eslint/no-explicit-any": "error",
+    },
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 测试文件 - 完全排除 any 类型检查
+  // ───────────────────────────────────────────────────────────────────────────
+  // 设计理念：测试代码允许使用 any 以提高测试编写效率
+  // Mock、Stub、Spy 等测试工具经常需要动态类型
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    files: ["**/__tests__/**/*.{ts,tsx}", "**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  // ==============================
+  // 工具和适配器文件放宽规则
+  // ==============================
+  {
+    files: [
+      "lib/tools/**/*.ts",
+      "lib/adapter/**/*.ts",
+      "lib/adapters/**/*.ts",
+      "lib/utils/markdown-converter.ts",
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
     },
   },
 ];

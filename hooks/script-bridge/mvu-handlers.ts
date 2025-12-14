@@ -28,8 +28,8 @@ async function getMessageVariable(args: unknown[], ctx: ApiCallContext): Promise
   // 优先从持久化层读取
   if (ctx.characterId) {
     const variables = options?.message_id
-      ? await getNodeVariables(ctx.characterId, options.message_id)
-      : await getCharacterVariables(ctx.characterId);
+      ? await getNodeVariables({ dialogueKey: ctx.characterId }, options.message_id)
+      : await getCharacterVariables({ dialogueKey: ctx.characterId });
 
     if (variables) {
       const category = options?.category || "stat";
@@ -62,9 +62,9 @@ async function getMessageVariables(args: unknown[], ctx: ApiCallContext): Promis
   // 优先从持久化层读取
   if (ctx.characterId) {
     if (messageId) {
-      return getNodeVariables(ctx.characterId, messageId);
+      return getNodeVariables({ dialogueKey: ctx.characterId }, messageId);
     }
-    return getCharacterVariables(ctx.characterId);
+    return getCharacterVariables({ dialogueKey: ctx.characterId });
   }
 
   // 回退到内存 store

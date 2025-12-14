@@ -16,6 +16,8 @@ import type {
 import { MessageBridge, createIframeBridge } from "./message-bridge";
 import { ScriptEventEmitter, createEventEmitterWithBridge } from "./event-emitter";
 import { SandboxContext, createSandboxContext } from "./sandbox-context";
+import { GlobalEventBridge, createGlobalEventBridge } from "./global-event-bridge";
+import { createTavernHelper, type TavernHelperAPI } from "./tavern-helper";
 
 /**
  * Default executor options
@@ -59,6 +61,8 @@ export class ScriptExecutor {
   private bridge: MessageBridge | null = null;
   private eventEmitter: ScriptEventEmitter | null = null;
   private sandboxContext: SandboxContext | null = null;
+  private globalEventBridge: GlobalEventBridge | null = null;
+  private tavernHelper: TavernHelperAPI | null = null;
   private isReady: boolean = false;
   private readyPromise: Promise<void> | null = null;
   
@@ -100,26 +104,52 @@ export class ScriptExecutor {
             timeout: this.options.timeout,
           });
 
-          // 兼容 TavernHelper API_CALL（最少返回空结果，避免脚本超时）
+          // TavernHelper API 调用处理
           this.bridge.on("API_CALL", (message) => {
-            const method = (message.payload as any)?.method;
-            const args = (message.payload as any)?.args || [];
-            const reply = (result: any) => {
+            const payload = message.payload as Record<string, unknown>;
+            const method = payload?.method as string | undefined;
+            const args = (payload?.args as unknown[] | undefined) || [];
+            const reply = (result: unknown) => {
               if (!message.id) return;
               this.bridge?.send("API_RESPONSE", { result }, message.id);
             };
 
-            if (method === "getChatMessages") {
-              reply([]);
-            } else if (method === "getCurrentMessageId") {
-              reply(null);
-            } else if (method === "eventEmit" || method === "events.emit") {
-              reply(args[0] ?? null);
+            // 如果还没有 TavernHelper 实例,返回错误
+            if (!this.tavernHelper) {
+              reply({ error: "TavernHelper not initialized" });
+              return;
+            }
+
+            // 调用 TavernHelper 方法
+            const helperMethod = this.tavernHelper[method as keyof TavernHelperAPI];
+            if (typeof helperMethod !== "function") {
+              reply({ error: `Unknown API method: ${method}` });
+              return;
+            }
+
+            try {
+              const result = (helperMethod as (...args: unknown[]) => unknown)(...args);
+
+              // 处理异步结果
+              if (result instanceof Promise) {
+                result
+                  .then((res) => reply(res))
+                  .catch((err) => reply({ error: err instanceof Error ? err.message : String(err) }));
+              } else {
+                reply(result);
+              }
+            } catch (err: unknown) {
+              reply({ error: err instanceof Error ? err.message : String(err) });
             }
           });
           
           // Create event emitter
           this.eventEmitter = createEventEmitterWithBridge(this.bridge);
+          
+          // Create global event bridge (connects sandbox events to global event system)
+          if (this.options.allowEvents) {
+            this.globalEventBridge = createGlobalEventBridge(this.eventEmitter);
+          }
           
           // Wait for iframe to signal ready
           await new Promise<void>((resolveReady, rejectReady) => {
@@ -174,8 +204,12 @@ export class ScriptExecutor {
         throw new Error("Executor not properly initialized");
       }
       
-      // Create sandbox context
+      // Create TavernHelper instance
       const sandboxCtx = context || {};
+      const scriptId = `script_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      this.tavernHelper = createTavernHelper(scriptId, sandboxCtx);
+
+      // Create sandbox context
       this.sandboxContext = createSandboxContext(
         sandboxCtx,
         this.eventEmitter,
@@ -223,18 +257,23 @@ export class ScriptExecutor {
         consoleOutput: this.sandboxContext.getLogs(),
       };
       
-    } catch (error: any) {
+    } catch (error) {
       const executionTime = Date.now() - startTime;
-      
+
       return {
         success: false,
         error: {
-          message: error.message || "Unknown error",
-          stack: error.stack,
+          message: error instanceof Error ? error.message : "Unknown error",
+          stack: error instanceof Error ? error.stack : undefined,
         },
         executionTime,
         consoleOutput: this.sandboxContext?.getLogs() || [],
       };
+    } finally {
+      // 清理 TavernHelper 资源
+      if (this.tavernHelper) {
+        this.tavernHelper._cleanup();
+      }
     }
   }
   
@@ -300,25 +339,37 @@ export class ScriptExecutor {
   destroy(): void {
     this.isReady = false;
     this.readyPromise = null;
-    
+
+    // Cleanup TavernHelper
+    if (this.tavernHelper) {
+      this.tavernHelper._cleanup();
+      this.tavernHelper = null;
+    }
+
+    // Destroy global event bridge
+    if (this.globalEventBridge) {
+      this.globalEventBridge.destroy();
+      this.globalEventBridge = null;
+    }
+
     // Destroy message bridge
     if (this.bridge) {
       this.bridge.destroy();
       this.bridge = null;
     }
-    
+
     // Destroy event emitter
     if (this.eventEmitter) {
       this.eventEmitter.destroy();
       this.eventEmitter = null;
     }
-    
+
     // Remove iframe
     if (this.iframe && this.iframe.parentNode) {
       this.iframe.parentNode.removeChild(this.iframe);
       this.iframe = null;
     }
-    
+
     // Clear sandbox context
     this.sandboxContext = null;
   }

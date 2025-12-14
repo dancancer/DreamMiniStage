@@ -25,10 +25,12 @@ export class RegexNode extends NodeBase {
 
   protected async _call(input: NodeInput): Promise<NodeOutput> {
     log("START", "━━━ RegexNode 开始执行 ━━━");
-    log("INPUT", `llmResponse长度=${input.llmResponse?.length}, characterId=${input.characterId}`);
+    const typedInput = input as { llmResponse?: string; characterId?: string; presetId?: string };
+    log("INPUT", `llmResponse长度=${typedInput.llmResponse?.length}, characterId=${typedInput.characterId}`);
 
-    let llmResponse = input.llmResponse;
-    const characterId = input.characterId;
+    let llmResponse = typedInput.llmResponse;
+    const characterId = typedInput.characterId;
+    const presetId = typedInput.presetId;
 
     if (!llmResponse) {
       log("ERROR", "缺少 llmResponse");
@@ -86,6 +88,7 @@ export class RegexNode extends NodeBase {
       "processRegex",
       mainContent,
       characterId,
+      presetId,
     ) as { replacedText: string };
 
     return {

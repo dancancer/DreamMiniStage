@@ -87,10 +87,17 @@ export interface MemoryContext {
   config: MemoryRAGConfig;
 }
 
-// Memory Operations Results
+/* ═══════════════════════════════════════════════════════════════════════════
+   记忆操作结果
+
+   data 字段：操作返回的任意数据
+   - 使用 unknown 而非 any：调用方必须进行类型检查或断言
+   - 强制类型安全：防止直接使用未验证的数据
+   设计理念：在边界处使用 unknown，倒逼上层代码显式处理类型
+   ═══════════════════════════════════════════════════════════════════════════ */
 export interface MemoryOperationResult {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
   affectedCount?: number;
 }

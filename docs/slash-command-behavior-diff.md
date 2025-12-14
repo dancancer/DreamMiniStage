@@ -1,6 +1,10 @@
 # Slash Command 行为差异分析
 
-> 更新至 2025-12-10。当前实现已切换到内核解析/执行器（递归下降 + 链式作用域 + 生成器），支持 `{: :}`、`/if` `/while` `/times`、控制信号 `/return` `/break` `/abort` 与作用域变量 `/let|/var`。仍与 SillyTavern 在参数、返回值、UI 副作用上存在差异。
+> **更新时间**: 2024-12-11
+> **测试覆盖**: 23/23 通过
+> **实现位置**: `lib/slash-command/`
+
+当前实现已切换到内核解析/执行器（递归下降 + 链式作用域 + 生成器），支持 `{: :}`、`/if` `/while` `/times`、控制信号 `/return` `/break` `/abort` 与作用域变量 `/let|/var`。仍与 SillyTavern 在参数、返回值、UI 副作用上存在差异。
 
 ---
 
@@ -8,24 +12,25 @@
 
 | 命令 | 兼容性 | 主要差异 |
 |------|--------|----------|
-| `/send` | ⚠️ 部分兼容 | 已支持 `at`/`name`/`compact`/`return`（基础）；空文本/`...` 会发送；无 persona/布局副作用 |
-| `/trigger` | ⚠️ 部分兼容 | 返回空字符串，新增 await + 简单双生成锁 + 群组成员参数（透传） |
-| `/setvar` | ⚠️ 部分兼容 | 无 `index`/`as`，作用域只分当前会话变量，缺少全局/本地开关 |
-| `/getvar` | ⚠️ 部分兼容 | 无 `index`，无数字转换，未区分全局/本地 |
-| `/delvar` | ⚠️ 部分兼容 | 命令名不同（无 `/flushvar` 别名），无闭包参数 |
-| `/let` `/var` | ⚠️ 部分兼容 | 仅作用域变量，不写入聊天/全局存储 |
-| `/if` `/while` `/times` | ⚠️ 部分兼容 | 支持 `{: :}` 块，条件为简单 truthy 判断，无表达式求值 |
+| `/send` | ⚠️ 部分兼容 | 已支持 `at`/`name`/`compact`/`return`；无 persona/布局副作用 |
+| `/trigger` | ⚠️ 部分兼容 | 返回空字符串，await + 简单生成锁 + 群组成员参数 |
+| `/setvar` | ⚠️ 部分兼容 | 无 `index`/`as`，缺少全局/本地开关 |
+| `/getvar` | ⚠️ 部分兼容 | 无 `index`，无数字转换 |
+| `/delvar` | ⚠️ 部分兼容 | 无 `/flushvar` 别名 |
+| `/let` `/var` | ⚠️ 部分兼容 | 仅作用域变量，不写入聊天存储 |
+| `/if` `/while` `/times` | ⚠️ 部分兼容 | 支持 `{: :}` 块，条件为 truthy 判断 |
 | `/echo` | ✅ 基本兼容 | 无 toast/UI 副作用 |
 | `/pass` | ✅ 项目扩展 | SillyTavern 无该命令 |
-| `/return` | ✅ 基本兼容 | 终止执行链并返回值，缺少 `return=` 类型选择 |
-| `/sendas` | ⚠️ 部分兼容 | 依赖 `onSendAs` 回调；fallback 仅前缀文本，无 persona 元数据 |
-| `/sys` | ⚠️ 部分兼容 | 依赖 `onSendSystem`，fallback 为 `[SYS]` 前缀 |
-| `/impersonate` | ⚠️ 部分兼容 | 依赖 `onImpersonate`，fallback 为 send+trigger |
-| `/continue` `/cont` | ⚠️ 部分兼容 | 仅调用 `onContinue`/`onTrigger`，无生成锁/上下文校验 |
-| `/swipe` | ⚠️ 部分兼容 | 只透传 `onSwipe`，未接入实际多候选切换 |
-| `/add` `/sub` | ⚠️ 部分兼容 | 只做数字求和/相减，返回字符串，无 `return` 选项 |
-| `/len` `/trim` | ✅ 基础功能 | 仅字符串长度/裁剪，返回字符串 |
-| `/push` | ⚠️ 部分兼容 | 仅支持 append 数组，无 pop/slice/类型转换 |
+| `/return` | ✅ 基本兼容 | 终止执行链并返回值 |
+| `/break` `/abort` | ✅ 基本兼容 | 控制信号 |
+| `/sendas` | ⚠️ 部分兼容 | 依赖 `onSendAs` 回调 |
+| `/sys` | ⚠️ 部分兼容 | 依赖 `onSendSystem` |
+| `/impersonate` | ⚠️ 部分兼容 | 依赖 `onImpersonate` |
+| `/continue` `/cont` | ⚠️ 部分兼容 | 调用 `onContinue`/`onTrigger` |
+| `/swipe` | ⚠️ 部分兼容 | 透传 `onSwipe` |
+| `/add` `/sub` | ⚠️ 部分兼容 | 数字求和/相减 |
+| `/len` `/trim` | ✅ 基础功能 | 字符串长度/裁剪 |
+| `/push` | ⚠️ 部分兼容 | append 数组 |
 
 ---
 

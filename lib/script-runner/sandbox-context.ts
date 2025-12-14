@@ -1,6 +1,6 @@
 /**
  * Sandbox Context Module
- * 
+ *
  * Provides a secure, controlled environment for scripts running in the iframe sandbox.
  * Exposes a limited API to scripts with rate limiting, permissions, and audit logging.
  */
@@ -13,6 +13,38 @@ import type {
 } from "@/types/script-runner";
 import { ScriptEventEmitter } from "./event-emitter";
 import { MessageBridge } from "./message-bridge";
+
+// ========================================
+// 类型定义
+// ========================================
+
+/**
+ * 脚本变量值类型
+ */
+export type ScriptValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | ScriptValue[]
+  | { [key: string]: ScriptValue };
+
+/**
+ * 事件处理器函数签名
+ */
+export type EventHandler = (...args: unknown[]) => void | Promise<void>;
+
+/**
+ * 世界书条目类型
+ */
+export interface WorldbookEntry {
+  id: string;
+  keys: string[];
+  content: string;
+  enabled?: boolean;
+  [key: string]: unknown;
+}
 
 /**
  * Simple rate limiter implementation
@@ -140,21 +172,21 @@ export class SandboxContext {
   /**
    * Wrap an API method with rate limiting and error handling
    */
-  private wrapAPI<T extends (...args: any[]) => any>(
+  private wrapAPI<TArgs extends unknown[], TReturn>(
     methodName: string,
-    fn: T,
-  ): T {
-    return ((...args: any[]) => {
+    fn: (...args: TArgs) => TReturn,
+  ): (...args: TArgs) => TReturn {
+    return (...args: TArgs): TReturn => {
       // Check if method is blocked
       if (this.policy.blockedMethods?.includes(methodName)) {
         throw new Error(`Method ${methodName} is blocked by security policy`);
       }
-      
+
       // Rate limiting
       if (!this.rateLimiter.checkLimit(methodName)) {
         throw new Error(`Rate limit exceeded for ${methodName}`);
       }
-      
+
       try {
         this.log(`[API] ${methodName}(${JSON.stringify(args)})`);
         return fn(...args);
@@ -162,17 +194,17 @@ export class SandboxContext {
         this.log(`[API Error] ${methodName}: ${error}`);
         throw error;
       }
-    }) as T;
+    };
   }
-  
+
   /**
    * Variable API methods
    */
-  private getVariable(key: string): any {
-    return this.context.variables?.[key];
+  private getVariable(key: string): ScriptValue {
+    return this.context.variables?.[key] as ScriptValue;
   }
-  
-  private setVariable(key: string, value: any): void {
+
+  private setVariable(key: string, value: ScriptValue): void {
     if (!this.context.variables) {
       this.context.variables = {};
     }
@@ -208,45 +240,45 @@ export class SandboxContext {
   /**
    * Event API methods
    */
-  private addEventListener(eventName: string, handler: Function): void {
-    this.eventEmitter.on(eventName, handler as any);
+  private addEventListener(eventName: string, handler: EventHandler): void {
+    this.eventEmitter.on(eventName, handler);
   }
-  
-  private addEventListenerOnce(eventName: string, handler: Function): void {
-    this.eventEmitter.once(eventName, handler as any);
+
+  private addEventListenerOnce(eventName: string, handler: EventHandler): void {
+    this.eventEmitter.once(eventName, handler);
   }
-  
-  private removeEventListener(eventName: string, handler?: Function): void {
-    this.eventEmitter.off(eventName, handler as any);
+
+  private removeEventListener(eventName: string, handler?: EventHandler): void {
+    this.eventEmitter.off(eventName, handler);
   }
-  
-  private emitEvent(eventName: string, data?: any): void {
+
+  private emitEvent(eventName: string, data?: unknown): void {
     this.eventEmitter.emit(eventName, data);
   }
-  
+
   /**
    * World book API methods (placeholder)
    */
-  private getWorldbookEntry(id: string): any {
+  private getWorldbookEntry(id: string): WorldbookEntry | null {
     // TODO: Implement world book integration
     this.log(`[Worldbook] Get entry: ${id} (not implemented)`);
     return null;
   }
-  
-  private searchWorldbook(query: string): any[] {
+
+  private searchWorldbook(query: string): WorldbookEntry[] {
     // TODO: Implement world book search
     this.log(`[Worldbook] Search: ${query} (not implemented)`);
     return [];
   }
-  
+
   /**
    * Utility methods
    */
-  private log(...args: any[]): void {
+  private log(...args: unknown[]): void {
     const message = args.map(arg =>
       typeof arg === "object" ? JSON.stringify(arg) : String(arg),
     ).join(" ");
-    
+
     this.logs.push(`[${new Date().toISOString()}] ${message}`);
     console.log("[Sandbox]", ...args);
   }

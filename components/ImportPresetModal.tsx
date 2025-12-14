@@ -26,6 +26,12 @@ import { Button } from "@/components/ui/button";
 //                              类型定义
 // ============================================================================
 
+/** 导入操作的结果类型 */
+interface ImportResult {
+  success: boolean;
+  error?: string;
+}
+
 interface ImportPresetModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -44,10 +50,10 @@ export default function ImportPresetModal({
   const { t, fontClass, serifFontClass } = useLanguage();
   const [isDragging, setIsDragging] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [importResult, setImportResult] = useState<any>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [customName, setCustomName] = useState("");
   const [fileName, setFileName] = useState("");
-  const [jsonData, setJsonData] = useState<any>(null);
+  const [jsonData, setJsonData] = useState<unknown>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ========== 文件处理 ==========
@@ -215,7 +221,7 @@ export default function ImportPresetModal({
               </div>
             </div>
             
-            {jsonData && !importResult && (
+            {jsonData !== null && !importResult && (
               <div className="p-4 bg-muted-surface/50 backdrop-blur-sm border border-border/40 rounded-md animate-fadeIn">
                 <h4 className={"text-sm font-medium text-cream-soft mb-3 "}>{t("importPreset.customizePreset")}</h4>
                 

@@ -1,30 +1,54 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Character Dialogue - 角色对话核心逻辑
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 import { Character } from "@/lib/core/character";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatOllama } from "@langchain/ollama";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
-import { PromptAssembler } from "@/lib/core/prompt-assembler";
-import { RunnablePassthrough } from "@langchain/core/runnables";
+import { RunnablePassthrough, RunnableLambda } from "@langchain/core/runnables";
 import { getCharacterCompressorPromptZh, getCharacterCompressorPromptEn } from "@/lib/prompts/character-prompts";
 import { CharacterHistory } from "@/lib/core/character-history";
 import { DialogueOptions } from "@/lib/models/character-dialogue-model";
 import { createGeminiRunnable } from "@/lib/core/gemini-client";
 import { getString } from "@/lib/storage/client-storage";
+import type { Runnable, RunnableLike } from "@langchain/core/runnables";
+import type { ChatPromptValueInterface } from "@langchain/core/prompt_values";
+
+/* ───────────────────────────────────────────────────────────────────────────
+   类型定义
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * LLM 联合类型 - 支持的所有 LLM 实现
+ */
+type LLMInstance = ChatOpenAI | ChatOllama | ReturnType<typeof createGeminiRunnable>;
+
+/**
+ * 对话输入接口 - RunnablePassthrough 的输入结构
+ */
+interface DialogueInput {
+  system_message: string;
+  user_message: string;
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   主类实现
+   ─────────────────────────────────────────────────────────────────────────── */
 
 export class CharacterDialogue {
   character: Character;
   history: CharacterHistory;
-  llm: any;
-  dialogueChain: RunnablePassthrough | null = null;
+  llm: LLMInstance | null;
+  dialogueChain: Runnable<DialogueInput, string> | null = null;
   language: "zh" | "en" = "zh";
-  promptAssembler: PromptAssembler;
   llmType: "openai" | "ollama" | "gemini" = "openai";
 
   constructor(character: Character) {
     this.character = character;
     this.history = new CharacterHistory(this.language);
     this.llm = null;
-    this.promptAssembler = new PromptAssembler({ language: this.language });
   }
 
   async initialize(options?: DialogueOptions): Promise<void> {
@@ -37,11 +61,6 @@ export class CharacterDialogue {
         this.llmType = options.llmType;
       }
 
-      this.promptAssembler = new PromptAssembler({
-        language: this.language,
-        contextWindow: options?.contextWindow || 5,
-      });
-      
       this.setupLLM(options);
       this.setupDialogueChain();
     } catch (error) {
@@ -177,12 +196,15 @@ export class CharacterDialogue {
       ["human", "{user_message}"],
     ]);
 
-    this.dialogueChain = RunnablePassthrough.assign({
-      system_message: (input: any) => input.system_message,
-      user_message: (input: any) => input.user_message,
-    })
+    // 创建可运行的对话链
+    const assignRunnable = RunnableLambda.from((input: DialogueInput) => ({
+      system_message: input.system_message,
+      user_message: input.user_message,
+    }));
+
+    this.dialogueChain = assignRunnable
       .pipe(dialoguePrompt)
-      .pipe(this.llm)
+      .pipe(this.llm as unknown as RunnableLike<ChatPromptValueInterface, string>)
       .pipe(new StringOutputParser());
   }
   
@@ -191,8 +213,12 @@ export class CharacterDialogue {
       throw new Error("LLM not initialized");
     }
 
-    this.llm.streaming = false;
-    
+    // 对于 Ollama 模型，可能需要设置 streaming 选项
+    if (this.llmType === "ollama" && "streaming" in this.llm) {
+      const llmWithStreaming = this.llm as { streaming?: boolean };
+      llmWithStreaming.streaming = false;
+    }
+
     try {
       let compressorPrompt;
       if (this.language === "zh") {
@@ -206,12 +232,12 @@ export class CharacterDialogue {
           ["user", getCharacterCompressorPromptEn(userInput, story)],
         ]);
       }
-      
+
       const compressorChain = compressorPrompt
-        .pipe(this.llm)
+        .pipe(this.llm as unknown as RunnableLike<ChatPromptValueInterface, string>)
         .pipe(new StringOutputParser());
       const compressedStory = await compressorChain.invoke({});
-      
+
       return compressedStory;
     } catch (error) {
       console.error("Error compressing story:", error);

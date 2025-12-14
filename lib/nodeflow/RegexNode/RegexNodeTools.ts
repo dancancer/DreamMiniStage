@@ -14,9 +14,9 @@ export class RegexNodeTools extends NodeTool {
     return this.toolType;
   }
 
-  static async executeMethod(methodName: string, ...params: any[]): Promise<any> {
+  static async executeMethod(methodName: string, ...params: unknown[]): Promise<unknown> {
     log("EXEC", `调用方法: ${methodName}`);
-    const method = (this as any)[methodName];
+    const method = (this as unknown as Record<string, unknown>)[methodName];
 
     if (typeof method !== "function") {
       log("ERROR", `方法不存在: ${methodName}`);
@@ -25,7 +25,7 @@ export class RegexNodeTools extends NodeTool {
 
     try {
       this.logExecution(methodName, params);
-      return await (method as Function).apply(this, params);
+      return await (method as (...args: unknown[]) => Promise<unknown>).apply(this, params);
     } catch (error) {
       this.handleError(error as Error, methodName);
     }
@@ -34,6 +34,7 @@ export class RegexNodeTools extends NodeTool {
   static async processRegex(
     response: string,
     characterId: string,
+    presetId?: string,
   ): Promise<{ replacedText: string }> {
     log("PROCESS", "━━━ 开始处理 ━━━");
     log("PROCESS", `characterId=${characterId}, 输入长度=${response.length}`);
@@ -41,6 +42,9 @@ export class RegexNodeTools extends NodeTool {
     try {
       const result = await RegexProcessor.processFullContext(response, {
         ownerId: characterId,
+        presetSource: presetId
+          ? { ownerId: presetId, presetName: presetId }
+          : undefined,
       });
 
       log("PROCESS", `处理完成，输出长度=${result.replacedText.length}`);

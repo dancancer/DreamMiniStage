@@ -31,7 +31,7 @@ export class UserSettingTool extends BaseTool {
     },
   ];
 
-  protected async doWork(parameters: Record<string, any>, context: ExecutionContext): Promise<ExecutionResult> {
+  protected async doWork(parameters: Record<string, unknown>, context: ExecutionContext): Promise<ExecutionResult> {
     const content = parameters.content;
     const comment = parameters.comment;
     
@@ -39,7 +39,7 @@ export class UserSettingTool extends BaseTool {
       return this.createFailureResult("USER_SETTING tool requires 'content' parameter as a string.");
     }
 
-    if (!comment || comment.toUpperCase() !== "USER_SETTING") {
+    if (!comment || typeof comment !== "string" || comment.toUpperCase() !== "USER_SETTING") {
       return this.createFailureResult("USER_SETTING tool requires 'comment' parameter to be exactly 'USER_SETTING'.");
     }
 

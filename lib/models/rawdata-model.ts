@@ -1,8 +1,37 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Raw Data Model - 原始角色数据类型定义
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 import { WorldBookEntry } from "@/lib/models/world-book-model";
 import { TavernHelperScript } from "@/lib/models/character-model";
 
+/**
+ * 角色书条目 - 兼容不同来源的数据结构
+ */
+export interface CharacterBookEntry {
+  comment: string;
+  content: string;
+  disable?: boolean;
+  enabled?: boolean;
+  position?: number;
+  constant?: boolean;
+  key?: string[];
+  keys?: string[];
+  order?: number;
+  insertion_order?: number;
+  depth?: number;
+  extensions?: {
+    position?: number;
+    depth?: number;
+    [key: string]: unknown;
+  };
+}
+
+/**
+ * 原始角色数据结构 - 从外部文件导入的格式
+ */
 export interface RawCharacterData {
-  id: any;
+  id: string | number;
   name: string;
   description: string;
   personality: string;
@@ -27,20 +56,11 @@ export interface RawCharacterData {
     character_version: string;
     alternate_greetings: string[];
     character_book:{
-      entries: {
-        comment: string;
-        content: string;
-        disable?: boolean;
-        position?: number;
-        constant?: boolean;
-        key?: string[];
-        order?: number;
-        depth?: number;
-      }[] | Record<string, WorldBookEntry>;
+      entries: CharacterBookEntry[] | Record<string, WorldBookEntry>;
     },
     extensions?: {
       TavernHelper_scripts?: TavernHelperScript[];
-      [key: string]: any;
+      [key: string]: unknown;
     };
   },
 }

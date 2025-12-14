@@ -6,7 +6,7 @@ import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-re
 import { Character } from "@/lib/core/character";
 
 interface EditDialogueNodeRequest {
-  dialogueId?: string;  // 对话树 ID（sessionId 或 characterId）
+  dialogueId: string;  // 对话树 ID（sessionId）
   characterId: string;
   nodeId: string;
   assistantResponse: string;
@@ -31,10 +31,11 @@ export async function editDialaogueNodeContent(input: EditDialogueNodeRequest) {
       language, 
     } = input;
 
-    // 使用 dialogueId（sessionId）或回退到 characterId
-    const treeId = dialogueId || characterId;
-    
-    const dialogueTree = await LocalCharacterDialogueOperations.getDialogueTreeById(treeId);
+    if (!dialogueId) {
+      throw new Error("dialogueId is required");
+    }
+
+    const dialogueTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueId);
     if (!dialogueTree) {
       throw new Error("Dialogue tree not found");
     }

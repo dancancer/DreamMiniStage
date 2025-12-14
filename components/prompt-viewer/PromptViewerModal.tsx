@@ -274,6 +274,7 @@ function ContentArea({
   return (
     <div className="h-full overflow-y-auto">
       <PromptContent
+        messages={promptData.messages}
         content={promptData.fullPrompt}
         searchResult={searchResult}
         expandedRegions={uiState.expandedRegions}

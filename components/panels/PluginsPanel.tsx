@@ -1,7 +1,7 @@
 /**
  * ╔════════════════════════════════════════════════════════════════════╗
  * ║                         PluginsPanel 插件面板                       ║
- * ║  嵌入插件列表/过滤/统计，复用插件管理逻辑，无额外模态。               ║
+ * ║  嵌入插件列表/过滤/统计,复用插件管理逻辑，无额外模态。               ║
  * ╚════════════════════════════════════════════════════════════════════╝
  */
 
@@ -14,16 +14,9 @@ import { PluginFilter, type FilterValue } from "@/components/plugin-manager/Plug
 import { Button } from "@/components/ui/button";
 import { PluginList } from "@/components/plugin-manager/PluginList";
 import { PluginStats } from "@/components/plugin-manager/PluginStats";
+import type { PluginEntry } from "@/types/global";
 
-interface PluginEntry {
-  plugin: any;
-  manifest: any;
-  enabled: boolean;
-  initialized: boolean;
-  loaded: boolean;
-  error?: string;
-  loadTime?: Date;
-}
+// PluginEntry 类型已在 types/global.d.ts 中定义
 
 export function PluginsPanel() {
   const { t, fontClass } = useLanguage();
@@ -39,9 +32,9 @@ export function PluginsPanel() {
   const loadPlugins = async () => {
     setIsLoading(true);
     try {
-      if (typeof window !== "undefined" && (window as any).pluginRegistry) {
-        await (window as any).pluginRegistry.initialize();
-        const allPlugins = (window as any).pluginRegistry.getPlugins();
+      if (typeof window !== "undefined" && window.pluginRegistry) {
+        await window.pluginRegistry.initialize();
+        const allPlugins = window.pluginRegistry.getPlugins();
         setPlugins(allPlugins);
       }
     } catch (error) {
@@ -54,8 +47,8 @@ export function PluginsPanel() {
   const handleRefreshPlugins = async () => {
     setIsRefreshing(true);
     try {
-      if (typeof window !== "undefined" && (window as any).pluginDiscovery) {
-        await (window as any).pluginDiscovery.discoverPlugins();
+      if (typeof window !== "undefined" && window.pluginDiscovery) {
+        await window.pluginDiscovery.discoverPlugins();
       }
       await loadPlugins();
     } catch (error) {
@@ -67,11 +60,11 @@ export function PluginsPanel() {
 
   const handleTogglePlugin = async (pluginId: string, enabled: boolean) => {
     try {
-      if (typeof window !== "undefined" && (window as any).pluginRegistry) {
+      if (typeof window !== "undefined" && window.pluginRegistry) {
         if (enabled) {
-          await (window as any).pluginRegistry.enablePlugin(pluginId);
+          await window.pluginRegistry.enablePlugin(pluginId);
         } else {
-          await (window as any).pluginRegistry.disablePlugin(pluginId);
+          await window.pluginRegistry.disablePlugin(pluginId);
         }
         await loadPlugins();
       }
