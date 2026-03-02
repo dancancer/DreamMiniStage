@@ -271,7 +271,7 @@ export function useCharacterDialogue({
     if (!storeKey || !characterId) return;
 
     const record = await LocalCharacterRecordOperations.getCharacterById(characterId);
-    const characterName = record?.name || "";
+    const characterName = record?.data?.name || "";
     const jsonl = await exportDialogueJsonl({ dialogueId: storeKey, characterName });
 
     const blob = new Blob([jsonl], { type: "application/x-ndjson;charset=utf-8" });
