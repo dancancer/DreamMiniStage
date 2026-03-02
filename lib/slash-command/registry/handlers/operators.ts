@@ -207,6 +207,29 @@ export const handleReplace: CommandHandler = async (args, namedArgs, _ctx, pipe)
   return params.text.replace(re, params.replacer);
 };
 
+/**
+ * /match pattern=... [text]
+ * - 对齐 SillyTavern：非全局返回首个匹配数组，全局返回匹配数组列表
+ */
+export const handleMatch: CommandHandler = async (args, namedArgs, _ctx, pipe) => {
+  const params = resolveMatchInput(args, namedArgs, pipe);
+  if (params.pattern === "") {
+    throw new Error("Argument of 'pattern=' cannot be empty");
+  }
+
+  const re = regexFromString(params.pattern);
+  if (!re) {
+    throw new Error("The value of 'pattern' argument is not a valid regular expression.");
+  }
+
+  if (re.flags.includes("g")) {
+    return JSON.stringify([...params.text.matchAll(re)]);
+  }
+
+  const match = params.text.match(re);
+  return match ? JSON.stringify(match) : "";
+};
+
 function resolveRandRange(
   args: string[],
   namedArgs: Record<string, string>,
@@ -333,6 +356,28 @@ function resolveReplaceInput(
     pattern: args[0],
     replacer: "",
     text: pipe,
+  };
+}
+
+function resolveMatchInput(
+  args: string[],
+  namedArgs: Record<string, string>,
+  pipe: string,
+): { pattern: string; text: string } {
+  if (namedArgs.pattern !== undefined) {
+    return {
+      pattern: namedArgs.pattern,
+      text: args.length > 0 ? args.join(" ") : pipe,
+    };
+  }
+
+  if (args.length === 0) {
+    throw new Error("Argument of 'pattern=' cannot be empty");
+  }
+
+  return {
+    pattern: args[0],
+    text: args.length > 1 ? args.slice(1).join(" ") : pipe,
   };
 }
 

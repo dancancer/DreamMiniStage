@@ -124,6 +124,7 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["join", OperatorHandlers.handleJoin],
   ["replace", OperatorHandlers.handleReplace],
   ["re", OperatorHandlers.handleReplace],
+  ["match", OperatorHandlers.handleMatch],
 
   // ─── JS-Slash-Runner 兼容命令 ───
   ["event-emit", JSSlashRunnerHandlers.handleEventEmit],

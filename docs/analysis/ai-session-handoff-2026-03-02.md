@@ -123,6 +123,21 @@
 - 相关测试：
   - `lib/slash-command/__tests__/p2-operators.test.ts`
 
+### 2.10 Slash 命令覆盖补齐（P2 第五批：正则匹配）
+
+- 已新增高频正则命令：
+  - `/match`
+- 行为约定（当前实现）：
+  - `pattern` 支持普通文本与 `/pattern/flags` 形式。
+  - 非全局正则返回首个匹配数组（未命中返回空字符串）。
+  - 全局正则返回匹配数组列表（未命中返回 `[]`）。
+- 相关实现：
+  - `lib/slash-command/registry/handlers/operators.ts`
+  - `lib/slash-command/registry/index.ts`
+  - `hooks/script-bridge/capability-matrix.ts`
+- 相关测试：
+  - `lib/slash-command/__tests__/p2-operators.test.ts`
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -139,7 +154,7 @@
 - `hooks/script-bridge/slash-handlers.ts`
   - 变量上下文拆分为 local/global，并暴露 scoped 读写接口
 - `lib/slash-command/registry/handlers/operators.ts`
-  - 新增 `sin/cos/log/abs/sqrt/round` 命令处理器
+  - 新增 `sin/cos/log/abs/sqrt/round/match` 命令处理器
 
 ### 3.2 测试
 
@@ -159,7 +174,7 @@
 - `lib/slash-command/__tests__/p2-variable-scope.test.ts`
   - 覆盖 `addvar/globalvar` 及 chat/global alias 命令行为
 - `lib/slash-command/__tests__/p2-operators.test.ts`
-  - 补充单参数数学命令与 fail-fast 异常分支回归
+  - 补充单参数数学、`/match` 与 fail-fast 异常分支回归
 
 ### 3.3 文档
 
@@ -186,6 +201,7 @@
 - `pnpm vitest run lib/slash-command/__tests__/p2-variable-scope.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts`
 - `pnpm vitest run hooks/script-bridge/__tests__/slash-handlers.integration.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/slash-command/__tests__/p2-variable-scope.test.ts`
+- `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`
 
 结果：全部通过。
 
@@ -217,9 +233,10 @@
 - 已补：`mul/div/mod/rand/split/join/replace(re)/pow/max/min`。
 - 本轮新增变量族：`addvar/set|get|add|inc|dec|flush globalvar` 与 `set|get|add|inc|dec|flush chatvar` 别名。
 - 本轮新增数学族：`sin/cos/log/abs/sqrt/round`。
+- 本轮新增正则匹配：`match`。
 - 下一批建议优先（按插件脚本采样）：
-  - `/match`（SillyTavern 示例脚本高频缺口之一）
   - `set/getglobalvar` 的 `index/as` 参数语义对齐（对象/数组下标写入与类型转换）
+  - 然后再补 `set/getvar` 的同类参数语义，避免 chat/global 分叉
   - 然后再推进消息/角色侧高频缺口
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
@@ -251,12 +268,11 @@
 
 ```bash
 pnpm vitest run \
+  lib/slash-command/__tests__/p2-variable-scope.test.ts \
   lib/slash-command/__tests__/p2-operators.test.ts \
-  lib/slash-command/__tests__/js-slash-runner-audio.test.ts \
   hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts \
   hooks/script-bridge/__tests__/api-surface-contract.test.ts \
-  hooks/script-bridge/__tests__/variable-handlers.test.ts \
-  lib/script-runner/__tests__/slash-runner-shim-contract.test.ts
+  hooks/script-bridge/__tests__/variable-handlers.test.ts
 ```
 
-然后从 `lib/slash-command/registry/index.ts` 与真实插件脚本调用频率入手，优先补齐高频命令族。
+然后优先推进 `set/getglobalvar` 的 `index/as` 语义（数组/对象下标 + as 类型转换），再评估是否把同语义平移到 `set/getvar`。

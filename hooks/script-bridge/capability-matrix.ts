@@ -189,6 +189,7 @@ export const SLASH_COMMAND_MATRIX = [
   "join",
   "replace",
   "re",
+  "match",
   "event-emit",
   "eventemit",
   "audioenable",

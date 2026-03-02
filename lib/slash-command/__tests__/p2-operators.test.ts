@@ -181,6 +181,30 @@ describe("P2 utility commands", () => {
     expect(aliasResult.pipe).toBe("green green");
   });
 
+  it("/match 对齐 ST 的 regex 返回语义", async () => {
+    const ctx = createMinimalContext();
+
+    const singleParsed = parseSlashCommands("/match pattern=\"color_(\\w+)\" \"color_green green lamp\"");
+    const singleResult = await executeSlashCommands(singleParsed.commands, ctx);
+    expect(singleResult.isError).toBe(false);
+    expect(singleResult.pipe).toBe("[\"color_green\",\"green\"]");
+
+    const globalParsed = parseSlashCommands("/match pattern=\"/color_(\\w+)/g\" \"color_green green lamp color_blue\"");
+    const globalResult = await executeSlashCommands(globalParsed.commands, ctx);
+    expect(globalResult.isError).toBe(false);
+    expect(globalResult.pipe).toBe("[[\"color_green\",\"green\"],[\"color_blue\",\"blue\"]]");
+
+    const singleMissParsed = parseSlashCommands("/match pattern=orange \"color_green\"");
+    const singleMissResult = await executeSlashCommands(singleMissParsed.commands, ctx);
+    expect(singleMissResult.isError).toBe(false);
+    expect(singleMissResult.pipe).toBe("");
+
+    const globalMissParsed = parseSlashCommands("/match pattern=\"/orange/g\" \"color_green\"");
+    const globalMissResult = await executeSlashCommands(globalMissParsed.commands, ctx);
+    expect(globalMissResult.isError).toBe(false);
+    expect(globalMissResult.pipe).toBe("[]");
+  });
+
   it("/push 维护数组变量并返回 JSON 字符串", async () => {
     const parsed = parseSlashCommands("/push list apple|/push list banana");
     const ctx = createMinimalContext();
@@ -216,6 +240,15 @@ describe("P2 utility commands", () => {
 
     expect(result.isError).toBe(true);
     expect(result.errorMessage).toContain("Invalid replace mode");
+  });
+
+  it("/match 缺少 pattern 时返回错误", async () => {
+    const parsed = parseSlashCommands("/match");
+    const ctx = createMinimalContext();
+    const result = await executeSlashCommands(parsed.commands, ctx);
+
+    expect(result.isError).toBe(true);
+    expect(result.errorMessage).toContain("pattern");
   });
 
   it("/log /sqrt 非法输入与缺参时返回错误", async () => {
