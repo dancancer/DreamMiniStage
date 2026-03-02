@@ -62,6 +62,19 @@
 - 相关测试：
   - `lib/slash-command/__tests__/p2-operators.test.ts`
 
+### 2.6 Slash 命令覆盖补齐（P2 第二批）
+
+- 已新增高频数学命令：
+  - `/pow`、`/max`、`/min`
+- 行为约定（当前实现）：
+  - `pow` 使用顺序幂运算（可消费 pipe 作为首项）。
+  - `max/min` 与现有算子一致，支持位置参数与 pipe 输入。
+- 相关实现：
+  - `lib/slash-command/registry/handlers/operators.ts`
+  - `lib/slash-command/registry/index.ts`
+- 相关测试：
+  - `lib/slash-command/__tests__/p2-operators.test.ts`
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -100,6 +113,7 @@
 - `pnpm vitest run hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts lib/slash-command/__tests__/js-slash-runner-audio.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
+- `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts`
 
 结果：全部通过。
 
@@ -126,10 +140,10 @@
    - 回归测试：
      - `lib/slash-command/__tests__/js-slash-runner-audio.test.ts`
 
-3. **Slash 命令覆盖继续补齐**（P2 第一批已完成）
-   - 已补：`mul/div/mod/rand/split/join/replace(re)`。
-   - 下一批建议优先：`pow/max/min` 或消息/角色侧真实脚本高频缺口（按插件脚本采样决定）。
-   - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
+3. **Slash 命令覆盖继续补齐**（P2 第二批已完成）
+- 已补：`mul/div/mod/rand/split/join/replace(re)/pow/max/min`。
+- 下一批建议优先：消息/角色侧真实脚本高频缺口（按插件脚本采样决定）。
+- 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
 ### 5.2 中优先
 

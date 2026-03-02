@@ -48,6 +48,25 @@ describe("P2 utility commands", () => {
     expect(modResult.pipe).toBe("2");
   });
 
+  it("/pow /max /min 覆盖扩展数学语义", async () => {
+    const ctx = createMinimalContext();
+
+    const powParsed = parseSlashCommands("/pow 2 3");
+    const powResult = await executeSlashCommands(powParsed.commands, ctx);
+    expect(powResult.isError).toBe(false);
+    expect(powResult.pipe).toBe("8");
+
+    const maxParsed = parseSlashCommands("/echo 4|/max 9 1");
+    const maxResult = await executeSlashCommands(maxParsed.commands, ctx);
+    expect(maxResult.isError).toBe(false);
+    expect(maxResult.pipe).toBe("9");
+
+    const minParsed = parseSlashCommands("/min -2 5 3");
+    const minResult = await executeSlashCommands(minParsed.commands, ctx);
+    expect(minResult.isError).toBe(false);
+    expect(minResult.pipe).toBe("-2");
+  });
+
   it("/div 和 /mod 在除数为 0 时显式失败", async () => {
     const ctx = createMinimalContext();
 

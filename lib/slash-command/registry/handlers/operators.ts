@@ -61,6 +61,26 @@ export const handleMod: CommandHandler = async (args, _namedArgs, _ctx, pipe) =>
   return String(result);
 };
 
+/** /pow a b ... - 依次幂运算，pipe 也可作为首项 */
+export const handlePow: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  const nums = collectNumbers(args, pipe, 0);
+  const [head, ...rest] = nums;
+  const result = rest.reduce((acc, n) => Math.pow(acc, n), head);
+  return String(result);
+};
+
+/** /max a b ... - 取最大值 */
+export const handleMax: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  const nums = collectNumbers(args, pipe, 0);
+  return String(Math.max(...nums));
+};
+
+/** /min a b ... - 取最小值 */
+export const handleMin: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  const nums = collectNumbers(args, pipe, 0);
+  return String(Math.min(...nums));
+};
+
 /**
  * /rand [to] | /rand from=0 to=1 [round=round|ceil|floor]
  * - 兼容常见位置参数与命名参数写法
