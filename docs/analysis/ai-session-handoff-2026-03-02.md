@@ -168,6 +168,21 @@
 - 相关测试：
   - `lib/slash-command/__tests__/p2-variable-scope.test.ts`
 
+### 2.13 Slash 变量语义补齐（P2 第八批：addvar/addglobalvar index 路径追加）
+
+- 已补齐 `addvar/addglobalvar` 的 `index=...` 路径追加语义：
+  - 支持对象路径与数组路径（示例：`index=player.hp`、`index=player.tags`）。
+  - 路径内数值节点执行累加，路径内数组节点执行追加。
+  - 路径类型不匹配时显式报错（fail-fast），不再静默忽略。
+- 行为约定（当前实现）：
+  - `addvar/addglobalvar` 仅接受 `key/value/index/as` 命名参数，其他命名参数 fail-fast。
+  - `index` 支持 `a.b[0].c` / `a.b.0.c` 形式。
+  - 路径节点缺失时会按路径类型自动建容器（数组/对象），最终统一回写 JSON 字符串。
+- 相关实现：
+  - `lib/slash-command/registry/handlers/variables.ts`
+- 相关测试：
+  - `lib/slash-command/__tests__/p2-variable-scope.test.ts`
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -269,9 +284,10 @@
 - 本轮新增数学族：`sin/cos/log/abs/sqrt/round`。
 - 本轮新增正则匹配：`match`。
 - 本轮新增变量深度语义：`set/getglobalvar` 与 `set/getvar` 的 `index/as`。
+- 本轮新增变量追加语义：`addvar/addglobalvar` 的 `index` 路径内累加/追加。
 - 下一批建议优先（按插件脚本采样）：
-  - `addvar/addglobalvar` 的嵌套索引追加语义（数组/对象内累加）评估是否需要跟随上游
-  - 然后再推进消息/角色侧高频缺口
+  - 补齐 `audioplaypause`（JS-Slash-Runner 仍有历史命令引用）
+  - 然后推进消息/角色侧高频缺口（基于脚本样本统计，优先补调用频率高且易迁移命令）
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
 ### 5.2 中优先

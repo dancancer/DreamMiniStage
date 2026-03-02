@@ -81,6 +81,21 @@ describe("P2 scoped variable commands", () => {
     expect(local.get("tags")).toEqual(["alpha", "beta"]);
   });
 
+  it("/addvar 支持 index 路径内的数值累加与数组追加", async () => {
+    const { ctx, local } = createScopedContext();
+    local.set("stats", "{\"player\":{\"hp\":10,\"tags\":[\"alpha\"]}}");
+
+    const hpParsed = parseSlashCommands("/addvar key=stats index=player.hp 5|/getvar key=stats index=player.hp");
+    const hpResult = await executeSlashCommands(hpParsed.commands, ctx);
+    expect(hpResult.isError).toBe(false);
+    expect(hpResult.pipe).toBe("15");
+
+    const tagsParsed = parseSlashCommands("/addvar key=stats index=player.tags beta|/getvar key=stats index=player.tags");
+    const tagsResult = await executeSlashCommands(tagsParsed.commands, ctx);
+    expect(tagsResult.isError).toBe(false);
+    expect(tagsResult.pipe).toBe("[\"alpha\",\"beta\"]");
+  });
+
   it("/setglobalvar /addglobalvar /getglobalvar use scoped global store", async () => {
     const { ctx, local, global } = createScopedContext();
 
@@ -91,6 +106,18 @@ describe("P2 scoped variable commands", () => {
     expect(result.pipe).toBe("10");
     expect(local.get("coins")).toBe("100");
     expect(global.get("coins")).toBe(10);
+  });
+
+  it("/addglobalvar 支持 index 路径内数值累加", async () => {
+    const { ctx, global } = createScopedContext();
+    global.set("profile", "{\"balance\":{\"coin\":2}}");
+
+    const parsed = parseSlashCommands("/addglobalvar key=profile index=balance.coin 3|/getglobalvar key=profile index=balance.coin");
+    const result = await executeSlashCommands(parsed.commands, ctx);
+
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("5");
+    expect(global.get("profile")).toBe("{\"balance\":{\"coin\":5}}");
   });
 
   it("global increment/decrement and chat aliases keep compatibility", async () => {
@@ -188,5 +215,19 @@ describe("P2 scoped variable commands", () => {
 
     expect(result.isError).toBe(true);
     expect(result.errorMessage).toContain("does not support named argument");
+  });
+
+  it("addvar/addglobalvar 对不支持 named-args 做 fail-fast", async () => {
+    const { ctx } = createScopedContext();
+
+    const localParsed = parseSlashCommands("/addvar name=score 1");
+    const localResult = await executeSlashCommands(localParsed.commands, ctx);
+    expect(localResult.isError).toBe(true);
+    expect(localResult.errorMessage).toContain("does not support named argument");
+
+    const globalParsed = parseSlashCommands("/addglobalvar name=score 1");
+    const globalResult = await executeSlashCommands(globalParsed.commands, ctx);
+    expect(globalResult.isError).toBe(true);
+    expect(globalResult.errorMessage).toContain("does not support named argument");
   });
 });
