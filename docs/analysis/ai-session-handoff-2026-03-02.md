@@ -197,6 +197,22 @@
 - 相关测试：
   - `lib/slash-command/__tests__/js-slash-runner-audio.test.ts`
 
+### 2.15 Slash 命令覆盖补齐（P2 第十批：消息侧高频别名/列表）
+
+- 已补齐消息侧高频别名与列表命令：
+  - 别名：`setmessage/setmes`、`edit`、`del`、`narrator`、`imp`
+  - 新增：`messages/mes`（消息快照列表）
+- 行为约定（当前实现）：
+  - `messages/mes` 默认返回全量消息快照，传入索引时返回单条消息数组。
+  - `setmessage/setmes/edit/del/getmessage` 统一使用同一索引规范化逻辑，支持负索引并在越界时报错（fail-fast）。
+  - `narrator` 与 `sys` 共用处理器，`imp` 与 `impersonate` 共用处理器，避免双实现漂移。
+- 相关实现：
+  - `lib/slash-command/registry/handlers/messages.ts`
+  - `lib/slash-command/registry/index.ts`
+  - `hooks/script-bridge/capability-matrix.ts`
+- 相关测试：
+  - `lib/slash-command/__tests__/p2-message-command-aliases.test.ts`
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -214,6 +230,8 @@
   - 变量上下文拆分为 local/global，并暴露 scoped 读写接口
 - `lib/slash-command/registry/handlers/operators.ts`
   - 新增 `sin/cos/log/abs/sqrt/round/match` 命令处理器
+- `lib/slash-command/registry/handlers/messages.ts`
+  - 收敛消息索引解析，并新增 `messages/mes` 快照输出
 
 ### 3.2 测试
 
@@ -234,6 +252,8 @@
   - 覆盖 `addvar/globalvar`、chat/global alias，以及 `set/getglobalvar` + `set/getvar` 的 `index/as` 语义
 - `lib/slash-command/__tests__/p2-operators.test.ts`
   - 补充单参数数学、`/match` 与 fail-fast 异常分支回归
+- `lib/slash-command/__tests__/p2-message-command-aliases.test.ts`
+  - 覆盖消息侧别名（`setmessage/setmes/edit/del/messages/mes`）及核心别名（`narrator/imp`）
 
 ### 3.3 文档
 
@@ -265,6 +285,7 @@
 - `pnpm vitest run lib/slash-command/__tests__/p2-variable-scope.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-variable-scope.test.ts lib/slash-command/__tests__/p2-operators.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-variable-scope.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts lib/slash-command/__tests__/p2-operators.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts`
+- `pnpm vitest run lib/slash-command/__tests__/p2-message-command-aliases.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`
 
 结果：全部通过。
 
@@ -300,9 +321,15 @@
 - 本轮新增变量深度语义：`set/getglobalvar` 与 `set/getvar` 的 `index/as`。
 - 本轮新增变量追加语义：`addvar/addglobalvar` 的 `index` 路径内累加/追加。
 - 本轮新增 JS-Slash-Runner 音频别名：`audioplaypause`。
+- 本轮新增消息侧高频别名/列表：`setmessage/setmes/edit/del/messages/mes`，以及核心别名 `narrator/imp`。
+- 脚本采样（SillyTavern + JS-Slash-Runner + MagVarUpdate 文档/示例，忽略 dist 与依赖目录）中消息侧仍有频次缺口：
+  - `/messages`：9 次
+  - `/comment`：6 次
+  - `/edit`：5 次（已补齐）
+  - `/character`：2 次、`/char-find`：1 次
 - 下一批建议优先（按插件脚本采样）：
-  - 推进消息/角色侧高频缺口（基于脚本样本统计，优先补调用频率高且易迁移命令）
-  - 并行评估 MVU `parseCommandValue` 的 mathjs/YAML 差距是否进入下一批
+  - 优先补 `comment` 以及角色检索/切换最小子集（`char/character/char-find` 的可用路径）
+  - 并行评估 MVU `parseCommandValue` 的 mathjs/YAML 差距并确定是否引入外部依赖
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
 ### 5.2 中优先
@@ -337,9 +364,10 @@ pnpm vitest run \
   lib/slash-command/__tests__/p2-variable-scope.test.ts \
   lib/slash-command/__tests__/js-slash-runner-audio.test.ts \
   lib/slash-command/__tests__/p2-operators.test.ts \
+  lib/slash-command/__tests__/p2-message-command-aliases.test.ts \
   hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts \
   hooks/script-bridge/__tests__/api-surface-contract.test.ts \
   hooks/script-bridge/__tests__/variable-handlers.test.ts
 ```
 
-然后优先推进消息/角色侧高频命令缺口（按脚本采样频率排序），并并行评估 MVU `parseCommandValue` 在 mathjs/YAML 场景的语义差距；继续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。
+然后优先推进 `comment` + 角色检索/切换最小命令集（`char/character/char-find`），并并行评估 MVU `parseCommandValue` 在 mathjs/YAML 场景的语义差距；继续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。
