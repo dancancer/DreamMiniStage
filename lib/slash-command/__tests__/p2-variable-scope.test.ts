@@ -105,4 +105,46 @@ describe("P2 scoped variable commands", () => {
     const checkLocal = await executeSlashCommands(parseSlashCommands("/getchatvar tone").commands, ctx);
     expect(checkLocal.pipe).toBe("calm");
   });
+
+  it("set/getglobalvar 支持 index 与 as 语义（对象/数组写入）", async () => {
+    const { ctx, global } = createScopedContext();
+
+    const objectParsed = parseSlashCommands("/setglobalvar key=profile index=name as=string Linus|/getglobalvar key=profile index=name");
+    const objectResult = await executeSlashCommands(objectParsed.commands, ctx);
+    expect(objectResult.isError).toBe(false);
+    expect(objectResult.pipe).toBe("Linus");
+    expect(global.get("profile")).toBe("{\"name\":\"Linus\"}");
+
+    const arrayParsed = parseSlashCommands("/setglobalvar key=ages index=1 as=number 21|/getglobalvar key=ages index=1");
+    const arrayResult = await executeSlashCommands(arrayParsed.commands, ctx);
+    expect(arrayResult.isError).toBe(false);
+    expect(arrayResult.pipe).toBe("21");
+    expect(global.get("ages")).toBe("[null,21]");
+  });
+
+  it("getglobalvar index 读取对象时返回 JSON 文本", async () => {
+    const { ctx, global } = createScopedContext();
+    global.set("stats", "{\"meta\":{\"hp\":88}}");
+
+    const parsed = parseSlashCommands("/getglobalvar key=stats index=meta");
+    const result = await executeSlashCommands(parsed.commands, ctx);
+
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("{\"hp\":88}");
+  });
+
+  it("set/getglobalvar index 在容器类型不匹配时显式失败", async () => {
+    const { ctx, global } = createScopedContext();
+    global.set("profile", "{\"name\":\"Linus\"}");
+
+    const setParsed = parseSlashCommands("/setglobalvar key=profile index=0 as=number 1");
+    const setResult = await executeSlashCommands(setParsed.commands, ctx);
+    expect(setResult.isError).toBe(true);
+    expect(setResult.errorMessage).toContain("JSON array");
+
+    const getParsed = parseSlashCommands("/getglobalvar key=profile index=0");
+    const getResult = await executeSlashCommands(getParsed.commands, ctx);
+    expect(getResult.isError).toBe(true);
+    expect(getResult.errorMessage).toContain("JSON array");
+  });
 });

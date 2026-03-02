@@ -92,6 +92,12 @@ export const handleSetGlobalVar: CommandHandler = async (args, namedArgs, ctx, p
   const value = resolveVariableValue(args, namedArgs, pipe);
   if (value === undefined) return pipe;
 
+  const index = resolveVariableIndex(namedArgs);
+  if (index !== undefined) {
+    setIndexedScopedVariable(ctx, "global", key, index, value, namedArgs.as);
+    return String(value);
+  }
+
   scopedSet(ctx, "global", key, value);
   return String(value);
 };
@@ -101,8 +107,11 @@ export const handleGetGlobalVar: CommandHandler = async (args, namedArgs, ctx, p
   const key = resolveVariableKey(args, namedArgs);
   if (!key) return pipe;
 
-  const value = scopedGet(ctx, "global", key);
-  return value !== undefined ? String(value) : "";
+  const index = resolveVariableIndex(namedArgs);
+  const value = index === undefined
+    ? scopedGet(ctx, "global", key)
+    : getIndexedScopedVariable(ctx, "global", key, index);
+  return normalizeReadValue(value);
 };
 
 /** /flushglobalvar key - 删除全局变量 */
@@ -235,6 +244,216 @@ function resolveVariableValue(
   }
 
   return pipe || undefined;
+}
+
+function resolveVariableIndex(namedArgs: Record<string, string>): string | undefined {
+  return namedArgs.index;
+}
+
+function setIndexedScopedVariable(
+  ctx: ExecutionContext,
+  scope: VariableScope,
+  key: string,
+  index: string,
+  rawValue: string,
+  typeHint: string | undefined,
+): void {
+  const base = parseIndexedContainer(scopedGet(ctx, scope, key), key);
+  const typedValue = convertIndexedValue(rawValue, typeHint);
+  const next = setByIndex(base, index, typedValue, key);
+  scopedSet(ctx, scope, key, JSON.stringify(next));
+}
+
+function getIndexedScopedVariable(
+  ctx: ExecutionContext,
+  scope: VariableScope,
+  key: string,
+  index: string,
+): unknown {
+  const current = scopedGet(ctx, scope, key);
+  if (current === undefined) {
+    return undefined;
+  }
+
+  const base = parseIndexedContainer(current, key);
+  if (base === null) {
+    return undefined;
+  }
+  return getByIndex(base, index, key);
+}
+
+type JsonRecord = Record<string, unknown>;
+type JsonContainer = JsonRecord | unknown[] | null;
+
+function parseIndexedContainer(current: unknown, key: string): JsonContainer {
+  if (current === undefined || current === null || current === "") {
+    return null;
+  }
+
+  if (Array.isArray(current)) {
+    return [...current];
+  }
+
+  if (isJsonRecord(current)) {
+    return { ...current };
+  }
+
+  if (typeof current !== "string") {
+    throw new Error(`Global variable '${key}' must be JSON object or array when using index`);
+  }
+
+  try {
+    const parsed = JSON.parse(current);
+    if (parsed === null) {
+      return null;
+    }
+    if (Array.isArray(parsed)) {
+      return [...parsed];
+    }
+    if (isJsonRecord(parsed)) {
+      return { ...parsed };
+    }
+  } catch {
+    throw new Error(`Global variable '${key}' is not valid JSON for index access`);
+  }
+
+  throw new Error(`Global variable '${key}' must be JSON object or array when using index`);
+}
+
+function setByIndex(
+  container: JsonContainer,
+  index: string,
+  value: unknown,
+  key: string,
+): JsonRecord | unknown[] {
+  const numberIndex = Number(index);
+  if (!Number.isNaN(numberIndex)) {
+    if (container === null) {
+      const created: unknown[] = [];
+      created[numberIndex] = value;
+      return created;
+    }
+    if (!Array.isArray(container)) {
+      throw new Error(`Global variable '${key}' must be JSON array for numeric index '${index}'`);
+    }
+    const next = [...container];
+    next[numberIndex] = value;
+    return next;
+  }
+
+  if (container === null) {
+    return { [index]: value };
+  }
+  if (!isJsonRecord(container)) {
+    throw new Error(`Global variable '${key}' must be JSON object for key index '${index}'`);
+  }
+
+  return {
+    ...container,
+    [index]: value,
+  };
+}
+
+function getByIndex(container: JsonContainer, index: string, key: string): unknown {
+  const numberIndex = Number(index);
+  if (!Number.isNaN(numberIndex)) {
+    if (!Array.isArray(container)) {
+      throw new Error(`Global variable '${key}' must be JSON array for numeric index '${index}'`);
+    }
+    return container[numberIndex];
+  }
+
+  if (!isJsonRecord(container)) {
+    throw new Error(`Global variable '${key}' must be JSON object for key index '${index}'`);
+  }
+  return container[index];
+}
+
+function isJsonRecord(value: unknown): value is JsonRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function convertIndexedValue(value: string, typeHint: string | undefined): unknown {
+  if (typeof typeHint !== "string") {
+    return value;
+  }
+
+  switch (typeHint.trim().toLowerCase()) {
+  case "string":
+  case "str":
+    return String(value);
+  case "null":
+    return null;
+  case "undefined":
+  case "none":
+    return undefined;
+  case "number":
+    return Number(value);
+  case "int":
+    return Number.parseInt(value, 10);
+  case "float":
+    return Number.parseFloat(value);
+  case "boolean":
+  case "bool":
+    return parseTrueBoolean(value);
+  case "list":
+  case "array":
+    return parseAsArray(value);
+  case "object":
+  case "dict":
+  case "dictionary":
+    return parseAsObject(value);
+  default:
+    return value;
+  }
+}
+
+function parseTrueBoolean(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  return normalized === "on" || normalized === "true" || normalized === "1";
+}
+
+function parseAsArray(value: string): unknown[] {
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function parseAsObject(value: string): unknown {
+  try {
+    const parsed = JSON.parse(value);
+    return typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function normalizeReadValue(value: unknown): string {
+  if (value === undefined || value === null) {
+    return "";
+  }
+
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  if (typeof value !== "string") {
+    return String(value);
+  }
+
+  if (value.trim() === "") {
+    return "";
+  }
+
+  const numberValue = Number(value);
+  if (Number.isNaN(numberValue)) {
+    return value;
+  }
+
+  return String(numberValue);
 }
 
 function scopedGet(ctx: ExecutionContext, scope: VariableScope, key: string): unknown {
