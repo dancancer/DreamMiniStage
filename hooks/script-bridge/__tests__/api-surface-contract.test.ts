@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { hasCommand } from "@/lib/slash-command/registry";
 
 import { variableHandlers } from "../variable-handlers";
 import { worldbookHandlers } from "../worldbook-handlers";
@@ -16,6 +17,10 @@ import { quickReplyHandlers } from "../quickreply-handlers";
 import { characterHandlers } from "../character-handlers";
 import { audioHandlers } from "../audio-handlers";
 import { toolHandlers } from "../tool-handlers";
+import {
+  SCRIPT_BRIDGE_API_MATRIX,
+  SLASH_COMMAND_MATRIX,
+} from "../capability-matrix";
 
 const SHIM_PATH = path.resolve(process.cwd(), "public/iframe-libs/slash-runner-shim.js");
 
@@ -65,5 +70,22 @@ describe("script bridge api surface", () => {
     const missingHandlers = shimMethods.filter((method) => !handlerMethods.has(method));
 
     expect(missingHandlers).toEqual([]);
+  });
+
+  it("keeps capability matrix aligned with shim and handlers", () => {
+    const source = readFileSync(SHIM_PATH, "utf8");
+    const shimMethods = new Set(getShimApiMethods(source));
+    const handlerMethods = getRegisteredHandlerMethods();
+
+    const missingFromShim = SCRIPT_BRIDGE_API_MATRIX.filter((method) => !shimMethods.has(method));
+    const missingFromHandlers = SCRIPT_BRIDGE_API_MATRIX.filter((method) => !handlerMethods.has(method));
+
+    expect(missingFromShim).toEqual([]);
+    expect(missingFromHandlers).toEqual([]);
+  });
+
+  it("keeps slash command matrix aligned with registry", () => {
+    const missingCommands = SLASH_COMMAND_MATRIX.filter((command) => !hasCommand(command));
+    expect(missingCommands).toEqual([]);
   });
 });

@@ -98,6 +98,8 @@
 - `public/iframe-libs/slash-runner-shim.js`
   - 删除顶层 alias
   - 群聊 API 改为 fail-fast
+- `hooks/script-bridge/capability-matrix.ts`
+  - 新增脚本桥接能力矩阵单源（shim API + slash command）
 
 ### 3.2 测试
 
@@ -110,6 +112,10 @@
   - JS-Slash-Runner/MagVarUpdate 最小链路回归
 - `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`
   - 覆盖 `registerFunctionTool/registerSlashCommand` 的注册、调用、清理、再注册链路
+- `hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts`
+  - 覆盖 MVU `{ type, message_id }` 参数语义与会话键优先级
+- `hooks/script-bridge/__tests__/api-surface-contract.test.ts`
+  - 通过 `capability-matrix.ts` 同步校验 shim/handler/slash 三侧能力面一致性
 
 ### 3.3 文档
 
@@ -132,6 +138,7 @@
 - `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts`
 - `pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
 - `pnpm vitest run hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts`
+- `pnpm vitest run hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts`
 
 结果：全部通过。
 
@@ -170,8 +177,9 @@
    - 已覆盖：注册 -> 调用 -> iframe 清理 -> 再注册。
    - 相关测试：`hooks/script-bridge/__tests__/extension-lifecycle.test.ts`
 
-5. 能力清单单源化：
-   - 将 shim 暴露面、script-bridge handlers、slash registry 能力形成单一“能力矩阵”文件（生成或校验）。
+5. 能力清单单源化：✅ 已完成首版
+   - 新增 `hooks/script-bridge/capability-matrix.ts` 作为单源声明。
+   - `api-surface-contract.test.ts` 已校验 shim 暴露面、script-bridge handlers、slash registry 三侧一致性。
 
 ---
 

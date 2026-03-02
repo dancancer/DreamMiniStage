@@ -11,6 +11,7 @@
 | `index.ts` | 模块入口 | 导出桥接功能 |
 | `types.ts` | 类型定义 | 桥接类型定义 |
 | `audio-handlers.ts` | 处理器 | 音频事件处理 |
+| `capability-matrix.ts` | 能力矩阵 | shim/handler/slash 单一能力声明 |
 | `character-handlers.ts` | 处理器 | 角色事件处理 |
 | `event-handlers.ts` | 处理器 | 通用事件处理 |
 | `extension-handlers.ts` | 处理器 | 扩展事件处理 |
@@ -33,5 +34,6 @@
 - `public/iframe-libs/slash-runner-shim.js` 不再导出 `window.getVariables`/`window.triggerSlash` 等顶层别名；脚本统一通过 `window.TavernHelper` / `window.SillyTavern` 访问 API。
 - `variable-handlers.ts` 的集合操作默认作用域为 `chat`，并支持上游常用参数形态 `{ type, message_id }`（含 `latest` 与负索引）。
 - `mvu-handlers.ts` 的 `mvu.getVariable/mvu.getVariables` 已支持 `{ type, message_id }` 与 `messageId`，并统一 `chatId > dialogueId > characterId` 的会话键优先级。
+- `capability-matrix.ts` 已作为能力单源，`api-surface-contract.test.ts` 会同步校验 shim 暴露面、handler 注册面与 slash 注册面。
 - 群聊相关 `getGroupMembers` / `isGroupChat` 目前为显式未支持（fail-fast），不再返回静默默认值。
 - 新增 `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`，覆盖 `registerFunctionTool/registerSlashCommand` 的注册→调用→清理→再注册回归链路。

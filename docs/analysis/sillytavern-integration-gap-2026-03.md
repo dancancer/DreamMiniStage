@@ -123,6 +123,7 @@
 
 1. 建立兼容性快照测试（目标版本变化可追踪）。
 2. 合并 shim API、script-bridge handler、slash registry 的能力声明为单一来源。
+   - 当前已落地首版：`hooks/script-bridge/capability-matrix.ts` + `api-surface-contract.test.ts` 契约校验。
 3. 清理重复入口（尤其 audio/event/variables）以降低回归面。
 
 ## 5. 验收指标建议
