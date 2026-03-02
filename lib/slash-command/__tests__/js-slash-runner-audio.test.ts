@@ -152,4 +152,20 @@ describe("JS-Slash-Runner audio semantics", () => {
     await executeSlashCommandScript("/audioplay type=bgm", ctx);
     expect(channels.bgm.isPlaying).toBe(true);
   });
+
+  it("keeps legacy /audioplaypause semantics aligned with /audioplay", async () => {
+    const { ctx, channels } = createAudioContext();
+
+    await executeSlashCommandScript(
+      "/audioimport type=bgm https://a.example/main.mp3",
+      ctx,
+    );
+    expect(channels.bgm.isPlaying).toBe(true);
+
+    await executeSlashCommandScript("/audioplaypause type=bgm play=false", ctx);
+    expect(channels.bgm.isPlaying).toBe(false);
+
+    await executeSlashCommandScript("/audioplaypause type=bgm", ctx);
+    expect(channels.bgm.isPlaying).toBe(true);
+  });
 });

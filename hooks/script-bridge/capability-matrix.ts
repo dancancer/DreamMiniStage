@@ -194,6 +194,7 @@ export const SLASH_COMMAND_MATRIX = [
   "eventemit",
   "audioenable",
   "audioplay",
+  "audioplaypause",
   "audioimport",
   "audioselect",
   "audiomode",

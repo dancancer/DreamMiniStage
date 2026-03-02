@@ -183,6 +183,20 @@
 - 相关测试：
   - `lib/slash-command/__tests__/p2-variable-scope.test.ts`
 
+### 2.14 JS-Slash-Runner 命令补齐（P2 第九批：audioplaypause 别名）
+
+- 已补齐历史别名命令：
+  - `audioplaypause`（与 `audioplay` 共享参数语义）
+- 行为约定（当前实现）：
+  - `type=bgm|ambient` 通道解析与 `audioplay` 保持一致。
+  - `play=true|false` 语义保持一致；未指定时默认播放。
+- 相关实现：
+  - `lib/slash-command/registry/handlers/js-slash-runner.ts`
+  - `lib/slash-command/registry/index.ts`
+  - `hooks/script-bridge/capability-matrix.ts`
+- 相关测试：
+  - `lib/slash-command/__tests__/js-slash-runner-audio.test.ts`
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -285,9 +299,10 @@
 - 本轮新增正则匹配：`match`。
 - 本轮新增变量深度语义：`set/getglobalvar` 与 `set/getvar` 的 `index/as`。
 - 本轮新增变量追加语义：`addvar/addglobalvar` 的 `index` 路径内累加/追加。
+- 本轮新增 JS-Slash-Runner 音频别名：`audioplaypause`。
 - 下一批建议优先（按插件脚本采样）：
-  - 补齐 `audioplaypause`（JS-Slash-Runner 仍有历史命令引用）
-  - 然后推进消息/角色侧高频缺口（基于脚本样本统计，优先补调用频率高且易迁移命令）
+  - 推进消息/角色侧高频缺口（基于脚本样本统计，优先补调用频率高且易迁移命令）
+  - 并行评估 MVU `parseCommandValue` 的 mathjs/YAML 差距是否进入下一批
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
 ### 5.2 中优先

@@ -282,6 +282,13 @@ export const handleAudioPlay: CommandHandler = async (args, namedArgs, ctx, pipe
 };
 
 /**
+ * /audioplaypause 与 /audioplay 共享语义（历史命令别名）
+ */
+export const handleAudioPlayPause: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  return handleAudioPlay(args, namedArgs, ctx, pipe);
+};
+
+/**
  * /audioimport type=bgm|ambient [play=true|false] <url[,url2,...]>
  */
 export const handleAudioImport: CommandHandler = async (args, namedArgs, ctx, pipe) => {

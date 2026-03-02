@@ -131,6 +131,7 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["eventemit", JSSlashRunnerHandlers.handleEventEmit],
   ["audioenable", JSSlashRunnerHandlers.handleAudioEnable],
   ["audioplay", JSSlashRunnerHandlers.handleAudioPlay],
+  ["audioplaypause", JSSlashRunnerHandlers.handleAudioPlayPause],
   ["audioimport", JSSlashRunnerHandlers.handleAudioImport],
   ["audioselect", JSSlashRunnerHandlers.handleAudioSelect],
   ["audiomode", JSSlashRunnerHandlers.handleAudioMode],
