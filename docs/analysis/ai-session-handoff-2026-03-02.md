@@ -288,6 +288,9 @@
   - 新增字符串字面量剥离后再做标识符校验，避免把日期字符串中的 `T/Z` 误判成符号。
 - 当前仍保留单路径约束（fail-fast）：
   - `matrix(...)` 暂不支持，保持原样字符串返回（不做隐式降级转换）。
+- 已完成二阶段前置采样（SillyTavern + JS-Slash-Runner + MagVarUpdate 源码/文档，忽略 dist 与依赖目录）：
+  - `math.matrix(...)` 仅发现 1 处引用，位于 `MagVarUpdate/doc/supplementary-tutorial.md` 示例片段。
+  - 结论：现阶段继续 **不引入 `mathjs`**，维持 `matrix` 原样字符串 + fail-fast 单路径。
 - 相关实现：
   - `lib/mvu/core/parser.ts`
 - 相关测试：
@@ -377,9 +380,9 @@
 - `app/session/__tests__/session-switch.test.ts`
   - 覆盖切换会话命名策略（带来源角色/同角色回退）
 - `lib/mvu/__tests__/parser.test.ts`
-  - 新增扩展 math 语义（`Math/math` 别名 + `complex/date/now`）与 YAML 解析回归
+  - 新增扩展 math 语义（`Math/math` 别名 + `complex/date/now`）与 YAML 解析回归，并锁定 `math.matrix(...)` 原样字符串语义
 - `lib/core/__tests__/st-baseline-mvu.test.ts`
-  - 新增基线回归：扩展 math 别名、`complex/date` 与 YAML 片段解析
+  - 新增基线回归：扩展 math 别名、`complex/date` 与 YAML 片段解析，并覆盖 `math.matrix(...)` 不隐式求值
 - `components/__tests__/ScriptSandbox.lifecycle.test.tsx`
   - 覆盖 `character:switch_*` 在 iframe 销毁/重建过程中的监听器清理与重建回归
 
@@ -469,8 +472,8 @@
 - 角色切换跨 iframe 生命周期回归已补齐：
   - 已覆盖 `character:switch_*` 监听器在 iframe 销毁/重建场景的清理与重建，不再残留旧监听器。
 - 下一批建议优先（按插件脚本采样）：
-  - 评估 `parseCommandValue` 的 `matrix` 场景是否需要二阶段引入 `mathjs`（complex/date 已在一阶段补齐）。
-  - 若确认 `matrix` 仍是高频需求，再决定是否引入 `mathjs`；否则保持 fail-fast + 原样字符串单路径。
+  - `matrix` 二阶段评估已完成：当前低频（仅 1 处示例引用），暂不引入 `mathjs`，继续保持单路径。
+  - 建议下一步审计 `registerFunctionTool/registerSlashCommand` 在真实 `ScriptSandbox` 卸载路径的自动清理一致性，防止跨 iframe 残留。
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
 ### 5.2 中优先
@@ -516,4 +519,4 @@ pnpm vitest run \
   lib/core/__tests__/st-baseline-mvu.test.ts
 ```
 
-然后优先评估 `parseCommandValue` 的 `matrix` 重表达式场景是否需要二阶段引入 `mathjs`（先做插件脚本频率与表达式复杂度采样，再决定依赖策略）；持续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。
+然后优先审计 `registerFunctionTool/registerSlashCommand` 在 `ScriptSandbox` 销毁/重建路径中的自动清理一致性（必要时补组件级回收与回归测试）；并持续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。

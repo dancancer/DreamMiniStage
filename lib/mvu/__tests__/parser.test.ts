@@ -55,6 +55,9 @@ describe("parseCommandValue", () => {
     expect(parseCommandValue("hp + bonus")).toBe("hp + bonus");
     expect(parseCommandValue("'10 + 2'")).toBe("10 + 2");
     expect(parseCommandValue("matrix(1,2,3)")).toBe("matrix(1,2,3)");
+
+    const matrixExpr = "math.matrix([[1, 2], [3, 4]]).multiply(math.matrix([[5], [6]]))";
+    expect(parseCommandValue(matrixExpr)).toBe(matrixExpr);
   });
 
   it("解析 YAML 片段", () => {

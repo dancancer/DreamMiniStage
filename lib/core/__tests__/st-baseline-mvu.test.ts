@@ -536,6 +536,9 @@ describe("MVU 变量管理系统基线测试", () => {
 
     it("未支持的 matrix 表达式应保持原样字符串", () => {
       expect(parseCommandValue("matrix(1,2,3)")).toBe("matrix(1,2,3)");
+
+      const matrixExpr = "math.matrix([[1, 2], [3, 4]]).multiply(math.matrix([[5], [6]]))";
+      expect(parseCommandValue(matrixExpr)).toBe(matrixExpr);
     });
 
     it("应解析 JavaScript 对象字面量", () => {
