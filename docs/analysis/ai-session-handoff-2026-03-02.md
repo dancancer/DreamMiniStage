@@ -335,10 +335,11 @@
 ```bash
 pnpm vitest run \
   lib/slash-command/__tests__/p2-variable-scope.test.ts \
+  lib/slash-command/__tests__/js-slash-runner-audio.test.ts \
   lib/slash-command/__tests__/p2-operators.test.ts \
   hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts \
   hooks/script-bridge/__tests__/api-surface-contract.test.ts \
   hooks/script-bridge/__tests__/variable-handlers.test.ts
 ```
 
-然后优先评估并实现 `addvar/addglobalvar` 的嵌套索引追加语义（若插件脚本采样确认高频），并继续排查变量/脚本桥接链路中残留的“兼容旧路径”分支，发现即删并补 fail-fast 测试。
+然后优先推进消息/角色侧高频命令缺口（按脚本采样频率排序），并并行评估 MVU `parseCommandValue` 在 mathjs/YAML 场景的语义差距；继续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。
