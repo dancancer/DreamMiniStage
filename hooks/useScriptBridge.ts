@@ -46,6 +46,7 @@ interface UseScriptBridgeOptions {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
+  onSwitchCharacter?: (target: string) => void | Promise<void>;
 }
 
 interface UseScriptBridgeReturn {
@@ -74,6 +75,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onImpersonate,
     onContinue,
     onSwipe,
+    onSwitchCharacter,
   } = options;
   const [scriptStatuses, setScriptStatuses] = useState<ScriptStatus[]>([]);
 
@@ -126,6 +128,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onImpersonate,
           onContinue,
           onSwipe,
+          onSwitchCharacter,
         });
         console.log("[useScriptBridge] API_CALL 返回:", method, "result:", result);
         return result;
@@ -168,6 +171,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onImpersonate,
       onContinue,
       onSwipe,
+      onSwitchCharacter,
     ],
   );
 

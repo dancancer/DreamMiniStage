@@ -33,6 +33,7 @@ import { useCharacterLoader } from "@/hooks/useCharacterLoader";
 import { useUIStore } from "@/lib/store/ui-store";
 import { useUserStore } from "@/lib/store/user-store";
 import { useSessionStore } from "@/lib/store/session-store";
+import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import DialogueTreeModal from "@/components/DialogueTreeModal";
 
 // ============================================================================
@@ -48,6 +49,7 @@ function SessionPageContent() {
   // ========== Session Store - 获取 characterId ==========
   const getSessionById = useSessionStore((state) => state.getSessionById);
   const fetchAllSessions = useSessionStore((state) => state.fetchAllSessions);
+  const createSession = useSessionStore((state) => state.createSession);
   const sessions = useSessionStore((state) => state.sessions);
   const [characterId, setCharacterId] = useState<string | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
@@ -185,6 +187,51 @@ function SessionPageContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayUsername, sessionId]);
+
+  const resolveCharacterSwitchTarget = useCallback(async (target: string): Promise<string> => {
+    const normalized = target.trim();
+    if (!normalized) {
+      throw new Error("Character target is required");
+    }
+
+    const records = await LocalCharacterRecordOperations.getAllCharacters();
+    const exactId = records.find((record) => record.id === normalized);
+    if (exactId) {
+      return exactId.id;
+    }
+
+    const lower = normalized.toLowerCase();
+    const exactNameMatches = records.filter((record) =>
+      (record.data?.name ?? "").trim().toLowerCase() === lower,
+    );
+    if (exactNameMatches.length === 1) {
+      return exactNameMatches[0].id;
+    }
+    if (exactNameMatches.length > 1) {
+      throw new Error(`Character name is ambiguous: ${normalized}`);
+    }
+
+    const fuzzyMatches = records.filter((record) =>
+      (record.data?.name ?? "").toLowerCase().includes(lower),
+    );
+    if (fuzzyMatches.length === 1) {
+      return fuzzyMatches[0].id;
+    }
+    if (fuzzyMatches.length > 1) {
+      throw new Error(`Character target is ambiguous: ${normalized}`);
+    }
+
+    throw new Error(`Character not found: ${normalized}`);
+  }, []);
+
+  const handleSwitchCharacter = useCallback(async (target: string) => {
+    const nextCharacterId = await resolveCharacterSwitchTarget(target);
+    const nextSessionId = await createSession(nextCharacterId);
+    if (!nextSessionId) {
+      throw new Error(`Failed to create session for character: ${nextCharacterId}`);
+    }
+    router.push(`/session?id=${encodeURIComponent(nextSessionId)}`);
+  }, [createSession, resolveCharacterSwitchTarget, router]);
 
   // ========== 提交消息 ==========
   const handleSubmit = useCallback(
@@ -333,6 +380,7 @@ function SessionPageContent() {
             onImpersonate={(text) => dialogue.addRoleMessage("assistant", text)}
             onContinue={dialogue.triggerGeneration}
             onSwipe={dialogue.handleSwipe}
+            onSwitchCharacter={handleSwitchCharacter}
             onExportJsonl={dialogue.exportJsonl}
             onImportJsonl={dialogue.importJsonl}
           />

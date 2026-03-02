@@ -233,6 +233,15 @@
 - 相关测试：
   - `lib/slash-command/__tests__/p2-character-command-gaps.test.ts`
 
+### 2.17 角色切换链路打通（宿主注入 switchCharacter）
+
+- 已打通 `/char` / `/character` 的宿主切换执行链路：
+  - `SessionPage` 注入 `onSwitchCharacter` 回调，按 `id > name(精确) > name(模糊)` 解析目标角色。
+  - 切换路径统一创建新会话并 `router.push(/session?id=...)`，失败显式报错（fail-fast）。
+- Script Bridge 上下文已完整透传切换回调：
+  - `CharacterChatPanel -> useScriptBridge -> ApiCallContext(onSwitchCharacter) -> slashHandlers`.
+- 补齐桥接层回归，防止后续回调链路断裂。
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -256,6 +265,12 @@
   - 新增 `char/character/char-find/findchar` 最小角色命令集
 - `hooks/script-bridge/slash-handlers.ts`
   - 补齐角色摘要查询适配（当前角色 + 全量角色列表）
+- `app/session/page.tsx`
+  - 新增角色切换目标解析与会话跳转回调（`onSwitchCharacter`）
+- `components/CharacterChatPanel.tsx`
+  - 向脚本桥接注入 `onSwitchCharacter`
+- `hooks/useScriptBridge.ts`
+  - 扩展 `UseScriptBridgeOptions`，透传 `onSwitchCharacter`
 
 ### 3.2 测试
 
@@ -280,6 +295,10 @@
   - 覆盖消息侧别名（`setmessage/setmes/edit/del/messages/mes`）及核心别名（`narrator/imp`）
 - `lib/slash-command/__tests__/p2-character-command-gaps.test.ts`
   - 覆盖 `comment`、`char/character`、`char-find/findchar` 与切换缺失回调 fail-fast 分支
+- `hooks/script-bridge/__tests__/slash-handlers.integration.test.ts`
+  - 新增 `/character` -> `onSwitchCharacter` 回调链路回归，并更新 `setvar/getvar` 用例到 `key/value` 单路径语义
+- `hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
+  - 新增最小链路回归：`triggerSlash("/character ...")` 可触达宿主切换回调
 
 ### 3.3 文档
 
@@ -313,6 +332,7 @@
 - `pnpm vitest run lib/slash-command/__tests__/p2-variable-scope.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts lib/slash-command/__tests__/p2-operators.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-message-command-aliases.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-character-command-gaps.test.ts lib/slash-command/__tests__/p2-message-command-aliases.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`
+- `pnpm vitest run hooks/script-bridge/__tests__/slash-handlers.integration.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts lib/slash-command/__tests__/p2-character-command-gaps.test.ts`
 
 结果：全部通过。
 
@@ -356,8 +376,8 @@
   - `/edit`：5 次（已补齐）
   - `/character`：2 次（已补最小路径）、`/char-find`：1 次（已补）
 - 下一批建议优先（按插件脚本采样）：
-  - 打通 `char/character` 真正切换路径（宿主注入 `switchCharacter` 回调并补集成回归）
   - 并行评估 MVU `parseCommandValue` 的 mathjs/YAML 差距并确定是否引入外部依赖
+  - 继续补齐 `char/character` 切换后的端到端体验（例如：切换后会话命名策略、脚本侧可观测事件）
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
 ### 5.2 中优先
@@ -399,4 +419,4 @@ pnpm vitest run \
   hooks/script-bridge/__tests__/variable-handlers.test.ts
 ```
 
-然后优先打通 `char/character` 的宿主切换回调链路（当前仅查询路径可用），并并行评估 MVU `parseCommandValue` 在 mathjs/YAML 场景的语义差距；继续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。
+然后优先评估并收敛 MVU `parseCommandValue` 在 mathjs/YAML 场景的语义差距（明确是否引入外部依赖）；并继续补齐 `char/character` 切换后的端到端体验回归（会话跳转、事件可观测性）；持续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。

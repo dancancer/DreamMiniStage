@@ -80,4 +80,14 @@ describe("plugin minimal regression", () => {
     const currentMessageId = await handleApiCall("getCurrentMessageId", [], ctx);
     expect(currentMessageId).toBe("a1");
   });
+
+  it("keeps /character switch callback path runnable", async () => {
+    const onSwitchCharacter = vi.fn().mockResolvedValue(undefined);
+    const ctx = createMockContext({ onSwitchCharacter });
+
+    const result = await handleApiCall("triggerSlash", ["/character Bob"], ctx);
+
+    expect(result).toMatchObject({ isError: false, pipe: "Bob" });
+    expect(onSwitchCharacter).toHaveBeenCalledWith("Bob");
+  });
 });

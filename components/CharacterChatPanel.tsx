@@ -81,6 +81,7 @@ interface Props {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
+  onSwitchCharacter?: (target: string) => void | Promise<void>;
   onExportJsonl?: () => void | Promise<void>;
   onImportJsonl?: (file: File) => void | Promise<void>;
 }
@@ -118,6 +119,7 @@ export default function CharacterChatPanel({
   onImpersonate,
   onContinue,
   onSwipe,
+  onSwitchCharacter,
   onExportJsonl,
   onImportJsonl,
 }: Props) {
@@ -172,6 +174,7 @@ export default function CharacterChatPanel({
     onImpersonate: handleImpersonate,
     onContinue: handleContinue,
     onSwipe: handleSwipe,
+    onSwitchCharacter,
   });
 
   // ═══════════════════════════════════════════════════════════════

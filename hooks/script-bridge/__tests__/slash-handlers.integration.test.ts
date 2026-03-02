@@ -30,6 +30,7 @@ function createMockContext(overrides: Partial<{
   onImpersonate: (text: string) => void | Promise<void>;
   onContinue: () => void | Promise<void>;
   onSwipe: (target?: string) => void | Promise<void>;
+  onSwitchCharacter: (target: string) => void | Promise<void>;
 }>= {}): ApiCallContext {
   const globalVars: Record<string, unknown> = overrides.globalVars ?? {};
   const characterVars: Record<string, Record<string, unknown>> = overrides.characterVars ?? {};
@@ -45,6 +46,7 @@ function createMockContext(overrides: Partial<{
     onImpersonate: overrides.onImpersonate,
     onContinue: overrides.onContinue,
     onSwipe: overrides.onSwipe,
+    onSwitchCharacter: overrides.onSwitchCharacter,
     setScriptVariable: vi.fn((key, value, scope, id) => {
       if (scope === "global") {
         globalVars[key] = value;
@@ -243,7 +245,7 @@ describe("triggerSlash Integration Tests", () => {
       const ctx = createMockContext();
 
       const result = await slashHandlers.triggerSlash(
-        ["/setvar mykey=myvalue|/getvar mykey"],
+        ["/setvar key=mykey value=myvalue|/getvar key=mykey"],
         ctx
       );
 
@@ -369,6 +371,21 @@ describe("triggerSlash Integration Tests", () => {
 
       expect(result.isError).toBe(false);
       expect(swipes).toEqual(["2"]);
+    });
+
+    it("routes /character to onSwitchCharacter", async () => {
+      const switched: string[] = [];
+      const ctx = createMockContext({
+        onSwitchCharacter: (target) => { switched.push(target); },
+      });
+
+      const result = await slashHandlers.triggerSlash(
+        ["/character Bob"],
+        ctx,
+      );
+
+      expect(result.isError).toBe(false);
+      expect(switched).toEqual(["Bob"]);
     });
   });
 });
