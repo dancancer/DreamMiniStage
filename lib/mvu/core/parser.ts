@@ -48,6 +48,22 @@ const MATH_ALIAS = Object.freeze({
   sqrt: Math.sqrt,
   tan: Math.tan,
   trunc: Math.trunc,
+  // 复杂数：在不引入 mathjs 的前提下，返回稳定字符串表示
+  complex: (real: number, imaginary: number): string => {
+    const normalizedReal = Number.parseFloat(real.toPrecision(12));
+    const normalizedImaginary = Number.parseFloat(imaginary.toPrecision(12));
+    const sign = normalizedImaginary >= 0 ? "+" : "-";
+    return `${normalizedReal}${sign}${Math.abs(normalizedImaginary)}i`;
+  },
+  // 日期工具：返回毫秒时间戳，便于与 add/set 路径直接联动
+  now: (): number => Date.now(),
+  date: (value?: string | number): number => {
+    const timestamp = value === undefined ? Date.now() : new Date(value).getTime();
+    if (!Number.isFinite(timestamp)) {
+      throw new Error("Invalid date input");
+    }
+    return timestamp;
+  },
   PI: Math.PI,
   E: Math.E,
   pi: Math.PI,
@@ -64,14 +80,15 @@ const MATH_SCOPE_KEYS = Object.keys(MATH_SCOPE);
 const MATH_SCOPE_VALUES = MATH_SCOPE_KEYS.map((key) => MATH_SCOPE[key]);
 const MATH_IDENTIFIER_WHITELIST = new Set(MATH_SCOPE_KEYS);
 
-function evaluateMathExpression(expression: string): number | undefined {
+function evaluateMathExpression(expression: string): number | string | undefined {
   const source = expression.trim();
   if (!source) return undefined;
-  if (!/^[A-Za-z0-9_+\-*/%().,\s]+$/.test(source)) {
+  if (!/^[A-Za-z0-9_+\-*/%().,\s:'"]+$/.test(source)) {
     return undefined;
   }
 
-  const identifiers = source.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? [];
+  const sourceWithoutLiterals = source.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, " ");
+  const identifiers = sourceWithoutLiterals.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? [];
   for (const identifier of identifiers) {
     if (!MATH_IDENTIFIER_WHITELIST.has(identifier)) {
       return undefined;
@@ -81,10 +98,16 @@ function evaluateMathExpression(expression: string): number | undefined {
   try {
     const evaluator = new Function(...MATH_SCOPE_KEYS, `"use strict"; return (${source});`);
     const result = evaluator(...MATH_SCOPE_VALUES);
-    if (typeof result !== "number" || !Number.isFinite(result)) {
+    if (typeof result === "number" && Number.isFinite(result)) {
+      return Number.parseFloat(result.toPrecision(12));
+    }
+    if (typeof result === "string") {
+      return result;
+    }
+    if (result === undefined) {
       return undefined;
     }
-    return Number.parseFloat(result.toPrecision(12));
+    return undefined;
   } catch {
     return undefined;
   }

@@ -46,9 +46,15 @@ describe("parseCommandValue", () => {
     expect(parseCommandValue("Math.cos(Math.PI) + 2")).toBeCloseTo(1, 12);
   });
 
+  it("解析 complex/date 扩展表达式（无需 mathjs）", () => {
+    expect(parseCommandValue("complex(2, -3)")).toBe("2-3i");
+    expect(parseCommandValue("date(\"2026-03-02T10:00:00Z\")")).toBe(1772445600000);
+  });
+
   it("未知数学符号保持原样字符串", () => {
     expect(parseCommandValue("hp + bonus")).toBe("hp + bonus");
     expect(parseCommandValue("'10 + 2'")).toBe("10 + 2");
+    expect(parseCommandValue("matrix(1,2,3)")).toBe("matrix(1,2,3)");
   });
 
   it("解析 YAML 片段", () => {

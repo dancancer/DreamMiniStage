@@ -529,6 +529,15 @@ describe("MVU 变量管理系统基线测试", () => {
       expect(parseCommandValue("Math.cos(Math.PI) + 2")).toBeCloseTo(1, 12);
     });
 
+    it("应解析 complex/date 扩展表达式", () => {
+      expect(parseCommandValue("complex(2, -3)")).toBe("2-3i");
+      expect(parseCommandValue("date(\"2026-03-02T10:00:00Z\")")).toBe(1772445600000);
+    });
+
+    it("未支持的 matrix 表达式应保持原样字符串", () => {
+      expect(parseCommandValue("matrix(1,2,3)")).toBe("matrix(1,2,3)");
+    });
+
     it("应解析 JavaScript 对象字面量", () => {
       const result = parseCommandValue("{ name: 'Alice', age: 25 }");
       expect(result).toEqual({ name: "Alice", age: 25 });

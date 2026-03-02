@@ -278,6 +278,22 @@
   - `lib/slash-command/__tests__/p2-character-command-gaps.test.ts`
   - `hooks/script-bridge/__tests__/slash-handlers.integration.test.ts`
 
+### 2.20 MVU 重表达式评估（complex/date 一阶段落地）
+
+- 已在不引入 `mathjs` 的前提下补齐两类高频表达式：
+  - `complex(real, imaginary)`：返回稳定字符串表示（如 `2-3i`）。
+  - `date(...)` / `now()`：返回毫秒时间戳，便于与 `_.add/_.set` 数值路径联动。
+- 安全策略同步收敛：
+  - 表达式求值继续走白名单标识符机制；
+  - 新增字符串字面量剥离后再做标识符校验，避免把日期字符串中的 `T/Z` 误判成符号。
+- 当前仍保留单路径约束（fail-fast）：
+  - `matrix(...)` 暂不支持，保持原样字符串返回（不做隐式降级转换）。
+- 相关实现：
+  - `lib/mvu/core/parser.ts`
+- 相关测试：
+  - `lib/mvu/__tests__/parser.test.ts`
+  - `lib/core/__tests__/st-baseline-mvu.test.ts`
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -312,7 +328,7 @@
 - `hooks/useScriptBridge.ts`
   - 扩展 `UseScriptBridgeOptions`，并在切换回调路径中广播 `requested/completed/failed` 事件
 - `lib/mvu/core/parser.ts`
-  - 扩展 math 表达式白名单求值与 YAML 解析
+  - 扩展 math 表达式白名单求值（新增 `complex/date/now`）与 YAML 解析
 - `package.json`
   - 新增 `yaml` 直接依赖（显式化 MVU 解析路径）
 
@@ -346,9 +362,9 @@
 - `app/session/__tests__/session-switch.test.ts`
   - 覆盖切换会话命名策略（带来源角色/同角色回退）
 - `lib/mvu/__tests__/parser.test.ts`
-  - 新增扩展 math 语义（`Math/math` 别名）与 YAML 解析回归
+  - 新增扩展 math 语义（`Math/math` 别名 + `complex/date/now`）与 YAML 解析回归
 - `lib/core/__tests__/st-baseline-mvu.test.ts`
-  - 新增基线回归：扩展 math 别名与 YAML 片段解析
+  - 新增基线回归：扩展 math 别名、`complex/date` 与 YAML 片段解析
 
 ### 3.3 文档
 
@@ -386,6 +402,7 @@
 - `pnpm vitest run lib/mvu/__tests__/parser.test.ts lib/core/__tests__/st-baseline-mvu.test.ts`
 - `pnpm vitest run hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
 - `pnpm vitest run app/session/__tests__/session-switch.test.ts lib/slash-command/__tests__/p2-character-command-gaps.test.ts hooks/script-bridge/__tests__/slash-handlers.integration.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
+- `pnpm vitest run lib/mvu/__tests__/parser.test.ts lib/core/__tests__/st-baseline-mvu.test.ts`
 
 结果：全部通过。
 
@@ -432,7 +449,7 @@
   - 已完成切换命名策略与脚本侧可观测事件（`character:switch_*`）。
 - 下一批建议优先（按插件脚本采样）：
   - 补 `character:switch_*` 的跨 iframe 生命周期回归（路由切换后监听器清理/重建）。
-  - 评估 `parseCommandValue` 仍未覆盖的重表达式场景（complex/matrix/date）是否需要二阶段引入 `mathjs`。
+  - 评估 `parseCommandValue` 的 `matrix` 场景是否需要二阶段引入 `mathjs`（complex/date 已在一阶段补齐）。
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
 ### 5.2 中优先
@@ -475,4 +492,4 @@ pnpm vitest run \
   hooks/script-bridge/__tests__/variable-handlers.test.ts
 ```
 
-然后优先补 `character:switch_*` 在 iframe 销毁/重建场景下的监听器生命周期回归，并评估 `parseCommandValue` 在 complex/matrix/date 等重表达式场景是否需要二阶段引入 `mathjs`；持续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。
+然后优先补 `character:switch_*` 在 iframe 销毁/重建场景下的监听器生命周期回归，并评估 `parseCommandValue` 的 `matrix` 重表达式场景是否需要二阶段引入 `mathjs`；持续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。
