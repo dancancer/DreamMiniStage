@@ -34,7 +34,12 @@ interface SessionState {
 
   // ========== 操作 ==========
   fetchAllSessions: () => Promise<void>;
-  createSession: (characterId: string) => Promise<string | null>;
+  createSession: (
+    characterId: string,
+    options?: {
+      name?: string;
+    },
+  ) => Promise<string | null>;
   updateSessionName: (sessionId: string, name: string) => Promise<boolean>;
   deleteSession: (sessionId: string) => Promise<boolean>;
 
@@ -108,7 +113,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
    * 
    * @returns 新会话 ID，失败返回 null
    */
-  createSession: async (characterId: string) => {
+  createSession: async (characterId: string, options) => {
     try {
       const character = await LocalCharacterRecordOperations.getCharacterById(
         characterId,
@@ -118,9 +123,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         return null;
       }
 
-      const defaultName = generateDefaultSessionName(
+      const generatedName = generateDefaultSessionName(
         character.data?.name ?? "未知角色",
       );
+      const defaultName = options?.name?.trim() || generatedName;
       const session = await SessionOperations.createSession(
         characterId,
         defaultName,

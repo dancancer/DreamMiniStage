@@ -34,6 +34,8 @@ import { useUIStore } from "@/lib/store/ui-store";
 import { useUserStore } from "@/lib/store/user-store";
 import { useSessionStore } from "@/lib/store/session-store";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
+import { buildSwitchedSessionName } from "@/app/session/session-switch";
+import type { CharacterSwitchResult } from "@/lib/slash-command/types";
 import DialogueTreeModal from "@/components/DialogueTreeModal";
 
 // ============================================================================
@@ -139,6 +141,7 @@ function SessionPageContent() {
   });
   const [isBranchOpen, setIsBranchOpen] = useState(false);
   const { setHeaderContent } = useHeaderContent();
+  const currentCharacterName = loader.character?.name;
 
   useEffect(() => {
     if (!loader.character) {
@@ -224,14 +227,24 @@ function SessionPageContent() {
     throw new Error(`Character not found: ${normalized}`);
   }, []);
 
-  const handleSwitchCharacter = useCallback(async (target: string) => {
+  const handleSwitchCharacter = useCallback(async (target: string): Promise<CharacterSwitchResult> => {
     const nextCharacterId = await resolveCharacterSwitchTarget(target);
-    const nextSessionId = await createSession(nextCharacterId);
+    const nextCharacterRecord = await LocalCharacterRecordOperations.getCharacterById(nextCharacterId);
+    const nextCharacterName = nextCharacterRecord?.data?.name?.trim() || nextCharacterId;
+    const switchedSessionName = buildSwitchedSessionName(nextCharacterName, currentCharacterName);
+    const nextSessionId = await createSession(nextCharacterId, { name: switchedSessionName });
     if (!nextSessionId) {
       throw new Error(`Failed to create session for character: ${nextCharacterId}`);
     }
     router.push(`/session?id=${encodeURIComponent(nextSessionId)}`);
-  }, [createSession, resolveCharacterSwitchTarget, router]);
+    return {
+      target,
+      characterId: nextCharacterId,
+      characterName: nextCharacterName,
+      sessionId: nextSessionId,
+      sessionName: switchedSessionName,
+    };
+  }, [createSession, currentCharacterName, resolveCharacterSwitchTarget, router]);
 
   // ========== 提交消息 ==========
   const handleSubmit = useCallback(

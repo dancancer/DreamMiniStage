@@ -20,6 +20,14 @@ export interface CharacterSummary {
   name: string;
 }
 
+export interface CharacterSwitchResult {
+  target: string;
+  characterId: string;
+  characterName: string;
+  sessionId: string;
+  sessionName: string;
+}
+
 // ============================================================================
 //                              解析结果类型
 // ============================================================================
@@ -85,7 +93,9 @@ export interface ExecutionContext {
   getMessageCount?: () => number;
   getCurrentCharacter?: () => CharacterSummary | undefined | Promise<CharacterSummary | undefined>;
   listCharacters?: () => CharacterSummary[] | Promise<CharacterSummary[]>;
-  switchCharacter?: (target: string) => void | Promise<void>;
+  switchCharacter?: (
+    target: string
+  ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
 
   // 扩展操作 - World Book
   getWorldBookEntry?: (id: string) => WorldBookEntryData | undefined | Promise<WorldBookEntryData | undefined>;

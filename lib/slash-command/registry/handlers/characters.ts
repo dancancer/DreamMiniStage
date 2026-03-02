@@ -6,7 +6,8 @@
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
-import type { CommandHandler, CharacterSummary } from "../types";
+import type { CommandHandler } from "../types";
+import type { CharacterSummary, CharacterSwitchResult } from "../../types";
 
 function findCharacterMatches(characters: CharacterSummary[], keyword: string): CharacterSummary[] {
   const normalized = keyword.trim().toLowerCase();
@@ -15,6 +16,20 @@ function findCharacterMatches(characters: CharacterSummary[], keyword: string): 
     character.name.toLowerCase().includes(normalized) ||
     character.id.toLowerCase().includes(normalized)
   ));
+}
+
+function isCharacterSwitchResult(value: unknown): value is CharacterSwitchResult {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const candidate = value as Partial<CharacterSwitchResult>;
+  return (
+    typeof candidate.target === "string" &&
+    typeof candidate.characterId === "string" &&
+    typeof candidate.characterName === "string" &&
+    typeof candidate.sessionId === "string" &&
+    typeof candidate.sessionName === "string"
+  );
 }
 
 /** /char [name|id] - 读取当前角色，或切换角色 */
@@ -33,7 +48,10 @@ export const handleCharacter: CommandHandler = async (args, namedArgs, ctx, pipe
     throw new Error("/char switch is not available in current context");
   }
 
-  await ctx.switchCharacter(target);
+  const switchResult = await ctx.switchCharacter(target);
+  if (isCharacterSwitchResult(switchResult)) {
+    return JSON.stringify(switchResult);
+  }
   return target;
 };
 

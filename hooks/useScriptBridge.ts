@@ -18,7 +18,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useScriptVariables } from "@/lib/store/script-variables";
 import { handleApiCall } from "./script-bridge";
 import type { DialogueMessage } from "@/types/character-dialogue";
-import type { SendOptions } from "@/lib/slash-command/types";
+import type { CharacterSwitchResult, SendOptions } from "@/lib/slash-command/types";
 import type { ScriptMessageData } from "@/types/script-message";
 
 // ============================================================================
@@ -46,7 +46,9 @@ interface UseScriptBridgeOptions {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
-  onSwitchCharacter?: (target: string) => void | Promise<void>;
+  onSwitchCharacter?: (
+    target: string
+  ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
 }
 
 interface UseScriptBridgeReturn {
@@ -55,6 +57,21 @@ interface UseScriptBridgeReturn {
   handleScriptMessage: (data: ScriptMessageData) => Promise<unknown>;
   broadcastCharacterChange: () => void;
   broadcastMessage: (message: DialogueMessage) => void;
+}
+
+function isCharacterSwitchResult(value: unknown): value is CharacterSwitchResult {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<CharacterSwitchResult>;
+  return (
+    typeof candidate.target === "string" &&
+    typeof candidate.characterId === "string" &&
+    typeof candidate.characterName === "string" &&
+    typeof candidate.sessionId === "string" &&
+    typeof candidate.sessionName === "string"
+  );
 }
 
 // ============================================================================
@@ -95,6 +112,62 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
 
+  const broadcastEvent = useCallback((eventName: string, data: unknown) => {
+    window.dispatchEvent(
+      new CustomEvent("DreamMiniStage:broadcast", {
+        detail: { eventName, data },
+      })
+    );
+  }, []);
+
+  const handleCharacterSwitch = useCallback(
+    async (target: string): Promise<CharacterSwitchResult | void> => {
+      if (!onSwitchCharacter) {
+        return undefined;
+      }
+
+      const sourceCharacter = {
+        id: characterId ?? "",
+        name: characterName ?? "",
+      };
+      broadcastEvent("character:switch_requested", {
+        target,
+        from: sourceCharacter,
+      });
+
+      try {
+        const result = await onSwitchCharacter(target);
+        if (isCharacterSwitchResult(result)) {
+          broadcastEvent("character:switch_completed", {
+            from: sourceCharacter,
+            to: {
+              id: result.characterId,
+              name: result.characterName,
+            },
+            sessionId: result.sessionId,
+            sessionName: result.sessionName,
+            target: result.target,
+          });
+          return result;
+        }
+
+        broadcastEvent("character:switch_completed", {
+          from: sourceCharacter,
+          target,
+        });
+        return result;
+      } catch (error) {
+        broadcastEvent("character:switch_failed", {
+          from: sourceCharacter,
+          target,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+      }
+    },
+    [broadcastEvent, characterId, characterName, onSwitchCharacter],
+  );
+
   // ─── 处理脚本消息 ───
   // 【性能优化】不依赖 messages，通过 ref 获取最新值
   const handleScriptMessage = useCallback(
@@ -128,7 +201,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onImpersonate,
           onContinue,
           onSwipe,
-          onSwitchCharacter,
+          onSwitchCharacter: onSwitchCharacter ? handleCharacterSwitch : undefined,
         });
         console.log("[useScriptBridge] API_CALL 返回:", method, "result:", result);
         return result;
@@ -172,6 +245,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onContinue,
       onSwipe,
       onSwitchCharacter,
+      handleCharacterSwitch,
     ],
   );
 

@@ -253,6 +253,31 @@
   - **引入 `yaml` 作为显式直接依赖**；
   - **暂不引入 `mathjs`**，当前先采用白名单数学求值覆盖高频脚本表达式，控制包体与执行复杂度。
 
+### 2.19 `/char` 切换端到端增强（命名策略 + 可观测事件）
+
+- 已补齐角色切换后的会话命名策略：
+  - 新增 `buildSwitchedSessionName`，统一命名格式为 `toCharacter - MM/DD HH:mm [from fromCharacter]`。
+  - `SessionPage` 的 `/char` 切换路径改为显式传入命名策略，不再依赖隐式默认名。
+- 已补齐脚本侧可观测事件（通过 `DreamMiniStage:broadcast` 下发）：
+  - `character:switch_requested`
+  - `character:switch_completed`
+  - `character:switch_failed`
+- `/character` 命令在宿主回调返回结构化结果时，会把结果 JSON 透传到 `pipe`：
+  - 返回体包含 `target/characterId/characterName/sessionId/sessionName`，便于脚本链路继续消费。
+- 相关实现：
+  - `app/session/session-switch.ts`
+  - `app/session/page.tsx`
+  - `lib/store/session-store.ts`
+  - `hooks/useScriptBridge.ts`
+  - `hooks/script-bridge/types.ts`
+  - `components/CharacterChatPanel.tsx`
+  - `lib/slash-command/types.ts`
+  - `lib/slash-command/registry/handlers/characters.ts`
+- 相关测试：
+  - `app/session/__tests__/session-switch.test.ts`
+  - `lib/slash-command/__tests__/p2-character-command-gaps.test.ts`
+  - `hooks/script-bridge/__tests__/slash-handlers.integration.test.ts`
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -273,15 +298,19 @@
 - `lib/slash-command/registry/handlers/messages.ts`
   - 收敛消息索引解析，并新增 `messages/mes` 快照输出
 - `lib/slash-command/registry/handlers/characters.ts`
-  - 新增 `char/character/char-find/findchar` 最小角色命令集
+  - 新增 `char/character/char-find/findchar` 最小角色命令集，并支持结构化切换结果透传
 - `hooks/script-bridge/slash-handlers.ts`
   - 补齐角色摘要查询适配（当前角色 + 全量角色列表）
 - `app/session/page.tsx`
-  - 新增角色切换目标解析与会话跳转回调（`onSwitchCharacter`）
+  - 新增角色切换目标解析与会话跳转回调（`onSwitchCharacter`），并接入切换命名策略
+- `app/session/session-switch.ts`
+  - 新增切换会话命名策略工具函数（单源）
+- `lib/store/session-store.ts`
+  - `createSession` 支持显式会话名参数，减少调用侧重复改名分支
 - `components/CharacterChatPanel.tsx`
-  - 向脚本桥接注入 `onSwitchCharacter`
+  - 向脚本桥接注入结构化 `onSwitchCharacter` 回调
 - `hooks/useScriptBridge.ts`
-  - 扩展 `UseScriptBridgeOptions`，透传 `onSwitchCharacter`
+  - 扩展 `UseScriptBridgeOptions`，并在切换回调路径中广播 `requested/completed/failed` 事件
 - `lib/mvu/core/parser.ts`
   - 扩展 math 表达式白名单求值与 YAML 解析
 - `package.json`
@@ -309,11 +338,13 @@
 - `lib/slash-command/__tests__/p2-message-command-aliases.test.ts`
   - 覆盖消息侧别名（`setmessage/setmes/edit/del/messages/mes`）及核心别名（`narrator/imp`）
 - `lib/slash-command/__tests__/p2-character-command-gaps.test.ts`
-  - 覆盖 `comment`、`char/character`、`char-find/findchar` 与切换缺失回调 fail-fast 分支
+  - 覆盖 `comment`、`char/character`、`char-find/findchar`、结构化切换结果透传与缺失回调 fail-fast 分支
 - `hooks/script-bridge/__tests__/slash-handlers.integration.test.ts`
-  - 新增 `/character` -> `onSwitchCharacter` 回调链路回归，并更新 `setvar/getvar` 用例到 `key/value` 单路径语义
+  - 新增 `/character` -> `onSwitchCharacter` 回调链路回归，并覆盖结构化切换结果序列化
 - `hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
   - 新增最小链路回归：`triggerSlash("/character ...")` 可触达宿主切换回调
+- `app/session/__tests__/session-switch.test.ts`
+  - 覆盖切换会话命名策略（带来源角色/同角色回退）
 - `lib/mvu/__tests__/parser.test.ts`
   - 新增扩展 math 语义（`Math/math` 别名）与 YAML 解析回归
 - `lib/core/__tests__/st-baseline-mvu.test.ts`
@@ -354,6 +385,7 @@
 - `pnpm vitest run hooks/script-bridge/__tests__/slash-handlers.integration.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts lib/slash-command/__tests__/p2-character-command-gaps.test.ts`
 - `pnpm vitest run lib/mvu/__tests__/parser.test.ts lib/core/__tests__/st-baseline-mvu.test.ts`
 - `pnpm vitest run hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
+- `pnpm vitest run app/session/__tests__/session-switch.test.ts lib/slash-command/__tests__/p2-character-command-gaps.test.ts hooks/script-bridge/__tests__/slash-handlers.integration.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
 
 结果：全部通过。
 
@@ -396,9 +428,11 @@
   - `/comment`：6 次
   - `/edit`：5 次（已补齐）
   - `/character`：2 次（已补最小路径）、`/char-find`：1 次（已补）
+- 角色切换端到端体验已补齐：
+  - 已完成切换命名策略与脚本侧可观测事件（`character:switch_*`）。
 - 下一批建议优先（按插件脚本采样）：
-  - 继续补齐 `char/character` 切换后的端到端体验（例如：切换后会话命名策略、脚本侧可观测事件）
-  - 评估 `parseCommandValue` 仍未覆盖的重表达式场景（complex/matrix/date）是否需要二阶段引入 `mathjs`
+  - 补 `character:switch_*` 的跨 iframe 生命周期回归（路由切换后监听器清理/重建）。
+  - 评估 `parseCommandValue` 仍未覆盖的重表达式场景（complex/matrix/date）是否需要二阶段引入 `mathjs`。
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
 ### 5.2 中优先
@@ -430,6 +464,7 @@
 
 ```bash
 pnpm vitest run \
+  app/session/__tests__/session-switch.test.ts \
   lib/slash-command/__tests__/p2-variable-scope.test.ts \
   lib/slash-command/__tests__/js-slash-runner-audio.test.ts \
   lib/slash-command/__tests__/p2-operators.test.ts \
@@ -440,4 +475,4 @@ pnpm vitest run \
   hooks/script-bridge/__tests__/variable-handlers.test.ts
 ```
 
-然后优先补齐 `char/character` 切换后的端到端体验回归（会话跳转后命名策略、脚本事件可观测性）；并评估 `parseCommandValue` 在 complex/matrix/date 等重表达式场景是否需要二阶段引入 `mathjs`；持续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。
+然后优先补 `character:switch_*` 在 iframe 销毁/重建场景下的监听器生命周期回归，并评估 `parseCommandValue` 在 complex/matrix/date 等重表达式场景是否需要二阶段引入 `mathjs`；持续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。

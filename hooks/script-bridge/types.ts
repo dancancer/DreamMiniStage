@@ -10,7 +10,7 @@
  */
 
 import type { DialogueMessage } from "@/types/character-dialogue";
-import type { SendOptions } from "@/lib/slash-command/types";
+import type { CharacterSwitchResult, SendOptions } from "@/lib/slash-command/types";
 
 // ============================================================================
 //                              API Handler 上下文
@@ -54,7 +54,9 @@ export interface ApiCallContext {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
-  onSwitchCharacter?: (target: string) => void | Promise<void>;
+  onSwitchCharacter?: (
+    target: string
+  ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
 }
 
 // ============================================================================

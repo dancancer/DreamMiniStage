@@ -18,7 +18,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { getDisplayUsername, setDisplayUsername } from "@/utils/username-helper";
 import { useApiConfig } from "@/hooks/useApiConfig";
 import { useScriptBridge } from "@/hooks/useScriptBridge";
-import type { SendOptions } from "@/lib/slash-command/types";
+import type { CharacterSwitchResult, SendOptions } from "@/lib/slash-command/types";
 import { useLocalStorageBoolean } from "@/hooks/useLocalStorage";
 import UserNameSettingModal from "@/components/UserNameSettingModal";
 import ScriptDebugPanel from "@/components/ScriptDebugPanel";
@@ -81,7 +81,9 @@ interface Props {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
-  onSwitchCharacter?: (target: string) => void | Promise<void>;
+  onSwitchCharacter?: (
+    target: string
+  ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
   onExportJsonl?: () => void | Promise<void>;
   onImportJsonl?: (file: File) => void | Promise<void>;
 }

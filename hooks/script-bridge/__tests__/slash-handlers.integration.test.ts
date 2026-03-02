@@ -10,7 +10,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { slashHandlers } from "../slash-handlers";
 import type { ApiCallContext } from "../types";
-import type { SendOptions } from "@/lib/slash-command/types";
+import type { CharacterSwitchResult, SendOptions } from "@/lib/slash-command/types";
 
 // ============================================================================
 //                              测试辅助函数
@@ -30,7 +30,7 @@ function createMockContext(overrides: Partial<{
   onImpersonate: (text: string) => void | Promise<void>;
   onContinue: () => void | Promise<void>;
   onSwipe: (target?: string) => void | Promise<void>;
-  onSwitchCharacter: (target: string) => void | Promise<void>;
+  onSwitchCharacter: (target: string) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
 }>= {}): ApiCallContext {
   const globalVars: Record<string, unknown> = overrides.globalVars ?? {};
   const characterVars: Record<string, Record<string, unknown>> = overrides.characterVars ?? {};
@@ -386,6 +386,32 @@ describe("triggerSlash Integration Tests", () => {
 
       expect(result.isError).toBe(false);
       expect(switched).toEqual(["Bob"]);
+    });
+
+    it("serializes structured /character switch result", async () => {
+      const ctx = createMockContext({
+        onSwitchCharacter: async (target) => ({
+          target,
+          characterId: "char-2",
+          characterName: "Bob",
+          sessionId: "session-2",
+          sessionName: "Bob - 03/02 23:30 [from Alice]",
+        }),
+      });
+
+      const result = await slashHandlers.triggerSlash(
+        ["/character Bob"],
+        ctx,
+      );
+
+      expect(result.isError).toBe(false);
+      expect(JSON.parse(result.pipe)).toEqual({
+        target: "Bob",
+        characterId: "char-2",
+        characterName: "Bob",
+        sessionId: "session-2",
+        sessionName: "Bob - 03/02 23:30 [from Alice]",
+      });
     });
   });
 });
