@@ -162,6 +162,7 @@
   - `getvar index=...` 读取对象值时返回 JSON 文本。
   - 索引容器类型不匹配时显式报错（fail-fast），不再静默吞错。
   - 已移除旧式兼容写法：`/setvar name=Bob age=30`（多 named-args 批量赋值）不再支持，命令会 fail-fast 报错。
+  - `set/getvar` 与 `set/getglobalvar` 仅接受 `key=...` 命名参数，不再接受 `name=...` 兼容别名。
 - 相关实现：
   - `lib/slash-command/registry/handlers/variables.ts`
 - 相关测试：

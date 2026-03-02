@@ -187,6 +187,6 @@ describe("P2 scoped variable commands", () => {
     const result = await executeSlashCommands(parsed.commands, ctx);
 
     expect(result.isError).toBe(true);
-    expect(result.errorMessage).toContain("does not support named argument 'age'");
+    expect(result.errorMessage).toContain("does not support named argument");
   });
 });

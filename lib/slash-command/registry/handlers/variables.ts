@@ -15,7 +15,7 @@ import type { ExecutionContext, VariableScope } from "@/lib/slash-command/types"
 
 /** /setvar key=value 或 /setvar key value - 设置变量 */
 export const handleSetVar: CommandHandler = async (args, namedArgs, ctx, pipe) => {
-  assertSupportedNamedArgs(namedArgs, ["key", "name", "value", "index", "as"], "setvar");
+  assertSupportedNamedArgs(namedArgs, ["key", "value", "index", "as"], "setvar");
 
   const key = resolveVariableKey(args, namedArgs);
   if (!key) return pipe;
@@ -35,7 +35,7 @@ export const handleSetVar: CommandHandler = async (args, namedArgs, ctx, pipe) =
 
 /** /getvar key - 获取变量 */
 export const handleGetVar: CommandHandler = async (args, namedArgs, ctx, pipe) => {
-  assertSupportedNamedArgs(namedArgs, ["key", "name", "index"], "getvar");
+  assertSupportedNamedArgs(namedArgs, ["key", "index"], "getvar");
 
   const key = resolveVariableKey(args, namedArgs);
   if (!key) return pipe;
@@ -77,7 +77,7 @@ export const handleDumpVar: CommandHandler = async (_args, _namedArgs, ctx, pipe
 
 /** /setglobalvar key value - 设置全局变量 */
 export const handleSetGlobalVar: CommandHandler = async (args, namedArgs, ctx, pipe) => {
-  assertSupportedNamedArgs(namedArgs, ["key", "name", "value", "index", "as"], "setglobalvar");
+  assertSupportedNamedArgs(namedArgs, ["key", "value", "index", "as"], "setglobalvar");
 
   const key = resolveVariableKey(args, namedArgs);
   if (!key) return pipe;
@@ -97,7 +97,7 @@ export const handleSetGlobalVar: CommandHandler = async (args, namedArgs, ctx, p
 
 /** /getglobalvar key - 获取全局变量 */
 export const handleGetGlobalVar: CommandHandler = async (args, namedArgs, ctx, pipe) => {
-  assertSupportedNamedArgs(namedArgs, ["key", "name", "index"], "getglobalvar");
+  assertSupportedNamedArgs(namedArgs, ["key", "index"], "getglobalvar");
 
   const key = resolveVariableKey(args, namedArgs);
   if (!key) return pipe;
@@ -215,7 +215,7 @@ export const handlePush: CommandHandler = async (args, _namedArgs, ctx, pipe) =>
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function resolveVariableKey(args: string[], namedArgs: Record<string, string>): string | undefined {
-  return namedArgs.key ?? namedArgs.name ?? args[0];
+  return namedArgs.key ?? args[0];
 }
 
 function resolveVariableValue(
@@ -227,7 +227,7 @@ function resolveVariableValue(
     return namedArgs.value;
   }
 
-  if (namedArgs.key !== undefined || namedArgs.name !== undefined) {
+  if (namedArgs.key !== undefined) {
     if (args.length > 0) {
       return args.join(" ");
     }
