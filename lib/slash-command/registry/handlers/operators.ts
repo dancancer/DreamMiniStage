@@ -100,6 +100,48 @@ export const handleRand: CommandHandler = async (args, namedArgs, _ctx, pipe) =>
   return String(value);
 };
 
+/** /sin value - 正弦运算 */
+export const handleSin: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  const value = resolveUnaryNumber(args, pipe);
+  return String(Math.sin(value));
+};
+
+/** /cos value - 余弦运算 */
+export const handleCos: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  const value = resolveUnaryNumber(args, pipe);
+  return String(Math.cos(value));
+};
+
+/** /log value - 自然对数（值必须 > 0） */
+export const handleLog: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  const value = resolveUnaryNumber(args, pipe);
+  if (value <= 0) {
+    throw new Error("Log input must be greater than 0");
+  }
+  return String(Math.log(value));
+};
+
+/** /abs value - 绝对值 */
+export const handleAbs: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  const value = resolveUnaryNumber(args, pipe);
+  return String(Math.abs(value));
+};
+
+/** /sqrt value - 平方根（值必须 >= 0） */
+export const handleSqrt: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  const value = resolveUnaryNumber(args, pipe);
+  if (value < 0) {
+    throw new Error("Sqrt input must be non-negative");
+  }
+  return String(Math.sqrt(value));
+};
+
+/** /round value - 四舍五入 */
+export const handleRound: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
+  const value = resolveUnaryNumber(args, pipe);
+  return String(Math.round(value));
+};
+
 /* ═══════════════════════════════════════════════════════════════════════════
    字符串算子
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -309,6 +351,16 @@ function parseList(raw: string): string[] {
   }
 
   return raw.split(",").map((item) => item.trim());
+}
+
+function resolveUnaryNumber(args: string[], pipe: string): number {
+  if (args.length > 0) {
+    return toNumber(args[0]);
+  }
+  if (pipe) {
+    return toNumber(pipe);
+  }
+  throw new Error("Missing number argument");
 }
 
 function regexFromString(input: string): RegExp | undefined {

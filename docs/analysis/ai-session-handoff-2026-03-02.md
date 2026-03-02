@@ -108,6 +108,21 @@
   - `lib/slash-command/__tests__/p2-variable-scope.test.ts`
   - `hooks/script-bridge/__tests__/api-surface-contract.test.ts`
 
+### 2.9 Slash 命令覆盖补齐（P2 第四批：单参数数学）
+
+- 已新增单参数数学命令：
+  - `/sin`、`/cos`、`/log`、`/abs`、`/sqrt`、`/round`
+- 行为约定（当前实现）：
+  - 支持“位置参数优先，pipe 兜底”的单值取数模式。
+  - `log` 在输入 `<= 0` 时显式报错（fail-fast）。
+  - `sqrt` 在输入 `< 0` 时显式报错（fail-fast）。
+- 相关实现：
+  - `lib/slash-command/registry/handlers/operators.ts`
+  - `lib/slash-command/registry/index.ts`
+  - `hooks/script-bridge/capability-matrix.ts`
+- 相关测试：
+  - `lib/slash-command/__tests__/p2-operators.test.ts`
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -123,6 +138,8 @@
   - 新增 add/global 变量命令族与 scoped 变量回退逻辑
 - `hooks/script-bridge/slash-handlers.ts`
   - 变量上下文拆分为 local/global，并暴露 scoped 读写接口
+- `lib/slash-command/registry/handlers/operators.ts`
+  - 新增 `sin/cos/log/abs/sqrt/round` 命令处理器
 
 ### 3.2 测试
 
@@ -141,6 +158,8 @@
   - 通过 `capability-matrix.ts` 同步校验 shim/handler/slash 三侧能力面一致性
 - `lib/slash-command/__tests__/p2-variable-scope.test.ts`
   - 覆盖 `addvar/globalvar` 及 chat/global alias 命令行为
+- `lib/slash-command/__tests__/p2-operators.test.ts`
+  - 补充单参数数学命令与 fail-fast 异常分支回归
 
 ### 3.3 文档
 
@@ -166,6 +185,7 @@
 - `pnpm vitest run hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-variable-scope.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts`
 - `pnpm vitest run hooks/script-bridge/__tests__/slash-handlers.integration.test.ts`
+- `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/slash-command/__tests__/p2-variable-scope.test.ts`
 
 结果：全部通过。
 
@@ -196,6 +216,7 @@
 3. **Slash 命令覆盖继续补齐**（P2 第二批已完成）
 - 已补：`mul/div/mod/rand/split/join/replace(re)/pow/max/min`。
 - 本轮新增变量族：`addvar/set|get|add|inc|dec|flush globalvar` 与 `set|get|add|inc|dec|flush chatvar` 别名。
+- 本轮新增数学族：`sin/cos/log/abs/sqrt/round`。
 - 下一批建议优先：消息/角色侧真实脚本高频缺口（按插件脚本采样决定）。
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 

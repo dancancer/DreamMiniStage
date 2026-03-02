@@ -67,6 +67,34 @@ describe("P2 utility commands", () => {
     expect(minResult.pipe).toBe("-2");
   });
 
+  it("/sin /cos /log /abs /sqrt /round 覆盖单参数数学语义", async () => {
+    const ctx = createMinimalContext();
+
+    const sinResult = await executeSlashCommands(parseSlashCommands("/sin 1.5707963267948966").commands, ctx);
+    expect(sinResult.isError).toBe(false);
+    expect(Number(sinResult.pipe)).toBeCloseTo(1, 10);
+
+    const cosResult = await executeSlashCommands(parseSlashCommands("/echo 0|/cos").commands, ctx);
+    expect(cosResult.isError).toBe(false);
+    expect(Number(cosResult.pipe)).toBeCloseTo(1, 10);
+
+    const logResult = await executeSlashCommands(parseSlashCommands("/log 1").commands, ctx);
+    expect(logResult.isError).toBe(false);
+    expect(logResult.pipe).toBe("0");
+
+    const absResult = await executeSlashCommands(parseSlashCommands("/abs -7.5").commands, ctx);
+    expect(absResult.isError).toBe(false);
+    expect(absResult.pipe).toBe("7.5");
+
+    const sqrtResult = await executeSlashCommands(parseSlashCommands("/sqrt 9").commands, ctx);
+    expect(sqrtResult.isError).toBe(false);
+    expect(sqrtResult.pipe).toBe("3");
+
+    const roundResult = await executeSlashCommands(parseSlashCommands("/round 2.6").commands, ctx);
+    expect(roundResult.isError).toBe(false);
+    expect(roundResult.pipe).toBe("3");
+  });
+
   it("/div 和 /mod 在除数为 0 时显式失败", async () => {
     const ctx = createMinimalContext();
 
@@ -188,5 +216,21 @@ describe("P2 utility commands", () => {
 
     expect(result.isError).toBe(true);
     expect(result.errorMessage).toContain("Invalid replace mode");
+  });
+
+  it("/log /sqrt 非法输入与缺参时返回错误", async () => {
+    const ctx = createMinimalContext();
+
+    const logResult = await executeSlashCommands(parseSlashCommands("/log 0").commands, ctx);
+    expect(logResult.isError).toBe(true);
+    expect(logResult.errorMessage).toContain("Log input must be greater than 0");
+
+    const sqrtResult = await executeSlashCommands(parseSlashCommands("/sqrt -1").commands, ctx);
+    expect(sqrtResult.isError).toBe(true);
+    expect(sqrtResult.errorMessage).toContain("Sqrt input must be non-negative");
+
+    const sinResult = await executeSlashCommands(parseSlashCommands("/sin").commands, ctx);
+    expect(sinResult.isError).toBe(true);
+    expect(sinResult.errorMessage).toContain("Missing number argument");
   });
 });
