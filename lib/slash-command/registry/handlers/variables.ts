@@ -15,45 +15,39 @@ import type { ExecutionContext, VariableScope } from "@/lib/slash-command/types"
 
 /** /setvar key=value 或 /setvar key value - 设置变量 */
 export const handleSetVar: CommandHandler = async (args, namedArgs, ctx, pipe) => {
-  // 优先使用命名参数
-  if (Object.keys(namedArgs).length > 0) {
+  if (shouldUseLegacyNamedSet(args, namedArgs, pipe)) {
     for (const [key, value] of Object.entries(namedArgs)) {
-      ctx.setVariable(key, value);
+      scopedSet(ctx, "local", key, value);
     }
     return pipe;
   }
 
-  // 位置参数: /setvar key value
-  if (args.length >= 2) {
-    const [key, ...rest] = args;
-    const value = rest.join(" ");
-    ctx.setVariable(key, value);
-    return value;
+  const key = resolveVariableKey(args, namedArgs);
+  if (!key) return pipe;
+
+  const value = resolveVariableValue(args, namedArgs, pipe);
+  if (value === undefined) return pipe;
+
+  const index = resolveVariableIndex(namedArgs);
+  if (index !== undefined) {
+    setIndexedScopedVariable(ctx, "local", key, index, value, namedArgs.as);
+    return String(value);
   }
 
-  // 单参数带等号: /setvar key=value
-  if (args.length === 1 && args[0].includes("=")) {
-    const eqIndex = args[0].indexOf("=");
-    const key = args[0].slice(0, eqIndex);
-    const value = args[0].slice(eqIndex + 1);
-    ctx.setVariable(key, value);
-    return value;
-  }
-
-  // 使用 pipe 作为值
-  if (args.length === 1 && pipe) {
-    ctx.setVariable(args[0], pipe);
-    return pipe;
-  }
-
-  return pipe;
+  scopedSet(ctx, "local", key, value);
+  return String(value);
 };
 
 /** /getvar key - 获取变量 */
-export const handleGetVar: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
-  if (args.length === 0) return pipe;
-  const value = ctx.getVariable(args[0]);
-  return value !== undefined ? String(value) : "";
+export const handleGetVar: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const key = resolveVariableKey(args, namedArgs);
+  if (!key) return pipe;
+
+  const index = resolveVariableIndex(namedArgs);
+  const value = index === undefined
+    ? scopedGet(ctx, "local", key)
+    : getIndexedScopedVariable(ctx, "local", key, index);
+  return normalizeReadValue(value);
 };
 
 /** /delvar key - 删除变量 */
@@ -250,6 +244,30 @@ function resolveVariableIndex(namedArgs: Record<string, string>): string | undef
   return namedArgs.index;
 }
 
+function shouldUseLegacyNamedSet(
+  args: string[],
+  namedArgs: Record<string, string>,
+  pipe: string,
+): boolean {
+  if (Object.keys(namedArgs).length === 0) {
+    return false;
+  }
+
+  if (namedArgs.key !== undefined || namedArgs.index !== undefined || namedArgs.as !== undefined) {
+    return false;
+  }
+
+  if (namedArgs.name !== undefined) {
+    const hasSingleNamedArg = Object.keys(namedArgs).length === 1;
+    const hasValueSource = args.length > 0 || pipe !== "";
+    if (hasSingleNamedArg && hasValueSource) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 function setIndexedScopedVariable(
   ctx: ExecutionContext,
   scope: VariableScope,
@@ -258,9 +276,9 @@ function setIndexedScopedVariable(
   rawValue: string,
   typeHint: string | undefined,
 ): void {
-  const base = parseIndexedContainer(scopedGet(ctx, scope, key), key);
+  const base = parseIndexedContainer(scopedGet(ctx, scope, key), key, scope);
   const typedValue = convertIndexedValue(rawValue, typeHint);
-  const next = setByIndex(base, index, typedValue, key);
+  const next = setByIndex(base, index, typedValue, key, scope);
   scopedSet(ctx, scope, key, JSON.stringify(next));
 }
 
@@ -275,17 +293,17 @@ function getIndexedScopedVariable(
     return undefined;
   }
 
-  const base = parseIndexedContainer(current, key);
+  const base = parseIndexedContainer(current, key, scope);
   if (base === null) {
     return undefined;
   }
-  return getByIndex(base, index, key);
+  return getByIndex(base, index, key, scope);
 }
 
 type JsonRecord = Record<string, unknown>;
 type JsonContainer = JsonRecord | unknown[] | null;
 
-function parseIndexedContainer(current: unknown, key: string): JsonContainer {
+function parseIndexedContainer(current: unknown, key: string, scope: VariableScope): JsonContainer {
   if (current === undefined || current === null || current === "") {
     return null;
   }
@@ -299,7 +317,7 @@ function parseIndexedContainer(current: unknown, key: string): JsonContainer {
   }
 
   if (typeof current !== "string") {
-    throw new Error(`Global variable '${key}' must be JSON object or array when using index`);
+    throw indexedTypeError(scope, key, "must be JSON object or array when using index");
   }
 
   try {
@@ -314,10 +332,10 @@ function parseIndexedContainer(current: unknown, key: string): JsonContainer {
       return { ...parsed };
     }
   } catch {
-    throw new Error(`Global variable '${key}' is not valid JSON for index access`);
+    throw indexedTypeError(scope, key, "is not valid JSON for index access");
   }
 
-  throw new Error(`Global variable '${key}' must be JSON object or array when using index`);
+  throw indexedTypeError(scope, key, "must be JSON object or array when using index");
 }
 
 function setByIndex(
@@ -325,6 +343,7 @@ function setByIndex(
   index: string,
   value: unknown,
   key: string,
+  scope: VariableScope,
 ): JsonRecord | unknown[] {
   const numberIndex = Number(index);
   if (!Number.isNaN(numberIndex)) {
@@ -334,7 +353,7 @@ function setByIndex(
       return created;
     }
     if (!Array.isArray(container)) {
-      throw new Error(`Global variable '${key}' must be JSON array for numeric index '${index}'`);
+      throw indexedTypeError(scope, key, `must be JSON array for numeric index '${index}'`);
     }
     const next = [...container];
     next[numberIndex] = value;
@@ -345,7 +364,7 @@ function setByIndex(
     return { [index]: value };
   }
   if (!isJsonRecord(container)) {
-    throw new Error(`Global variable '${key}' must be JSON object for key index '${index}'`);
+    throw indexedTypeError(scope, key, `must be JSON object for key index '${index}'`);
   }
 
   return {
@@ -354,19 +373,24 @@ function setByIndex(
   };
 }
 
-function getByIndex(container: JsonContainer, index: string, key: string): unknown {
+function getByIndex(container: JsonContainer, index: string, key: string, scope: VariableScope): unknown {
   const numberIndex = Number(index);
   if (!Number.isNaN(numberIndex)) {
     if (!Array.isArray(container)) {
-      throw new Error(`Global variable '${key}' must be JSON array for numeric index '${index}'`);
+      throw indexedTypeError(scope, key, `must be JSON array for numeric index '${index}'`);
     }
     return container[numberIndex];
   }
 
   if (!isJsonRecord(container)) {
-    throw new Error(`Global variable '${key}' must be JSON object for key index '${index}'`);
+    throw indexedTypeError(scope, key, `must be JSON object for key index '${index}'`);
   }
   return container[index];
+}
+
+function indexedTypeError(scope: VariableScope, key: string, detail: string): Error {
+  const scopeName = scope === "global" ? "Global" : "Local";
+  return new Error(`${scopeName} variable '${key}' ${detail}`);
 }
 
 function isJsonRecord(value: unknown): value is JsonRecord {

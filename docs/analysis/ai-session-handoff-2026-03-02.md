@@ -152,6 +152,21 @@
 - 相关测试：
   - `lib/slash-command/__tests__/p2-variable-scope.test.ts`
 
+### 2.12 Slash 变量语义补齐（P2 第七批：local/chat index/as）
+
+- 已补齐 `set/getvar`（含 `set|getchatvar` 别名）的高频参数语义：
+  - `index=...`：支持数组下标与对象键路径写入/读取。
+  - `as=...`：支持 `string/number/int/float/bool/array/object/null/undefined` 类型转换。
+- 行为约定（当前实现）：
+  - `setvar index=...` 与 `setglobalvar` 复用同一索引写入骨架，统一落盘为 JSON 字符串。
+  - `getvar index=...` 读取对象值时返回 JSON 文本。
+  - 索引容器类型不匹配时显式报错（fail-fast），不再静默吞错。
+  - 保留旧语义：`/setvar name=Bob age=30` 的多命名参数批量赋值仍可用。
+- 相关实现：
+  - `lib/slash-command/registry/handlers/variables.ts`
+- 相关测试：
+  - `lib/slash-command/__tests__/p2-variable-scope.test.ts`
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -164,7 +179,7 @@
 - `hooks/script-bridge/capability-matrix.ts`
   - 新增脚本桥接能力矩阵单源（shim API + slash command）
 - `lib/slash-command/registry/handlers/variables.ts`
-  - 新增 add/global 变量命令族，以及 `set/getglobalvar index/as` 语义对齐
+  - 新增 add/global 变量命令族，以及 `set/getglobalvar` + `set/getvar` 的 `index/as` 语义对齐
 - `hooks/script-bridge/slash-handlers.ts`
   - 变量上下文拆分为 local/global，并暴露 scoped 读写接口
 - `lib/slash-command/registry/handlers/operators.ts`
@@ -186,7 +201,7 @@
 - `hooks/script-bridge/__tests__/api-surface-contract.test.ts`
   - 通过 `capability-matrix.ts` 同步校验 shim/handler/slash 三侧能力面一致性
 - `lib/slash-command/__tests__/p2-variable-scope.test.ts`
-  - 覆盖 `addvar/globalvar`、chat/global alias，以及 `set/getglobalvar index/as` 语义
+  - 覆盖 `addvar/globalvar`、chat/global alias，以及 `set/getglobalvar` + `set/getvar` 的 `index/as` 语义
 - `lib/slash-command/__tests__/p2-operators.test.ts`
   - 补充单参数数学、`/match` 与 fail-fast 异常分支回归
 
@@ -217,6 +232,8 @@
 - `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/slash-command/__tests__/p2-variable-scope.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-variable-scope.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`
+- `pnpm vitest run lib/slash-command/__tests__/p2-variable-scope.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`
+- `pnpm vitest run lib/slash-command/__tests__/p2-variable-scope.test.ts lib/slash-command/__tests__/p2-operators.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts`
 
 结果：全部通过。
 
@@ -244,15 +261,15 @@
    - 回归测试：
      - `lib/slash-command/__tests__/js-slash-runner-audio.test.ts`
 
-3. **Slash 命令覆盖继续补齐**（P2 第二批已完成）
+3. **Slash 命令覆盖继续补齐**（P2 多批次已完成）
 - 已补：`mul/div/mod/rand/split/join/replace(re)/pow/max/min`。
 - 本轮新增变量族：`addvar/set|get|add|inc|dec|flush globalvar` 与 `set|get|add|inc|dec|flush chatvar` 别名。
 - 本轮新增数学族：`sin/cos/log/abs/sqrt/round`。
 - 本轮新增正则匹配：`match`。
-- 本轮新增变量深度语义：`set/getglobalvar` 的 `index/as`。
+- 本轮新增变量深度语义：`set/getglobalvar` 与 `set/getvar` 的 `index/as`。
 - 下一批建议优先（按插件脚本采样）：
-  - `set/getvar` 的 `index/as` 参数语义对齐（chat/global 行为收敛）
   - `addvar/addglobalvar` 的嵌套索引追加语义（数组/对象内累加）评估是否需要跟随上游
+  - 评估 `set/getvar` 在 `name=` 语法上的长期去兼容策略（是否保留批量赋值分支）
   - 然后再推进消息/角色侧高频缺口
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
@@ -291,4 +308,4 @@ pnpm vitest run \
   hooks/script-bridge/__tests__/variable-handlers.test.ts
 ```
 
-然后优先把 `set/getvar` 的 `index/as` 语义补齐到与 global 同一实现骨架，再基于真实脚本采样决定是否推进 `add*var` 的嵌套索引语义。
+然后优先评估并实现 `addvar/addglobalvar` 的嵌套索引追加语义（若插件脚本采样确认高频），并同步决定 `set/getvar name=` 旧批量赋值语法是否继续保留或进入去兼容清理计划。

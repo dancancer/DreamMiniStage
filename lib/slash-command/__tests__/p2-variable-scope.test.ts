@@ -147,4 +147,46 @@ describe("P2 scoped variable commands", () => {
     expect(getResult.isError).toBe(true);
     expect(getResult.errorMessage).toContain("JSON array");
   });
+
+  it("set/getvar 支持 index 与 as 语义（chat 别名共用本地作用域）", async () => {
+    const { ctx, local } = createScopedContext();
+
+    const objectParsed = parseSlashCommands("/setvar key=profile index=name as=string Linus|/getchatvar key=profile index=name");
+    const objectResult = await executeSlashCommands(objectParsed.commands, ctx);
+    expect(objectResult.isError).toBe(false);
+    expect(objectResult.pipe).toBe("Linus");
+    expect(local.get("profile")).toBe("{\"name\":\"Linus\"}");
+
+    const arrayParsed = parseSlashCommands("/setchatvar key=ages index=1 as=number 21|/getvar key=ages index=1");
+    const arrayResult = await executeSlashCommands(arrayParsed.commands, ctx);
+    expect(arrayResult.isError).toBe(false);
+    expect(arrayResult.pipe).toBe("21");
+    expect(local.get("ages")).toBe("[null,21]");
+  });
+
+  it("set/getvar index 在容器类型不匹配时显式失败", async () => {
+    const { ctx, local } = createScopedContext();
+    local.set("profile", "{\"name\":\"Linus\"}");
+
+    const setParsed = parseSlashCommands("/setvar key=profile index=0 as=number 1");
+    const setResult = await executeSlashCommands(setParsed.commands, ctx);
+    expect(setResult.isError).toBe(true);
+    expect(setResult.errorMessage).toContain("Local variable");
+    expect(setResult.errorMessage).toContain("JSON array");
+
+    const getParsed = parseSlashCommands("/getchatvar key=profile index=0");
+    const getResult = await executeSlashCommands(getParsed.commands, ctx);
+    expect(getResult.isError).toBe(true);
+    expect(getResult.errorMessage).toContain("Local variable");
+    expect(getResult.errorMessage).toContain("JSON array");
+  });
+
+  it("setvar 兼容保留多命名参数批量写入语义", async () => {
+    const { ctx } = createScopedContext();
+    const parsed = parseSlashCommands("/setvar name=Bob age=30|/getvar age");
+    const result = await executeSlashCommands(parsed.commands, ctx);
+
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("30");
+  });
 });
