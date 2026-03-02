@@ -54,6 +54,7 @@ export interface ApiCallContext {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
+  onSwitchCharacter?: (target: string) => void | Promise<void>;
 }
 
 // ============================================================================

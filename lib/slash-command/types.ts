@@ -15,6 +15,11 @@ export interface SendOptions {
   returnType?: string;
 }
 
+export interface CharacterSummary {
+  id: string;
+  name: string;
+}
+
 // ============================================================================
 //                              解析结果类型
 // ============================================================================
@@ -78,6 +83,9 @@ export interface ExecutionContext {
   editMessage?: (index: number, content: string) => void | Promise<void>;
   deleteMessage?: (index: number) => void | Promise<void>;
   getMessageCount?: () => number;
+  getCurrentCharacter?: () => CharacterSummary | undefined | Promise<CharacterSummary | undefined>;
+  listCharacters?: () => CharacterSummary[] | Promise<CharacterSummary[]>;
+  switchCharacter?: (target: string) => void | Promise<void>;
 
   // 扩展操作 - World Book
   getWorldBookEntry?: (id: string) => WorldBookEntryData | undefined | Promise<WorldBookEntryData | undefined>;

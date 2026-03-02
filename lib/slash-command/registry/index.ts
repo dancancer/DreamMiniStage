@@ -12,6 +12,7 @@ import type { CommandHandler } from "./types";
 import * as CoreHandlers from "./handlers/core";
 import * as VariableHandlers from "./handlers/variables";
 import * as MessageHandlers from "./handlers/messages";
+import * as CharacterHandlers from "./handlers/characters";
 import * as GenerationHandlers from "./handlers/generation";
 import * as OperatorHandlers from "./handlers/operators";
 import * as JSSlashRunnerHandlers from "./handlers/js-slash-runner";
@@ -32,6 +33,7 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["continue", CoreHandlers.handleContinue],
   ["cont", CoreHandlers.handleContinue],
   ["swipe", CoreHandlers.handleSwipe],
+  ["comment", CoreHandlers.handleSys],
 
   // ─── 工具命令 ───
   ["echo", CoreHandlers.handleEcho],
@@ -77,6 +79,10 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["mes", MessageHandlers.handleMessages],
   ["messagecount", MessageHandlers.handleMessageCount],
   ["mescount", MessageHandlers.handleMessageCount],
+  ["char", CharacterHandlers.handleCharacter],
+  ["character", CharacterHandlers.handleCharacter],
+  ["char-find", CharacterHandlers.handleCharacterFind],
+  ["findchar", CharacterHandlers.handleCharacterFind],
 
   // ─── World Book 命令 ───
   ["getentry", GenerationHandlers.handleGetEntry],

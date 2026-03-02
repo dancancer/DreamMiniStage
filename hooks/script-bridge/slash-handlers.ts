@@ -21,11 +21,13 @@ import type {
   PresetInfo,
   AudioChannelType,
   AudioChannelSnapshot,
+  CharacterSummary,
 } from "@/lib/slash-command/types";
 import { executeSlashCommandScript } from "@/lib/slash-command/executor";
 import { getAudioManager } from "@/lib/audio/store";
 import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
 import { PresetOperations } from "@/lib/data/roleplay/preset-operation";
+import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import type { WorldBookEntry } from "@/lib/models/world-book-model";
 
 // ============================================================================
@@ -104,6 +106,7 @@ function adaptContext(ctx: ApiCallContext): ExecutionContext {
   const onImpersonate = ctx.onImpersonate;
   const onContinue = ctx.onContinue;
   const onSwipe = ctx.onSwipe;
+  const onSwitchCharacter = ctx.onSwitchCharacter;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // WorldBook 扩展操作
@@ -254,6 +257,28 @@ function adaptContext(ctx: ApiCallContext): ExecutionContext {
     };
   };
 
+  const toCharacterSummary = (
+    record: {
+      id: string;
+      data?: { name?: string };
+    },
+  ): CharacterSummary => ({
+    id: record.id,
+    name: record.data?.name?.trim() || record.id,
+  });
+
+  const getCurrentCharacter = async (): Promise<CharacterSummary | undefined> => {
+    if (!ctx.characterId) return undefined;
+    const record = await LocalCharacterRecordOperations.getCharacterById(ctx.characterId);
+    if (!record) return undefined;
+    return toCharacterSummary(record);
+  };
+
+  const listCharacters = async (): Promise<CharacterSummary[]> => {
+    const records = await LocalCharacterRecordOperations.getAllCharacters();
+    return records.map(toCharacterSummary);
+  };
+
   return {
     characterId: ctx.characterId,
     messages: ctx.messages,
@@ -264,6 +289,7 @@ function adaptContext(ctx: ApiCallContext): ExecutionContext {
     onImpersonate,
     onContinue,
     onSwipe,
+    switchCharacter: onSwitchCharacter,
     getVariable: getLocalVariable,
     setVariable: setLocalVariable,
     deleteVariable: deleteLocalVariable,
@@ -313,6 +339,9 @@ function adaptContext(ctx: ApiCallContext): ExecutionContext {
     replaceAudioListByType,
     appendAudioListByType,
     getAudioStateByType,
+    // ─── Character 扩展 ───
+    getCurrentCharacter,
+    listCharacters,
   };
 }
 

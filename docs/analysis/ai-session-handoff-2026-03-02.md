@@ -213,6 +213,26 @@
 - 相关测试：
   - `lib/slash-command/__tests__/p2-message-command-aliases.test.ts`
 
+### 2.16 Slash 命令覆盖补齐（P2 第十一批：角色侧最小命令集 + comment）
+
+- 已补齐角色侧最小高频命令与消息注释命令：
+  - 角色：`char`、`character`、`char-find`、`findchar`
+  - 消息：`comment`（复用系统消息通道）
+- 行为约定（当前实现）：
+  - `char` 无参数返回当前角色摘要（`{ id, name }`），有参数时尝试切换角色。
+  - 当前宿主若未注入 `switchCharacter` 回调，`char` 切换路径显式报错（fail-fast）。
+  - `char-find/findchar` 基于角色 `name/id` 做大小写无关匹配并返回数组结果。
+  - Script Bridge `slash` 适配层已补齐角色查询能力（`getCurrentCharacter/listCharacters`）。
+- 相关实现：
+  - `lib/slash-command/registry/handlers/characters.ts`
+  - `lib/slash-command/registry/index.ts`
+  - `lib/slash-command/types.ts`
+  - `hooks/script-bridge/slash-handlers.ts`
+  - `hooks/script-bridge/types.ts`
+  - `hooks/script-bridge/capability-matrix.ts`
+- 相关测试：
+  - `lib/slash-command/__tests__/p2-character-command-gaps.test.ts`
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -232,6 +252,10 @@
   - 新增 `sin/cos/log/abs/sqrt/round/match` 命令处理器
 - `lib/slash-command/registry/handlers/messages.ts`
   - 收敛消息索引解析，并新增 `messages/mes` 快照输出
+- `lib/slash-command/registry/handlers/characters.ts`
+  - 新增 `char/character/char-find/findchar` 最小角色命令集
+- `hooks/script-bridge/slash-handlers.ts`
+  - 补齐角色摘要查询适配（当前角色 + 全量角色列表）
 
 ### 3.2 测试
 
@@ -254,6 +278,8 @@
   - 补充单参数数学、`/match` 与 fail-fast 异常分支回归
 - `lib/slash-command/__tests__/p2-message-command-aliases.test.ts`
   - 覆盖消息侧别名（`setmessage/setmes/edit/del/messages/mes`）及核心别名（`narrator/imp`）
+- `lib/slash-command/__tests__/p2-character-command-gaps.test.ts`
+  - 覆盖 `comment`、`char/character`、`char-find/findchar` 与切换缺失回调 fail-fast 分支
 
 ### 3.3 文档
 
@@ -286,6 +312,7 @@
 - `pnpm vitest run lib/slash-command/__tests__/p2-variable-scope.test.ts lib/slash-command/__tests__/p2-operators.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-variable-scope.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts lib/slash-command/__tests__/p2-operators.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-message-command-aliases.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`
+- `pnpm vitest run lib/slash-command/__tests__/p2-character-command-gaps.test.ts lib/slash-command/__tests__/p2-message-command-aliases.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`
 
 结果：全部通过。
 
@@ -322,13 +349,14 @@
 - 本轮新增变量追加语义：`addvar/addglobalvar` 的 `index` 路径内累加/追加。
 - 本轮新增 JS-Slash-Runner 音频别名：`audioplaypause`。
 - 本轮新增消息侧高频别名/列表：`setmessage/setmes/edit/del/messages/mes`，以及核心别名 `narrator/imp`。
+- 本轮新增角色侧最小命令：`char/character/char-find/findchar`，并补 `comment`。
 - 脚本采样（SillyTavern + JS-Slash-Runner + MagVarUpdate 文档/示例，忽略 dist 与依赖目录）中消息侧仍有频次缺口：
   - `/messages`：9 次
   - `/comment`：6 次
   - `/edit`：5 次（已补齐）
-  - `/character`：2 次、`/char-find`：1 次
+  - `/character`：2 次（已补最小路径）、`/char-find`：1 次（已补）
 - 下一批建议优先（按插件脚本采样）：
-  - 优先补 `comment` 以及角色检索/切换最小子集（`char/character/char-find` 的可用路径）
+  - 打通 `char/character` 真正切换路径（宿主注入 `switchCharacter` 回调并补集成回归）
   - 并行评估 MVU `parseCommandValue` 的 mathjs/YAML 差距并确定是否引入外部依赖
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
@@ -365,9 +393,10 @@ pnpm vitest run \
   lib/slash-command/__tests__/js-slash-runner-audio.test.ts \
   lib/slash-command/__tests__/p2-operators.test.ts \
   lib/slash-command/__tests__/p2-message-command-aliases.test.ts \
+  lib/slash-command/__tests__/p2-character-command-gaps.test.ts \
   hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts \
   hooks/script-bridge/__tests__/api-surface-contract.test.ts \
   hooks/script-bridge/__tests__/variable-handlers.test.ts
 ```
 
-然后优先推进 `comment` + 角色检索/切换最小命令集（`char/character/char-find`），并并行评估 MVU `parseCommandValue` 在 mathjs/YAML 场景的语义差距；继续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。
+然后优先打通 `char/character` 的宿主切换回调链路（当前仅查询路径可用），并并行评估 MVU `parseCommandValue` 在 mathjs/YAML 场景的语义差距；继续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。
