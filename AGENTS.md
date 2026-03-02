@@ -35,6 +35,12 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 - ESLint rules: 2-space indentation, double quotes, semicolons required, trailing commas on multi-line, spaced object braces, single blank line separation, newline at EOF.
 - Components PascalCase in `components/`, hooks prefixed with `use`, utilities camelCase; prefer function components and absolute imports via `@/`.
 
+## Compatibility Policy (Strict)
+- This repository is a greenfield project: do **not** add backward-compatibility branches for legacy code/data/syntax.
+- If you encounter existing compatibility code (fallback paths, legacy adapters, silent compatibility shims), remove it and converge to a single explicit path.
+- Prefer fail-fast errors over silent fallback when unsupported/legacy inputs are used.
+- Any exception to this policy requires explicit user approval in the current session before implementation.
+
 ## UI Composition & Styling
 ### Radix UI Composition (Shadcn)
 - Always compose UI from existing primitives in `components/ui` (import via `@/components/ui/...`); do not fork or reimplement modals, dropdowns, dialogs, etc.

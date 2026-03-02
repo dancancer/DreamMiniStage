@@ -181,12 +181,12 @@ describe("P2 scoped variable commands", () => {
     expect(getResult.errorMessage).toContain("JSON array");
   });
 
-  it("setvar 兼容保留多命名参数批量写入语义", async () => {
+  it("setvar 对旧式多 named-args 批量写入做 fail-fast", async () => {
     const { ctx } = createScopedContext();
-    const parsed = parseSlashCommands("/setvar name=Bob age=30|/getvar age");
+    const parsed = parseSlashCommands("/setvar name=Bob age=30");
     const result = await executeSlashCommands(parsed.commands, ctx);
 
-    expect(result.isError).toBe(false);
-    expect(result.pipe).toBe("30");
+    expect(result.isError).toBe(true);
+    expect(result.errorMessage).toContain("does not support named argument 'age'");
   });
 });

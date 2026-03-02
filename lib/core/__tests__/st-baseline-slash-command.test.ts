@@ -89,11 +89,18 @@ describe("Slash 命令系统基线测试", () => {
 
     it("应正确解析命名参数（key=value）", async () => {
       const ctx = createMinimalContext();
-      await execSlash("/setvar name=Bob age=30", ctx);
-      const name = await execSlash("/getvar name", ctx);
-      const age = await execSlash("/getvar age", ctx);
+      await execSlash("/setvar key=name Bob", ctx);
+      await execSlash("/setvar key=age 30", ctx);
+      const name = await execSlash("/getvar key=name", ctx);
+      const age = await execSlash("/getvar key=age", ctx);
       expect(name.pipe).toBe("Bob");
       expect(age.pipe).toBe("30");
+    });
+
+    it("应对旧式多命名参数赋值报错", async () => {
+      const ctx = createMinimalContext();
+      const result = await execSlash("/setvar name=Bob age=30", ctx);
+      expect(result.isError).toBe(true);
     });
 
     it("应正确处理双引号包裹的参数", async () => {

@@ -15,12 +15,7 @@ import type { ExecutionContext, VariableScope } from "@/lib/slash-command/types"
 
 /** /setvar key=value 或 /setvar key value - 设置变量 */
 export const handleSetVar: CommandHandler = async (args, namedArgs, ctx, pipe) => {
-  if (shouldUseLegacyNamedSet(args, namedArgs, pipe)) {
-    for (const [key, value] of Object.entries(namedArgs)) {
-      scopedSet(ctx, "local", key, value);
-    }
-    return pipe;
-  }
+  assertSupportedNamedArgs(namedArgs, ["key", "name", "value", "index", "as"], "setvar");
 
   const key = resolveVariableKey(args, namedArgs);
   if (!key) return pipe;
@@ -40,6 +35,8 @@ export const handleSetVar: CommandHandler = async (args, namedArgs, ctx, pipe) =
 
 /** /getvar key - 获取变量 */
 export const handleGetVar: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  assertSupportedNamedArgs(namedArgs, ["key", "name", "index"], "getvar");
+
   const key = resolveVariableKey(args, namedArgs);
   if (!key) return pipe;
 
@@ -80,6 +77,8 @@ export const handleDumpVar: CommandHandler = async (_args, _namedArgs, ctx, pipe
 
 /** /setglobalvar key value - 设置全局变量 */
 export const handleSetGlobalVar: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  assertSupportedNamedArgs(namedArgs, ["key", "name", "value", "index", "as"], "setglobalvar");
+
   const key = resolveVariableKey(args, namedArgs);
   if (!key) return pipe;
 
@@ -98,6 +97,8 @@ export const handleSetGlobalVar: CommandHandler = async (args, namedArgs, ctx, p
 
 /** /getglobalvar key - 获取全局变量 */
 export const handleGetGlobalVar: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  assertSupportedNamedArgs(namedArgs, ["key", "name", "index"], "getglobalvar");
+
   const key = resolveVariableKey(args, namedArgs);
   if (!key) return pipe;
 
@@ -244,28 +245,16 @@ function resolveVariableIndex(namedArgs: Record<string, string>): string | undef
   return namedArgs.index;
 }
 
-function shouldUseLegacyNamedSet(
-  args: string[],
+function assertSupportedNamedArgs(
   namedArgs: Record<string, string>,
-  pipe: string,
-): boolean {
-  if (Object.keys(namedArgs).length === 0) {
-    return false;
+  allowedKeys: string[],
+  commandName: string,
+): void {
+  const allowed = new Set(allowedKeys);
+  const unsupported = Object.keys(namedArgs).find((key) => !allowed.has(key));
+  if (unsupported) {
+    throw new Error(`/${commandName} does not support named argument '${unsupported}'`);
   }
-
-  if (namedArgs.key !== undefined || namedArgs.index !== undefined || namedArgs.as !== undefined) {
-    return false;
-  }
-
-  if (namedArgs.name !== undefined) {
-    const hasSingleNamedArg = Object.keys(namedArgs).length === 1;
-    const hasValueSource = args.length > 0 || pipe !== "";
-    if (hasSingleNamedArg && hasValueSource) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 function setIndexedScopedVariable(
