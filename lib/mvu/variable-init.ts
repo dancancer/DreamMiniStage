@@ -140,40 +140,50 @@ export function isInitVarEntry(entry: WorldBookEntry): boolean {
   return comment.includes("[initvar]");
 }
 
-/** 从世界书条目提取初始变量 */
-export function extractInitVarFromEntry(entry: WorldBookEntry): StatData | null {
-  if (!isInitVarEntry(entry)) return null;
+/** 从世界书条目提取初始变量，同时收集错误 */
+export function extractInitVarFromEntry(
+  entry: WorldBookEntry,
+): { data: StatData | null; error?: string } {
+  if (!isInitVarEntry(entry)) return { data: null };
 
   try {
     const content = extractCodeBlock(entry.content);
     const parsed = parseMultiFormat(content);
 
     if (!isPlainObject(parsed)) {
-      console.warn(`[MVU] InitVar 条目 '${entry.comment}' 解析结果不是对象`);
-      return null;
+      const error = `InitVar 条目 '${entry.comment}' 解析结果不是对象`;
+      console.warn(`[MVU] ${error}`);
+      return { data: null, error };
     }
 
-    return parsed as StatData;
+    return { data: parsed as StatData };
   } catch (error) {
-    console.error(`[MVU] 解析 InitVar 条目 '${entry.comment}' 失败:`, error);
-    return null;
+    const errorMsg = `解析 InitVar 条目 '${entry.comment}' 失败: ${error instanceof Error ? error.message : String(error)}`;
+    console.error(`[MVU] ${errorMsg}`);
+    return { data: null, error: errorMsg };
   }
 }
 
-/** 从世界书列表提取所有初始变量 */
-export function extractInitVarFromWorldBook(entries: WorldBookEntry[]): StatData {
+/** 从世界书列表提取所有初始变量，收集错误 */
+export function extractInitVarFromWorldBook(
+  entries: WorldBookEntry[],
+): { data: StatData; errors: string[] } {
   let result: StatData = {};
+  const errors: string[] = [];
 
   for (const entry of entries) {
     if (!entry.enabled && entry.enabled !== undefined) continue;
 
-    const initVar = extractInitVarFromEntry(entry);
+    const { data: initVar, error } = extractInitVarFromEntry(entry);
+    if (error) {
+      errors.push(error);
+    }
     if (initVar) {
       result = deepMerge(result, initVar);
     }
   }
 
-  return result;
+  return { data: result, errors };
 }
 
 // ============================================================================
@@ -256,8 +266,9 @@ export function loadInitVarFromWorldBooks(
       continue;
     }
 
-    // 提取初始变量
-    const initVar = extractInitVarFromWorldBook(entries);
+    // 提取初始变量（收集解析错误）
+    const { data: initVar, errors: extractErrors } = extractInitVarFromWorldBook(entries);
+    errors.push(...extractErrors);
 
     if (Object.keys(initVar).length > 0) {
       // 增量合并到 stat_data
@@ -304,16 +315,76 @@ export function applyGreetingOverride(
   return true;
 }
 
+// ============================================================================
+//                              简化 API（SillyTavern 兼容）
+// ============================================================================
+
+/** 简化的初始化配置（SillyTavern 风格） */
+export interface SimpleInitConfig {
+  worldBooks: WorldBookEntry[][];
+  worldBookNames: string[];
+  greeting?: string;
+  existingData?: MvuData | null;
+  skipInitialized?: boolean;
+  forceReinit?: boolean;
+}
+
 /**
  * 完整的变量初始化流程
+ *
+ * 支持两种调用方式：
+ * 1. 简化 API（SillyTavern 兼容）：initializeVariables({ worldBooks, worldBookNames })
+ * 2. 完整 API：initializeVariables(existingData, worldBooks, worldBookNames, greeting, config)
  */
+export function initializeVariables(config: SimpleInitConfig): InitResult;
 export function initializeVariables(
   existingData: MvuData | null,
   worldBooks: WorldBookEntry[][],
   worldBookNames: string[],
   greeting?: string,
+  config?: InitConfig,
+): InitResult;
+export function initializeVariables(
+  existingDataOrConfig: MvuData | null | SimpleInitConfig,
+  worldBooks?: WorldBookEntry[][],
+  worldBookNames?: string[],
+  greeting?: string,
   config: InitConfig = {},
 ): InitResult {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 参数规范化：支持简化 API
+  // ═══════════════════════════════════════════════════════════════════════════
+  let existingData: MvuData | null;
+  let actualWorldBooks: WorldBookEntry[][];
+  let actualWorldBookNames: string[];
+  let actualGreeting: string | undefined;
+  let actualConfig: InitConfig;
+
+  if (
+    existingDataOrConfig !== null &&
+    typeof existingDataOrConfig === "object" &&
+    "worldBooks" in existingDataOrConfig &&
+    "worldBookNames" in existingDataOrConfig
+  ) {
+    // 简化 API：initializeVariables({ worldBooks, worldBookNames, ... })
+    const simpleConfig = existingDataOrConfig as SimpleInitConfig;
+    existingData = simpleConfig.existingData ?? null;
+    actualWorldBooks = simpleConfig.worldBooks;
+    actualWorldBookNames = simpleConfig.worldBookNames;
+    actualGreeting = simpleConfig.greeting;
+    actualConfig = {
+      skipInitialized: simpleConfig.skipInitialized,
+      forceReinit: simpleConfig.forceReinit,
+    };
+  } else {
+    // 完整 API：initializeVariables(existingData, worldBooks, worldBookNames, ...)
+    existingData = existingDataOrConfig as MvuData | null;
+    actualWorldBooks = worldBooks!;
+    actualWorldBookNames = worldBookNames!;
+    actualGreeting = greeting;
+    actualConfig = config;
+  }
+
   const errors: string[] = [];
   const loadedSources: string[] = [];
 
@@ -323,33 +394,33 @@ export function initializeVariables(
     : createEmptyMvuData();
 
   // 强制重新初始化时清空
-  if (config.forceReinit) {
+  if (actualConfig.forceReinit) {
     mvuData.stat_data = {};
     mvuData.initialized_lorebooks = {};
   }
 
   // 检查开场白是否有 <initvar> 覆盖
-  const hasGreetingOverride = greeting && hasInitVarBlock(greeting);
+  const hasGreetingOverride = actualGreeting && hasInitVarBlock(actualGreeting);
 
   // 加载世界书变量（如果没有开场白覆盖）
   if (!hasGreetingOverride) {
-    const result = loadInitVarFromWorldBooks(mvuData, worldBooks, worldBookNames, config);
+    const result = loadInitVarFromWorldBooks(mvuData, actualWorldBooks, actualWorldBookNames, actualConfig);
     errors.push(...result.errors);
     loadedSources.push(...result.loadedSources);
   }
 
   // 应用开场白覆盖
-  if (hasGreetingOverride && greeting) {
-    const primaryWorldBook = worldBookNames[0];
-    applyGreetingOverride(mvuData, greeting, primaryWorldBook ? [primaryWorldBook] : undefined);
+  if (hasGreetingOverride && actualGreeting) {
+    const primaryWorldBook = actualWorldBookNames[0];
+    applyGreetingOverride(mvuData, actualGreeting, primaryWorldBook ? [primaryWorldBook] : undefined);
     loadedSources.push("greeting:<initvar>");
 
     // 覆盖后需要重新加载其他世界书（非主角色卡世界书）
-    if (worldBooks.length > 1) {
-      const otherBooks = worldBooks.slice(1);
-      const otherNames = worldBookNames.slice(1);
+    if (actualWorldBooks.length > 1) {
+      const otherBooks = actualWorldBooks.slice(1);
+      const otherNames = actualWorldBookNames.slice(1);
       const result = loadInitVarFromWorldBooks(mvuData, otherBooks, otherNames, {
-        ...config,
+        ...actualConfig,
         skipInitialized: false,
       });
       errors.push(...result.errors);
@@ -385,7 +456,7 @@ export function initializeVariables(
   cleanupMeta(mvuData.stat_data);
 
   return {
-    success: errors.length === 0,
+    success: true,  // 即使有解析错误也返回 true（错误已被收集到 errors 数组）
     updated: loadedSources.length > 0,
     variables: mvuData,
     errors,

@@ -195,7 +195,7 @@ describe("回归测试", () => {
     });
   });
 
-  describe("L3.3 向后兼容性", () => {
+  describe("L3.3 宏格式行为", () => {
     const evaluator = new STMacroEvaluator();
 
     it("应该支持大小写不敏感的宏名", () => {
@@ -206,11 +206,9 @@ describe("回归测试", () => {
       expect(evaluator.evaluate("{{CHAR}}", env)).toBe("Bob");
     });
 
-    it("旧版占位符应在导入时转换（运行时不再处理）", () => {
+    it("旧版尖括号占位符在运行时应保持原样", () => {
       const env: MacroEnv = { user: "Alice", char: "Bob" };
-      // 旧版 <USER> 和 <BOT> 格式现在在导入时转换
-      // 参见 lib/adapters/import/preset-import.ts: convertLegacyPlaceholders()
-      // 运行时如果遇到这些格式，应保持原样（不处理）
+      // 运行时只处理 {{...}} 宏，不处理旧版尖括号占位符
       expect(evaluator.evaluate("<USER>", env)).toBe("<USER>");
       expect(evaluator.evaluate("<BOT>", env)).toBe("<BOT>");
 

@@ -1,3 +1,10 @@
+/**
+ * @input  lib/data/roleplay/world-book-operation, lib/models/world-book-model
+ * @output GlobalWorldBook, GlobalWorldBookResult, ListGlobalWorldBooksResult, getNextGlobalId, saveAsGlobalWorldBook, listGlobalWorldBooks, getGlobalWorldBook, importFromGlobalWorldBook, deleteGlobalWorldBook
+ * @pos    全局世界书 - 全局世界书的 CRUD 与导入导出
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { WorldBookOperations, WorldBookSettings } from "@/lib/data/roleplay/world-book-operation";
 import { WorldBookEntry } from "@/lib/models/world-book-model";
 

@@ -1,4 +1,9 @@
 /**
+ * @input  @/components, @/utils
+ * @output MessageItem, Message, MemoizedMessageItem
+ * @pos    角色对话交互组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         Message Item Component                             ║
  * ║                                                                            ║
@@ -31,6 +36,7 @@ export interface Message {
   content: string;
   timestamp?: string;
   isUser?: boolean;
+  swipe?: { activeIndex: number; total: number };
 }
 
 interface Character {

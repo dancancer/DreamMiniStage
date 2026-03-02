@@ -1,4 +1,9 @@
 /**
+ * @input  React, UI 基础组件
+ * @output LoadingSpinner
+ * @pos    正则脚本编辑器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                      Loading Spinner Component                           ║
  * ║                                                                           ║

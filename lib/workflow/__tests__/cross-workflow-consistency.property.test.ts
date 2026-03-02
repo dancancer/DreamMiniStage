@@ -83,7 +83,7 @@ describe("Property 11: 跨工作流一致性", () => {
     );
 
     // 核心输出字段必须一致
-    const coreOutputFields = ["chatHistoryMessages", "chatHistoryText", "conversationContext", "userInput"];
+    const coreOutputFields = ["chatHistoryMessages", "conversationContext", "userInput"];
     
     for (const field of coreOutputFields) {
       expect(dialogueHistoryPre.outputFields).toContain(field);
@@ -137,15 +137,19 @@ describe("Property 11: 跨工作流一致性", () => {
 
     expect(dialoguePreset.outputFields).toContain("messages");
     expect(ragPreset.outputFields).toContain("messages");
+    expect(dialoguePreset.outputFields).not.toContain("systemMessage");
+    expect(dialoguePreset.outputFields).not.toContain("userMessage");
+    expect(ragPreset.outputFields).not.toContain("systemMessage");
+    expect(ragPreset.outputFields).not.toContain("userMessage");
   });
 
   /**
    * **Feature: message-assembly-remediation, Property 11: 跨工作流一致性**
    * **Validates: Requirements 6.1**
    * 
-   * 验证 ContextNode 接收 chatHistoryText 的配置在两个工作流中一致
+   * 验证 ContextNode 在两个工作流中都保持 messages-only 中转
    */
-  it("ContextNode 应该在两个工作流中都接收 chatHistoryText", () => {
+  it("ContextNode 应该在两个工作流中都只处理中转 messages", () => {
     const dialogueWorkflow = new DialogueWorkflow();
     const ragWorkflow = new CorrectRAGWorkflow();
 
@@ -159,8 +163,10 @@ describe("Property 11: 跨工作流一致性", () => {
       (n: WorkflowNodeConfig) => n.name === "context",
     );
 
-    expect(dialogueContext.inputFields).toContain("chatHistoryText");
-    expect(ragContext.inputFields).toContain("chatHistoryText");
+    expect(dialogueContext.inputFields).toEqual(["messages"]);
+    expect(dialogueContext.outputFields).toEqual(["messages"]);
+    expect(ragContext.inputFields).toEqual(["messages"]);
+    expect(ragContext.outputFields).toEqual(["messages"]);
   });
 
   /**
@@ -185,6 +191,23 @@ describe("Property 11: 跨工作流一致性", () => {
 
     expect(dialogueLLM.inputFields).toContain("messages");
     expect(ragLLM.inputFields).toContain("messages");
+  });
+
+  /**
+   * RAG 记忆检索节点应采用 messages-only 注入链路
+   */
+  it("RAG 的 MemoryRetrievalNode 不应依赖 systemMessage 字符串输入", () => {
+    const ragWorkflow = new CorrectRAGWorkflow();
+    const ragConfig = (ragWorkflow as unknown).config;
+
+    const memoryRetrieval = ragConfig.nodes.find(
+      (n: WorkflowNodeConfig) => n.name === "memoryRetrieval",
+    );
+
+    expect(memoryRetrieval.inputFields).toContain("messages");
+    expect(memoryRetrieval.inputFields).not.toContain("systemMessage");
+    expect(memoryRetrieval.outputFields).toContain("messages");
+    expect(memoryRetrieval.outputFields).not.toContain("systemMessage");
   });
 
   /**
@@ -308,7 +331,6 @@ describe("Property 11: 跨工作流一致性", () => {
       fc.property(
         fc.constantFrom(
           "chatHistoryMessages",
-          "chatHistoryText",
           "conversationContext",
           "userInput",
         ),

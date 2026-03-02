@@ -1,4 +1,11 @@
 /**
+ * @input  @/app, @/hooks, @/components
+ * @output MobileBottomNav
+ * @pos    移动端底部导航栏组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
+/**
  * Mobile Bottom Navigation Component
  * 
  * This component provides a mobile-specific bottom navigation bar with the following features:

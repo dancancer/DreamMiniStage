@@ -1,4 +1,9 @@
 /**
+ * @input  react
+ * @output UiLayoutProvider, useUiLayout, PanelId, parsePanelId
+ * @pos    全局 UI 状态层 - 统一管理左侧导航与右侧面板的开关状态
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔════════════════════════════════════════════════════════════════════╗
  * ║                             UI Layout 状态                          ║
  * ║  左侧导航与右侧抽屉的统一状态容器，减少分支与漂移。                      ║
@@ -19,6 +24,7 @@ const PANEL_IDS = [
   "tagColors",
   "advancedSettings",
   "data",
+  "settingsHub",
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

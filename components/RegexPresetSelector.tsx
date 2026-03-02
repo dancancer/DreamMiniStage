@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/lib, @/components
+ * @output RegexPresetSelector
+ * @pos    正则预设选择器
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                    RegexPresetSelector Component                         ║
  * ║                                                                          ║
@@ -226,7 +231,7 @@ export default function RegexPresetSelector({
                 value={newPresetName}
                 onChange={(e) => setNewPresetName(e.target.value)}
                 placeholder={t("regexPreset.namePlaceholder") || "Enter preset name..."}
-                className="w-full px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
+                className="w-full px-3 py-2 bg-muted-surface border border-border/60 rounded-md text-cream 
                   focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                   placeholder-ink-soft/70 hover:border-border text-sm"
               />
@@ -240,7 +245,7 @@ export default function RegexPresetSelector({
                 value={newPresetDescription}
                 onChange={(e) => setNewPresetDescription(e.target.value)}
                 placeholder={t("regexPreset.descriptionPlaceholder") || "Enter description..."}
-                className="w-full h-20 px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
+                className="w-full h-20 px-3 py-2 bg-muted-surface border border-border/60 rounded-md text-cream 
                   focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                   placeholder-ink-soft/70 hover:border-border text-sm resize-none"
               />

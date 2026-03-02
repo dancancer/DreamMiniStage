@@ -1,3 +1,10 @@
+/**
+ * @input  app/i18n/index
+ * @output languageFontMap, languageSerifFontMap, languageTitleFontMap, getLanguageFont, getLanguageSerifFont, getLanguageTitleFont, fontClass, serifFontClass, titleFontClass
+ * @pos    字体配置 - 按语言映射字体类名
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { Language } from "./index";
 
 export const languageFontMap: Record<Language, string> = {

@@ -1,9 +1,16 @@
-import { 
-  CHARACTERS_RECORD_FILE, 
-  deleteRecord, 
-  getAllRecords, 
-  getRecordByKey, 
-  putRecord, 
+/**
+ * @input  lib/data/local-storage, lib/models/rawdata-model
+ * @output LocalCharacterRecordOperations, CharacterRecord
+ * @pos    角色记录数据操作层,提供角色卡的 CRUD 与 IndexedDB 交互
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
+import {
+  CHARACTERS_RECORD_FILE,
+  deleteRecord,
+  getAllRecords,
+  getRecordByKey,
+  putRecord,
 } from "@/lib/data/local-storage";
 import { RawCharacterData } from "@/lib/models/rawdata-model";
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";

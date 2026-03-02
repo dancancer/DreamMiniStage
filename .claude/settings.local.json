@@ -22,7 +22,15 @@
       "Bash(awk:*)",
       "Bash(pnpm add:*)",
       "Bash(tee:*)",
-      "Bash(pnpm typecheck:*)"
+      "Bash(pnpm typecheck:*)",
+      "Bash(codex exec --help:*)",
+      "Bash(codex review --help:*)",
+      "Bash(codex --help:*)",
+      "Bash(timeout 60 pnpm test:*)",
+      "Bash(timeout 60 pnpm vitest run:*)",
+      "Bash(git config:*)",
+      "Bash(done)",
+      "Bash(node /Users/xupeng/mycode/DreamMiniStage/scripts/add-file-headers.mjs:*)"
     ],
     "deny": [],
     "ask": []

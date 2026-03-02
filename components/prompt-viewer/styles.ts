@@ -1,4 +1,9 @@
 /**
+ * @input  @/lib
+ * @output BREAKPOINTS, THEME_COLORS, COMPONENT_STYLES, getResponsiveClasses, getButtonResponsiveStyles, getModalResponsiveStyles, ANIMATIONS, getButtonStateStyles, getContentTextStyles, isDarkTheme, getThemeAwareStyles, getOptimizedScrollbarStyles, getHardwareAcceleratedStyles, DEFAULT_STYLES
+ * @pos    提示词查看器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                    提示词查看器样式配置                                    ║
  * ║                                                                           ║
@@ -164,8 +169,6 @@ export const COMPONENT_STYLES = {
     image: cn(
       "w-full max-h-60 object-cover rounded-md",
       "border border-border",
-      "transition-transform duration-200",
-      "hover:scale-105",
     ),
   },
 } as const;
@@ -230,7 +233,6 @@ export const ANIMATIONS = {
   
   // 悬停效果
   hoverLift: "hover:-translate-y-0.5 duration-200",
-  hoverScale: "hover:scale-105 duration-150",
   
   // 颜色过渡
   colorTransition: "transition-colors duration-200",

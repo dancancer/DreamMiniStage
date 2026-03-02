@@ -13,7 +13,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-import { STPromptManager } from "@/lib/core/st-prompt-manager";
+import { STPromptManager } from "@/lib/core/prompt";
 import { STMacroEvaluator } from "@/lib/core/st-macro-evaluator";
 import { WorldBookManager } from "@/lib/core/world-book";
 import type { WorldBookEntry } from "@/lib/models/world-book-model";
@@ -27,6 +27,7 @@ import type { STOpenAIPreset, MacroEnv, ChatMessage } from "@/lib/core/st-preset
 const ASSET_DIR = path.join(process.cwd(), "test-baseline-assets");
 const CARD_PATH = path.join(ASSET_DIR, "character-card", "Sgw3.card.json");
 const WORLD_BOOK_PATH = path.join(ASSET_DIR, "worldbook", "服装随机化.json");
+const RECORDED_MESSAGE_PATH = path.join(process.cwd(), "message.json");
 
 const PRESET_CASES = [
   { name: "明月秋青 v3.94", filename: "明月秋青v3.94.json" },
@@ -34,6 +35,7 @@ const PRESET_CASES = [
 ] as const;
 
 const USER_INPUT = "推进剧情";
+const RECORDED_USER_INPUT = "被压抑的创作欲在深夜出租屋中爆发";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    工具方法
@@ -123,6 +125,7 @@ function buildWorldInfoProject(
 function buildEnv(
   card: any,
   worldInfo: { wiBefore: string; wiAfter: string },
+  userInput: string = USER_INPUT,
 ): MacroEnv {
   const data = card.data ?? card;
   return {
@@ -137,8 +140,8 @@ function buildEnv(
     wiAfter: worldInfo.wiAfter,
     chatHistory: "",
     chatHistoryMessages: [],
-    userInput: USER_INPUT,
-    lastUserMessage: USER_INPUT,
+    userInput,
+    lastUserMessage: userInput,
     number: 200,
     language: "zh",
   };
@@ -251,5 +254,29 @@ describe("SillyTavern 基线拼装对比", () => {
 
     // 便于快速理解差异来源
     expect(name).toBe(name); // 防止 Vitest 折叠空用例
+  });
+
+  it("录制首条请求与基线对比：夏瑾 + Sgw3 + 深夜出租屋输入", () => {
+    const presetPath = path.join(ASSET_DIR, "preset", "夏瑾 Pro - Beta 0.70.json");
+    const openaiPreset = readJson<STOpenAIPreset>(presetPath);
+    const recorded = readJson<{ messages: ChatMessage[] }>(RECORDED_MESSAGE_PATH);
+
+    const baselineWorldInfo = buildWorldInfoBaseline(
+      worldBookEntries,
+      RECORDED_USER_INPUT,
+      chatHistory,
+    );
+    const baselineEnv = buildEnv(characterCard, baselineWorldInfo, RECORDED_USER_INPUT);
+    const baselineManager = new STPromptManager({ openai: openaiPreset }, new STMacroEvaluator());
+    const baselineMessages = baselineManager.buildMessages(baselineEnv, {
+      userInput: RECORDED_USER_INPUT,
+    });
+
+    const diff = diffMessages(
+      baselineMessages as ChatMessage[],
+      recorded.messages as ChatMessage[],
+    );
+
+    expect(diff).toMatchSnapshot();
   });
 });

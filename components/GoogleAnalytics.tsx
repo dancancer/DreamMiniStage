@@ -1,3 +1,10 @@
+/**
+ * @input  @/utils/google-analytics
+ * @output GoogleAnalytics
+ * @pos    Google Analytics 集成组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 "use client";
 
 import Script from "next/script";

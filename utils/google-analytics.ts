@@ -1,3 +1,10 @@
+/**
+ * @input  (none)
+ * @output initGA, pageview, gtagEvent, trackButtonClick, trackFormSubmit, GA_MEASUREMENT_ID
+ * @pos    埋点工具层 - 封装 Google Analytics 事件追踪与页面访问统计
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 export const GA_MEASUREMENT_ID = "G-KDEPSL9CJG";
 
 declare global {

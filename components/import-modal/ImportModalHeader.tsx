@@ -1,4 +1,9 @@
 /**
+ * @input  @/components
+ * @output ImportModalHeader
+ * @pos    数据导入模态框组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                        Import Modal Header                                ║
  * ║                                                                          ║
@@ -29,14 +34,10 @@ interface ImportModalHeaderProps {
 }
 
 const ICON_MAP = { file: FileText, global: Globe2 };
-const COLOR_MAP: Record<string, { active: string; glow: string }> = {
-  primary: { active: "from-primary-600/90 to-primary-700/90", glow: "shadow-primary-500/20" },
-  blue: { active: "from-blue-600/90 to-blue-700/90", glow: "shadow-blue-500/20" },
-};
 
 export function ImportModalHeader({ title, activeTab, tabs, serifFontClass, onTabChange, onClose }: ImportModalHeaderProps) {
   return (
-    <div className="relative p-3 border-b border-border/40 bg-gradient-to-r from-muted-surface/80 via-deep/60 to-muted-surface/80 backdrop-blur-sm">
+    <div className="relative p-3 border-b border-border/40 bg-muted-surface/80 backdrop-blur-sm">
       <div className="flex justify-between items-center">
         <h2 className={"text-base font-semibold text-cream-soft  "}>
           {title}

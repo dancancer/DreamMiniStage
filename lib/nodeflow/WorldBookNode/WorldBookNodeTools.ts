@@ -7,7 +7,6 @@
  * ║  核心方法：                                                                 ║
  * ║  - modifyMessages: 对 messages[] 进行结构化修改                             ║
  * ║  - replacePlaceholdersInMessages: 扫描并替换占位符                          ║
- * ║  - assemblePromptWithWorldBook: 兼容旧接口（仅用于 UI 展示）                 ║
  * ║                                                                            ║
  * ║  Requirements: 4.2, 4.4                                                    ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
@@ -197,57 +196,6 @@ export class WorldBookNodeTools extends NodeTool {
     } catch (error) {
       console.error("[WorldBookNodeTools] loadWorldBookPlaceholders error:", error);
       return { wiBefore: "", wiAfter: "" };
-    }
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════════════
-     兼容方法：assemblePromptWithWorldBook
-     仅用于 UI 展示和旧接口兼容，不影响最终 LLM 请求
-     ═══════════════════════════════════════════════════════════════════════════ */
-
-  /**
-   * 组装带世界书的提示词（兼容旧接口）
-   * 
-   * 注意：此方法仅用于 UI 展示，不影响最终发送给 LLM 的 messages[]
-   */
-  static async assemblePromptWithWorldBook(
-    characterId: string,
-    baseSystemMessage: string,
-    userMessage: string,
-    currentUserInput: string,
-    _language: "zh" | "en" = "zh",
-    _contextWindow: number = 5,
-    _username?: string,
-    _charName?: string,
-    dialogueKey?: string,
-  ): Promise<{ systemMessage: string; userMessage: string }> {
-    try {
-      const historyKey = dialogueKey || characterId;
-      const placeholders = await this.loadWorldBookPlaceholders(
-        characterId,
-        historyKey,
-        currentUserInput,
-      );
-
-      // 替换占位符
-      let systemMessage = baseSystemMessage
-        .replace(/\{\{worldInfoBefore\}\}/g, placeholders.wiBefore)
-        .replace(/\{\{worldInfoAfter\}\}/g, placeholders.wiAfter)
-        .replace(/\{\{wiBefore\}\}/g, placeholders.wiBefore)
-        .replace(/\{\{wiAfter\}\}/g, placeholders.wiAfter);
-
-      // 处理用户输入
-      let finalUserMessage = userMessage;
-      if (userMessage.includes("{{userInput}}")) {
-        finalUserMessage = userMessage.replace(/\{\{userInput\}\}/g, currentUserInput);
-      } else if (currentUserInput?.trim()) {
-        finalUserMessage = `${currentUserInput}${userMessage}`;
-      }
-
-      return { systemMessage, userMessage: finalUserMessage };
-    } catch (error) {
-      this.handleError(error as Error, "assemblePromptWithWorldBook");
-      return { systemMessage: baseSystemMessage, userMessage };
     }
   }
 }

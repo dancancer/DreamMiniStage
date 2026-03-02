@@ -1,4 +1,9 @@
 /**
+ * @input  (none)
+ * @output Session, SessionWithCharacter, serializeSession, deserializeSession, generateDefaultSessionName, isValidSessionName
+ * @pos    类型定义层 - 会话管理实体与序列化辅助函数
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                        Session Type Definitions                           ║
  * ║  会话管理相关类型：Session 实体、带角色信息的扩展类型                          ║

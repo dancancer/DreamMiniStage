@@ -1,3 +1,10 @@
+/**
+ * @input  @/lib
+ * @output checkbox
+ * @pos    基础 UI 组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 "use client";
 
 import * as React from "react";
@@ -13,9 +20,7 @@ const Checkbox = React.forwardRef<
   <CheckboxPrimitive.Root
     ref={ref}
     className={cn(
-      "peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
-      // Fantasy styles
-      "h-5 w-5 border-border bg-black/20 data-[state=checked]:bg-primary-900/50 data-[state=checked]:border-primary-500 fantasy-input transition-all duration-300",
+      "peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
       className,
     )}
     {...props}
@@ -23,7 +28,7 @@ const Checkbox = React.forwardRef<
     <CheckboxPrimitive.Indicator
       className={cn("flex items-center justify-center text-current")}
     >
-      <Check className="h-3.5 w-3.5 text-primary-400" />
+      <Check className="h-4 w-4" />
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 ));

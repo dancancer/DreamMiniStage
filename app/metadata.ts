@@ -1,3 +1,10 @@
+/**
+ * @input  next
+ * @output homeMetadata
+ * @pos    SEO 配置 - 首页元数据定义
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { Metadata } from "next";
 
 export const homeMetadata: Metadata = {

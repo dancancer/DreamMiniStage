@@ -1,6 +1,11 @@
 /**
+ * @input  (none)
+ * @output MessageType, WorldBookEntry, MessageBridgeData, ScriptContext, ScriptExecutorOptions, ScriptExecutionResult, SandboxAPI, EventEmitter, SecurityPolicy, ChatHtmlBubbleProps, ScriptExecutorProps, DeepPartial, MaybePromise, Nullable ...
+ * @pos    类型定义层 - iframe 脚本执行系统的完整类型声明
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * Script Runner Type Definitions
- * 
+ *
  * TypeScript type definitions for the iframe-based script execution system.
  * These types ensure type safety across the script runner, message bridge,
  * event system, and sandbox environment.

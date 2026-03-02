@@ -1,3 +1,10 @@
+/**
+ * @input  lib/data/local-storage, lib/models/preset-model, lib/adapters/import/preset-import, lib/core/prompt/sorting
+ * @output PresetOperations
+ * @pos    Preset 预设数据操作层,管理提示词组合的存储、排序、导入
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 import {
   PRESET_FILE,
   clearStore,
@@ -131,7 +138,6 @@ export class PresetOperations {
 
       /* ─────────────────────────────────────────────────────────────────────
          使用导入适配器规范化数据
-         - 转换 legacy 占位符 (<USER> → {{user}})
          - 转换 prompt_order → group_id/position
          ───────────────────────────────────────────────────────────────────── */
       const normalized = normalizePresetData(presetData);
@@ -163,12 +169,22 @@ export class PresetOperations {
       console.log(`[PresetOperations.getOrderedPrompts] prompts count: ${preset.prompts?.length || 0}`);
 
       /* ─────────────────────────────────────────────────────────────────────
-         使用统一排序算法
-         - prompt_order 已在导入时转换为 group_id/position
-         - 运行时只使用单一排序路径
+         默认遵循文件自然顺序
+         - 若无 position/group_id 明确排序信息，则保持导入时的原始顺序
+         - 仅当存在 position/group_id 时才按分组排序
          ───────────────────────────────────────────────────────────────────── */
+      const hasExplicitOrder = preset.prompts?.some(
+        (p) => p.position !== undefined || p.group_id !== undefined,
+      );
+
+      if (!hasExplicitOrder) {
+        const natural = (preset.prompts || []).filter((p) => p.enabled !== false);
+        console.log(`[PresetOperations.getOrderedPrompts] Using natural order, count=${natural.length}`);
+        return natural;
+      }
+
       const orderedPrompts = getPromptsFromBestGroup(preset.prompts, true);
-      console.log(`[PresetOperations.getOrderedPrompts] Returning ${orderedPrompts.length} prompts`);
+      console.log(`[PresetOperations.getOrderedPrompts] Using group/position order, count=${orderedPrompts.length}`);
       return orderedPrompts;
     } catch (error) {
       console.error("Error getting ordered prompts:", error);
@@ -185,9 +201,9 @@ export class PresetOperations {
       }
 
       /* ─────────────────────────────────────────────────────────────────────
-         使用统一排序算法（不过滤禁用项，用于 UI 展示）
+         UI 展示：保持导入顺序，避免因 group/position 缺失导致条目被跳过
          ───────────────────────────────────────────────────────────────────── */
-      return getPromptsFromBestGroup(preset.prompts, false);
+      return [...(preset.prompts || [])];
     } catch (error) {
       console.error("Error getting ordered prompts for display:", error);
       return [];

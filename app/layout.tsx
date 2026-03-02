@@ -1,3 +1,10 @@
+/**
+ * @input  next, components/layout/MainShell, app/i18n/*, contexts/*, components/*, vercel/analytics
+ * @output RootLayout (default export), metadata, viewport
+ * @pos    根布局组件 - 全局 Provider 包装与元数据配置
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./styles/local-fonts.css";

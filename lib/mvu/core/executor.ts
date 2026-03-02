@@ -14,10 +14,24 @@ import { getSchemaForPath, validateInsert, validateDelete, reconcileSchema } fro
 import { applyTemplate, type ApplyTemplateOptions } from "../data/template";
 
 // ============================================================================
+//                              SillyTavern 兼容类型
+// ============================================================================
+
+/** SillyTavern 风格的命令对象 */
+export interface STStyleCommand {
+  name: "set" | "insert" | "delete";
+  path: string;
+  oldValue?: unknown;
+  newValue?: unknown;
+}
+
+// ============================================================================
 //                              工具函数
 // ============================================================================
 
 function deepClone<T>(obj: T): T {
+  // 处理 undefined（JSON.stringify 会忽略 undefined）
+  if (obj === undefined) return undefined as T;
   return JSON.parse(JSON.stringify(obj));
 }
 
@@ -54,7 +68,20 @@ function unsetByPath(obj: unknown, path: string): void {
     if (current == null) return;
     current = current[segments[i]] as Record<string, unknown>;
   }
-  if (current) delete current[segments[segments.length - 1]];
+  if (current) {
+    const lastSeg = segments[segments.length - 1];
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 数组元素删除：使用 splice 而不是 delete
+    // ═══════════════════════════════════════════════════════════════════════════
+    if (Array.isArray(current) && /^\d+$/.test(lastSeg)) {
+      const index = parseInt(lastSeg, 10);
+      if (index >= 0 && index < current.length) {
+        current.splice(index, 1);
+      }
+    } else {
+      delete current[lastSeg];
+    }
+  }
 }
 
 function hasPath(obj: unknown, path: string): boolean {
@@ -333,27 +360,57 @@ export interface UpdateResult {
   modified: boolean;
   results: CommandResult[];
   variables: MvuData;
+  /** SillyTavern 兼容：成功更新的命令数量 */
+  updatedCount: number;
 }
 
-/** 从消息内容更新变量 */
+/**
+ * 从消息内容更新变量
+ *
+ * 支持两种调用方式：
+ * 1. SillyTavern 风格：updateVariablesFromMessage(variables, message)
+ * 2. 原有风格：updateVariablesFromMessage(message, variables)
+ *
+ * 注意：此函数直接修改传入的 variables 对象（SillyTavern 行为）
+ */
 export function updateVariablesFromMessage(
-  messageContent: string,
-  variables: MvuData,
+  variablesOrMessage: MvuData | string,
+  messageOrVariables: string | MvuData,
 ): UpdateResult {
-  const newVariables = deepClone(variables);
-  const displayData: Record<string, unknown> = deepClone(newVariables.stat_data);
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 参数规范化：支持两种调用顺序
+  // ═══════════════════════════════════════════════════════════════════════════
+  let messageContent: string;
+  let variables: MvuData;
+
+  if (typeof variablesOrMessage === "string") {
+    // 原有风格：(message, variables)
+    messageContent = variablesOrMessage;
+    variables = messageOrVariables as MvuData;
+  } else {
+    // SillyTavern 风格：(variables, message)
+    variables = variablesOrMessage;
+    messageContent = messageOrVariables as string;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 直接在原对象上操作（SillyTavern 行为）
+  // ═══════════════════════════════════════════════════════════════════════════
+  const displayData: Record<string, unknown> = variables.display_data ?? {};
   const deltaData: Record<string, unknown> = {};
 
   const commands = extractCommands(messageContent);
   const results: CommandResult[] = [];
   let modified = false;
+  let updatedCount = 0;
 
   for (const command of commands) {
-    const result = executeCommand(newVariables.stat_data, command, newVariables.schema);
+    const result = executeCommand(variables.stat_data, command, variables.schema);
     results.push(result);
 
     if (result.success) {
       modified = true;
+      updatedCount++;
       const path = result.path;
       const reasonStr = command.reason ? `(${command.reason})` : "";
       const displayStr = `${JSON.stringify(result.oldValue)}->${JSON.stringify(result.newValue)} ${reasonStr}`;
@@ -365,51 +422,132 @@ export function updateVariablesFromMessage(
     }
   }
 
-  newVariables.display_data = displayData;
-  newVariables.delta_data = deltaData;
+  variables.display_data = displayData;
+  variables.delta_data = deltaData;
 
   // 调和 Schema
   if (modified) {
-    reconcileSchema(newVariables);
+    reconcileSchema(variables);
   }
 
-  return { modified, results, variables: newVariables };
+  return { modified, results, variables, updatedCount };
 }
 
-/** 直接更新单个变量 */
+/**
+ * 直接更新单个变量
+ *
+ * 支持两种调用方式：
+ * 1. SillyTavern 风格：updateSingleVariable(variables, command)
+ *    其中 command 为 { name, path, oldValue?, newValue }
+ * 2. 原有风格：updateSingleVariable(variables, path, newValue, reason?)
+ *
+ * 注意：此函数只更新 stat_data，不更新 display_data 和 delta_data
+ * display_data 由更高层的函数（如 updateVariablesFromMessage）管理
+ */
 export function updateSingleVariable(
   variables: MvuData,
-  path: string,
-  newValue: unknown,
+  pathOrCommand: string | STStyleCommand,
+  newValue?: unknown,
   reason = "",
 ): CommandResult {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 参数规范化：支持 STStyleCommand 对象
+  // ═══════════════════════════════════════════════════════════════════════════
+  let path: string;
+  let actualNewValue: unknown;
+  let expectedOldValue: unknown;
+  let commandName: string;
+
+  if (typeof pathOrCommand === "object" && pathOrCommand !== null) {
+    // SillyTavern 风格：command 对象
+    const cmd = pathOrCommand as STStyleCommand;
+    path = cmd.path;
+    actualNewValue = cmd.newValue;
+    expectedOldValue = cmd.oldValue;
+    commandName = cmd.name;
+  } else {
+    // 原有风格：分离参数
+    path = pathOrCommand as string;
+    actualNewValue = newValue;
+    expectedOldValue = undefined;
+    commandName = "set";
+  }
+
   const fixedPath = fixPath(path);
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 处理 delete 命令
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (commandName === "delete") {
+    if (!hasPath(variables.stat_data, fixedPath)) {
+      return { success: false, path: fixedPath, error: `路径 '${fixedPath}' 不存在` };
+    }
+    const oldValue = getByPath(variables.stat_data, fixedPath);
+    unsetByPath(variables.stat_data, fixedPath);
+    return { success: true, path: fixedPath, oldValue, newValue: undefined };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 处理 insert 命令
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (commandName === "insert") {
+    const target = getByPath(variables.stat_data, fixedPath);
+    if (Array.isArray(target)) {
+      target.push(actualNewValue);
+      return { success: true, path: fixedPath, newValue: target };
+    }
+    // 如果路径不存在，创建数组
+    if (!hasPath(variables.stat_data, fixedPath)) {
+      setByPath(variables.stat_data, fixedPath, [actualNewValue]);
+      return { success: true, path: fixedPath, newValue: [actualNewValue] };
+    }
+    return { success: false, path: fixedPath, error: "insert 目标必须是数组" };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 处理 set 命令
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // 如果路径不存在且 expectedOldValue 是 undefined，创建路径
   if (!hasPath(variables.stat_data, fixedPath)) {
+    if (expectedOldValue === undefined) {
+      // 创建新路径
+      setByPath(variables.stat_data, fixedPath, actualNewValue);
+      return { success: true, path: fixedPath, oldValue: undefined, newValue: actualNewValue };
+    }
     return { success: false, path: fixedPath, error: `路径 '${fixedPath}' 不存在` };
   }
 
-  const oldValue = getByPath(variables.stat_data, fixedPath);
-  const reasonStr = reason ? `(${reason})` : "";
+  const currentValue = getByPath(variables.stat_data, fixedPath);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // oldValue 验证（SillyTavern 行为：严格相等）
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (expectedOldValue !== undefined) {
+    // ValueWithDescription 检查
+    if (isValueWithDescription(currentValue)) {
+      const actualOld = getVWDValue(currentValue);
+      if (JSON.stringify(actualOld) !== JSON.stringify(expectedOldValue)) {
+        return { success: false, path: fixedPath, error: "oldValue 不匹配" };
+      }
+      setVWDValue(currentValue, actualNewValue);
+      return { success: true, path: fixedPath, oldValue: actualOld, newValue: actualNewValue };
+    }
+
+    // 普通值严格相等检查
+    if (JSON.stringify(currentValue) !== JSON.stringify(expectedOldValue)) {
+      return { success: false, path: fixedPath, error: "oldValue 不匹配" };
+    }
+  }
 
   // ValueWithDescription（兼容数组和对象格式）
-  if (isValueWithDescription(oldValue)) {
-    const oldActual = getVWDValue(oldValue);
-    setVWDValue(oldValue, newValue);
-
-    const displayStr = `${JSON.stringify(oldActual)}->${JSON.stringify(newValue)} ${reasonStr}`;
-    if (variables.display_data) setByPath(variables.display_data, fixedPath, displayStr);
-    if (variables.delta_data) setByPath(variables.delta_data, fixedPath, displayStr);
-
-    return { success: true, path: fixedPath, oldValue: oldActual, newValue };
+  if (isValueWithDescription(currentValue)) {
+    const oldActual = getVWDValue(currentValue);
+    setVWDValue(currentValue, actualNewValue);
+    return { success: true, path: fixedPath, oldValue: oldActual, newValue: actualNewValue };
   }
 
   // 普通值
-  setByPath(variables.stat_data, fixedPath, newValue);
-
-  const displayStr = `${JSON.stringify(oldValue)}->${JSON.stringify(newValue)} ${reasonStr}`;
-  if (variables.display_data) setByPath(variables.display_data, fixedPath, displayStr);
-  if (variables.delta_data) setByPath(variables.delta_data, fixedPath, displayStr);
-
-  return { success: true, path: fixedPath, oldValue, newValue };
+  setByPath(variables.stat_data, fixedPath, actualNewValue);
+  return { success: true, path: fixedPath, oldValue: currentValue, newValue: actualNewValue };
 }

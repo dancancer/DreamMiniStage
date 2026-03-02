@@ -1,3 +1,10 @@
+/**
+ * @input  function/dialogue/opening
+ * @output initCharacterDialogue
+ * @pos    对话初始化 - 创建新对话并获取开场白
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { prepareOpeningGreeting } from "@/function/dialogue/opening";
 
 interface InitCharacterDialogueOptions {

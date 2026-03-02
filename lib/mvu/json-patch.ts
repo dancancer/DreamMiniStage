@@ -495,15 +495,23 @@ export const createPatch = {
  */
 export function patchToMvuCommands(patch: PatchOperation[]): Array<{
   type: "set" | "insert" | "delete";
+  name: "set" | "insert" | "delete";
   fullMatch: string;
   args: string[];
   reason: string;
+  path: string;
+  oldValue?: unknown;
+  newValue?: unknown;
 }> {
   const commands: Array<{
     type: "set" | "insert" | "delete";
+    name: "set" | "insert" | "delete";
     fullMatch: string;
     args: string[];
     reason: string;
+    path: string;
+    oldValue?: unknown;
+    newValue?: unknown;
   }> = [];
 
   for (const op of patch) {
@@ -512,11 +520,15 @@ export function patchToMvuCommands(patch: PatchOperation[]): Array<{
 
     switch (op.op) {
     case "replace": {
+      const replaceValue = (op as ReplaceOperation).value;
       commands.push({
         type: "set",
+        name: "set",
         fullMatch: JSON.stringify(op),
-        args: [path, JSON.stringify((op as ReplaceOperation).value)],
+        args: [path, JSON.stringify(replaceValue)],
         reason: "json_patch",
+        path,
+        newValue: replaceValue,
       });
       break;
     }
@@ -530,12 +542,16 @@ export function patchToMvuCommands(patch: PatchOperation[]): Array<{
         ? containerPath.join(".")
         : "";
       const keyOrIndexArg = /^\d+$/.test(lastPart) ? lastPart : `'${lastPart}'`;
+      const addValue = (op as AddOperation).value;
 
       commands.push({
         type: "insert",
+        name: "insert",
         fullMatch: JSON.stringify(op),
-        args: [containerDotPath, keyOrIndexArg, JSON.stringify((op as AddOperation).value)],
+        args: [containerDotPath, keyOrIndexArg, JSON.stringify(addValue)],
         reason: "json_patch",
+        path: containerDotPath,
+        newValue: addValue,
       });
       break;
     }
@@ -543,9 +559,11 @@ export function patchToMvuCommands(patch: PatchOperation[]): Array<{
     case "remove": {
       commands.push({
         type: "delete",
+        name: "delete",
         fullMatch: JSON.stringify(op),
         args: [path],
         reason: "json_patch",
+        path,
       });
       break;
     }

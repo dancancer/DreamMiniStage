@@ -1,4 +1,9 @@
 /**
+ * @input  lib/data/roleplay/regex-preset-operation, lib/data/roleplay/regex-allow-list-operation
+ * @output useAdditionalOperations
+ * @pos    正则脚本附加操作 Hook - 预设管理与授权控制
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                    Additional Operations Hook                             ║
  * ║                                                                           ║

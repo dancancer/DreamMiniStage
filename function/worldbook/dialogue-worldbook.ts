@@ -1,6 +1,11 @@
 "use server";
 
 /**
+ * @input  lib/data/roleplay/world-book-operation, lib/models/world-book-model
+ * @output getDialogueWorldBook, saveDialogueWorldBookEntry, updateDialogueWorldBookEntry, deleteDialogueWorldBookEntry, getDialogueWorldBookEntries, deleteDialogueWorldBook, bulkToggleDialogueWorldBookEntries
+ * @pos    会话级世界书 - 会话级世界书的 CRUD 操作
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                   会话级世界书 API                                           ║
  * ║                                                                            ║

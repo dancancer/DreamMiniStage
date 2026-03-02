@@ -1,3 +1,10 @@
+/**
+ * @input  @/components
+ * @output AgentUserInput
+ * @pos    Agent 用户输入组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -124,7 +131,7 @@ export default function AgentUserInput({ question, options, onResponse, isLoadin
             (inputMode === "options" && !selectedOption) || 
             (inputMode === "custom" && !customInput.trim())
           }
-          className="h-auto bg-gradient-to-r from-primary-500 to-orange-400 text-black py-2 px-4 font-medium text-sm hover:from-primary-400 hover:to-orange-300"
+          className="h-auto bg-primary text-primary-foreground py-2 px-4 font-medium text-sm hover:bg-primary/90"
         >
           {isLoading ? (
             <>

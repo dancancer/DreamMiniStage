@@ -1,4 +1,9 @@
 /**
+ * @input  @/hooks, @/components
+ * @output DialogueEditModal
+ * @pos    对话树可视化组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                       DialogueEditModal                                   ║
  * ║  节点内容编辑弹窗：展示摘要 + 文本编辑 + 保存/取消                          ║

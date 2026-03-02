@@ -24,6 +24,7 @@ export interface VectorMemoryOptions {
 }
 
 const DEFAULT_MAX_CONTEXT = 1500;
+const PREF_KEY = "vector_memory_enabled";
 
 export class VectorMemoryManager {
   private enabled: boolean;
@@ -36,17 +37,30 @@ export class VectorMemoryManager {
     const envEnabled = process.env.VECTOR_MEMORY_ENABLED === "true"
       || process.env.NEXT_PUBLIC_VECTOR_MEMORY_ENABLED === "true";
 
+    const preference = loadVectorMemoryPreference();
     const providerConfig = options.providerConfig || {};
     const resolvedProvider = options.provider || resolveEmbeddingProvider(providerConfig).provider;
     const hasUsableProvider = !(resolvedProvider instanceof NoopEmbeddingProvider);
 
-    this.enabled = options.enabled ?? (envEnabled || hasUsableProvider);
+    this.enabled = options.enabled ?? preference ?? (envEnabled || hasUsableProvider);
     this.topK = options.topK ?? Number(process.env.VECTOR_MEMORY_TOPK || 5);
     this.maxContextChars = options.maxContextChars ?? DEFAULT_MAX_CONTEXT;
     this.provider = resolvedProvider;
     this.store = options.store || createVectorMemoryStore();
 
     if (!this.enabled) {
+      this.provider = new NoopEmbeddingProvider();
+    }
+  }
+
+  isEnabled(): boolean {
+    return this.enabled;
+  }
+
+  setEnabled(enabled: boolean): void {
+    this.enabled = enabled;
+    saveVectorMemoryPreference(enabled);
+    if (!enabled) {
       this.provider = new NoopEmbeddingProvider();
     }
   }
@@ -161,6 +175,15 @@ export function getVectorMemoryManager(): VectorMemoryManager {
   return sharedManager;
 }
 
+export function setVectorMemoryEnabled(enabled: boolean): void {
+  const manager = getVectorMemoryManager();
+  manager.setEnabled(enabled);
+}
+
+export function isVectorMemoryEnabled(): boolean {
+  return getVectorMemoryManager().isEnabled();
+}
+
 function trimContent(content: string, maxLength = 2000): string {
   const trimmed = content.trim();
   if (trimmed.length <= maxLength) return trimmed;
@@ -188,4 +211,16 @@ function formatResults(results: Array<VectorMemoryRecord & { score: number }>, m
   }
 
   return lines.join("\n");
+}
+
+function loadVectorMemoryPreference(): boolean | undefined {
+  if (typeof window === "undefined") return undefined;
+  const raw = window.localStorage.getItem(PREF_KEY);
+  if (raw === null) return undefined;
+  return raw === "true";
+}
+
+function saveVectorMemoryPreference(enabled: boolean): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(PREF_KEY, String(enabled));
 }

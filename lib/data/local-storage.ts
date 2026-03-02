@@ -41,7 +41,7 @@ const STORE_NAMES = [
   REGEX_PRESETS_FILE,
 ];
 
-// 仍然保持旧的“data”数组模式的仓库
+// 预留数组模式仓库（当前无启用项）
 const ARRAY_STORES: string[] = [];
 
 // 迁移到按记录存储的仓库
@@ -153,8 +153,6 @@ async function ensureDataStoresInitialized(): Promise<void> {
         await promisify(store.put([], "data"));
       }
     }));
-
-    await migrateLegacyArrays(db);
   })();
 
   return initPromise;
@@ -413,102 +411,11 @@ function selectRecordKey(storeName: string, record: unknown): IDBValidKey {
   }
 
   const recordObj = record as Record<string, unknown>;
-  const key =
-    recordObj.id ||
-    recordObj.key ||
-    recordObj.ownerId ||
-    recordObj.name ||
-    recordObj.identifier ||
-    recordObj.characterId;
+  const key = recordObj.id;
 
-  if (key) {
+  if (key !== undefined && key !== null) {
     return key as IDBValidKey;
   }
-  throw new Error(`Invalid record key for store ${storeName}`);
-}
 
-// ================================
-// 迁移辅助
-// ================================
-
-type LegacyKeySelector = (record: unknown) => IDBValidKey | null;
-
-const LEGACY_KEY_SELECTORS: Record<string, LegacyKeySelector> = {
-  [CHARACTERS_RECORD_FILE]: (record) => {
-    if (!record || typeof record !== "object") return null;
-    return (record as Record<string, unknown>).id as IDBValidKey || null;
-  },
-  [CHARACTER_DIALOGUES_FILE]: (record) => {
-    if (!record || typeof record !== "object") return null;
-    const r = record as Record<string, unknown>;
-    return (r.id || r.character_id) as IDBValidKey || null;
-  },
-  [AGENT_CONVERSATIONS_FILE]: (record) => {
-    if (!record || typeof record !== "object") return null;
-    return (record as Record<string, unknown>).id as IDBValidKey || null;
-  },
-  [MEMORY_ENTRIES_FILE]: (record) => {
-    if (!record || typeof record !== "object") return null;
-    const r = record as Record<string, unknown>;
-    return (r.characterId || r.id) as IDBValidKey || null;
-  },
-  [MEMORY_EMBEDDINGS_FILE]: (record) => {
-    if (!record || typeof record !== "object") return null;
-    return (record as Record<string, unknown>).id as IDBValidKey || null;
-  },
-  [WORLD_BOOK_FILE]: () => null,
-  [REGEX_SCRIPTS_FILE]: () => null,
-  [PRESET_FILE]: () => null,
-  [REGEX_ALLOW_LIST_FILE]: () => null,
-  [REGEX_PRESETS_FILE]: () => null,
-};
-
-async function migrateLegacyArrays(db: IDBDatabase): Promise<void> {
-  await Promise.all(
-    Object.entries(LEGACY_KEY_SELECTORS).map(async ([storeName, getKey]) => {
-      if (!db.objectStoreNames.contains(storeName)) {
-        console.warn(`[migrateLegacyArrays] skip missing store: ${storeName}`);
-        return;
-      }
-      const tx = db.transaction(storeName, "readwrite");
-      const store = tx.objectStore(storeName);
-
-      const keys = await promisify(store.getAllKeys());
-      const hasNonDataKey = (keys as IDBValidKey[]).some(key => key !== "data");
-      if (hasNonDataKey) {
-        return;
-      }
-
-      const legacy = await promisify(store.get("data"));
-      if (!Array.isArray(legacy) || legacy.length === 0) {
-        return;
-      }
-
-      const [first] = legacy;
-
-      // 特殊：原本以单对象承载所有数据的仓库（world_book/regex_scripts/preset）
-      if ((storeName === WORLD_BOOK_FILE || storeName === REGEX_SCRIPTS_FILE || storeName === PRESET_FILE) && first && typeof first === "object") {
-        for (const [key, value] of Object.entries(first as Record<string, unknown>)) {
-          await promisify(store.put(value, key));
-        }
-      } else {
-        for (const record of legacy) {
-          const key = getKey(record);
-          if (key === null) {
-            continue;
-          }
-          if (storeName === CHARACTERS_RECORD_FILE && record && typeof record === "object") {
-            const recordObj = record as Record<string, unknown>;
-            if (recordObj.order === undefined) {
-              const timestamp = recordObj.updated_at || recordObj.created_at;
-              recordObj.order = timestamp ? Date.parse(String(timestamp)) : Date.now();
-            }
-          }
-          await promisify(store.put(record, key));
-        }
-      }
-
-      await promisify(store.delete("data"));
-    }),
-  );
+  throw new Error(`Invalid record key for store ${storeName}: missing "id"`);
 }

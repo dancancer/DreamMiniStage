@@ -1,4 +1,9 @@
 /**
+ * @input  hooks/script-bridge/types, lib/data/roleplay/world-book-operation
+ * @output lorebookHandlers
+ * @pos    Lorebook 兼容层 Handlers - 旧版 API 映射到 WorldBook 操作
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         Lorebook 兼容层 Handlers                           ║
  * ║                                                                            ║

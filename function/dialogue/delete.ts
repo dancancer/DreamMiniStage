@@ -1,4 +1,12 @@
+/**
+ * @input  lib/data/roleplay/character-dialogue-operation, function/dialogue/processed-dialogue
+ * @output deleteDialogueNode
+ * @pos    对话节点删除 - 删除指定的对话节点
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
+import { buildProcessedDialogue } from "@/function/dialogue/processed-dialogue";
 
 interface DeleteDialogueNodeOptions {
   dialogueId: string;  // 对话树 ID（sessionId）
@@ -12,50 +20,7 @@ export async function deleteDialogueNode({ dialogueId, nodeId }: DeleteDialogueN
     if (!updatedDialogueTree) {
       throw new Error("Failed to delete node or node not found");
     }
-
-    const currentPath =
-      updatedDialogueTree.current_nodeId !== "root"
-        ? await LocalCharacterDialogueOperations.getDialoguePathToNode(
-          dialogueId,
-          updatedDialogueTree.current_nodeId,
-        )
-        : [];
-
-    const messages = currentPath.flatMap((node) => {
-      const msgs = [];
-
-      if (node.userInput) {
-        msgs.push({
-          id: node.nodeId,
-          role: "user",
-          content: node.userInput,
-          parsedContent: null,
-        });
-      }
-
-      if (node.assistantResponse) {
-        msgs.push({
-          id: node.nodeId,
-          role: "assistant",
-          content: node.assistantResponse,
-          parsedContent: node.parsedContent || null,
-          nodeId: node.nodeId,
-        });
-      }
-
-      return msgs;
-    });
-
-    const processedDialogue = {
-      id: updatedDialogueTree.id,
-      character_id: updatedDialogueTree.character_id,
-      current_nodeId: updatedDialogueTree.current_nodeId,
-      messages,
-      tree: {
-        nodes: updatedDialogueTree.nodes,
-        currentNodeId: updatedDialogueTree.current_nodeId,
-      },
-    };
+    const processedDialogue = buildProcessedDialogue(updatedDialogueTree);
 
     return {
       success: true,

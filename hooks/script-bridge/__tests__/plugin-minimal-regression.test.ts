@@ -1,0 +1,83 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { handleApiCall } from "../index";
+import type { ApiCallContext } from "../types";
+
+function createMockContext(overrides: Partial<ApiCallContext> = {}): ApiCallContext {
+  const globalVars: Record<string, unknown> = {};
+  const characterVars: Record<string, Record<string, unknown>> = {};
+
+  return {
+    characterId: "char-plugin-test",
+    dialogueId: "dialogue-plugin-test",
+    messages: [
+      { id: "u1", role: "user", content: "hello" },
+      { id: "a1", role: "assistant", content: "world" },
+    ],
+    iframeId: "iframe_plugin_test",
+    setScriptVariable: vi.fn((key, value, scope, id) => {
+      if (scope === "global") {
+        globalVars[key] = value;
+        return;
+      }
+      if (!id) {
+        return;
+      }
+      characterVars[id] = characterVars[id] ?? {};
+      characterVars[id][key] = value;
+    }),
+    deleteScriptVariable: vi.fn((key, scope, id) => {
+      if (scope === "character" && id && characterVars[id]) {
+        delete characterVars[id][key];
+        return;
+      }
+      delete globalVars[key];
+    }),
+    getVariablesSnapshot: () => ({
+      global: { ...globalVars },
+      character: { ...characterVars },
+    }),
+    ...overrides,
+  };
+}
+
+describe("plugin minimal regression", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("keeps JS-Slash-Runner core bridge path runnable", async () => {
+    const onSend = vi.fn().mockResolvedValue(undefined);
+    const onTrigger = vi.fn().mockResolvedValue(undefined);
+    const ctx = createMockContext({ onSend, onTrigger });
+
+    const slashResult = await handleApiCall("triggerSlash", ["/send hi|/trigger"], ctx);
+
+    expect(slashResult).toMatchObject({ isError: false });
+    expect(onSend).toHaveBeenCalledTimes(1);
+    expect(onTrigger).toHaveBeenCalledTimes(1);
+
+    const eventOnResult = await handleApiCall("eventOn", ["mvu.variable_updated", "h1", "iframe_plugin_test"], ctx);
+    expect(eventOnResult).toMatchObject({ success: true });
+
+    const eventEmitResult = await handleApiCall("eventEmit", ["mvu.variable_updated", { hp: 1 }], ctx);
+    expect(eventEmitResult).toMatchObject({ eventType: "mvu.variable_updated", triggeredCount: 1 });
+  });
+
+  it("keeps MagVarUpdate-like variables and message reads runnable", async () => {
+    const ctx = createMockContext();
+
+    const replaceResult = await handleApiCall("replaceVariables", [{ hp: 10, mp: 5 }, "global"], ctx);
+    expect(replaceResult).toBe(true);
+
+    const vars = await handleApiCall("getVariables", [{ scope: "global" }], ctx);
+    expect(vars).toMatchObject({ hp: 10, mp: 5 });
+
+    const messages = await handleApiCall("getChatMessages", [], ctx);
+    expect(Array.isArray(messages)).toBe(true);
+    expect(messages).toHaveLength(2);
+
+    const currentMessageId = await handleApiCall("getCurrentMessageId", [], ctx);
+    expect(currentMessageId).toBe("a1");
+  });
+});

@@ -1,4 +1,12 @@
+/**
+ * @input  lib/data/roleplay/character-dialogue-operation, function/dialogue/processed-dialogue
+ * @output switchDialogueBranch
+ * @pos    对话分支切换 - 切换到指定的对话节点
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
+import { buildProcessedDialogue } from "@/function/dialogue/processed-dialogue";
 
 interface SwitchDialogueBranchOptions {
   dialogueId: string;  // 对话树 ID（sessionId）
@@ -8,12 +16,6 @@ interface SwitchDialogueBranchOptions {
 export async function switchDialogueBranch({ dialogueId, nodeId }: SwitchDialogueBranchOptions) {
 
   try {
-    const dialogueTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueId);
-
-    if (!dialogueTree) {
-      throw new Error("Dialogue not found");
-    }
-
     const updated = await LocalCharacterDialogueOperations.switchBranch(dialogueId, nodeId);
     if (!updated) {
       throw new Error("Failed to switch to the specified node");
@@ -23,52 +25,7 @@ export async function switchDialogueBranch({ dialogueId, nodeId }: SwitchDialogu
     if (!updatedDialogueTree) {
       throw new Error("Failed to retrieve updated dialogue");
     }
-
-    const currentPath =
-      updatedDialogueTree.current_nodeId !== "root"
-        ? await LocalCharacterDialogueOperations.getDialoguePathToNode(
-          dialogueId,
-          updatedDialogueTree.current_nodeId,
-        )
-        : [];
-
-    const messages = currentPath.flatMap((node) => {
-      const msgs = [];
-
-      if (node.userInput) {
-        msgs.push({
-          id: node.nodeId,
-          role: "user",
-          thinkingContent: node.thinkingContent ?? "",
-          content: node.userInput,
-          parsedContent: null,
-        });
-      }
-
-      if (node.assistantResponse) {
-        msgs.push({
-          id: node.nodeId,
-          role: "assistant",
-          thinkingContent: node.thinkingContent ?? "",
-          content: node.parsedContent?.regexResult || node.assistantResponse,
-          parsedContent: node.parsedContent || null, 
-          nodeId: node.nodeId,
-        });
-      }
-
-      return msgs;
-    });
-
-    const processedDialogue = {
-      id: updatedDialogueTree.id,
-      character_id: updatedDialogueTree.character_id,
-      current_nodeId: updatedDialogueTree.current_nodeId,
-      messages,
-      tree: {
-        nodes: updatedDialogueTree.nodes,
-        currentNodeId: updatedDialogueTree.current_nodeId,
-      },
-    };
+    const processedDialogue = buildProcessedDialogue(updatedDialogueTree);
 
     return {
       success: true,

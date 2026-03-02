@@ -1,4 +1,9 @@
 /**
+ * @input  React, UI 基础组件
+ * @output ImportResult, ImportResultDisplay
+ * @pos    数据导入模态框组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                      Import Result Display                                ║
  * ║                                                                          ║
@@ -107,7 +112,7 @@ export function ImportResultDisplay({
   serifFontClass,
 }: ImportResultDisplayProps) {
   return (
-    <div className="mt-3 p-2.5 bg-gradient-to-br from-muted-surface/60 via-deep/40 to-muted-surface/60 backdrop-blur-sm border border-border/40 rounded-md animate-in slide-in-from-bottom-2 duration-300">
+    <div className="mt-3 p-2.5 bg-muted-surface/60 backdrop-blur-sm border border-border/40 rounded-md animate-in slide-in-from-bottom-2 duration-300">
       <h3 className={"text-xs font-medium text-cream-soft mb-1.5 "}>{title}</h3>
       <div className="space-y-1 text-xs">
         {/* 已导入数量 */}

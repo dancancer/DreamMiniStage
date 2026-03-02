@@ -10,6 +10,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { slashHandlers } from "../slash-handlers";
 import type { ApiCallContext } from "../types";
+import type { SendOptions } from "@/lib/slash-command/types";
 
 // ============================================================================
 //                              测试辅助函数
@@ -22,6 +23,13 @@ function createMockContext(overrides: Partial<{
   characterId: string;
   globalVars: Record<string, unknown>;
   characterVars: Record<string, Record<string, unknown>>;
+  onSend: (text: string, options?: SendOptions) => void | Promise<void>;
+  onTrigger: (member?: string) => void | Promise<void>;
+  onSendAs: (role: string, text: string) => void | Promise<void>;
+  onSendSystem: (text: string) => void | Promise<void>;
+  onImpersonate: (text: string) => void | Promise<void>;
+  onContinue: () => void | Promise<void>;
+  onSwipe: (target?: string) => void | Promise<void>;
 }>= {}): ApiCallContext {
   const globalVars: Record<string, unknown> = overrides.globalVars ?? {};
   const characterVars: Record<string, Record<string, unknown>> = overrides.characterVars ?? {};
@@ -30,6 +38,13 @@ function createMockContext(overrides: Partial<{
   return {
     characterId,
     messages: [],
+    onSend: overrides.onSend,
+    onTrigger: overrides.onTrigger,
+    onSendAs: overrides.onSendAs,
+    onSendSystem: overrides.onSendSystem,
+    onImpersonate: overrides.onImpersonate,
+    onContinue: overrides.onContinue,
+    onSwipe: overrides.onSwipe,
     setScriptVariable: vi.fn((key, value, scope, id) => {
       if (scope === "global") {
         globalVars[key] = value;
@@ -65,10 +80,10 @@ describe("triggerSlash Integration Tests", () => {
     it("should execute /send followed by /trigger in sequence", async () => {
       const onSend = vi.fn().mockResolvedValue(undefined);
       const onTrigger = vi.fn().mockResolvedValue(undefined);
-      const ctx = createMockContext();
+      const ctx = createMockContext({ onSend, onTrigger });
 
       const result = await slashHandlers.triggerSlash(
-        ["/send Hello World|/trigger", { onSend, onTrigger }],
+        ["/send Hello World|/trigger"],
         ctx
       );
 
@@ -84,10 +99,10 @@ describe("triggerSlash Integration Tests", () => {
     it("should allow /send even with empty or ellipsis text", async () => {
       const onSend = vi.fn().mockResolvedValue(undefined);
       const onTrigger = vi.fn().mockResolvedValue(undefined);
-      const ctx = createMockContext();
+      const ctx = createMockContext({ onSend, onTrigger });
 
       const result = await slashHandlers.triggerSlash(
-        ["/send|/trigger", { onSend, onTrigger }],
+        ["/send|/trigger"],
         ctx
       );
 
@@ -99,7 +114,7 @@ describe("triggerSlash Integration Tests", () => {
       expect(onTrigger).toHaveBeenCalledTimes(1);
 
       const resultEllipsis = await slashHandlers.triggerSlash(
-        ["/send ...|/trigger", { onSend, onTrigger }],
+        ["/send ...|/trigger"],
         ctx
       );
 
@@ -116,10 +131,10 @@ describe("triggerSlash Integration Tests", () => {
      */
     it("should execute /trigger alone", async () => {
       const onTrigger = vi.fn().mockResolvedValue(undefined);
-      const ctx = createMockContext();
+      const ctx = createMockContext({ onTrigger });
 
       const result = await slashHandlers.triggerSlash(
-        ["/trigger", { onTrigger }],
+        ["/trigger"],
         ctx
       );
 
@@ -133,10 +148,10 @@ describe("triggerSlash Integration Tests", () => {
      */
     it("should pass pipe value through command chain", async () => {
       const onSend = vi.fn().mockResolvedValue(undefined);
-      const ctx = createMockContext();
+      const ctx = createMockContext({ onSend });
 
       const result = await slashHandlers.triggerSlash(
-        ["/echo TestValue|/send", { onSend }],
+        ["/echo TestValue|/send"],
         ctx
       );
 
@@ -155,10 +170,10 @@ describe("triggerSlash Integration Tests", () => {
     it("should behave identically to triggerSlash", async () => {
       const onSend = vi.fn().mockResolvedValue(undefined);
       const onTrigger = vi.fn().mockResolvedValue(undefined);
-      const ctx = createMockContext();
+      const ctx = createMockContext({ onSend, onTrigger });
 
       const result = await slashHandlers.triggerSlashWithResult(
-        ["/send Hello|/trigger", { onSend, onTrigger }],
+        ["/send Hello|/trigger"],
         ctx
       );
 
@@ -179,7 +194,7 @@ describe("triggerSlash Integration Tests", () => {
       const ctx = createMockContext();
 
       const result = await slashHandlers.triggerSlash(
-        ["not a command", {}],
+        ["not a command"],
         ctx
       );
 
@@ -195,7 +210,7 @@ describe("triggerSlash Integration Tests", () => {
       const ctx = createMockContext();
 
       const result = await slashHandlers.triggerSlash(
-        ["/unknowncommand123", {}],
+        ["/unknowncommand123"],
         ctx
       );
 
@@ -208,10 +223,10 @@ describe("triggerSlash Integration Tests", () => {
      */
     it("should return error when command execution fails", async () => {
       const onSend = vi.fn().mockRejectedValue(new Error("Network error"));
-      const ctx = createMockContext();
+      const ctx = createMockContext({ onSend });
 
       const result = await slashHandlers.triggerSlash(
-        ["/send Hello", { onSend }],
+        ["/send Hello"],
         ctx
       );
 
@@ -228,7 +243,7 @@ describe("triggerSlash Integration Tests", () => {
       const ctx = createMockContext();
 
       const result = await slashHandlers.triggerSlash(
-        ["/setvar mykey=myvalue|/getvar mykey", {}],
+        ["/setvar mykey=myvalue|/getvar mykey"],
         ctx
       );
 
@@ -244,7 +259,7 @@ describe("triggerSlash Integration Tests", () => {
       const ctx = createMockContext({ globalVars: { existingKey: "value" } });
 
       const result = await slashHandlers.triggerSlash(
-        ["/delvar existingKey", {}],
+        ["/delvar existingKey"],
         ctx
       );
 
@@ -260,11 +275,11 @@ describe("triggerSlash Integration Tests", () => {
     it("should handle multi-step command chains", async () => {
       const onSend = vi.fn().mockResolvedValue(undefined);
       const onTrigger = vi.fn().mockResolvedValue(undefined);
-      const ctx = createMockContext();
+      const ctx = createMockContext({ onSend, onTrigger });
 
       // /setvar name=World|/echo Hello|/pass|/send|/trigger
       const result = await slashHandlers.triggerSlash(
-        ["/echo Hello|/pass|/send|/trigger", { onSend, onTrigger }],
+        ["/echo Hello|/pass|/send|/trigger"],
         ctx
       );
 
@@ -282,11 +297,11 @@ describe("triggerSlash Integration Tests", () => {
     it("should stop execution on first error in chain", async () => {
       const onSend = vi.fn().mockResolvedValue(undefined);
       const onTrigger = vi.fn().mockResolvedValue(undefined);
-      const ctx = createMockContext();
+      const ctx = createMockContext({ onSend, onTrigger });
 
       // /echo Hello|/unknowncmd|/trigger - 中间命令失败
       const result = await slashHandlers.triggerSlash(
-        ["/echo Hello|/unknowncmd|/trigger", { onSend, onTrigger }],
+        ["/echo Hello|/unknowncmd|/trigger"],
         ctx
       );
 
@@ -298,10 +313,12 @@ describe("triggerSlash Integration Tests", () => {
   describe("Role/system callbacks wiring", () => {
     it("routes /sys to onSendSystem", async () => {
       const sys: string[] = [];
-      const ctx = createMockContext();
+      const ctx = createMockContext({
+        onSendSystem: (text) => { sys.push(text); },
+      });
 
       const result = await slashHandlers.triggerSlash(
-        ["/sys alert from system", { onSendSystem: (text) => { sys.push(text); } }],
+        ["/sys alert from system"],
         ctx,
       );
 
@@ -311,10 +328,12 @@ describe("triggerSlash Integration Tests", () => {
 
     it("routes /sendas to onSendAs with role + text", async () => {
       const sent: Array<{ role: string; text: string }> = [];
-      const ctx = createMockContext();
+      const ctx = createMockContext({
+        onSendAs: (role, text) => { sent.push({ role, text }); },
+      });
 
       const result = await slashHandlers.triggerSlash(
-        ["/sendas narrator hello world", { onSendAs: (role, text) => { sent.push({ role, text }); } }],
+        ["/sendas narrator hello world"],
         ctx,
       );
 
@@ -324,10 +343,12 @@ describe("triggerSlash Integration Tests", () => {
 
     it("routes /impersonate to onImpersonate", async () => {
       const imp: string[] = [];
-      const ctx = createMockContext();
+      const ctx = createMockContext({
+        onImpersonate: (text) => { imp.push(text); },
+      });
 
       const result = await slashHandlers.triggerSlash(
-        ["/impersonate mimic this", { onImpersonate: (text) => { imp.push(text); } }],
+        ["/impersonate mimic this"],
         ctx,
       );
 
@@ -337,10 +358,12 @@ describe("triggerSlash Integration Tests", () => {
 
     it("routes /swipe to onSwipe", async () => {
       const swipes: string[] = [];
-      const ctx = createMockContext();
+      const ctx = createMockContext({
+        onSwipe: (target) => { if (target) swipes.push(target); },
+      });
 
       const result = await slashHandlers.triggerSlash(
-        ["/swipe 2", { onSwipe: (target) => { if (target) swipes.push(target); } }],
+        ["/swipe 2"],
         ctx,
       );
 

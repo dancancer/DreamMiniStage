@@ -6,8 +6,7 @@
  * ║                                                                            ║
  * ║  职责（整改后）：                                                           ║
  * ║  - 对 messages[] 进行结构化修改（深度注入/过滤）                             ║
- * ║  - 扫描 messages[] 内容，替换文本占位符（兼容老 preset）                     ║
- * ║  - 不再只修改 systemMessage/userMessage 字符串                              ║
+ * ║  - 扫描 messages[] 内容，替换文本占位符                                      ║
  * ║                                                                            ║
  * ║  Requirements: 4.2, 4.3, 4.4                                               ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
@@ -44,14 +43,6 @@ export class WorldBookNode extends NodeBase {
     const characterId = input.characterId as string | undefined;
     const currentUserInput = (input.currentUserInput || "") as string;
 
-    // 兼容字段透传
-    const systemMessage = input.systemMessage as string | undefined;
-    const userMessage = input.userMessage as string | undefined;
-    const language = input.language || "zh";
-    const username = input.username;
-    const charName = input.charName;
-    const contextWindow = input.contextWindow || 5;
-
     if (!characterId) {
       throw new Error("Character ID is required for WorldBookNode");
     }
@@ -73,42 +64,8 @@ export class WorldBookNode extends NodeBase {
       ) as ChatMessage[];
     }
 
-    /* ═══════════════════════════════════════════════════════════════════════
-       兼容层：同时更新 systemMessage/userMessage（仅用于 UI 展示）
-       Requirements 4.3: 主要修改必须落到 messages[]
-       ═══════════════════════════════════════════════════════════════════════ */
-
-    let outputSystemMessage = systemMessage;
-    let outputUserMessage = userMessage;
-
-    if (systemMessage || userMessage) {
-      const legacyResult = await this.executeTool(
-        "assemblePromptWithWorldBook",
-        characterId,
-        systemMessage || "",
-        userMessage || "",
-        currentUserInput,
-        language,
-        contextWindow,
-        username,
-        charName,
-        dialogueKey,
-      ) as { systemMessage: string; userMessage: string };
-
-      outputSystemMessage = legacyResult.systemMessage;
-      outputUserMessage = legacyResult.userMessage;
-    }
-
     return {
       messages: outputMessages,
-      systemMessage: outputSystemMessage,
-      userMessage: outputUserMessage,
-      characterId,
-      language,
-      username,
-      charName,
-      contextWindow,
-      currentUserInput,
     };
   }
 }

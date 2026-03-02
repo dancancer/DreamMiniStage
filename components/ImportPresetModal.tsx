@@ -1,4 +1,9 @@
 /**
+ * @input  @/lib, @/app, @/function, @/components
+ * @output ImportPresetModal
+ * @pos    预设导入模态框
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                    Import Preset Modal Component                           ║
  * ║                                                                            ║
@@ -162,7 +167,7 @@ export default function ImportPresetModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-xl p-0 overflow-hidden  border-border gap-0">
-        <div className="p-3 border-b border-border/40 bg-gradient-to-r from-muted-surface/80 via-deep/60 to-muted-surface/80 backdrop-blur-sm">
+        <div className="p-3 border-b border-border/40 bg-muted-surface/80 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className={"text-base font-semibold text-cream-soft "}>
               {t("importPreset.title")}
@@ -182,11 +187,11 @@ export default function ImportPresetModal({
                   : "border-border/60 hover:border-primary-500/40 hover:bg-primary-500/5"
               }`}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-primary-500/5 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+              <div className="absolute inset-0 bg-primary/5 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
               
               <div className="relative z-10 space-y-3">
                 <div className="flex justify-center">
-                  <div className={`w-12 h-12 rounded-full bg-gradient-to-br from-primary-500/20 to-primary-600/30 flex items-center justify-center transition-transform duration-300 ${
+                  <div className={`w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center transition-transform duration-300 ${
                     isDragging ? "scale-110 animate-pulse" : ""
                   }`}>
                     <FileText className="h-6 w-6 text-primary-400" />
@@ -206,7 +211,7 @@ export default function ImportPresetModal({
                   <Button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isImporting}
-                    className="px-4 py-2 bg-gradient-to-r from-primary-600/80 to-primary-500/80 hover:from-primary-500/90 hover:to-primary-400/90 text-white font-medium"
+                    className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                   >
                     {isImporting ? t("importPreset.importing") : t("importPreset.browseFiles")}
                   </Button>
@@ -236,7 +241,7 @@ export default function ImportPresetModal({
                       value={customName}
                       onChange={(e) => setCustomName(e.target.value)}
                       placeholder={fileName}
-                      className="w-full px-3 py-2 /80 border border-border/60 rounded-md text-cream-soft placeholder-ink/80 focus:outline-none focus:ring-1 focus:ring-primary-500/40 transition-all duration-300"
+                      className="w-full px-3 py-2 bg-muted-surface/80 border border-border/60 rounded-md text-cream-soft placeholder-ink/80 focus:outline-none focus:ring-1 focus:ring-primary-500/40 transition-all duration-300"
                     />
                     <p className={`mt-1 text-xs text-ink-soft/70 ${fontClass}`}>{t("importPreset.presetNameDesc")}</p>
                   </div>
@@ -252,7 +257,7 @@ export default function ImportPresetModal({
                     <Button
                       onClick={handleImport}
                       disabled={isImporting}
-                      className="px-4 py-1.5 bg-gradient-to-r from-primary-600/80 to-primary-500/80 hover:from-primary-500/90 hover:to-primary-400/90 text-white font-medium"
+                      className="px-4 py-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                     >
                       {isImporting ? t("importPreset.importing") : t("importPreset.confirmImport")}
                     </Button>
@@ -299,7 +304,7 @@ export default function ImportPresetModal({
           </div>
         </div>
         
-        <div className="p-3 border-t border-border/40 bg-gradient-to-r from-muted-surface/60 via-deep/40 to-muted-surface/60 backdrop-blur-sm">
+        <div className="p-3 border-t border-border/40 bg-muted-surface/60 backdrop-blur-sm">
           <div className="flex justify-end space-x-2">
             <Button
               variant="ghost"

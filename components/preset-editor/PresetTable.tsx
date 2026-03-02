@@ -1,4 +1,9 @@
 /**
+ * @input  @/components
+ * @output PresetTable
+ * @pos    预设编辑器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                       PresetTable                                          ║
  * ║  预设列表 + 展开行显示提示词                                               ║
@@ -226,7 +231,7 @@ const PresetRow = memo(function PresetRow({
       </tr>
 
       {isExpanded && isSelected && selectedPreset && (
-        <tr className="border-b border-border bg-gradient-to-b from-deep to-coal transition-all duration-300">
+        <tr className="border-b border-border bg-deep transition-all duration-300">
           <td colSpan={6} className="p-2 sm:p-4">
             <div className="space-y-2 sm:space-y-3">
               <div className="flex justify-between items-center">
@@ -304,7 +309,7 @@ function ActionButton({
       className={`h-5 w-5 sm:h-6 sm:w-6 text-ink-soft hover:text-cream-soft hover:bg-stroke group ${className ?? ""}`}
       title={title}
     >
-      <IconComponent size={10} className="transition-transform duration-300 group-hover:scale-110" />
+      <IconComponent size={10} />
     </Button>
   );
 }

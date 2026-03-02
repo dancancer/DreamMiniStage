@@ -1,4 +1,9 @@
 /**
+ * @input  @/lib
+ * @output SidebarMenuItem
+ * @pos    角色侧边栏配置组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                        Sidebar Menu Item Component                        ║
  * ║                                                                           ║
@@ -45,16 +50,16 @@ interface SidebarMenuItemProps {
 
 const colorMap: Record<AccentColor, { gradient: string; line: string }> = {
   primary: {
-    gradient: "from-primary-500/10",
-    line: "via-primary-400",
+    gradient: "bg-primary/10",
+    line: "bg-primary/40",
   },
   purple: {
-    gradient: "from-purple-500/10",
-    line: "via-purple-400",
+    gradient: "bg-purple-500/10",
+    line: "bg-purple-400/40",
   },
   blue: {
-    gradient: "from-blue-500/10",
-    line: "via-blue-400",
+    gradient: "bg-blue-500/10",
+    line: "bg-blue-400/40",
   },
 };
 
@@ -112,10 +117,10 @@ const SidebarMenuItem: React.FC<SidebarMenuItemProps> = ({
   /* ─── 展开态：图标 + 文字 + 动效 ─── */
   const content = (
     <>
-      {/* 背景渐变层 */}
+      {/* 背景强调层 */}
       <div
         className={cn(
-          "absolute inset-0 bg-gradient-to-br via-transparent to-transparent rounded-md transition-opacity duration-300 z-0",
+          "absolute inset-0 rounded-md transition-opacity duration-300 z-0",
           colors.gradient,
           isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100",
         )}
@@ -127,10 +132,10 @@ const SidebarMenuItem: React.FC<SidebarMenuItemProps> = ({
           isActive ? "opacity-10" : "opacity-0 group-hover:opacity-10",
         )}
       />
-      {/* 底部渐变线 */}
+      {/* 底部强调线 */}
       <div
         className={cn(
-          "absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent to-transparent transition-all duration-500 z-5",
+          "absolute bottom-0 left-0 h-[1px] transition-all duration-500 z-5",
           colors.line,
           isActive ? "w-full opacity-100" : "w-0 group-hover:w-full",
         )}

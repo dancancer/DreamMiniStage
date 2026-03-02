@@ -1,14 +1,18 @@
 import { NodeTool } from "@/lib/nodeflow/NodeTool";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatOllama } from "@langchain/ollama";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { StringOutputParser } from "@langchain/core/output_parsers";
-import { RunnableLike, RunnablePassthrough, RunnableLambda, type Runnable } from "@langchain/core/runnables";
 import { createGeminiRunnable } from "@/lib/core/gemini-client";
 import { postProcessMessages, getTextContent } from "@/lib/core/prompt/post-processor";
-import { invokeClaudeModel, invokeGeminiModel } from "./model-invokers";
+import { invokeClaudeModel, invokeGeminiModel, invokeClaudeModelStream, type StreamingCallbacks } from "./model-invokers";
 import { extractTokenUsage, type TokenUsage } from "@/lib/adapters/token-usage";
 import type { PromptNames, ExtendedChatMessage, PostProcessingMode } from "@/lib/core/st-preset-types";
+import {
+  getMvuTool,
+  extractMvuToolCall,
+  functionCallToUpdateContent,
+  type ToolCallBatches,
+  type OpenAITool,
+} from "@/lib/mvu/function-call";
 
 // 为window对象添加lastTokenUsage属性的类型声明
 declare global {
@@ -65,6 +69,16 @@ export interface LLMConfig {
 
   /** 占位符文本 */
   placeholder?: string;
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     MVU Function Calling 选项
+     ───────────────────────────────────────────────────────────────────────── */
+
+  /** 启用 MVU 函数调用模式 */
+  mvuToolEnabled?: boolean;
+
+  /** 脚本注册的自定义工具 */
+  scriptTools?: OpenAITool[];
 }
 
 const DEFAULT_LLM_SETTINGS = {
@@ -86,28 +100,6 @@ const DEFAULT_LLM_SETTINGS = {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 type ChatMessage = { role: string; content: string };
-
-/**
- * 合并相邻同角色消息（简单版本，用于回退）
- * 
- * 大多数 LLM API 要求相邻消息角色交替，连续的同角色消息会导致报错。
- * 此函数在发送请求前将相邻同角色消息合并为一条。
- */
-function mergeAdjacentMessages(messages: ChatMessage[]): ChatMessage[] {
-  if (messages.length === 0) return [];
-  
-  const merged: ChatMessage[] = [];
-  for (const msg of messages) {
-    const last = merged[merged.length - 1];
-    if (last && last.role === msg.role) {
-      // 相邻同角色：合并内容
-      last.content = `${last.content}\n\n${msg.content}`;
-    } else {
-      merged.push({ role: msg.role, content: msg.content });
-    }
-  }
-  return merged;
-}
 
 /**
  * 将 ExtendedChatMessage 转换为简单 ChatMessage 格式
@@ -163,11 +155,7 @@ export class LLMNodeTools extends NodeTool {
     }
   }
 
-  static async invokeLLM(
-    systemMessage: string,
-    userMessage: string,
-    config: LLMConfig,
-  ): Promise<string> {
+  static async invokeLLM(config: LLMConfig): Promise<string> {
     try {
       console.log("invokeLLM");
       
@@ -175,29 +163,13 @@ export class LLMNodeTools extends NodeTool {
          messages-only 架构：messages[] 是唯一事实源
          
          Requirements 1.1: 仅使用 messages[] 作为最终提示词内容
-         Requirements 7.2: 若 messages[] 中无 user 消息，追加 fallback
          ═══════════════════════════════════════════════════════════════════════ */
       
-      // 优先使用预设构建的完整 messages 数组，回退到简单的 system + user 结构
-      let rawMessages = config.messages && config.messages.length > 0
-        ? [...config.messages]  // 浅拷贝，避免修改原数组
-        : [
-          { role: "system", content: systemMessage },
-          { role: "user", content: userMessage },
-        ];
-      
-      /* ═══════════════════════════════════════════════════════════════════════
-         用户消息存在性保证 (Requirements 7.2)
-         
-         大多数 LLM API 要求至少有一条 user 消息，否则会报错。
-         若 messages[] 中无 user 消息，追加 fallback user 消息。
-         ═══════════════════════════════════════════════════════════════════════ */
-      const hasUserMessage = rawMessages.some(msg => msg.role === "user");
-      if (!hasUserMessage) {
-        // 使用 userMessage 作为 fallback，若也为空则使用默认占位符
-        const fallbackContent = userMessage?.trim() || "[继续]";
-        rawMessages.push({ role: "user", content: fallbackContent });
+      if (!config.messages || config.messages.length === 0) {
+        throw new Error("messages[] is required for invokeLLM");
       }
+
+      const rawMessages = [...config.messages];
 
       /* ═══════════════════════════════════════════════════════════════════════
          后处理管线 (Requirements: 7.1, 8.1)
@@ -207,23 +179,24 @@ export class LLMNodeTools extends NodeTool {
          - 角色合并（合并连续同角色消息）
          - 严格模式处理（确保 user 起始）
          ═══════════════════════════════════════════════════════════════════════ */
-      let finalMessages: ChatMessage[];
-      
-      if (config.promptNames && config.postProcessingMode) {
-        // 使用新的后处理管线
-        const extMessages = rawMessages as ExtendedChatMessage[];
-        const processed = postProcessMessages(extMessages, {
-          mode: config.postProcessingMode,
-          names: config.promptNames,
-          tools: config.tools,
-          prefill: config.prefill,
-          placeholder: config.placeholder,
-        });
-        finalMessages = toSimpleMessages(processed);
-      } else {
-        // 回退到简单合并
-        finalMessages = mergeAdjacentMessages(rawMessages);
-      }
+      const finalMessages: ChatMessage[] = (() => {
+        // 新后处理管线：仅在明确提供模式时启用
+        if (config.promptNames && config.postProcessingMode) {
+          const extMessages = rawMessages as ExtendedChatMessage[];
+          const processed = postProcessMessages(extMessages, {
+            mode: config.postProcessingMode,
+            names: config.promptNames,
+            tools: config.tools,
+            prefill: config.prefill,
+            placeholder: config.placeholder,
+          });
+          return toSimpleMessages(processed);
+        }
+
+        // 默认行为：保持原始顺序与分条结构，避免合并同角色消息
+        // 这样能与 SillyTavern 的多条 system/user 提示对齐
+        return rawMessages;
+      })();
       
       // ═══════════════════════════════════════════════════════════════════════
       // 广播实际发送的提示词数据，供提示词查看器捕获
@@ -238,8 +211,6 @@ export class LLMNodeTools extends NodeTool {
           detail: {
             dialogueKey: config.dialogueKey,
             characterId: config.characterId,
-            systemMessage,
-            userMessage,
             modelName: config.modelName,
             timestamp: Date.now(),
             messages: finalMessages,
@@ -276,52 +247,89 @@ export class LLMNodeTools extends NodeTool {
       if (config.llmType === "openai") {
         const openaiLlm = this.createLLM(config) as ChatOpenAI;
 
-        // 直接调用LLM获取完整的AIMessage响应
+        // MVU/脚本工具函数调用模式
+        if (config.mvuToolEnabled || (config.scriptTools && config.scriptTools.length > 0)) {
+          // 合并 MVU 工具和脚本工具
+          const allTools: OpenAITool[] = [];
+          if (config.mvuToolEnabled) {
+            allTools.push(getMvuTool());
+          }
+          if (config.scriptTools) {
+            allTools.push(...config.scriptTools);
+          }
+
+          const boundModel = openaiLlm.bindTools(allTools, { tool_choice: "auto" });
+          const aiMessage = await boundModel.invoke(finalMessages);
+
+          // 提取 token usage
+          const usageData = extractTokenUsage(aiMessage);
+          if (usageData && typeof window !== "undefined") {
+            window.lastTokenUsage = {
+              prompt_tokens: usageData.promptTokens,
+              completion_tokens: usageData.completionTokens,
+              total_tokens: usageData.totalTokens,
+            };
+          }
+
+          // 处理工具调用
+          let textContent = aiMessage.content as string;
+          if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
+            const toolCalls: ToolCallBatches = [aiMessage.tool_calls.map(tc => ({
+              id: tc.id || "",
+              type: "function" as const,
+              function: {
+                name: tc.name,
+                arguments: typeof tc.args === "string" ? tc.args : JSON.stringify(tc.args),
+              },
+            }))];
+
+            // 处理 MVU 工具调用
+            const mvuArgs = extractMvuToolCall(toolCalls);
+            if (mvuArgs) {
+              const updateContent = functionCallToUpdateContent(mvuArgs);
+              textContent = textContent ? `${textContent}\n\n${updateContent}` : updateContent;
+              console.log("[LLMNodeTools] MVU 函数调用转换完成:", mvuArgs.analysis);
+            }
+
+            // 脚本工具调用将在响应后由调用方处理（返回原始 tool_calls）
+          }
+
+          return textContent;
+        }
+
+        // 标准调用（无工具）
         const aiMessage = await openaiLlm.invoke(finalMessages);
 
         /* ─────────────────────────────────────────────────────────────────────
            使用适配器链提取 token usage
-           - 统一的接口，支持多种 LLM 响应格式
-           - 消除 provider-specific 的 if-else 分支
            ───────────────────────────────────────────────────────────────────── */
         const usageData = extractTokenUsage(aiMessage);
-
-        // 转换为 snake_case 格式（保持与现有 API 的兼容性）
         const tokenUsage = usageData ? {
           prompt_tokens: usageData.promptTokens,
           completion_tokens: usageData.completionTokens,
           total_tokens: usageData.totalTokens,
         } : null;
 
-        // 如果没有从响应中获取到token usage，尝试从流式响应中获取
         if (!tokenUsage && config.streaming && config.streamUsage) {
           console.log("📊 Token usage not found in response, this may be due to streaming mode");
         }
 
-        // 将token usage信息存储到全局变量供插件使用
-        if (tokenUsage) {
-          if (typeof window !== "undefined") {
-            window.lastTokenUsage = tokenUsage;
-            console.log("📊 Token usage stored for plugins:", tokenUsage);
-
-            // 触发自定义事件通知插件
-            const event = new CustomEvent("llm-token-usage", {
-              detail: { tokenUsage },
-            });
-            window.dispatchEvent(event);
-          }
+        if (tokenUsage && typeof window !== "undefined") {
+          window.lastTokenUsage = tokenUsage;
+          console.log("📊 Token usage stored for plugins:", tokenUsage);
+          const event = new CustomEvent("llm-token-usage", { detail: { tokenUsage } });
+          window.dispatchEvent(event);
         }
 
         return aiMessage.content as string;
       }
 
-      // 对于其他LLM类型（ollama），使用通用的 chain 方式
+      // Ollama：直接使用 messages[] 调用
       const llm = this.createLLM(config);
-      const dialogueChain = this.createDialogueChain(llm);
-      const response = await dialogueChain.invoke({
-        system_message: systemMessage,
-        user_message: userMessage,
-      });
+      const aiMessage = await (llm as ChatOllama).invoke(finalMessages);
+      const response = typeof aiMessage.content === "string"
+        ? aiMessage.content
+        : JSON.stringify(aiMessage.content);
       
       if (!response || typeof response !== "string") {
         throw new Error("Invalid response from LLM");
@@ -330,6 +338,67 @@ export class LLMNodeTools extends NodeTool {
       return response;
     } catch (error) {
       this.handleError(error as Error, "invokeLLM");
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     流式 LLM 调用
+
+     与 invokeLLM 相同的前置处理，但使用流式回调返回内容
+     ═══════════════════════════════════════════════════════════════════════════ */
+  static async invokeLLMStream(
+    config: LLMConfig,
+    callbacks: StreamingCallbacks,
+  ): Promise<string> {
+    try {
+      if (!config.messages || config.messages.length === 0) {
+        throw new Error("messages[] is required for invokeLLMStream");
+      }
+
+      const rawMessages = [...config.messages];
+      let finalMessages: ChatMessage[];
+
+      if (config.promptNames && config.postProcessingMode) {
+        const extMessages = rawMessages as ExtendedChatMessage[];
+        const processed = postProcessMessages(extMessages, {
+          mode: config.postProcessingMode,
+          names: config.promptNames,
+          tools: config.tools,
+          prefill: config.prefill,
+          placeholder: config.placeholder,
+        });
+        finalMessages = toSimpleMessages(processed);
+      } else {
+        finalMessages = rawMessages;
+      }
+
+      // 广播提示词事件
+      if (typeof window !== "undefined" && config.dialogueKey) {
+        const promptEvent = new CustomEvent("llm-prompt-captured", {
+          detail: {
+            dialogueKey: config.dialogueKey,
+            characterId: config.characterId,
+            modelName: config.modelName,
+            timestamp: Date.now(),
+            messages: finalMessages,
+          },
+        });
+        window.dispatchEvent(promptEvent);
+      }
+
+      // 根据模型类型选择流式调用方式
+      if (config.llmType === "claude" || config.llmType === "openai") {
+        return await invokeClaudeModelStream(finalMessages, config, callbacks);
+      }
+
+      // Gemini 和 Ollama 暂不支持流式，回退到非流式
+      console.warn(`[LLMNodeTools] 流式模式不支持 ${config.llmType}，回退到非流式`);
+      const result = await this.invokeLLM(config);
+      callbacks.onToken?.(result);
+      return result;
+
+    } catch (error) {
+      this.handleError(error as Error, "invokeLLMStream");
     }
   }
 
@@ -379,36 +448,4 @@ export class LLMNodeTools extends NodeTool {
     }
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     创建对话链
-
-     RunnableLike 泛型：
-     - 输入/输出类型未知，因为支持多种 LLM 实现
-     - 使用 unknown 表达"任意类型但需要在使用时验证"
-
-     返回值：
-     - 返回 LangChain Runnable，结构复杂且动态
-     - 使用 unknown 表达，调用方负责正确使用
-
-     设计理念：LangChain 是外部库，我们只保证接口契约，不保证内部类型
-     ═══════════════════════════════════════════════════════════════════════════ */
-  private static createDialogueChain(llm: RunnableLike<unknown, unknown>): Runnable<{ system_message: string; user_message: string }, string> {
-    const dialoguePrompt = ChatPromptTemplate.fromMessages([
-      ["system", "{system_message}"],
-      ["human", "{user_message}"],
-    ]);
-
-    type InputType = { system_message: string; user_message: string };
-
-    // 使用 RunnableLambda 替代 RunnablePassthrough.assign 以避免类型问题
-    const assignRunnable = RunnableLambda.from((input: InputType) => ({
-      system_message: input.system_message,
-      user_message: input.user_message,
-    }));
-
-    return assignRunnable
-      .pipe(dialoguePrompt)
-      .pipe(llm)
-      .pipe(new StringOutputParser());
-  }
 } 

@@ -1,4 +1,9 @@
 /**
+ * @input  hooks/script-bridge/types, hooks/script-bridge/*-handlers
+ * @output handleApiCall, ApiCallContext, ApiHandler, ApiHandlerMap, ScriptTool, ToolCallRequest, ToolCallResponse
+ * @pos    脚本桥接注册表 - 统一的 API Handler 注册与调用入口
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         Script Bridge Handler Registry                     ║
  * ║                                                                            ║
@@ -17,6 +22,11 @@ import { messageHandlers } from "./message-handlers";
 import { mvuHandlers } from "./mvu-handlers";
 import { slashHandlers } from "./slash-handlers";
 import { eventHandlers } from "./event-handlers";
+import { extensionHandlers } from "./extension-handlers";
+import { quickReplyHandlers } from "./quickreply-handlers";
+import { characterHandlers } from "./character-handlers";
+import { audioHandlers } from "./audio-handlers";
+import { toolHandlers } from "./tool-handlers";
 
 // ============================================================================
 //                              Handler 注册表
@@ -32,6 +42,11 @@ const API_HANDLERS: ApiHandlerMap = {
   ...mvuHandlers,
   ...slashHandlers,
   ...eventHandlers,
+  ...extensionHandlers,
+  ...quickReplyHandlers,
+  ...characterHandlers,
+  ...audioHandlers,
+  ...toolHandlers,
 };
 
 // ============================================================================
@@ -59,6 +74,25 @@ export async function handleApiCall(
 // ============================================================================
 
 export type { ApiCallContext, ApiHandler, ApiHandlerMap } from "./types";
+
+// ============================================================================
+//                              脚本工具导出
+// ============================================================================
+
+export {
+  getRegisteredScriptTools,
+  getScriptToolsAsOpenAI,
+  findScriptTool,
+  clearIframeTools,
+  invokeScriptTool,
+  handleToolCallResponse,
+} from "./tool-handlers";
+
+export type {
+  ScriptTool,
+  ToolCallRequest,
+  ToolCallResponse,
+} from "./tool-handlers";
 
 // ============================================================================
 //                              iframe 生命周期管理

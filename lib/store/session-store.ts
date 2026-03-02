@@ -1,4 +1,9 @@
 /**
+ * @input  zustand, lib/data/roleplay/session-operation, types/session
+ * @output useSessionStore
+ * @pos    会话状态管理,负责会话列表的 CRUD 与 IndexedDB 同步
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                         Session Store                                     ║
  * ║                                                                           ║
@@ -11,7 +16,6 @@ import { create } from "zustand";
 import { SessionOperations } from "@/lib/data/roleplay/session-operation";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
-import { migrateExistingDialogues } from "@/lib/data/roleplay/session-migration";
 import {
   Session,
   SessionWithCharacter,
@@ -82,16 +86,12 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   /**
    * 获取所有会话并附加角色信息
-   * 首次加载时自动执行迁移
    * Requirements: 1.1, 7.2
    */
   fetchAllSessions: async () => {
     set({ isLoading: true });
 
     try {
-      // 首次加载时执行迁移
-      await migrateExistingDialogues();
-
       const rawSessions = await SessionOperations.getAllSessions();
       const enriched = await enrichSessions(rawSessions);
       set({ sessions: enriched });

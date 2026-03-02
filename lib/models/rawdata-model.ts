@@ -1,3 +1,10 @@
+/**
+ * @input  lib/models/world-book-model, lib/models/character-model
+ * @output RawCharacterData, CharacterBookEntry, CharacterBook
+ * @pos    原始角色数据模型,定义 PNG/JSON 导入的数据结构
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Raw Data Model - 原始角色数据类型定义
    ═══════════════════════════════════════════════════════════════════════════ */

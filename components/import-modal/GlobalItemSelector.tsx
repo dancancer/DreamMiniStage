@@ -1,4 +1,9 @@
 /**
+ * @input  @/components
+ * @output GlobalItem, GlobalItemSelector
+ * @pos    数据导入模态框组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                       Global Item Selector                                ║
  * ║                                                                          ║
@@ -67,7 +72,7 @@ function EmptyState({ title, hint, serifFontClass }: { title: string; hint: stri
     <div className="text-center py-6">
       <div className="relative inline-block">
         <FileText className="mx-auto mb-3 h-8 w-8 text-ink-soft/50" strokeWidth={1} />
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-blue-400/50 to-blue-600/50 rounded-full animate-pulse" />
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-info/50 rounded-full animate-pulse" />
       </div>
       <p className={"text-ink-soft text-sm "}>{title}</p>
       <p className="text-ink-soft/70 text-xs mt-1">{hint}</p>
@@ -94,11 +99,11 @@ function ItemCard({ item, isSelected, isDeleting, deleteTitle, serifFontClass, o
     <label
       className={`relative block p-2.5 border rounded-md cursor-pointer transition-all duration-300 group ${
         isSelected
-          ? "border-blue-500/60 bg-gradient-to-br from-blue-500/10 via-blue-400/5 to-blue-500/10  shadow-blue-500/10"
+          ? "border-blue-500/60 bg-info/10 shadow-blue-500/10"
           : "border-border/60 hover:border-border/80 hover:bg-muted-surface/30"
       }`}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute inset-0 bg-info/5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       <input type="radio" value={item.id} checked={isSelected} onChange={onSelect} className="sr-only" />
       <div className="relative flex items-start justify-between">
         <div className="flex-1 min-w-0">
@@ -138,7 +143,7 @@ function ItemCard({ item, isSelected, isDeleting, deleteTitle, serifFontClass, o
           </Button>
           <div className={`relative w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
             isSelected
-              ? "border-blue-500 bg-gradient-to-br from-blue-500 to-blue-600  shadow-blue-500/30"
+              ? "border-blue-500 bg-info shadow-blue-500/30"
               : "border-border group-hover:border-border"
           }`}>
             {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />}

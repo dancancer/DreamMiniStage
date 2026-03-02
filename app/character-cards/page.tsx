@@ -1,4 +1,9 @@
 /**
+ * @input  react, next/navigation, lucide-react, components/ui/*, components/*, function/character/*, utils/*, lib/store/*, lib/storage/*, app/i18n
+ * @output CharacterCards (default export)
+ * @pos    页面组件 - 角色卡管理页面，支持浏览和创建会话两种模式
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                      Character Cards Page                                 ║
  * ║                                                                           ║
@@ -24,7 +29,7 @@ import { trackButtonClick } from "@/utils/google-analytics";
 import { moveToTop } from "@/function/character/move-to-top";
 import { toast } from "@/lib/store/toast-store";
 import { useSessionStore } from "@/lib/store/session-store";
-import { getBoolean, getString, setString } from "@/lib/storage/client-storage";
+import { getString, setString } from "@/lib/storage/client-storage";
 
 /**
  * Interface defining the structure of a character object
@@ -125,51 +130,6 @@ function CharacterCardsContent() {
     }
   }, [t]);
     
-  /**
-   * Migrates data structure by deleting all character cards
-   * This is a one-time operation triggered by localStorage flag
-   * Used when data structure changes from parsed_content to parsedContent
-   */
-  const migrateDataStructure = useCallback(async () => {
-    const migrationFlag = getString("characterCardsDataMigration");
-    const migrationConfirmed = getBoolean("characterCardsDataMigrationConfirmed");
-    
-    // Check if migration is needed and hasn't been performed yet
-    if (migrationFlag !== "completed" && migrationConfirmed) {
-      console.log("Starting data structure migration - deleting all character cards");
-      
-      try {
-        // Fetch all characters first
-        const username = getString("username");
-        const language = getString("language", "zh");
-        const characters = await getAllCharacters(language as "zh" | "en", username);
-        
-        if (characters && characters.length > 0) {
-          // Delete all character cards
-          for (const character of characters) {
-            try {
-              await deleteCharacter(character.id);
-              console.log(`Deleted character: ${character.name}`);
-            } catch (error) {
-              console.error(`Failed to delete character ${character.name}:`, error);
-              toast.error(`Failed to delete character ${character.name}`);
-            }
-          }
-        }
-        
-        // Mark migration as completed
-        setString("characterCardsDataMigration", "completed");
-        console.log("Data structure migration completed");
-        
-      } catch (error) {
-        console.error("Error during data structure migration:", error);
-        toast.error(t("characterCardsPage.migrationError") || "Error during data migration");
-      }
-    } else if (migrationFlag !== "completed" && !migrationConfirmed) {
-      console.warn("Skipped destructive character card migration because confirmation flag is missing. Set 'characterCardsDataMigrationConfirmed' in localStorage to proceed after manual backup.");
-    }
-  }, [t]);
-    
   const handleDeleteCharacter = async (characterId: string) => {
     setIsLoading(true);
     try {
@@ -244,14 +204,11 @@ function CharacterCardsContent() {
 
   useEffect(() => {
     const initializeData = async () => {
-      // First run data structure migration if needed
-      await migrateDataStructure();
-      // Then fetch characters
       await fetchCharacters();
     };
     
     initializeData();
-  }, [fetchCharacters, migrateDataStructure]);
+  }, [fetchCharacters]);
 
   if (!mounted) return null;
 
@@ -322,7 +279,7 @@ function CharacterCardsContent() {
                 </div>
                 <p className={"text-cream-soft mb-6 "}>{t("characterCardsPage.noCharacters")}</p>
                 <div
-                  className={`portal-button inline-block text-primary-soft hover:text-highlight px-5 py-2 border border-border rounded-md cursor-pointer ${fontClass} transition-transform duration-150 hover:scale-105 active:scale-95`}
+                  className={`portal-button inline-block text-primary-soft hover:text-highlight px-5 py-2 border border-border rounded-md cursor-pointer ${fontClass} active:scale-95`}
                   onClick={() => setIsImportModalOpen(true)}
                 >
                   {t("characterCardsPage.importFirstCharacter")}

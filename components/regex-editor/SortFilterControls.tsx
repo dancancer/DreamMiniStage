@@ -1,4 +1,9 @@
 /**
+ * @input  @/hooks, @/components
+ * @output SortFilterControls
+ * @pos    正则脚本编辑器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                        SortFilterControls Component                       ║
  * ║                                                                          ║
@@ -9,7 +14,7 @@
 "use client";
 
 import { AlignJustify, Filter, ChevronDown } from "lucide-react";
-import { SortField, SortOrder, FilterType } from "@/hooks/useRegexScripts";
+import { SortField, SortOrder, FilterType } from "@/hooks/useRegexScripts/index";
 import { Button } from "@/components/ui/button";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -61,7 +66,7 @@ export function SortFilterControls({
           <select
             value={sortBy}
             onChange={(e) => onSortByChange(e.target.value as SortField)}
-            className={"appearance-none bg-gradient-to-br from-deep via-muted-surface to-deep text-cream-soft px-2 sm:px-3 py-1 sm:py-1.5 pr-5 sm:pr-7 rounded-md border border-border/60 focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 hover:border-border backdrop-blur-sm  text-2xs sm:text-xs font-medium  hover: hover:shadow-primary-500/5"}
+            className={"appearance-none bg-muted-surface text-cream-soft px-2 sm:px-3 py-1 sm:py-1.5 pr-5 sm:pr-7 rounded-md border border-border/60 focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 hover:border-border backdrop-blur-sm  text-2xs sm:text-xs font-medium  hover: hover:shadow-primary-500/5"}
           >
             <option value="priority" className=" text-cream-soft">{t("regexScriptEditor.priority")}</option>
             <option value="name" className=" text-cream-soft">{t("regexScriptEditor.name")}</option>
@@ -79,10 +84,10 @@ export function SortFilterControls({
           variant="outline"
           size="sm"
           onClick={onSortOrderToggle}
-          className="group relative flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 h-auto bg-gradient-to-br from-deep via-muted-surface to-deep border border-border/60 hover:border-primary-500/40 text-cream-soft hover:text-primary-200 backdrop-blur-sm"
+          className="group relative flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 h-auto bg-muted-surface border border-border/60 hover:border-primary-500/40 text-cream-soft hover:text-primary-200 backdrop-blur-sm"
           title={sortOrder === "asc" ? t("regexScriptEditor.ascending") : t("regexScriptEditor.descending")}
         >
-          <div className={`flex items-center justify-center w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gradient-to-br ${sortOrder === "asc" ? "from-primary-500/20 to-primary-600/30 text-primary-400" : "from-blue-500/20 to-blue-600/30 text-blue-400"} transition-all duration-300 group-hover:scale-110`}>
+          <div className={`flex items-center justify-center w-3 h-3 sm:w-4 sm:h-4 rounded-full ${sortOrder === "asc" ? "bg-primary/20 text-primary-400" : "bg-blue-500/20 text-blue-400"} transition-all duration-300`}>
             <span className="text-2xs sm:text-xs font-bold">{sortOrder === "asc" ? "↑" : "↓"}</span>
           </div>
           <span className="text-2xs sm:text-xs font-medium">{sortOrder === "asc" ? t("regexScriptEditor.asc") : t("regexScriptEditor.desc")}</span>
@@ -99,7 +104,7 @@ export function SortFilterControls({
           <select
             value={filterBy}
             onChange={(e) => onFilterByChange(e.target.value as FilterType)}
-            className={"appearance-none bg-gradient-to-br from-deep via-muted-surface to-deep text-cream-soft px-2 sm:px-3 py-1 sm:py-1.5 pr-5 sm:pr-7 rounded-md border border-border/60 focus:border-blue-500/60 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 hover:border-border backdrop-blur-sm  text-2xs sm:text-xs font-medium  hover: hover:shadow-blue-500/5"}
+            className={"appearance-none bg-muted-surface text-cream-soft px-2 sm:px-3 py-1 sm:py-1.5 pr-5 sm:pr-7 rounded-md border border-border/60 focus:border-blue-500/60 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 hover:border-border backdrop-blur-sm  text-2xs sm:text-xs font-medium  hover: hover:shadow-blue-500/5"}
           >
             <option value="all" className=" text-cream-soft">{t("regexScriptEditor.filterAll")}</option>
             <option value="enabled" className=" text-cream-soft">{t("regexScriptEditor.filterEnabled")}</option>

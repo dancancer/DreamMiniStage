@@ -1,3 +1,10 @@
+/**
+ * @input  lib/data/roleplay/*, lib/data/local-storage
+ * @output deleteCharacter
+ * @pos    角色删除 - 删除角色及关联的世界书、正则脚本、头像
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import { RegexScriptOperations } from "@/lib/data/roleplay/regex-script-operation";

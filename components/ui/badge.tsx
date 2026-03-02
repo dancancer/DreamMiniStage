@@ -1,4 +1,9 @@
 /**
+ * @input  @/lib
+ * @output Badge
+ * @pos    基础 UI 组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                               Badge 组件                                   ║
  * ║  轻量标签：统一关键词/状态标识的颜色与尺寸                                    ║
@@ -8,43 +13,42 @@
 "use client";
 
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = "neutral" | "info" | "success" | "warning" | "primary";
-type BadgeSize = "xs" | "sm";
+const badgeVariants = cva(
+  "inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  {
+    variants: {
+      variant: {
+        default: "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
+        secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        destructive: "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
+        outline: "text-foreground",
+      },
+      size: {
+        xs: "px-1.5 py-0.5 text-[10px] sm:text-2xs",
+        sm: "px-2.5 py-0.5 text-xs",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "xs",
+    },
+  },
+);
 
-interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: BadgeVariant;
-  size?: BadgeSize;
-}
-
-const variantMap: Record<BadgeVariant, string> = {
-  neutral: "bg-coal text-primary-200 border-border",
-  info: "bg-blue-900/40 text-blue-200 border border-blue-700/40",
-  success: "bg-green-900/40 text-green-200 border border-green-700/40",
-  warning: "bg-amber-900/30 text-amber-100 border border-amber-700/40",
-  primary: "bg-primary/15 text-primary-200 border border-primary/30",
-};
-
-const sizeMap: Record<BadgeSize, string> = {
-  xs: "px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-2xs",
-  sm: "px-2.5 py-1 text-xs",
-};
+interface BadgeProps
+  extends React.HTMLAttributes<HTMLSpanElement>,
+    VariantProps<typeof badgeVariants> {}
 
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
-  ({ className, variant = "neutral", size = "xs", ...props }, ref) => {
-    return (
-      <span
-        ref={ref}
-        className={cn(
-          "inline-flex items-center rounded-md font-medium transition-colors",
-          sizeMap[size],
-          variantMap[variant],
-          className,
-        )}
-        {...props}
-      />
-    );
-  },
+  ({ className, variant, size, ...props }, ref) => (
+    <span
+      ref={ref}
+      className={cn(badgeVariants({ variant, size, className }))}
+      {...props}
+    />
+  ),
 );
 Badge.displayName = "Badge";

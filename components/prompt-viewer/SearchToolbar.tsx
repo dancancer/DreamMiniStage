@@ -1,4 +1,9 @@
 /**
+ * @input  @/components, @/lib
+ * @output SearchToolbar, SearchToolbar
+ * @pos    提示词查看器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                        搜索工具栏组件                                      ║
  * ║                                                                           ║
@@ -105,7 +110,7 @@ function SearchInput({ value, onChange, onClear, disabled }: SearchInputProps) {
   return (
     <div className="relative group">
       {/* 魔法边框效果 */}
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-primary-400/20 via-primary-500/5 to-primary-400/10 rounded-md blur opacity-0 group-hover:opacity-100 transition duration-300" />
+      <div className="absolute -inset-0.5 bg-primary/10 rounded-md blur opacity-0 group-hover:opacity-100 transition duration-300" />
       
       {/* 搜索图标 */}
       <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">

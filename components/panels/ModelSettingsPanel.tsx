@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/contexts, @/utils, @/components, @/hooks
+ * @output ModelSettingsPanel
+ * @pos    功能面板组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔════════════════════════════════════════════════════════════════════╗
  * ║                       ModelSettingsPanel 模型设置面板               ║
  * ║  复用桌面端模型侧边栏视图，默认展开，关闭即收起右侧抽屉。               ║

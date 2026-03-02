@@ -1,3 +1,10 @@
+/**
+ * @input  lib/models/parsed-response
+ * @output DialogueNode
+ * @pos    对话树节点模型,支持多分支对话历史的树状结构
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 import { ParsedResponse } from "@/lib/models/parsed-response";
 
 export class DialogueNode {
@@ -8,6 +15,7 @@ export class DialogueNode {
   fullResponse: string;
   thinkingContent?: string;
   parsedContent?: ParsedResponse;
+  extra?: Record<string, unknown>;
   constructor(
     nodeId: string,
     parentNodeId: string,
@@ -16,6 +24,7 @@ export class DialogueNode {
     fullResponse: string,
     thinkingContent?: string,
     parsedContent?: ParsedResponse,
+    extra?: Record<string, unknown>,
   ) {
     this.nodeId = nodeId;
     this.parentNodeId = parentNodeId;
@@ -24,6 +33,7 @@ export class DialogueNode {
     this.fullResponse = fullResponse;
     this.thinkingContent = thinkingContent;
     this.parsedContent = parsedContent;
+    this.extra = extra;
   }
 }
 

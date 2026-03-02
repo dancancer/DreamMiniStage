@@ -1,4 +1,9 @@
 /**
+ * @input  @/utils, @/hooks, @/components
+ * @output CharacterChatPanel
+ * @pos    角色对话主面板
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                     Character Chat Panel Component                        ║
  * ║                                                                           ║
@@ -18,6 +23,8 @@ import { useLocalStorageBoolean } from "@/hooks/useLocalStorage";
 import UserNameSettingModal from "@/components/UserNameSettingModal";
 import ScriptDebugPanel from "@/components/ScriptDebugPanel";
 import type { TavernHelperScript } from "@/lib/models/character-model";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import {
   ApiSelector,
@@ -74,6 +81,8 @@ interface Props {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
+  onExportJsonl?: () => void | Promise<void>;
+  onImportJsonl?: (file: File) => void | Promise<void>;
 }
 
 // ============================================================================
@@ -109,6 +118,8 @@ export default function CharacterChatPanel({
   onImpersonate,
   onContinue,
   onSwipe,
+  onExportJsonl,
+  onImportJsonl,
 }: Props) {
   // ========== 状态管理 ==========
   const [streamingTarget, setStreamingTarget] = useState(-1);
@@ -152,6 +163,7 @@ export default function CharacterChatPanel({
   const scriptBridge = useScriptBridge({
     characterId: character.id,
     characterName: character.name,
+    dialogueId: dialogueKey,
     messages,
     onSend: onSendMessage,
     onTrigger: onTriggerGeneration,
@@ -211,26 +223,20 @@ export default function CharacterChatPanel({
   }, []);
 
   const handleToggleStreaming = useCallback(() => {
-    setActiveModes((prev) => {
-      const newStreaming = !prev.streaming;
-      setStreamingTarget(newStreaming ? messages.length : -1);
-      setStreamingEnabled(newStreaming);
-      return { ...prev, streaming: newStreaming };
-    });
-  }, [messages.length, setActiveModes, setStreamingEnabled]);
+    setStreamingEnabled((prev) => !prev);
+  }, [setStreamingEnabled]);
 
   const handleToggleFastModel = useCallback(() => {
-    setActiveModes((prev) => {
-      const newFastModel = !prev.fastModel;
-      setFastModelEnabled(newFastModel);
-      return { ...prev, fastModel: newFastModel };
-    });
-  }, [setActiveModes, setFastModelEnabled]);
+    setFastModelEnabled((prev) => !prev);
+  }, [setFastModelEnabled]);
 
   // ========== 渲染函数 ==========
   const renderMessageHeaderSlot = useCallback((message: Message, index: number) => {
     const isLastAssistant = !isSending && message.role === "assistant" && index === messages.length - 1;
     if (!isLastAssistant) return null;
+
+    const swipe = message.swipe;
+    const showSwipeControls = !!swipe && swipe.total > 1;
 
     return (
       <>
@@ -259,9 +265,35 @@ export default function CharacterChatPanel({
           onToggleFastModel={handleToggleFastModel}
           t={t}
         />
+
+        {showSwipeControls && (
+          <div className="ml-2 flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7 border-border bg-surface hover:border-border"
+              onClick={() => handleSwipe("prev")}
+              aria-label="Swipe previous"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="px-2 text-xs text-muted-foreground tabular-nums">
+              {swipe.activeIndex + 1}/{swipe.total}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7 border-border bg-surface hover:border-border"
+              onClick={() => handleSwipe("next")}
+              aria-label="Swipe next"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </>
     );
-  }, [apiConfig, activeModes, isSending, messages.length, handleToggleStreaming, handleToggleFastModel, t]);
+  }, [apiConfig, activeModes, isSending, messages.length, handleToggleStreaming, handleToggleFastModel, handleSwipe, t]);
 
   // ========== 渲染 ==========
   return (
@@ -312,6 +344,8 @@ export default function CharacterChatPanel({
           t={t}
           dialogueKey={dialogueKey}
           characterId={character?.id}
+          onExportJsonl={onExportJsonl}
+          onImportJsonl={onImportJsonl}
         />
       </ChatInput>
 

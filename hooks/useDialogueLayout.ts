@@ -1,4 +1,9 @@
 /**
+ * @input  reactflow, elkjs
+ * @output useDialogueLayout, LayoutMethod
+ * @pos    对话树布局 Hook - ELK 自动布局 / Grid 回退布局 / Progressive 增量布局
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                       useDialogueLayout Hook                               ║
  * ║                                                                            ║

@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/components, @/hooks, @/lib
+ * @output PersonaManagementPanel, PersonaManagementPanel
+ * @pos    人格管理面板
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                    Persona Management Panel Component                      ║
  * ║                                                                            ║

@@ -20,6 +20,7 @@ import type {
   SecondaryKeyLogic,
 } from "@/lib/models/world-book-model";
 import type { DialogueMessage } from "@/lib/models/character-dialogue-model";
+import { WorldBookManager } from "./world-book";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    类型定义
@@ -431,14 +432,43 @@ export class WorldBookAdvancedManager {
    * 单个关键词匹配（好品味：全词匹配用正则边界）
    */
   private matchSingleKey(text: string, key: string, wholeWords?: boolean): boolean {
-    if (wholeWords) {
-      // 全词匹配：使用单词边界
-      const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const regex = new RegExp(`\\b${escaped}\\b`);
-      return regex.test(text);
+    if (!wholeWords) {
+      return text.includes(key);
     }
-    // 子串匹配
-    return text.includes(key);
+
+    if (this.hasCjk(key)) {
+      return this.matchCjkWholeWord(text, key);
+    }
+
+    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`\\b${escaped}\\b`, "u");
+    return regex.test(text);
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     CJK 全词匹配：使用 Intl.Segmenter 近似中文/日文/韩文的词界
+     ───────────────────────────────────────────────────────────────────────── */
+  private matchCjkWholeWord(text: string, key: string): boolean {
+    const segmenter = typeof Intl !== "undefined" && "Segmenter" in Intl
+      ? new Intl.Segmenter("zh-CN", { granularity: "word" })
+      : null;
+
+    if (!segmenter) return text.includes(key);
+
+    for (const { segment, isWordLike } of segmenter.segment(text)) {
+      if (!isWordLike) continue;
+      if (segment === key || segment.startsWith(key)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private hasCjk(text: string): boolean {
+    return /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(
+      text,
+    );
   }
 
   /* ─────────────────────────────────────────────────────────────────────────
@@ -482,7 +512,8 @@ export class WorldBookAdvancedManager {
       entry._stickyRemaining = entry.sticky;
     }
     if (entry.cooldown && entry.cooldown > 0) {
-      entry._cooldownRemaining = entry.cooldown;
+      // ── cooldown 按轮次计数：+1 确保“冷却 2”代表跳过后续两轮
+      entry._cooldownRemaining = entry.cooldown + 1;
     }
   }
 
@@ -492,7 +523,10 @@ export class WorldBookAdvancedManager {
         entry._stickyRemaining--;
       }
       if (entry._cooldownRemaining && entry._cooldownRemaining > 0) {
-        entry._cooldownRemaining--;
+        entry._cooldownRemaining = Math.max(0, entry._cooldownRemaining - 1);
+        if (entry._cooldownRemaining === 0) {
+          entry._cooldownRemaining = undefined;
+        }
       }
     }
   }
@@ -668,16 +702,18 @@ export class WorldBookAdvancedManager {
 
   generateWiBefore(matched: MatchedEntry[]): string {
     const beforeEntries = matched.filter((m) => {
-      const pos = m.entry.position;
-      return pos === 0 || pos === "before" || pos === "0";
+      const normalizedPos = WorldBookManager.normalizePosition(m.entry);
+      return normalizedPos === 0;
     });
     return beforeEntries.map((m) => m.entry.content).join("\n\n");
   }
 
   generateWiAfter(matched: MatchedEntry[]): string {
     const afterEntries = matched.filter((m) => {
-      const pos = m.entry.position;
-      return pos === 1 || pos === "after" || pos === "1";
+      const normalizedPos = WorldBookManager.normalizePosition(m.entry);
+      // Position 1 = after story string (wiAfter)
+      // Position 2 = before AN (also sometimes used as after in some exports)
+      return normalizedPos === 1 || normalizedPos === 2;
     });
     return afterEntries.map((m) => m.entry.content).join("\n\n");
   }

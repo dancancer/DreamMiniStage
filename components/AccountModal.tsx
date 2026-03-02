@@ -1,3 +1,10 @@
+/**
+ * @input  @/app/i18n, @/hooks/useAuth, @/lib/store, @/components/ui
+ * @output AccountModal
+ * @pos    用户账户管理模态框组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -76,14 +83,14 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-        className="relative w-full max-w-md bg-gradient-to-br from-canvas via-surface to-canvas rounded-2xl border border-muted-surface/50 overflow-hidden p-0"
+        className="relative w-full max-w-md bg-surface rounded-2xl border border-muted-surface/50 overflow-hidden p-0"
         hideCloseButton
       >
         <DialogTitle className="sr-only">{t("account.title")}</DialogTitle>
         {/* ═══════════════════════════════════════════════════════════
             动画背景 - Animated Background
             ═══════════════════════════════════════════════════════════ */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-purple-500/5 opacity-60" />
+        <div className="absolute inset-0 bg-primary/5 opacity-60" />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f59e0b' fill-opacity='0.03'%3E%3Cpath d='M30 30l30-30v60L30 30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20" />
         
         {/* ═══════════════════════════════════════════════════════════
@@ -119,7 +126,7 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
           <div className="flex items-start gap-4">
             {/* 用户头像 - User Avatar */}
             <div className="relative">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-400 via-primary-500 to-orange-500 p-[2px] ">
+              <div className="w-20 h-20 rounded-full bg-primary p-[2px] ">
                 <div className="w-full h-full rounded-full bg-canvas flex items-center justify-center text-2xl font-bold text-primary-300">
                   {user.username.charAt(0).toUpperCase()}
                 </div>
@@ -239,7 +246,7 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
         {/* ═══════════════════════════════════════════════════════════
             分隔线 - Divider
             ═══════════════════════════════════════════════════════════ */}
-        <div className="mx-6 h-[1px] bg-gradient-to-r from-transparent via-muted-surface to-transparent"></div>
+        <div className="mx-6 h-[1px] bg-border"></div>
 
         {/* ═══════════════════════════════════════════════════════════
             账户类型标识 - Account Type Badge
@@ -270,7 +277,7 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
             onClick={handleLogout}
             className="w-full group relative overflow-hidden bg-red-600/10 hover:bg-red-600/20 border border-red-500/30 hover:border-red-500/50 text-red-400 hover:text-red-300 rounded-xl py-3 px-4"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-red-600/0 via-red-600/5 to-red-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+            <div className="absolute inset-0 bg-destructive/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
             
             <div className="relative flex items-center justify-center gap-2">
               <LogOut className="h-4 w-4" />

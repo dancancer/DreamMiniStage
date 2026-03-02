@@ -1,4 +1,9 @@
 /**
+ * @input  @/app/i18n, @/lib/store, @/hooks/useLocalStorage, @/components/ui
+ * @output LoginModal
+ * @pos    用户登录模态框组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         Login Modal Component                              ║
  * ║                                                                            ║
@@ -79,7 +84,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             autoComplete="off"
           />
           <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-0.5 opacity-100 transition-opacity duration-300">
-            <div className="w-full h-full bg-gradient-to-r from-transparent via-primary-soft to-transparent"></div>
+            <div className="w-full h-full bg-primary-soft/40"></div>
           </div>
         </div>
       </div>

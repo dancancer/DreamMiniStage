@@ -1,4 +1,9 @@
 /**
+ * @input  @/lib, @/components, @/app, @/function, @/hooks
+ * @output PresetEditor
+ * @pos    预设编辑器入口
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                       PresetEditor                                         ║
  * ║  预设管理：列表/排序/筛选/展开 + 提示词编辑弹窗                             ║

@@ -7,7 +7,7 @@
  * ║  Property 3: HistoryPreNode 输出完整性                                      ║
  * ║  Property 4: HistoryPreNode 历史隔离                                        ║
  * ║                                                                            ║
- * ║  Requirements: 2.2, 2.3, 2.4, 2.5                                          ║
+ * ║  Requirements: 2.2, 2.4, 2.5                                               ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -115,7 +115,7 @@ function calculateExpectedMessageCount(nodePath: DialogueNode[]): number {
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Property 3: HistoryPreNode 输出完整性
-   **Validates: Requirements 2.2, 2.3, 2.4**
+   **Validates: Requirements 2.2, 2.4**
    ═══════════════════════════════════════════════════════════════════════════ */
 
 describe("Property 3: HistoryPreNode 输出完整性", () => {
@@ -157,40 +157,6 @@ describe("Property 3: HistoryPreNode 输出完整性", () => {
             expect(msg).toHaveProperty("content");
             expect(["user", "assistant", "system"]).toContain(msg.role);
             expect(typeof msg.content).toBe("string");
-          }
-        },
-      ),
-      { numRuns: 100 },
-    );
-  });
-
-  /**
-   * **Feature: message-assembly-remediation, Property 3**
-   * **Validates: Requirements 2.3**
-   *
-   * *For any* dialogueKey 和 nodePath，getChatHistoryText 应该返回
-   * 非空字符串（当有历史时）或空字符串（当无历史时）
-   */
-  it("*For any* dialogueKey and nodePath, getChatHistoryText SHALL output compressed string", async () => {
-    await fc.assert(
-      fc.asyncProperty(
-        dialogueKeyArb,
-        dialoguePathArb,
-        memoryLengthArb,
-        async (dialogueKey, nodePath, memoryLength) => {
-          setupMocks(dialogueKey, nodePath);
-
-          const text = await HistoryPreNodeTools.getChatHistoryText(
-            dialogueKey,
-            memoryLength,
-          );
-
-          // 验证返回类型是字符串
-          expect(typeof text).toBe("string");
-
-          // 如果有历史数据，文本应该非空
-          if (nodePath.length > 0 && nodePath.some(n => n.assistantResponse)) {
-            expect(text.length).toBeGreaterThan(0);
           }
         },
       ),

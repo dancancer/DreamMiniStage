@@ -75,13 +75,13 @@ export interface ExecutionContext {
   getMessageCount?: () => number;
 
   // 扩展操作 - World Book
-  getWorldBookEntry?: (id: string) => WorldBookEntryData | undefined;
-  searchWorldBook?: (query: string) => WorldBookEntryData[];
+  getWorldBookEntry?: (id: string) => WorldBookEntryData | undefined | Promise<WorldBookEntryData | undefined>;
+  searchWorldBook?: (query: string) => WorldBookEntryData[] | Promise<WorldBookEntryData[]>;
   setWorldBookEntry?: (id: string, data: Partial<WorldBookEntryData>) => void | Promise<void>;
   createWorldBookEntry?: (data: Partial<WorldBookEntryData>) => WorldBookEntryData | Promise<WorldBookEntryData | undefined>;
   deleteWorldBookEntry?: (id: string) => void | Promise<void>;
   activateWorldBookEntry?: (id: string) => void | Promise<void>;
-  listWorldBookEntries?: (bookName?: string) => WorldBookEntryData[];
+  listWorldBookEntries?: (bookName?: string) => WorldBookEntryData[] | Promise<WorldBookEntryData[]>;
 
   // 扩展操作 - 生成
   generate?: (prompt: string, options?: GenerateOptions) => Promise<string>;
@@ -92,9 +92,9 @@ export interface ExecutionContext {
   activateWorldInfoEntry?: (name: string, options?: ActivateLoreOptions) => void | Promise<void>;
 
   // 扩展操作 - Preset
-  getPreset?: () => PresetInfo | undefined;
+  getPreset?: () => PresetInfo | undefined | Promise<PresetInfo | undefined>;
   setPreset?: (name: string) => void | Promise<void>;
-  listPresets?: () => PresetInfo[];
+  listPresets?: () => PresetInfo[] | Promise<PresetInfo[]>;
 
   // 扩展操作 - Regex
   listRegexScripts?: () => RegexScriptInfo[];
@@ -108,6 +108,15 @@ export interface ExecutionContext {
   pauseAudio?: () => void | Promise<void>;
   resumeAudio?: () => void | Promise<void>;
   setAudioVolume?: (volume: number) => void | Promise<void>;
+  playAudioByType?: (type: AudioChannelType, track?: { url: string; title?: string }) => void | Promise<void>;
+  pauseAudioByType?: (type: AudioChannelType) => void | Promise<void>;
+  stopAudioByType?: (type: AudioChannelType) => void | Promise<void>;
+  setAudioEnabledByType?: (type: AudioChannelType, enabled: boolean) => void | Promise<void>;
+  setAudioModeByType?: (type: AudioChannelType, mode: AudioChannelSnapshot["mode"]) => void | Promise<void>;
+  getAudioListByType?: (type: AudioChannelType) => Array<{ url: string; title?: string }>;
+  replaceAudioListByType?: (type: AudioChannelType, list: Array<{ url: string; title?: string }>) => void | Promise<void>;
+  appendAudioListByType?: (type: AudioChannelType, list: Array<{ url: string; title?: string }>) => void | Promise<void>;
+  getAudioStateByType?: (type: AudioChannelType) => AudioChannelSnapshot | undefined;
 }
 
 /** Preset 信息 */
@@ -128,6 +137,18 @@ export interface RegexScriptInfo {
 export interface AudioOptions {
   volume?: number;
   loop?: boolean;
+}
+
+/** 音频通道类型 */
+export type AudioChannelType = "bgm" | "ambient";
+
+/** 音频通道运行时快照 */
+export interface AudioChannelSnapshot {
+  enabled: boolean;
+  mode: "repeat" | "random" | "single" | "stop";
+  currentUrl: string | null;
+  playlist: Array<{ url: string; title?: string }>;
+  isPlaying: boolean;
 }
 
 /** World Book 条目数据 */

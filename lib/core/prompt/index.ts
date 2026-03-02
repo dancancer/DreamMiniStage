@@ -29,16 +29,6 @@ export {
   stripTools,
 } from "./post-processor";
 
-// 兼容性检测与转换 (Requirements: 7.1, 7.4)
-export {
-  isLegacyPreset,
-  checkPresetCompatibility,
-  applyCompatibilityLayer,
-  replaceTextPlaceholdersInMessages,
-  findUnreplacedPlaceholders,
-} from "./compatibility";
-export type { CompatibilityCheckResult, LegacyIssue } from "./compatibility";
-
 // 模型转换器 (Requirements: 7.1, 8.1)
 export {
   convertForClaude,

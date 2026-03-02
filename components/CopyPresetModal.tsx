@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/function, @/lib, @/components
+ * @output CopyPresetModal
+ * @pos    预设复制模态框
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                      Copy Preset Modal Component                           ║
  * ║                                                                            ║
@@ -118,7 +123,7 @@ export default function CopyPresetModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md p-0 overflow-hidden  border-border gap-0">
-        <div className="p-4 border-b border-border bg-gradient-to-r from-blue-500/5 to-transparent">
+        <div className="p-4 border-b border-border bg-muted">
           <DialogHeader>
             <DialogTitle className={"text-lg font-medium text-cream-soft magical-text "}>
               <span className="">
@@ -148,7 +153,7 @@ export default function CopyPresetModal({
               onChange={(e) => setPresetName(e.target.value)}
               placeholder={t("preset.newPresetNamePlaceholder")}
               disabled={isCopying}
-              className={`w-full px-3 py-2 bg-gradient-to-br from-deep via-muted-surface to-deep 
+              className={`w-full px-3 py-2 bg-muted-surface 
                 text-cream-soft rounded-md border border-border 
                 focus:border-blue-500/60 focus:outline-none focus:ring-2 focus:ring-blue-500/20 
                 transition-all duration-300 hover:border-border backdrop-blur-sm
@@ -165,7 +170,7 @@ export default function CopyPresetModal({
               onClick={() => handleOpenChange(false)}
               disabled={isCopying}
               className={`px-4 py-2 text-sm font-medium text-ink-soft hover:text-cream-soft 
-                bg-gradient-to-br from-deep via-muted-surface to-deep 
+                bg-muted-surface 
                 border border-border hover:border-border backdrop-blur-sm ${fontClass}`}
             >
               {t("preset.cancel")}
@@ -174,8 +179,7 @@ export default function CopyPresetModal({
               type="submit"
               disabled={isCopying || !presetName.trim()}
               className={`px-4 py-2 text-sm font-medium 
-                bg-gradient-to-r from-ember to-coal 
-                hover:from-ember hover:to-coal 
+                bg-info/20 hover:bg-info/30
                 text-sky hover:text-sky/80 
                 border border-info ${fontClass}
                 flex items-center`}

@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/lib, @/components
+ * @output RegexScriptEntryEditor
+ * @pos    正则脚本条目编辑器
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                  Regex Script Entry Editor Component                       ║
  * ║                                                                            ║
@@ -133,8 +138,8 @@ export default function RegexScriptEntryEditor({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden  border-border gap-0">
-        <div className="absolute inset-0 bg-linear-to-r from-primary-500/3 via-transparent to-primary-500/3 opacity-50 pointer-events-none"></div>
-        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary-500/30 to-transparent pointer-events-none"></div>
+        <div className="absolute inset-0 bg-primary/5 opacity-50 pointer-events-none"></div>
+        <div className="absolute top-0 left-0 w-full h-1 bg-primary/30 pointer-events-none"></div>
         
         <div className="p-5 border-b border-border/60 relative z-10">
           <DialogHeader>
@@ -156,7 +161,7 @@ export default function RegexScriptEntryEditor({
                 type="text"
                 value={localScript.scriptName || ""}
                 onChange={(e) => updateScript({ scriptName: e.target.value })}
-                className="w-full px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
+                className="w-full px-3 py-2 bg-muted-surface border border-border/60 rounded-md text-cream 
                   focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                   placeholder-ink-soft/70 hover:border-border text-sm"
                 placeholder={t("regexScriptEditor.scriptNamePlaceholder")}
@@ -171,7 +176,7 @@ export default function RegexScriptEntryEditor({
                 type="text"
                 value={localScript.findRegex || ""}
                 onChange={(e) => updateScript({ findRegex: e.target.value })}
-                className="w-full px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-primary-bright 
+                className="w-full px-3 py-2 bg-muted-surface border border-border/60 rounded-md text-primary-bright 
                   focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                   placeholder-ink-soft/70 hover:border-border font-mono text-sm"
                 placeholder={t("regexScriptEditor.findRegexPlaceholder")}
@@ -186,7 +191,7 @@ export default function RegexScriptEntryEditor({
                 type="text"
                 value={localScript.replaceString || ""}
                 onChange={(e) => updateScript({ replaceString: e.target.value })}
-                className="w-full px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-sky 
+                className="w-full px-3 py-2 bg-muted-surface border border-border/60 rounded-md text-sky 
                   focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                   placeholder-ink-soft/70 hover:border-border font-mono text-sm"
                 placeholder={t("regexScriptEditor.replaceStringPlaceholder") || "Leave empty to remove matched text"}
@@ -214,7 +219,7 @@ export default function RegexScriptEntryEditor({
                   type="number"
                   value={localScript.placement?.[0] || 999}
                   onChange={(e) => updateScript({ placement: [parseInt(e.target.value) || 999] })}
-                  className="w-20 px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
+                  className="w-20 px-3 py-2 bg-muted-surface border border-border/60 rounded-md text-cream 
                     focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                     hover:border-border text-sm text-center"
                   min="0"
@@ -231,8 +236,8 @@ export default function RegexScriptEntryEditor({
                   />
                   <div className={`w-5 h-5 rounded border-2 transition-all duration-300 flex items-center justify-center ${
                     localScript.disabled 
-                      ? "bg-linear-to-br from-orange-600 to-orange-700 border-orange-500/60" 
-                      : "bg-linear-to-br from-deep to-muted-surface border-border/60 group-hover:border-primary-500/40"
+                      ? "bg-destructive border-destructive/60" 
+                      : "bg-muted-surface border-border/60 group-hover:border-primary-500/40"
                   }`}>
                     {localScript.disabled && (
                       <Check className="h-3 w-3 text-white" strokeWidth={3} />
@@ -256,7 +261,7 @@ export default function RegexScriptEntryEditor({
               <select
                 value={localScript.substituteRegex ?? SubstituteRegexMode.NONE}
                 onChange={(e) => updateScript({ substituteRegex: parseInt(e.target.value) as SubstituteRegexMode })}
-                className="w-full px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
+                className="w-full px-3 py-2 bg-muted-surface border border-border/60 rounded-md text-cream 
                   focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                   hover:border-border text-sm"
               >
@@ -284,8 +289,8 @@ export default function RegexScriptEntryEditor({
                   />
                   <div className={`w-5 h-5 rounded border-2 transition-all duration-300 flex items-center justify-center ${
                     localScript.markdownOnly 
-                      ? "bg-linear-to-br from-primary-600 to-primary-700 border-primary-500/60" 
-                      : "bg-linear-to-br from-deep to-muted-surface border-border/60 group-hover:border-primary-500/40"
+                      ? "bg-primary border-primary-500/60" 
+                      : "bg-muted-surface border-border/60 group-hover:border-primary-500/40"
                   }`}>
                     {localScript.markdownOnly && (
                       <Check className="h-3 w-3 text-white" strokeWidth={3} />
@@ -307,8 +312,8 @@ export default function RegexScriptEntryEditor({
                   />
                   <div className={`w-5 h-5 rounded border-2 transition-all duration-300 flex items-center justify-center ${
                     localScript.promptOnly 
-                      ? "bg-linear-to-br from-primary-600 to-primary-700 border-primary-500/60" 
-                      : "bg-linear-to-br from-deep to-muted-surface border-border/60 group-hover:border-primary-500/40"
+                      ? "bg-primary border-primary-500/60" 
+                      : "bg-muted-surface border-border/60 group-hover:border-primary-500/40"
                   }`}>
                     {localScript.promptOnly && (
                       <Check className="h-3 w-3 text-white" strokeWidth={3} />
@@ -335,7 +340,7 @@ export default function RegexScriptEntryEditor({
                   value={localScript.minDepth ?? ""}
                   onChange={(e) => updateScript({ minDepth: e.target.value ? parseInt(e.target.value) : undefined })}
                   placeholder="No limit"
-                  className="w-full px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
+                  className="w-full px-3 py-2 bg-muted-surface border border-border/60 rounded-md text-cream 
                     focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                     hover:border-border text-sm"
                   min="0"
@@ -351,7 +356,7 @@ export default function RegexScriptEntryEditor({
                   value={localScript.maxDepth ?? ""}
                   onChange={(e) => updateScript({ maxDepth: e.target.value ? parseInt(e.target.value) : undefined })}
                   placeholder="No limit"
-                  className="w-full px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
+                  className="w-full px-3 py-2 bg-muted-surface border border-border/60 rounded-md text-cream 
                     focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                     hover:border-border text-sm"
                   min="0"

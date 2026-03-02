@@ -225,4 +225,4 @@ DreamMiniStage 可以直接导入 SillyTavern 导出的 `.json` 预设文件：
 
 - [宏系统参考](./MACRO_REFERENCE.md)
 - [事件系统](./EVENT_SYSTEM.md)
-- [SillyTavern 兼容性分析](./sillytavern-gap-analysis.md)
+- [SillyTavern 兼容性分析](./analysis/sillytavern-integration-gap-2026-03.md)

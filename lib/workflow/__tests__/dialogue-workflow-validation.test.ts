@@ -77,7 +77,7 @@ describe("Task 8: DialogueWorkflow 更新验证", () => {
       expect(presetNode.inputFields).toContain("chatHistoryMessages");
     });
 
-    it("chatHistoryText 应该从 HistoryPreNode 流向 ContextNode", () => {
+    it("HistoryPreNode 不再输出 chatHistoryText，ContextNode 保持 messages-only 中转", () => {
       const workflow = new DialogueWorkflow();
       const config = (workflow as unknown).config;
       const nodes = config.nodes;
@@ -85,11 +85,12 @@ describe("Task 8: DialogueWorkflow 更新验证", () => {
       const historyPreNode = nodes.find((n: any) => n.name === "historyPre");
       const contextNode = nodes.find((n: any) => n.name === "context");
 
-      // HistoryPreNode 输出 chatHistoryText
-      expect(historyPreNode.outputFields).toContain("chatHistoryText");
+      // HistoryPreNode 已移除 chatHistoryText 兼容输出
+      expect(historyPreNode.outputFields).not.toContain("chatHistoryText");
 
-      // ContextNode 接收 chatHistoryText
-      expect(contextNode.inputFields).toContain("chatHistoryText");
+      // ContextNode 仅透传 messages[]
+      expect(contextNode.inputFields).toEqual(["messages"]);
+      expect(contextNode.outputFields).toEqual(["messages"]);
     });
 
     it("HistoryPreNode 应该输出 conversationContext（用于 memory/RAG）", () => {
@@ -111,6 +112,9 @@ describe("Task 8: DialogueWorkflow 更新验证", () => {
       expect(presetNode.inputFields).toContain("dialogueKey");
       expect(presetNode.inputFields).toContain("userInput");
       expect(presetNode.inputMapping).toEqual({ userInput: "currentUserInput" });
+      expect(presetNode.outputFields).toContain("messages");
+      expect(presetNode.outputFields).not.toContain("systemMessage");
+      expect(presetNode.outputFields).not.toContain("userMessage");
     });
 
     it("HistoryPreNode 应该透传 userInput", () => {

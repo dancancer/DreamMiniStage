@@ -1,3 +1,10 @@
+/**
+ * @input  @/app, @/utils, @/hooks, @/components
+ * @output Sidebar
+ * @pos    应用侧边栏
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -120,9 +127,9 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
           aria-label={isOpen ? (language === "zh" ? "收起侧边栏" : "Collapse Sidebar") : (language === "zh" ? "展开侧边栏" : "Expand Sidebar")}
         >
           {isOpen ? (
-            <ChevronLeft size={16} className="transition-transform duration-300" />
+            <ChevronLeft size={16} />
           ) : (
-            <ChevronRight size={16} className="transition-transform duration-300" />
+            <ChevronRight size={16} />
           )}
         </Button>
       </div>
@@ -147,7 +154,7 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
               </div>
               <div className={`overflow-hidden transition-all duration-300 ${isOpen ? (isHomeOpen ? "max-h-20 opacity-100 mb-1" : "max-h-0 opacity-0 mb-0") : "max-h-20 opacity-100 mb-1"} mx-1`}>
                 <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-transparent rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-primary/5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   {!isOpen ? (
                     <Link href="/" className={`menu-item flex justify-center p-2 rounded-md cursor-pointer transition-all duration-300 ${isHomeActive ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"}`}>
                       <div className={`flex items-center justify-center text-cream bg-surface rounded-md border border-stroke  transition-all duration-300 w-8 h-8 ${isHomeActive ? "border-accent text-accent-foreground shadow-[0_0_10px_rgba(0,0,0,0.35)]" : "group-hover:border-accent hover:text-accent-foreground hover:border-accent "}`}>
@@ -156,10 +163,10 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
                     </Link>
                   ) : (
                     <Link href="/" className="focus:outline-none group relative overflow-hidden rounded-md w-full transition-all duration-300">
-                      <div className={`absolute inset-0 transition-opacity duration-300 ${isHomeActive ? "bg-gradient-to-br from-primary-500/20 via-primary-500/5 to-transparent opacity-100" : "bg-gradient-to-br from-primary-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100"}`}></div>
+                      <div className={`absolute inset-0 transition-opacity duration-300 ${isHomeActive ? "bg-primary/20 opacity-100" : "bg-primary/10 opacity-0 group-hover:opacity-100"}`}></div>
                       <div className="relative flex items-center p-2 w-full transition-all duration-300 z-10">
                         <div className={`absolute inset-0 w-full h-full bg-stroke transition-opacity duration-300 ${isHomeActive ? "opacity-20" : "opacity-0 group-hover:opacity-10"}`}></div>
-                        <div className={`absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-primary-bright to-transparent transition-all duration-500 ${isHomeActive ? "w-full" : "w-0 group-hover:w-full"}`}></div>
+                        <div className={`absolute bottom-0 left-0 h-[1px] bg-primary/40 transition-all duration-500 ${isHomeActive ? "w-full" : "w-0 group-hover:w-full"}`}></div>
                         <div className={`w-8 h-8 flex items-center justify-center flex-shrink-0 text-cream bg-surface rounded-md border border-stroke  transition-all duration-300 ${isHomeActive ? "border-primary-500/80 text-primary-400 shadow-[0_0_10px_rgba(251,146,60,0.5)]" : "group-hover:border-stroke-strong group-hover:text-primary-400 group-hover:shadow-[0_0_8px_rgba(251,146,60,0.4)]"}`}>
                           <Home size={16} />
                         </div>
@@ -208,7 +215,7 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
 
               <div className={`overflow-hidden transition-all duration-300 ${isOpen ? (isGameOpen ? "max-h-20 opacity-100 mt-1" : "max-h-0 opacity-0 mt-0") : "max-h-20 opacity-100 mt-1"} mx-1`}>
                 <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-transparent rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-primary/5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   {!isOpen ? (
                     <Link href="/character-cards" className={`menu-item flex justify-center p-2 rounded-md cursor-pointer transition-all duration-300 ${isGameAreaActive ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"}`}>
                       <div className={`flex items-center justify-center text-cream bg-surface rounded-md border border-stroke  transition-all duration-300 w-8 h-8 ${isGameAreaActive ? "border-accent text-accent-foreground shadow-[0_0_10px_rgba(0,0,0,0.35)]" : "group-hover:border-accent hover:text-accent-foreground hover:border-accent "}`}>
@@ -217,10 +224,10 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
                     </Link>
                   ) : (
                     <Link href="/character-cards" className="focus:outline-none group relative overflow-hidden rounded-md w-full transition-all duration-300">
-                      <div className={`absolute inset-0 transition-opacity duration-300 ${isGameAreaActive ? "bg-gradient-to-br from-primary-500/20 via-primary-500/5 to-transparent opacity-100" : "bg-gradient-to-br from-primary-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100"}`}></div>
+                      <div className={`absolute inset-0 transition-opacity duration-300 ${isGameAreaActive ? "bg-primary/20 opacity-100" : "bg-primary/10 opacity-0 group-hover:opacity-100"}`}></div>
                       <div className="relative flex items-center p-2 w-full transition-all duration-300 z-10">
                         <div className={`absolute inset-0 w-full h-full bg-stroke transition-opacity duration-300 ${isGameAreaActive ? "opacity-20" : "opacity-0 group-hover:opacity-10"}`}></div>
-                        <div className={`absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-primary-bright to-transparent transition-all duration-500 ${isGameAreaActive ? "w-full" : "w-0 group-hover:w-full"}`}></div>
+                        <div className={`absolute bottom-0 left-0 h-[1px] bg-primary/40 transition-all duration-500 ${isGameAreaActive ? "w-full" : "w-0 group-hover:w-full"}`}></div>
                         <div className={`w-8 h-8 flex items-center justify-center flex-shrink-0 text-cream bg-surface rounded-md border border-stroke  transition-all duration-300 ${isGameAreaActive ? "border-primary-500/80 text-primary-400 shadow-[0_0_10px_rgba(251,146,60,0.5)]" : "group-hover:border-stroke-strong group-hover:text-primary-400 group-hover:shadow-[0_0_8px_rgba(251,146,60,0.4)]"}`}>
                           <Users size={16} />
                         </div>
@@ -252,9 +259,9 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
         </ul>
       </nav>
       <div className="relative mt-auto pt-4 px-2 mb-3 transition-all duration-300 overflow-hidden group/footer">
-        {/* <div className="absolute top-0 left-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-primary-bright to-transparent opacity-70"></div>
-        <div className="absolute top-0 left-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-primary-bright to-transparent opacity-40 blur-[1px] translate-y-[0.5px]"></div>
-        <div className="absolute top-[-1px] w-8 h-[2px] bg-gradient-to-r from-transparent via-primary-bright to-transparent opacity-0 group-hover/footer:opacity-80 blur-[1px] transition-all duration-500 ease-in-out left-[-10%] animate-[moveRight_3s_ease-in-out_infinite]"></div>
+        {/* <div className="absolute top-0 left-0 right-0 h-[0.5px] bg-primary/40 opacity-70"></div>
+        <div className="absolute top-0 left-0 right-0 h-[0.5px] bg-primary/40 opacity-40 blur-[1px] translate-y-[0.5px]"></div>
+        <div className="absolute top-[-1px] w-8 h-[2px] bg-primary/40 opacity-0 group-hover/footer:opacity-80 blur-[1px] transition-all duration-500 ease-in-out left-[-10%] animate-[moveRight_3s_ease-in-out_infinite]"></div>
 
         <div className="absolute top-0 left-1/4 right-1/4 h-[0.5px] w-[2px] rounded-full bg-primary-bright opacity-0 group-hover/footer:opacity-90 transition-opacity duration-500 delay-100"></div>
         <div className="absolute top-0 left-2/4 h-[2px] w-[2px] rounded-full bg-primary-bright opacity-0 group-hover/footer:opacity-90 transition-opacity duration-500 delay-300"></div>
@@ -275,10 +282,10 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
               data-tour="login-button"
               className={`h-auto group relative overflow-hidden w-full ${!isOpen ? "p-2 justify-center" : "py-1.5 px-2 justify-center"}`}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-layer/0 to-canvas/0 opacity-0 group-hover:opacity-80 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-muted/20 opacity-0 group-hover:opacity-80 transition-opacity duration-300"></div>
               <div className="relative flex items-center justify-center w-full transition-all duration-300 z-10">
                 <div className={`${isOpen ? "w-6 h-6" : "w-8 h-8"} flex items-center justify-center flex-shrink-0 text-primary-bright group-hover:text-highlight transition-colors duration-300`}>
-                  <LogIn size={isOpen ? 14 : 16} className="transition-transform duration-300 group-hover:scale-110" />
+                  <LogIn size={isOpen ? 14 : 16} />
                 </div>
                 {isOpen && (
                   <div className={`${sectionLabelWrapperClass} ${isOpen ? "opacity-100 delay-[50ms]" : "opacity-0 delay-0"}`}>
@@ -302,7 +309,7 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
                 )}
               </div>
               <div className="absolute inset-0 w-full h-full bg-stroke opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-              <div className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-primary-bright to-transparent w-0 group-hover:w-full transition-all duration-500"></div>
+              <div className="absolute bottom-0 left-0 h-[1px] bg-primary/40 w-0 group-hover:w-full transition-all duration-500"></div>
             </Button>
           ) : (
             <Button
@@ -310,10 +317,10 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
               onClick={handleOpenAccount}
               className={`h-auto group relative overflow-hidden w-full ${!isOpen ? "p-2 justify-center" : "py-1.5 px-2 justify-center"}`}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-layer/0 to-canvas/0 opacity-0 group-hover:opacity-80 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-muted/20 opacity-0 group-hover:opacity-80 transition-opacity duration-300"></div>
               <div className="relative flex items-center justify-center w-full transition-all duration-300 z-10">
                 <div className={`${isOpen ? "w-6 h-6" : "w-8 h-8"} flex items-center justify-center flex-shrink-0 text-primary-bright group-hover:text-highlight transition-colors duration-300 `}>
-                  <Users size={isOpen ? 14 : 16} className="transition-transform duration-300 group-hover:scale-110" />
+                  <Users size={isOpen ? 14 : 16} />
                 </div>
                 {isOpen && (
                   <div className={`${sectionLabelWrapperClass} ${isOpen ? "opacity-100 delay-[50ms]" : "opacity-0 delay-0"}`}>
@@ -357,7 +364,7 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
                 )}
               </div>
               <div className="absolute inset-0 w-full h-full bg-stroke opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-              <div className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-primary-bright to-transparent w-0 group-hover:w-full transition-all duration-500"></div>
+              <div className="absolute bottom-0 left-0 h-[1px] bg-primary/40 w-0 group-hover:w-full transition-all duration-500"></div>
             </Button>
           )}
         </div>
@@ -377,10 +384,10 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
             rel="noopener noreferrer"
             className={`focus:outline-none group relative overflow-hidden rounded-md w-full transition-all duration-300 ${!isOpen ? "p-2 flex justify-center" : "py-1.5 px-2 flex items-center justify-center"}`}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-layer/0 to-canvas/0 opacity-0 group-hover:opacity-80 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-muted/20 opacity-0 group-hover:opacity-80 transition-opacity duration-300"></div>
             <div className="relative flex items-center justify-center transition-all duration-300 z-10">
               <div className={`${isOpen ? "w-6 h-6" : "w-8 h-8"} flex items-center justify-center flex-shrink-0 text-primary-bright group-hover:text-highlight transition-colors duration-300`}>
-                <Github size={isOpen ? 14 : 16} className="transition-transform duration-300 group-hover:scale-110" fill="currentColor" />
+                <Github size={isOpen ? 14 : 16} fill="currentColor" />
               </div>
               {isOpen && (
                 <div className={`${sectionLabelWrapperClass} ${isOpen ? "opacity-100 delay-[50ms]" : "opacity-0 delay-0"}`}>
@@ -404,7 +411,7 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
               )}
             </div>
             <div className="absolute inset-0 w-full h-full bg-stroke opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-            <div className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-primary-bright to-transparent w-0 group-hover:w-full transition-all duration-500"></div>
+            <div className="absolute bottom-0 left-0 h-[1px] bg-primary/40 w-0 group-hover:w-full transition-all duration-500"></div>
           </a>
         </div>
 
@@ -417,12 +424,12 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
               rel="noopener noreferrer"
               className={`focus:outline-none group relative overflow-hidden rounded-md w-full transition-all duration-300 ${!isOpen ? "p-2 flex justify-center" : "py-1.5 px-2 flex items-center justify-center"}`}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-transparent rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0" />
+              <div className="absolute inset-0 bg-success/10 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0" />
               <div className="absolute inset-0 w-full h-full bg-stroke opacity-0 group-hover:opacity-10 transition-opacity duration-300 z-0" />
-              <div className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-green-400 to-transparent w-0 group-hover:w-full transition-all duration-500 z-5" />
+              <div className="absolute bottom-0 left-0 h-[1px] bg-success/40 w-0 group-hover:w-full transition-all duration-500 z-5" />
               <div className="relative flex items-center justify-center transition-all duration-300 z-10">
                 <div className={`${isOpen ? "w-6 h-6" : "w-8 h-8"} flex items-center justify-center flex-shrink-0 text-green-400 group-hover:text-green-300 transition-colors duration-300`}>
-                  <Settings size={isOpen ? 14 : 16} className="transition-transform duration-300 group-hover:scale-110" />
+                  <Settings size={isOpen ? 14 : 16} />
                 </div>
                 {isOpen && (
                   <div className={`${sectionLabelWrapperClass} ${isOpen ? "opacity-100 delay-[50ms]" : "opacity-0 delay-0"}`}>

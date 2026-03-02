@@ -1,4 +1,9 @@
 /**
+ * @input  function/dialogue/info, utils/username-helper, hooks/character-dialogue/useDialoguePreferences, lib/core/dialogue-key, types/character-dialogue
+ * @output useCharacterLoader
+ * @pos    角色加载 Hook - 加载角色、初始化对话、错误处理
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                       useCharacterLoader Hook                              ║
  * ║                                                                            ║

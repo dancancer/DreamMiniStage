@@ -17,6 +17,7 @@ export type Script = AstNode[];
 
 export type AstNode =
   | CommandNode
+  | BlockNode
   | IfNode
   | WhileNode
   | TimesNode
@@ -30,6 +31,12 @@ export interface CommandNode {
   args: string[];
   namedArgs: Record<string, string>;
   blocks: BlockArgument[];
+  raw: string;
+}
+
+export interface BlockNode {
+  type: "block";
+  body: Script;
   raw: string;
 }
 

@@ -1,4 +1,9 @@
 /**
+ * @input  reactflow, function/dialogue/info, function/dialogue/incremental-info, lib/core/dialogue-key, components/dialogue-tree/DialogueNodeComponent
+ * @output useDialogueTreeData, DialogueNode
+ * @pos    对话树数据 Hook - 全量加载 / 增量更新 / 路径高亮 / 节点处理
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                       useDialogueTreeData Hook                             ║
  * ║                                                                            ║

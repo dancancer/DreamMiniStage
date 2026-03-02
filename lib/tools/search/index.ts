@@ -38,15 +38,10 @@ export class SearchTool extends BaseTool {
   protected async doWork(parameters: Record<string, unknown>, context: ExecutionContext): Promise<ExecutionResult> {
     const query = parameters.query;
 
-    // Support both array and string formats for backward compatibility
-    let queries: string[];
-    if (Array.isArray(query)) {
-      queries = query.filter((q: unknown) => q && typeof q === "string" && q.trim().length > 0);
-    } else if (typeof query === "string" && query.trim().length > 0) {
-      queries = [query.trim()];
-    } else {
-      return this.createFailureResult("SEARCH tool requires 'query' parameter as an array of strings or a single string.");
+    if (!Array.isArray(query)) {
+      return this.createFailureResult("SEARCH tool requires 'query' parameter as an array of strings.");
     }
+    const queries = query.filter((q: unknown) => q && typeof q === "string" && q.trim().length > 0);
 
     if (queries.length === 0) {
       return this.createFailureResult("SEARCH tool requires at least one valid query string.");

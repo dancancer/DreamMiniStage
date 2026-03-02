@@ -1,3 +1,10 @@
+/**
+ * @input  lib/data/roleplay/preset-operation
+ * @output importPresetFromJson
+ * @pos    预设导入 - 从 JSON 内容解析并创建预设
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { PresetOperations } from "@/lib/data/roleplay/preset-operation";
 
 export async function importPresetFromJson(jsonContent: string, customName?: string): Promise<{ success: boolean; presetId?: string; error?: string }> {

@@ -11,14 +11,29 @@
  */
 
 import { ChatOpenAI } from "@langchain/openai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { createGeminiRunnable } from "@/lib/core/gemini-client";
 import { getTextContent } from "@/lib/core/prompt/post-processor";
 import { convertForClaude, convertForGoogle } from "@/lib/core/prompt/converters";
 import type { ExtendedChatMessage, ContentPart } from "@/lib/core/st-preset-types";
 import type { LLMConfig } from "./LLMNodeTools";
 import type { ClaudeMessage, ClaudeContentPart } from "@/lib/core/prompt/converters/claude";
+import {
+  getMvuTool,
+  extractMvuToolCall,
+  functionCallToUpdateContent,
+  MVU_VARIABLE_UPDATE_FUNCTION,
+  type ToolCallBatches,
+  type OpenAITool,
+} from "@/lib/mvu/function-call";
 
 type ChatMessage = { role: string; content: string };
+
+/** 流式回调接口 */
+export interface StreamingCallbacks {
+  onToken?: (token: string) => void;
+  onReasoning?: (reasoning: string) => void;
+}
 
 const DEFAULT_LLM_SETTINGS = {
   temperature: 0.7,
@@ -50,11 +65,12 @@ function getClaudeTextContent(content: string | ClaudeContentPart[]): string {
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Claude 模型调用 (Requirements: 7.1)
-   
+
    使用 convertForClaude 转换消息格式：
    - 提取前置 system 消息到独立 systemPrompt
    - 转换剩余 system 为 user
    - 合并连续同角色消息
+   - 支持 MVU 函数调用模式
    ═══════════════════════════════════════════════════════════════════════════ */
 export async function invokeClaudeModel(
   messages: ChatMessage[],
@@ -62,16 +78,16 @@ export async function invokeClaudeModel(
 ): Promise<string> {
   // 转换为 ExtendedChatMessage 格式
   const extMessages = messages as ExtendedChatMessage[];
-  
+
   // 使用 Claude 转换器
   const { messages: claudeMessages, systemPrompt } = convertForClaude(extMessages, {
     useTools: config.tools,
     placeholder: config.placeholder,
   });
-  
+
   // 构建 system 字符串（Claude API 需要）
   const systemText = systemPrompt.map(s => s.text).join("\n\n");
-  
+
   // 使用 OpenAI 兼容接口调用 Claude（通过 baseUrl 配置）
   const openaiLlm = new ChatOpenAI({
     modelName: config.modelName,
@@ -95,18 +111,123 @@ export async function invokeClaudeModel(
       role: m.role,
       content: getClaudeTextContent(m.content),
     }));
-  
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MVU/脚本工具函数调用模式：绑定工具并处理 tool_calls
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (config.mvuToolEnabled || (config.scriptTools && config.scriptTools.length > 0)) {
+    // 合并 MVU 工具和脚本工具
+    const allTools: OpenAITool[] = [];
+    if (config.mvuToolEnabled) {
+      allTools.push(getMvuTool());
+    }
+    if (config.scriptTools) {
+      allTools.push(...config.scriptTools);
+    }
+
+    const boundModel = openaiLlm.bindTools(allTools, { tool_choice: "auto" });
+    const aiMessage = await boundModel.invoke(finalMessages);
+
+    let textContent = aiMessage.content as string;
+    if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
+      const toolCalls: ToolCallBatches = [aiMessage.tool_calls.map(tc => ({
+        id: tc.id || "",
+        type: "function" as const,
+        function: {
+          name: tc.name,
+          arguments: typeof tc.args === "string" ? tc.args : JSON.stringify(tc.args),
+        },
+      }))];
+
+      // 处理 MVU 工具调用
+      const mvuArgs = extractMvuToolCall(toolCalls);
+      if (mvuArgs) {
+        const updateContent = functionCallToUpdateContent(mvuArgs);
+        textContent = textContent ? `${textContent}\n\n${updateContent}` : updateContent;
+        console.log("[Claude] MVU 函数调用转换完成:", mvuArgs.analysis);
+      }
+
+      // 脚本工具调用将在响应后由调用方处理
+    }
+
+    return textContent;
+  }
+
+  // 标准调用（无工具）
   const aiMessage = await openaiLlm.invoke(finalMessages);
   return aiMessage.content as string;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   Claude 模型流式调用
+
+   使用 LangChain stream() 方法进行流式输出
+   ═══════════════════════════════════════════════════════════════════════════ */
+export async function invokeClaudeModelStream(
+  messages: ChatMessage[],
+  config: LLMConfig,
+  callbacks: StreamingCallbacks,
+): Promise<string> {
+  const extMessages = messages as ExtendedChatMessage[];
+  const { messages: claudeMessages, systemPrompt } = convertForClaude(extMessages, {
+    useTools: config.tools,
+    placeholder: config.placeholder,
+  });
+
+  const systemText = systemPrompt.map(s => s.text).join("\n\n");
+
+  const openaiLlm = new ChatOpenAI({
+    modelName: config.modelName,
+    openAIApiKey: config.apiKey,
+    configuration: {
+      baseURL: config.baseUrl?.trim() || undefined,
+    },
+    temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
+    maxRetries: config.maxRetries ?? DEFAULT_LLM_SETTINGS.maxRetries,
+    streaming: true,
+    streamUsage: true,
+  });
+
+  const finalMessages: ChatMessage[] = systemText
+    ? [{ role: "system", content: systemText }, ...claudeMessages.map(m => ({
+      role: m.role,
+      content: getClaudeTextContent(m.content),
+    }))]
+    : claudeMessages.map(m => ({
+      role: m.role,
+      content: getClaudeTextContent(m.content),
+    }));
+
+  let fullContent = "";
+
+  // 使用 stream() 方法进行流式调用
+  const stream = await openaiLlm.stream(finalMessages);
+
+  for await (const chunk of stream) {
+    const content = chunk.content;
+    if (typeof content === "string" && content) {
+      fullContent += content;
+      callbacks.onToken?.(content);
+    }
+
+    // 处理 reasoning_content（如果有）
+    const additional = chunk.additional_kwargs as Record<string, unknown> | undefined;
+    if (additional?.reasoning_content && typeof additional.reasoning_content === "string") {
+      callbacks.onReasoning?.(additional.reasoning_content);
+    }
+  }
+
+  return fullContent;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    Gemini 模型调用 (Requirements: 8.1)
-   
+
    使用 convertForGoogle 转换消息格式：
    - 提取前置 system 消息到 system_instruction
    - 转换 assistant 为 model
    - 转换 content 为 parts 格式
+   - 支持 MVU 函数调用模式
    ═══════════════════════════════════════════════════════════════════════════ */
 export async function invokeGeminiModel(
   messages: ChatMessage[],
@@ -114,16 +235,105 @@ export async function invokeGeminiModel(
 ): Promise<string> {
   // 转换为 ExtendedChatMessage 格式
   const extMessages = messages as ExtendedChatMessage[];
-  
+
   // 使用 Google 转换器
   const { contents, systemInstruction } = convertForGoogle(extMessages, {
     placeholder: config.placeholder,
   });
-  
+
   // 构建 system 字符串
   const systemText = systemInstruction?.parts.map(p => "text" in p ? p.text : "").join("\n\n") || "";
-  
-  // 使用现有的 Gemini 客户端
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MVU 函数调用模式：直接调用 SDK 并绑定工具
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (config.mvuToolEnabled) {
+    const client = new GoogleGenerativeAI(config.apiKey);
+    const requestOptions = config.baseUrl?.trim() ? { baseUrl: config.baseUrl.trim() } : undefined;
+
+    // 转换 MVU 工具为 Gemini 格式
+    const geminiTools = [{
+      functionDeclarations: [{
+        name: MVU_VARIABLE_UPDATE_FUNCTION.name,
+        description: MVU_VARIABLE_UPDATE_FUNCTION.description,
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            analysis: {
+              type: SchemaType.STRING,
+              description: MVU_VARIABLE_UPDATE_FUNCTION.parameters.properties.analysis.description,
+            },
+            delta: {
+              type: SchemaType.STRING,
+              description: MVU_VARIABLE_UPDATE_FUNCTION.parameters.properties.delta.description,
+            },
+          },
+          required: ["analysis", "delta"],
+        },
+      }],
+    }];
+
+    const model = client.getGenerativeModel({
+      model: config.modelName || "gemini-1.5-flash",
+      systemInstruction: systemText,
+      tools: geminiTools,
+    }, requestOptions);
+
+    const generationConfig: Record<string, number> = {};
+    if (config.temperature !== undefined) generationConfig.temperature = config.temperature;
+    if (config.maxTokens !== undefined) generationConfig.maxOutputTokens = config.maxTokens;
+    if (config.topP !== undefined) generationConfig.topP = config.topP;
+    if (config.topK !== undefined) generationConfig.topK = config.topK;
+
+    const result = await model.generateContent({
+      contents,
+      generationConfig,
+    });
+
+    // 解析响应
+    const response = result.response;
+    const candidate = response.candidates?.[0];
+    if (!candidate?.content?.parts) {
+      throw new Error("Gemini 返回为空");
+    }
+
+    let textContent = "";
+    const functionCalls: Array<{ name: string; args: Record<string, unknown> }> = [];
+
+    for (const part of candidate.content.parts) {
+      if ("text" in part && part.text) {
+        textContent += part.text;
+      }
+      if ("functionCall" in part && part.functionCall) {
+        functionCalls.push({
+          name: part.functionCall.name,
+          args: part.functionCall.args as Record<string, unknown>,
+        });
+      }
+    }
+
+    // 处理 MVU 函数调用
+    if (functionCalls.length > 0) {
+      const mvuCall = functionCalls.find(fc => fc.name === MVU_VARIABLE_UPDATE_FUNCTION.name);
+      if (mvuCall?.args) {
+        const mvuArgs = {
+          analysis: String(mvuCall.args.analysis || ""),
+          delta: String(mvuCall.args.delta || ""),
+        };
+        if (mvuArgs.delta && mvuArgs.delta.length > 5) {
+          const updateContent = functionCallToUpdateContent(mvuArgs);
+          textContent = textContent ? `${textContent}\n\n${updateContent}` : updateContent;
+          console.log("[Gemini] MVU 函数调用转换完成:", mvuArgs.analysis);
+        }
+      }
+    }
+
+    return textContent;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 标准调用（无工具）：使用现有的 Gemini 客户端
+  // ═══════════════════════════════════════════════════════════════════════════
   const geminiRunnable = createGeminiRunnable({
     apiKey: config.apiKey,
     model: config.modelName || "gemini-1.5-flash",
@@ -133,18 +343,18 @@ export async function invokeGeminiModel(
     topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
     topK: config.topK ?? DEFAULT_LLM_SETTINGS.topK,
   });
-  
+
   // 将转换后的消息传递给 Gemini
   const userContent = contents
     .filter(c => c.role === "user")
     .flatMap(c => c.parts)
     .map(p => "text" in p ? p.text : "")
     .join("\n");
-  
+
   const response = await geminiRunnable.invoke({
     system_message: systemText,
     user_message: userContent,
   });
-  
+
   return response as string;
 }

@@ -2,7 +2,7 @@
  * SillyTavern 宏替换引擎
  *
  * 实现三阶段管线架构：
- * 1. preEnvMacros - 预处理宏（legacy 占位符、变量宏、工具宏）
+ * 1. preEnvMacros - 预处理宏（变量宏、工具宏）
  * 2. envMacros - 环境宏（用户名、角色名、注册宏）
  * 3. postEnvMacros - 后处理宏（时间、消息、随机选择）
  */
@@ -44,7 +44,7 @@ export class STMacroEvaluator {
 
     /* ─────────────────────────────────────────────────────────────────────────
        短路检查：只检查现代宏格式 {{
-       - Legacy 占位符 (<USER>, <BOT>) 应在导入时转换
+       - 不再处理 Legacy 占位符 (<USER>, <BOT>)
        - 运行时只处理 {{...}} 格式
        ───────────────────────────────────────────────────────────────────────── */
     if (!result.includes("{{")) {
@@ -66,9 +66,8 @@ export class STMacroEvaluator {
     let result = content;
 
     /* ─────────────────────────────────────────────────────────────────────────
-       注意：Legacy 占位符 (<USER>, <BOT>) 应在导入时转换
-       参见 lib/adapters/import/preset-import.ts: convertLegacyPlaceholders()
-       运行时不再处理这些格式，以简化管线并提升性能
+       注意：Legacy 占位符 (<USER>, <BOT>) 不再支持
+       运行时仅处理现代 {{...}} 宏格式，以简化管线并提升性能
 
        注意：stripTemplateNoise 已移至主入口，确保无宏内容也能清理噪声
        ───────────────────────────────────────────────────────────────────────── */
@@ -82,8 +81,7 @@ export class STMacroEvaluator {
 
   /* ─────────────────────────────────────────────────────────────────────────
      注意：replaceLegacyPlaceholders() 已移除
-     Legacy 占位符 (<USER>, <BOT>) 现在在导入时转换
-     参见 lib/adapters/import/preset-import.ts: convertLegacyPlaceholders()
+     Legacy 占位符 (<USER>, <BOT>) 不再支持
      ───────────────────────────────────────────────────────────────────────── */
 
   /**

@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/lib, @/components
+ * @output EditPresetNameModal
+ * @pos    预设名称编辑模态框
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                   Edit Preset Name Modal Component                         ║
  * ║                                                                            ║
@@ -109,7 +114,7 @@ export default function EditPresetNameModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md p-0 overflow-hidden  border-border gap-0">
-        <div className="p-4 border-b border-border bg-gradient-to-r from-primary-500/5 to-transparent">
+        <div className="p-4 border-b border-border bg-muted">
           <DialogHeader>
             <DialogTitle className={"text-lg font-medium text-cream-soft magical-text "}>
               <span className="">
@@ -130,7 +135,7 @@ export default function EditPresetNameModal({
               onChange={(e) => setPresetName(e.target.value)}
               placeholder={t("preset.presetNamePlaceholder")}
               disabled={isUpdating}
-              className={`w-full px-3 py-2 bg-gradient-to-br from-deep via-muted-surface to-deep 
+              className={`w-full px-3 py-2 bg-muted-surface 
                 text-cream-soft rounded-md border border-border 
                 focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 
                 transition-all duration-300 hover:border-border backdrop-blur-sm

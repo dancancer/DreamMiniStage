@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/components
+ * @output FilterValue, PluginFilter
+ * @pos    插件管理组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         PluginFilter                                      ║
  * ║                                                                            ║
@@ -71,7 +76,7 @@ export function PluginFilter({ value, onChange, pluginCounts }: PluginFilterProp
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="flex items-center space-x-2 bg-gradient-to-r from-ink/25 to-ink/15 hover:from-ink/35 hover:to-ink/25 text-cream px-4 py-2.5 h-auto rounded-xl border border-border/40 hover:border-cream/30 group min-w-[140px]">
+        <Button variant="outline" className="flex items-center space-x-2 bg-ink/20 hover:bg-ink/30 text-cream px-4 py-2.5 h-auto rounded-xl border border-border/40 hover:border-cream/30 group min-w-[140px]">
           <Filter className="w-4 h-4 text-primary-soft group-hover:text-cream transition-colors" />
           {currentFilter && (
             <>

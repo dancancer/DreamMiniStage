@@ -1,3 +1,10 @@
+/**
+ * @input  react
+ * @output LANGUAGES, Language, DEFAULT_LANGUAGE, LanguageContext, useLanguage, getTranslation, getClientLanguage
+ * @pos    国际化入口 - 语言 Context 定义、翻译函数与客户端语言检测
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { createContext, useContext } from "react";
 
 export const LANGUAGES = ["zh", "en"] as const;

@@ -1,4 +1,9 @@
 /**
+ * @input  React, UI 基础组件
+ * @output SaveAsGlobalCheckbox, GlobalFormFields
+ * @pos    数据导入模态框组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                     Save As Global Checkbox                               ║
  * ║                                                                          ║
@@ -21,7 +26,7 @@ interface SaveAsGlobalCheckboxProps {
 
 export function SaveAsGlobalCheckbox({ checked, label, serifFontClass, onChange, children }: SaveAsGlobalCheckboxProps) {
   return (
-    <div className="bg-gradient-to-br from-muted-surface/60 via-deep/40 to-muted-surface/60 backdrop-blur-sm border border-border/40 rounded-md p-3">
+    <div className="bg-muted-surface/60 backdrop-blur-sm border border-border/40 rounded-md p-3">
       <label className="flex items-center space-x-2 cursor-pointer group">
         <div className="relative">
           <input
@@ -32,7 +37,7 @@ export function SaveAsGlobalCheckbox({ checked, label, serifFontClass, onChange,
           />
           <div className={`w-4 h-4 rounded border-2 transition-all duration-300 ${
             checked
-              ? "bg-gradient-to-br from-primary-500 to-primary-600 border-primary-500  shadow-primary-500/30"
+              ? "bg-primary border-primary  shadow-primary-500/30"
               : "border-border group-hover:border-border"
           }`}>
             {checked && <Check className="absolute inset-0 h-3 w-3 text-white" strokeWidth={3} />}

@@ -1,4 +1,9 @@
 /**
+ * @input  lib/mvu
+ * @output useMvu, UseMvuReturn
+ * @pos    MVU 变量管理 Hook - React 组件使用 MVU 变量管理的便捷接口
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         useMvu Hook                                        ║
  * ║                                                                            ║

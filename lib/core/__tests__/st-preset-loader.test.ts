@@ -20,7 +20,7 @@ describe("ST Preset 加载测试 - 明月秋青v3.94", () => {
   let manager: STPromptManager;
 
   beforeAll(() => {
-    const filePath = join(process.cwd(), "明月秋青v3.94.json");
+    const filePath = join(process.cwd(), "test-baseline-assets/preset/明月秋青v3.94.json");
     const fileContent = readFileSync(filePath, "utf-8");
     presetData = JSON.parse(fileContent);
 

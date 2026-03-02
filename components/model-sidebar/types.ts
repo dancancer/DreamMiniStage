@@ -1,3 +1,10 @@
+/**
+ * @input  React, UI 基础组件
+ * @output LLMType, APIConfig, SidebarState, SidebarActions, SidebarHelpers, SidebarViewProps
+ * @pos    模型配置侧边栏组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 import type { KeyboardEvent, MouseEvent } from "react";
 
 // ╔════════════════════════════════════════╗

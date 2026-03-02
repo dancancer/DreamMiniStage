@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/lib, @/components
+ * @output RegexDebuggerPanel
+ * @pos    正则调试器面板
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                     RegexDebuggerPanel Component                         ║
  * ║                                                                          ║
@@ -143,7 +148,7 @@ export default function RegexDebuggerPanel({
               value={testText}
               onChange={(e) => setTestText(e.target.value)}
               placeholder={t("regexDebugger.testTextPlaceholder") || "Enter text to test your regex scripts..."}
-              className="w-full h-32 px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream 
+              className="w-full h-32 px-3 py-2 bg-muted-surface border border-border/60 rounded-md text-cream 
                 focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300
                 placeholder-ink-soft/70 hover:border-border text-sm font-mono resize-none"
             />
@@ -196,7 +201,7 @@ export default function RegexDebuggerPanel({
                 <label className={`block text-xs text-ink-soft mb-1.5 font-medium ${fontClass}`}>
                   {t("regexDebugger.output") || "Output"}
                 </label>
-                <div className="px-3 py-2 bg-linear-to-br from-deep to-muted-surface border border-border/60 rounded-md text-cream text-sm font-mono whitespace-pre-wrap break-all">
+                <div className="px-3 py-2 bg-muted-surface border border-border/60 rounded-md text-cream text-sm font-mono whitespace-pre-wrap break-all">
                   {debugResult.outputText}
                 </div>
               </div>

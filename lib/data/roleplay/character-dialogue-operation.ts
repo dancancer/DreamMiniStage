@@ -1,8 +1,15 @@
-import { 
-  CHARACTER_DIALOGUES_FILE, 
-  deleteRecord, 
-  getRecordByKey, 
-  putRecord, 
+/**
+ * @input  lib/data/local-storage, lib/models/node-model, lib/models/parsed-response
+ * @output LocalCharacterDialogueOperations
+ * @pos    对话树数据操作层,管理多分支对话历史的存储与检索
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
+import {
+  CHARACTER_DIALOGUES_FILE,
+  deleteRecord,
+  getRecordByKey,
+  putRecord,
 } from "@/lib/data/local-storage";
 import { DialogueNode, DialogueTree } from "@/lib/models/node-model";
 import { v4 as uuidv4 } from "uuid";
@@ -41,8 +48,9 @@ export class LocalCharacterDialogueOperations {
         userInput: string;
         assistantResponse: string;
         fullResponse: string;
-        thinkingContent: string;
+        thinkingContent?: string;
         parsedContent?: ParsedResponse;
+        extra?: Record<string, unknown>;
       }>;
     }>(CHARACTER_DIALOGUES_FILE, dialogueId);
     if (!dialogue) return null;
@@ -58,6 +66,7 @@ export class LocalCharacterDialogueOperations {
         node.fullResponse,
         node.thinkingContent,
         node.parsedContent,
+        node.extra,
       )) || [],
       dialogue.current_nodeId,
     );

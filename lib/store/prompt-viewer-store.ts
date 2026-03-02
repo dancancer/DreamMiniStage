@@ -1,4 +1,9 @@
 /**
+ * @input  zustand, types/prompt-viewer, lib/prompt-viewer/constants
+ * @output usePromptViewerStore, usePromptData, useViewerUIState, useInterceptionState
+ * @pos    提示词查看器状态管理,支持拦截、搜索、UI 控制等功能
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                     提示词查看器状态管理                                   ║
  * ║                                                                           ║

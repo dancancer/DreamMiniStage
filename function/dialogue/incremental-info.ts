@@ -1,3 +1,10 @@
+/**
+ * @input  lib/data/roleplay/character-dialogue-operation
+ * @output getIncrementalDialogue, hasNewDialogueNodes
+ * @pos    增量对话获取 - 只返回新增/更新的对话节点
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 
 interface IncrementalDialogueParams {

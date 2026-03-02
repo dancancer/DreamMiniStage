@@ -1,17 +1,24 @@
-import { 
-  deleteRecord, 
-  getAllRecords, 
-  getRecordByKey, 
-  MEMORY_EMBEDDINGS_FILE, 
-  MEMORY_ENTRIES_FILE, 
-  putRecord, 
+/**
+ * @input  lib/data/local-storage, lib/models/memory-model
+ * @output MemoryOperations
+ * @pos    记忆系统数据操作层,管理向量记忆的 CRUD、检索、分析
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
+import {
+  deleteRecord,
+  getAllRecords,
+  getRecordByKey,
+  MEMORY_EMBEDDINGS_FILE,
+  MEMORY_ENTRIES_FILE,
+  putRecord,
 } from "@/lib/data/local-storage";
-import { 
-  MemoryEntry, 
-  MemoryType, 
-  MemorySearchQuery, 
+import {
+  MemoryEntry,
+  MemoryType,
+  MemorySearchQuery,
   MemoryAnalytics,
-  MemoryRAGConfig, 
+  MemoryRAGConfig,
 } from "@/lib/models/memory-model";
 import { v4 as uuidv4 } from "uuid";
 

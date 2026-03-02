@@ -1,4 +1,9 @@
 /**
+ * @input  zustand
+ * @output useUIStore, CharacterView
+ * @pos    UI 全局状态管理,控制侧边栏、视图切换,替代 window 事件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                            UI State Store                                 ║
  * ║                                                                           ║

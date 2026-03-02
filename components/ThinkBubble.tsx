@@ -1,4 +1,11 @@
 /**
+ * @input  @/components
+ * @output ThinkBubble
+ * @pos    角色思考气泡展示组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
+/**
  * ThinkBubble Component
  * 
  * A collapsible component to display character thinking content.

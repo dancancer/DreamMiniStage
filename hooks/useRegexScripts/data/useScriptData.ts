@@ -1,4 +1,9 @@
 /**
+ * @input  function/regex/get, function/regex/global, lib/data/roleplay/preset-operation, lib/models/regex-script-model
+ * @output useScriptData
+ * @pos    正则脚本数据 Hook - Scoped/Global/Preset 三源数据加载
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                      Script Data Loading Hook                             ║
  * ║                                                                           ║

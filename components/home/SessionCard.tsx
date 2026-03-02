@@ -1,4 +1,9 @@
 /**
+ * @input  @/types, @/components, @/app
+ * @output SessionCard, SessionCardProps, formatLastActivity
+ * @pos    首页会话管理组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                           SessionCard                                     ║
  * ║                                                                           ║
@@ -79,7 +84,7 @@ const SessionCard: React.FC<SessionCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className="relative session-card cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+      className="relative session-card cursor-pointer transition-all duration-300 hover:shadow-lg"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === "Enter" && onClick()}

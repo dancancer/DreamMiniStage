@@ -1,4 +1,9 @@
 /**
+ * @input  hooks/script-bridge/types, lib/store/model-store, function/dialogue/chat
+ * @output generationHandlers
+ * @pos    生成控制 Handlers - LLM 生成请求与中止控制
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         生成控制 Handlers                                  ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
@@ -29,7 +34,7 @@ async function generate(args: unknown[], ctx: ApiCallContext) {
     if (!ctx.characterId) {
       throw new Error("Character id is required for generation");
     }
-    const dialogueId = config?.dialogue_id as string | undefined;
+    const dialogueId = (config?.dialogue_id || config?.dialogueId || ctx.dialogueId) as string | undefined;
     if (!dialogueId) {
       throw new Error("dialogue_id is required for generation");
     }

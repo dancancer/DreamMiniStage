@@ -22,16 +22,16 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
-  --color-primary-50: #f8fafc;
-  --color-primary-100: #e2e8f0;
-  --color-primary-200: #cbd5e1;
-  --color-primary-300: #94a3b8;
-  --color-primary-400: #64748b;
-  --color-primary-500: #475569;
-  --color-primary-600: #334155;
-  --color-primary-700: #1e293b;
-  --color-primary-800: #0f172a;
-  --color-primary-900: #0b1220;
+  --color-primary-50: #fafafa;
+  --color-primary-100: #f5f5f5;
+  --color-primary-200: #e5e5e5;
+  --color-primary-300: #d4d4d4;
+  --color-primary-400: #a3a3a3;
+  --color-primary-500: #737373;
+  --color-primary-600: #525252;
+  --color-primary-700: #404040;
+  --color-primary-800: #262626;
+  --color-primary-900: #171717;
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -80,7 +80,7 @@
   --color-cream-soft: var(--muted-foreground);
   --color-primary-bright: var(--primary);
   --color-highlight: var(--accent);
-  --color-sand: var(--muted);
+  --color-sand: var(--primary);
   --color-success: var(--chart-2);
   --color-info: var(--chart-3);
   --color-sky: var(--chart-2);
@@ -119,8 +119,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #0f172a;
-  --primary-foreground: #f8fafc;
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -156,8 +156,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: #f8fafc;
-  --primary-foreground: #0f172a;
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -324,17 +324,6 @@
 }
 
 @layer utilities {
-  .bg-gradient-to-r,
-  .bg-gradient-to-l,
-  .bg-gradient-to-t,
-  .bg-gradient-to-b,
-  .bg-gradient-to-tr,
-  .bg-gradient-to-br,
-  .bg-gradient-to-bl,
-  .bg-gradient-to-tl {
-    background-image: none !important;
-  }
-
   .shadow,
   .shadow-sm,
   .shadow-md,

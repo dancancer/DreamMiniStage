@@ -1,4 +1,11 @@
 /**
+ * @input  @/lib, @/components
+ * @output CreatorAreaBanner
+ * @pos    创作区横幅组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
+/**
  * Creator Area Banner Component
  * 
  * A header banner component for the creator area interface.
@@ -56,7 +63,7 @@ export default function CreatorAreaBanner({
             <h2 className={"text-lg md:text-xl text-cream-soft magical-text  truncate max-w-[200px] md:max-w-[300px]"}>
               {session?.title || "创作工坊"}
             </h2>
-            <div className="p-1.5 rounded-md bg-gradient-to-r from-primary-500/20 to-orange-400/20 border border-primary-500/30 flex-shrink-0">
+            <div className="p-1.5 rounded-md bg-primary/10 border border-primary-500/30 flex-shrink-0">
               <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-primary-400 fantasy-glow" />
             </div>
           </div>

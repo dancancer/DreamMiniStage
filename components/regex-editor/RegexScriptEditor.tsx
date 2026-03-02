@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/utils, @/components, @/hooks, @/lib
+ * @output RegexScriptEditor
+ * @pos    正则脚本编辑器入口
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                  RegexScriptEditor - Main Component                       ║
  * ║                                                                           ║
@@ -22,7 +27,7 @@ import {
   type SortOrder,
   type FilterType,
   type ScriptWithKey,
-} from "@/hooks/useRegexScripts";
+} from "@/hooks/useRegexScripts/index";
 import { toast } from "@/lib/store/toast-store";
 
 // 导入子组件

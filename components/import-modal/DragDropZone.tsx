@@ -1,4 +1,9 @@
 /**
+ * @input  React, UI 基础组件
+ * @output DragDropZone
+ * @pos    数据导入模态框组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                         Drag Drop Zone                                    ║
  * ║                                                                          ║
@@ -59,11 +64,11 @@ export function DragDropZone({
       onDrop={onDrop}
       onClick={() => fileInputRef.current?.click()}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-blue-500/5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute inset-0 bg-primary/5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       <div className="relative flex flex-col items-center space-y-2">
         <div className="relative">
           <FileText className="h-8 w-8 text-ink-soft group-hover:text-primary-400 transition-colors duration-300" strokeWidth={1.5} />
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse" />
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse" />
         </div>
         <div>
           <p className={"text-cream-soft font-medium text-sm "}>{description}</p>

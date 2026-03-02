@@ -26,8 +26,6 @@ export {
   presetImportPipeline,
   importPreset,
   canImportPreset,
-  convertLegacyPlaceholders,
-  hasLegacyPlaceholders,
   convertPromptOrder,
   normalizePreset,
   standardPresetAdapter,

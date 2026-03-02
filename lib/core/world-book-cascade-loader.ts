@@ -281,9 +281,7 @@ async function getGlobalWorldBooks(): Promise<EntryWithSource[]> {
 /**
  * 加载角色世界书
  *
- * 【向后兼容】
- * - 尝试 "character:{id}" 新格式
- * - Fallback 到 "{id}" 旧格式
+ * - 使用 "character:{id}" 格式
  * - 错误容错：任何加载失败都返回空数组
  */
 async function getCharacterWorldBooks(characterId: string): Promise<EntryWithSource[]> {
@@ -307,7 +305,7 @@ async function getCharacterWorldBooks(characterId: string): Promise<EntryWithSou
     return entries;
   } catch (error) {
     console.error(`[WI] Failed to load character world book for ${characterId}:`, error);
-    return []; // 容错：失败时返回空数组
+    return [];
   }
 }
 

@@ -1,4 +1,9 @@
 /**
+ * @input  @/components
+ * @output PresetControls
+ * @pos    预设编辑器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                       PresetControls                                       ║
  * ║  顶部控制区：创建/导入 + 排序/筛选（单行合并）                             ║
@@ -47,7 +52,7 @@ export function PresetControls({
             className="px-2 sm:px-3 py-1 sm:py-1.5 h-auto text-primary-soft  text-xs sm:text-sm font-medium group border border-border"
           >
             <span className="flex items-center">
-              <Plus size={10} className="mr-1 sm:mr-1.5 transition-transform duration-300 group-hover:scale-110" />
+              <Plus size={10} className="mr-1 sm:mr-1.5" />
               <span className="hidden sm:inline">{t("preset.createPreset")}</span>
               <span className="sm:hidden">{t("preset.create")}</span>
             </span>
@@ -60,7 +65,7 @@ export function PresetControls({
             className="px-2 sm:px-3 py-1 sm:py-1.5 h-auto text-xs sm:text-sm font-medium group  border border-border"
           >
             <span className="flex items-center">
-              <FileText size={10} className="mr-1 sm:mr-1.5 transition-transform duration-300 group-hover:scale-110" />
+              <FileText size={10} className="mr-1 sm:mr-1.5" />
               {t("preset.importPreset")}
             </span>
           </Button>
@@ -83,7 +88,7 @@ export function PresetControls({
               <select
                 value={sortBy}
                 onChange={(e) => onSortByChange(e.target.value)}
-                className="appearance-none bg-gradient-to-br from-deep via-muted-surface to-deep text-cream-soft px-2 sm:px-3 py-1 sm:py-1.5 pr-5 sm:pr-7 rounded-md border border-border/60 focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 hover:border-border backdrop-blur-sm text-2xs sm:text-xs font-medium"
+                className="appearance-none bg-muted-surface text-cream-soft px-2 sm:px-3 py-1 sm:py-1.5 pr-5 sm:pr-7 rounded-md border border-border/60 focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 hover:border-border backdrop-blur-sm text-2xs sm:text-xs font-medium"
               >
                 <option value="name" className=" text-cream-soft">{t("preset.name")}</option>
                 <option value="promptCount" className=" text-cream-soft">{t("preset.promptCount")}</option>
@@ -100,14 +105,14 @@ export function PresetControls({
             variant="outline"
             size="sm"
             onClick={onSortOrderToggle}
-            className="group flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 h-auto bg-gradient-to-br from-deep via-muted-surface to-deep border border-border/60 hover:border-primary-500/40 text-cream-soft hover:text-primary-200 backdrop-blur-sm"
+            className="group flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 h-auto bg-muted-surface border border-border/60 hover:border-primary-500/40 text-cream-soft hover:text-primary-200 backdrop-blur-sm"
             title={sortOrder === "asc" ? t("preset.ascending") : t("preset.descending")}
           >
             <div
-              className={`flex items-center justify-center w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gradient-to-br transition-all duration-300 group-hover:scale-110 ${
+              className={`flex items-center justify-center w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-all duration-300 ${
                 sortOrder === "asc"
-                  ? "from-primary-500/20 to-primary-600/30 text-primary-400"
-                  : "from-blue-500/20 to-blue-600/30 text-blue-400"
+                  ? "bg-primary/20 text-primary-400"
+                  : "bg-blue-500/20 text-blue-400"
               }`}
             >
               <span className="text-3xs sm:text-xs font-bold">{sortOrder === "asc" ? "↑" : "↓"}</span>
@@ -123,7 +128,7 @@ export function PresetControls({
               <select
                 value={filterBy}
                 onChange={(e) => onFilterChange(e.target.value)}
-                className="appearance-none bg-gradient-to-br from-deep via-muted-surface to-deep text-cream-soft px-2 sm:px-3 py-1 sm:py-1.5 pr-5 sm:pr-7 rounded-md border border-border/60 focus:border-blue-500/60 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 hover:border-border backdrop-blur-sm text-2xs sm:text-xs font-medium"
+                className="appearance-none bg-muted-surface text-cream-soft px-2 sm:px-3 py-1 sm:py-1.5 pr-5 sm:pr-7 rounded-md border border-border/60 focus:border-blue-500/60 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 hover:border-border backdrop-blur-sm text-2xs sm:text-xs font-medium"
               >
                 <option value="all" className=" text-cream-soft">{t("preset.all")}</option>
                 <option value="active" className=" text-cream-soft">{t("preset.active")}</option>

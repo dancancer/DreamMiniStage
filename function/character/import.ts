@@ -1,3 +1,10 @@
+/**
+ * @input  utils/character-parser, lib/data/roleplay/*, lib/data/local-storage, lib/adapters/import, uuid
+ * @output handleCharacterUpload
+ * @pos    角色导入 - 从 PNG 文件解析并创建角色卡（含世界书、正则脚本）
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { parseCharacterCard } from "@/utils/character-parser";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import { setBlob } from "@/lib/data/local-storage";
@@ -19,7 +26,8 @@ export async function handleCharacterUpload(file: File) {
     const imagePath = `${characterId}.png`;
 
     if (characterJson.data?.character_book?.entries) {
-      await WorldBookOperations.updateWorldBook(characterId, characterJson.data.character_book.entries);
+      // ── 使用 "character:" 前缀，与级联加载器的读取规范保持一致
+      await WorldBookOperations.updateWorldBook(`character:${characterId}`, characterJson.data.character_book.entries);
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════

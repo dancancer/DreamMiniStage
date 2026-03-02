@@ -1,4 +1,9 @@
 /**
+ * @input  lib/store/model-store, utils/google-analytics, lib/storage/client-storage
+ * @output useApiConfig, APIConfig, LLMType
+ * @pos    API 配置管理 - 模型配置加载、切换与同步
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         useApiConfig Hook                                  ║
  * ║                                                                            ║

@@ -1,4 +1,9 @@
 /**
+ * @input  @/utils, @/components
+ * @output ChatInput
+ * @pos    角色对话交互组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         Chat Input Component                               ║
  * ║                                                                            ║
@@ -168,7 +173,7 @@ interface InputFieldProps {
 function InputField({ value, onChange, disabled, placeholder }: InputFieldProps) {
   return (
     <div className="flex-grow magical-input relative group">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-primary-400/20 via-primary-500/5 to-primary-400/10 rounded-md blur opacity-0 group-hover:opacity-100 transition duration-300" />
+      <div className="absolute -inset-0.5 bg-primary/10 rounded-md blur opacity-0 group-hover:opacity-100 transition duration-300" />
       <input
         type="text"
         value={value}

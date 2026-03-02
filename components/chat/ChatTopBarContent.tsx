@@ -1,4 +1,9 @@
 /**
+ * @input  @/components, @/utils, @/app, @/lib
+ * @output ChatTopBarContent
+ * @pos    聊天相关组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔════════════════════════════════════════════════════════════════════╗
  * ║                        ChatTopBarContent 聊天头部                   ║
  * ║  合并到全局 TopBar 内渲染，避免重复标题栏。                           ║

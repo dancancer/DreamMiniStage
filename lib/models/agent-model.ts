@@ -1,4 +1,11 @@
 /**
+ * @input  无外部依赖
+ * @output ResearchSession, ToolDecision, ExecutionContext, GenerationOutput, Message
+ * @pos    Agent 智能体模型,定义研究会话、工具决策、执行上下文等核心结构
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
+/**
  * Agent Model - Real-time Decision Architecture
  * Inspired by Jina AI DeepResearch design philosophy
  * Optimized naming conventions for clarity

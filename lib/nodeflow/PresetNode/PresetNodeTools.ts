@@ -21,10 +21,9 @@ import {
 } from "@/lib/core/macro-evaluator-manager";
 import type { STCombinedPreset, STOpenAIPreset, STSyspromptPreset, STPrompt, MacroEnv, ChatMessage } from "@/lib/core/st-preset-types";
 import type { Preset, PresetPrompt } from "@/lib/models/preset-model";
-import { isLegacyPreset, applyCompatibilityLayer } from "@/lib/core/prompt/compatibility";
 import { getVectorMemoryManager } from "@/lib/vector-memory/manager";
 
-/** 系统预设类型（内置预设已移除，保留类型兼容） */
+/** 系统预设类型（开发期允许自定义字符串标识） */
 export type SystemPresetType = "none" | string;
 
 export class PresetNodeTools extends NodeTool {
@@ -72,7 +71,7 @@ export class PresetNodeTools extends NodeTool {
     dialogueKey?: string,
     currentUserInput?: string,
     chatHistoryMessages?: ChatMessage[], // 新增：来自 HistoryPreNode
-  ): Promise<{ systemMessage: string; userMessage: string; messages: ChatMessage[]; presetId?: string }> {
+  ): Promise<{ messages: ChatMessage[]; presetId?: string }> {
     try {
       /* ═══════════════════════════════════════════════════════════════════════
          1. 加载角色数据
@@ -146,6 +145,13 @@ export class PresetNodeTools extends NodeTool {
         chatHistoryMessages: chatHistoryMessages || [],
       };
 
+      // ═══════════════════════════════════════════════════════════════════════
+      // 5.1 世界书模板替换（与 SillyTavern 一致）：在环境就绪后执行宏求值
+      //     这样 {{user}}/{{char}} 等占位符会在注入前被展开
+      // ═══════════════════════════════════════════════════════════════════════
+      env.wiBefore = macroEvaluator.evaluate(env.wiBefore || "", env);
+      env.wiAfter = macroEvaluator.evaluate(env.wiAfter || "", env);
+
       if (currentUserInput) {
         env.lastUserMessage = currentUserInput;
         env.userInput = currentUserInput;
@@ -156,9 +162,11 @@ export class PresetNodeTools extends NodeTool {
          ═══════════════════════════════════════════════════════════════════════ */
 
       const vectorManager = getVectorMemoryManager();
+      const hasUserHistory = (chatHistoryMessages || []).some((m) => m.role === "user");
       let vectorMemoryText = "";
 
-      if (currentUserInput) {
+      // 仅在开启且已有用户历史时检索向量记忆，避免首包污染
+      if (currentUserInput && hasUserHistory && vectorManager.isEnabled()) {
         const vectorRetrieval = await vectorManager.retrieve({
           sessionId: effectiveDialogueKey,
           query: currentUserInput,
@@ -170,6 +178,7 @@ export class PresetNodeTools extends NodeTool {
         ? promptManager.buildMessages(env, { userInput: currentUserInput })
         : promptManager.buildMessagesWithSysprompt(env, { userInput: currentUserInput });
 
+      // 首轮对话不注入向量记忆，避免干扰预设首包
       if (vectorMemoryText) {
         messages.unshift({
           role: "system",
@@ -191,24 +200,12 @@ export class PresetNodeTools extends NodeTool {
 
       await persistVariables(effectiveDialogueKey);
 
-      /* ═══════════════════════════════════════════════════════════════════════
-         8. 提取兼容字符串（用于 UI 展示）
-         ═══════════════════════════════════════════════════════════════════════ */
-
-      const systemMessages = normalizedMessages.filter(m => m.role === "system");
-      const userMessages = normalizedMessages.filter(m => m.role === "user");
-
-      const systemMessage = systemMessages.map(m => m.content).join("\n\n");
-      const userMessage = userMessages.length > 0
-        ? userMessages.map(m => m.content).join("\n\n")
-        : (currentUserInput || "");
-
       console.log(
         `[PresetNodeTools] Built: preset=${presetId}, msgs=${normalizedMessages.length}, ` +
         `historyMsgs=${chatHistoryMessages?.length || 0}`,
       );
 
-      return { systemMessage, userMessage, messages: normalizedMessages, presetId };
+      return { messages: normalizedMessages, presetId };
     } catch (error) {
       this.handleError(error as Error, "buildPromptFramework");
     }
@@ -240,14 +237,8 @@ export class PresetNodeTools extends NodeTool {
         
         if (orderedPrompts.length > 0) {
           // 3. 转换为 STOpenAIPreset 格式
-          let openaiPreset = this.convertToSTOpenAIPreset(enabledPreset, orderedPrompts);
+          const openaiPreset = this.convertToSTOpenAIPreset(enabledPreset, orderedPrompts);
           console.log(`[PresetNodeTools] Converted to STOpenAIPreset with ${openaiPreset.prompts.length} prompts`);
-
-          // 4. 应用兼容层（Requirements: 7.1, 7.4）
-          if (isLegacyPreset(openaiPreset)) {
-            console.log("[PresetNodeTools] Legacy preset detected, applying compatibility layer");
-            openaiPreset = applyCompatibilityLayer(openaiPreset);
-          }
 
           return { openaiPreset, presetId: enabledPreset.id };
         } else {

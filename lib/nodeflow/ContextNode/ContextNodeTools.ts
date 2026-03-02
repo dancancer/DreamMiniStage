@@ -2,13 +2,12 @@
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                     ContextNodeTools                                       ║
  * ║                                                                            ║
- * ║  上下文节点工具类 - UI/兼容层                                               ║
+ * ║  上下文节点工具类 - 透传辅助                                                ║
  * ║                                                                            ║
  * ║  职责（整改后）：                                                           ║
- * ║  - 提供 userMessage 中 {{chatHistory}} 文本替换的辅助方法                   ║
- * ║  - 历史数据获取已迁移到 HistoryPreNodeTools                                 ║
+ * ║  - 仅保留通用 NodeTool 调度能力                                             ║
  * ║                                                                            ║
- * ║  Requirements: 5.1, 5.2, 5.3, 5.4                                          ║
+ * ║  Requirements: 5.1, 5.3                                                    ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -16,7 +15,7 @@ import { NodeTool } from "@/lib/nodeflow/NodeTool";
 
 export class ContextNodeTools extends NodeTool {
   protected static readonly toolType: string = "context";
-  protected static readonly version: string = "2.0.0";
+  protected static readonly version: string = "3.0.0";
 
   static getToolType(): string {
     return this.toolType;
@@ -46,26 +45,4 @@ export class ContextNodeTools extends NodeTool {
     }
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     replaceHistoryPlaceholder - userMessage 文本替换
-     Requirements: 5.2, 5.4
-     ═══════════════════════════════════════════════════════════════════════════ */
-
-  /**
-   * 在 userMessage 中替换 {{chatHistory}} 占位符
-   * 仅用于 UI 展示和 legacy preset 兼容
-   *
-   * @param userMessage - 原始 userMessage 字符串
-   * @param chatHistoryText - 压缩的历史文本（来自 HistoryPreNode）
-   * @returns 替换后的 userMessage
-   */
-  static replaceHistoryPlaceholder(
-    userMessage: string,
-    chatHistoryText: string,
-  ): string {
-    if (!userMessage.includes("{{chatHistory}}")) {
-      return userMessage;
-    }
-    return userMessage.replace("{{chatHistory}}", chatHistoryText);
-  }
 }

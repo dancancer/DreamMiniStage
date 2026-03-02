@@ -1,3 +1,10 @@
+/**
+ * @input  lib/data/roleplay/character-dialogue-operation, lib/core/character-dialogue, lib/core/character, utils/response-parser
+ * @output editDialaogueNodeContent
+ * @pos    对话节点编辑 - 编辑助手响应内容并重新生成摘要
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { CharacterDialogue } from "@/lib/core/character-dialogue";
 import { parseEvent } from "@/utils/response-parser";

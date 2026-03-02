@@ -1,0 +1,35 @@
+**一旦我所属的文件夹有所变化，请更新我**
+
+# script-bridge/
+
+脚本桥接层。连接 React 组件与脚本运行时的事件与数据通道。
+
+## 文件清单
+
+| 文件 | 地位 | 功能 |
+|------|------|------|
+| `index.ts` | 模块入口 | 导出桥接功能 |
+| `types.ts` | 类型定义 | 桥接类型定义 |
+| `audio-handlers.ts` | 处理器 | 音频事件处理 |
+| `character-handlers.ts` | 处理器 | 角色事件处理 |
+| `event-handlers.ts` | 处理器 | 通用事件处理 |
+| `extension-handlers.ts` | 处理器 | 扩展事件处理 |
+| `generation-handlers.ts` | 处理器 | 生成事件处理 |
+| `lorebook-handlers.ts` | 处理器 | 知识库事件处理 |
+| `message-handlers.ts` | 处理器 | 消息事件处理 |
+| `mvu-handlers.ts` | 处理器 | MVU 事件处理 |
+| `preset-handlers.ts` | 处理器 | 预设事件处理 |
+| `quickreply-handlers.ts` | 处理器 | 快速回复处理 |
+| `scoped-variables.ts` | 处理器 | 作用域变量处理 |
+| `slash-handlers.ts` | 处理器 | 斜杠命令处理 |
+| `tool-handlers.ts` | 处理器 | 工具调用处理 |
+| `variable-handlers.ts` | 处理器 | 变量事件处理 |
+| `worldbook-handlers.ts` | 处理器 | 世界书事件处理 |
+
+## 近期约束
+
+- `slash-handlers.ts` 的 `triggerSlash` 仅接收命令字符串参数，回调统一从 `ApiCallContext` 注入，不再支持额外 options 覆盖。
+- `slash-handlers.ts` 已补齐 JS-Slash-Runner 音频通道能力（`bgm|ambient` 的 mode/enable/playlist 状态控制）。
+- `public/iframe-libs/slash-runner-shim.js` 不再导出 `window.getVariables`/`window.triggerSlash` 等顶层别名；脚本统一通过 `window.TavernHelper` / `window.SillyTavern` 访问 API。
+- `variable-handlers.ts` 的集合操作默认作用域为 `chat`，并支持上游常用参数形态 `{ type, message_id }`（含 `latest` 与负索引）。
+- 群聊相关 `getGroupMembers` / `isGroupChat` 目前为显式未支持（fail-fast），不再返回静默默认值。

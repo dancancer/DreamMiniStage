@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/components
+ * @output PluginManagerModal
+ * @pos    插件管理器模态框
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                      PluginManagerModal                                   ║
  * ║                                                                            ║
@@ -110,7 +115,7 @@ export default function PluginManagerModal({ isOpen, onClose }: PluginManagerMod
             ═══════════════════════════════════════════════════════════ */}
         <div className="flex items-center justify-between p-6 pb-4">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-br from-cream/20 to-primary/20 rounded-xl">
+            <div className="p-2 bg-primary/10 rounded-xl">
               <Package className="w-5 h-5 text-cream" />
             </div>
             <div>
@@ -128,7 +133,7 @@ export default function PluginManagerModal({ isOpen, onClose }: PluginManagerMod
               size="icon"
               onClick={handleRefreshPlugins}
               disabled={isRefreshing}
-              className="h-9 w-9 bg-ink/30 hover:bg-ink-soft/40 text-cream group hover:scale-105 active:scale-95"
+              className="h-9 w-9 bg-ink/30 hover:bg-ink-soft/40 text-cream group active:scale-95"
               title={t("plugins.refresh")}
             >
               <RefreshCw
@@ -149,7 +154,7 @@ export default function PluginManagerModal({ isOpen, onClose }: PluginManagerMod
                 onChange={setFilter}
                 pluginCounts={pluginCounts}
               />
-              <div className="px-3 py-1.5 bg-gradient-to-r from-ink/20 to-ink/10 rounded-md text-primary-soft border border-border/20 text-xs">
+              <div className="px-3 py-1.5 bg-ink/15 rounded-md text-primary-soft border border-border/20 text-xs">
                 <span className="font-medium text-cream">{pluginCounts[filter]}</span>
                 <span className="mx-1 text-primary-soft/60">/</span>
                 <span>{pluginCounts.all}</span>
@@ -183,7 +188,7 @@ export default function PluginManagerModal({ isOpen, onClose }: PluginManagerMod
         {/* ═══════════════════════════════════════════════════════════
             底部状态栏 - Footer Status Bar
             ═══════════════════════════════════════════════════════════ */}
-        <div className="px-6 py-4 border-t border-border/30 bg-gradient-to-r from-overlay/20 to-deep/40">
+        <div className="px-6 py-4 border-t border-border/30 bg-overlay/25">
           <PluginStats plugins={plugins} />
         </div>
       </DialogContent>

@@ -51,6 +51,26 @@ export {
 } from "./reasoning-extractor";
 
 // ============================================================================
+//                              SSE 流式处理导出
+// ============================================================================
+
+export type {
+  StreamEventType,
+  StreamEvent,
+  StreamCallbacks,
+  StreamResult,
+  StreamResponseEvent,
+} from "./sse-handler";
+
+export {
+  processSSEStream,
+  createSSEResponse,
+  formatSSEData,
+  formatSSEDone,
+  createStreamResponseBuilder,
+} from "./sse-handler";
+
+// ============================================================================
 //                              中断控制导出
 // ============================================================================
 

@@ -1,6 +1,6 @@
 import { NodeTool } from "@/lib/nodeflow/NodeTool";
-import { MemoryManager, RAGGenerationOptions, MemoryExtractionResult } from "@/lib/core/memory-manager";
-import { MemoryType, MemoryContext } from "@/lib/models/memory-model";
+import { MemoryManager } from "@/lib/core/memory-manager";
+import { MemoryType } from "@/lib/models/memory-model";
 import { LocalMemoryOperations } from "@/lib/data/roleplay/memory-operation";
 
 export class MemoryNodeTools extends NodeTool {
@@ -166,55 +166,62 @@ export class MemoryNodeTools extends NodeTool {
   }
 
   /**
-   * Retrieve memories and enhance system message for MemoryRetrievalNode
+   * Retrieve memories and inject them into messages[] for MemoryRetrievalNode
    */
-  static async retrieveAndEnhanceSystemMessage(
+  static async retrieveAndInjectMemories(
     characterId: string,
     userInput: string,
-    systemMessage: string,
+    messages: Array<{ role: string; content: string }>,
     apiKey: string,
     baseUrl?: string,
     language: "zh" | "en" = "zh",
     maxMemories: number = 5,
   ): Promise<{
-    enhancedSystemMessage: string;
+    messages: Array<{ role: string; content: string }>;
     memoryPrompt: string;
     retrievedMemories: unknown[];
     memoryCount: number;
   }> {
     try {
-      // Search for relevant memories
       const searchResult = await this.searchMemories(
         characterId,
         userInput,
         apiKey,
         baseUrl,
         maxMemories,
-        undefined, // includeTypes
-        true, // useSemanticSearch
+        undefined,
+        true,
       );
 
       if (!searchResult.success) {
-        return this.createFallbackResult(systemMessage, language);
+        return this.createFallbackMessagesResult(messages, language);
       }
 
-      // Format memories for prompt injection
       const memoryPrompt = this.formatMemoriesForPrompt(searchResult.results, language);
+      const memoryCount = searchResult.count;
 
-      // Inject memories into system message
-      const enhancedSystemMessage = this.injectMemoriesIntoSystemMessage(systemMessage, memoryPrompt);
+      // 无命中时不修改消息，仅返回提示信息用于调试展示
+      if (memoryCount === 0) {
+        return {
+          messages,
+          memoryPrompt,
+          retrievedMemories: [],
+          memoryCount: 0,
+        };
+      }
 
-      console.log(`Retrieved ${searchResult.count} memories for character ${characterId}`);
+      const enhancedMessages = this.injectMemoriesIntoMessages(messages, memoryPrompt);
+      console.log(`Retrieved ${memoryCount} memories for character ${characterId}`);
 
       return {
-        enhancedSystemMessage,
+        messages: enhancedMessages,
         memoryPrompt,
         retrievedMemories: searchResult.results,
-        memoryCount: searchResult.count,
+        memoryCount,
       };
     } catch (error) {
-      this.handleError(error as Error, "retrieveAndEnhanceSystemMessage");
-      return this.createFallbackResult(systemMessage, language);
+      this.handleError(error as Error, "retrieveAndInjectMemories");
+      return this.createFallbackMessagesResult(messages, language);
     }
   }
 
@@ -329,16 +336,37 @@ export class MemoryNodeTools extends NodeTool {
   }
 
   /**
-   * Private helper: Inject memories into system message
+   * Private helper: Inject memory prompt into messages[]
    */
-  private static injectMemoriesIntoSystemMessage(systemMessage: string, memoryPrompt: string): string {
-    // Replace {{memory}} placeholder if exists
-    if (systemMessage.includes("{{memory}}")) {
-      return systemMessage.replace("{{memory}}", memoryPrompt);
+  private static injectMemoriesIntoMessages(
+    messages: Array<{ role: string; content: string }>,
+    memoryPrompt: string,
+  ): Array<{ role: string; content: string }> {
+    const nextMessages = messages.map((msg) => ({ ...msg }));
+    const firstSystemIndex = nextMessages.findIndex((msg) => msg.role === "system");
+    const memoryBlock = `<memory>\n${memoryPrompt}\n</memory>`;
+
+    if (firstSystemIndex === -1) {
+      return [{ role: "system", content: memoryBlock }, ...nextMessages];
     }
 
-    // If no placeholder, append memory section
-    return `${systemMessage}\n\n<memory>\n${memoryPrompt}\n</memory>`;
+    const currentContent = nextMessages[firstSystemIndex].content || "";
+    if (currentContent.includes("{{memory}}")) {
+      nextMessages[firstSystemIndex] = {
+        ...nextMessages[firstSystemIndex],
+        content: currentContent.replace("{{memory}}", memoryPrompt),
+      };
+      return nextMessages;
+    }
+
+    nextMessages[firstSystemIndex] = {
+      ...nextMessages[firstSystemIndex],
+      content: currentContent
+        ? `${currentContent}\n\n${memoryBlock}`
+        : memoryBlock,
+    };
+
+    return nextMessages;
   }
 
   /**
@@ -361,61 +389,15 @@ export class MemoryNodeTools extends NodeTool {
   /**
    * Private helper: Create fallback result for memory retrieval
    */
-  private static createFallbackResult(systemMessage: string, language: "zh" | "en") {
+  private static createFallbackMessagesResult(
+    messages: Array<{ role: string; content: string }>,
+    language: "zh" | "en",
+  ) {
     return {
-      enhancedSystemMessage: systemMessage,
+      messages,
       memoryPrompt: language === "zh" ? "无相关记忆" : "No relevant memories",
       retrievedMemories: [],
       memoryCount: 0,
     };
   }
-
-  /**
-   * Private helper: Enhance system message with memory context
-   */
-  private static enhanceSystemMessageWithMemory(
-    originalSystemMessage: string,
-    memoryContext: MemoryContext,
-    language: "zh" | "en",
-  ): string {
-    if (!memoryContext.memoryPrompt || memoryContext.activeMemories.length === 0) {
-      return originalSystemMessage;
-    }
-
-    // Check if memory context already exists to avoid duplication
-    const memoryKeywords = language === "zh" 
-      ? ["记忆", "回忆", "相关记忆"] 
-      : ["memory", "memories", "relevant memories"];
-    
-    const hasMemoryContext = memoryKeywords.some(keyword => 
-      originalSystemMessage.toLowerCase().includes(keyword.toLowerCase()),
-    );
-
-    if (hasMemoryContext) {
-      // Replace existing memory placeholder
-      const memoryPlaceholders = language === "zh" 
-        ? ["{{memories}}", "{{相关记忆}}", "{{记忆}}"]
-        : ["{{memories}}", "{{relevant_memories}}", "{{memory}}"];
-      
-      let enhancedMessage = originalSystemMessage;
-      for (const placeholder of memoryPlaceholders) {
-        if (enhancedMessage.includes(placeholder)) {
-          enhancedMessage = enhancedMessage.replace(placeholder, memoryContext.memoryPrompt);
-          break;
-        }
-      }
-      
-      // If no placeholder found, append memory context
-      if (enhancedMessage === originalSystemMessage) {
-        const separator = language === "zh" ? "\n\n" : "\n\n";
-        enhancedMessage = `${originalSystemMessage}${separator}${memoryContext.memoryPrompt}`;
-      }
-      
-      return enhancedMessage;
-    } else {
-      // Add memory context to system message
-      const separator = language === "zh" ? "\n\n" : "\n\n";
-      return `${originalSystemMessage}${separator}${memoryContext.memoryPrompt}`;
-    }
-  }
-} 
+}

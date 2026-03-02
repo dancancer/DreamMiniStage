@@ -2,7 +2,7 @@
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║              World Book Operations 单元测试                                ║
  * ║                                                                            ║
- * ║  测试存储层的新键格式支持和向后兼容性                                        ║
+ * ║  测试存储层的新键格式支持                                                    ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -101,10 +101,10 @@ describe("WorldBookOperations", () => {
   });
 
   /* ───────────────────────────────────────────────────────────────────────
-     getWorldBook 向后兼容性测试
+     getWorldBook 测试
      ─────────────────────────────────────────────────────────────────────── */
 
-  describe("getWorldBook - 向后兼容", () => {
+  describe("getWorldBook", () => {
     it("应该支持新格式键（character:id）", async () => {
       const testWorldBook = {
         entry_1: {
@@ -158,55 +158,6 @@ describe("WorldBookOperations", () => {
       const result = await WorldBookOperations.getWorldBook("dialogue:dlg_xyz");
 
       expect(result).toEqual(testWorldBook);
-    });
-
-    it("应该 fallback 到旧格式当新格式不存在时", async () => {
-      const testWorldBook = {
-        entry_1: {
-          content: "Legacy content",
-          keys: ["legacy"],
-          selective: false,
-          constant: false,
-          position: 4,
-        },
-      };
-
-      // 第一次调用（新格式）返回 null
-      // 第二次调用（旧格式 fallback）返回数据
-      vi.mocked(getRecordByKey)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(testWorldBook);
-
-      const result = await WorldBookOperations.getWorldBook("char_123");
-
-      // 应该尝试两次：1. char_123  2. character:char_123
-      expect(getRecordByKey).toHaveBeenCalledTimes(2);
-      expect(getRecordByKey).toHaveBeenNthCalledWith(1, "world_book", "char_123");
-      expect(getRecordByKey).toHaveBeenNthCalledWith(
-        2,
-        "world_book",
-        "character:char_123",
-      );
-      expect(result).toEqual(testWorldBook);
-    });
-
-    it("旧格式键不应该触发 fallback（因为包含冒号检查）", async () => {
-      const testWorldBook = {
-        entry_1: {
-          content: "Test",
-          keys: ["test"],
-          selective: false,
-          constant: false,
-          position: 4,
-        },
-      };
-
-      vi.mocked(getRecordByKey).mockResolvedValue(testWorldBook);
-
-      await WorldBookOperations.getWorldBook("character:char_123");
-
-      // 只应该调用一次（不触发 fallback）
-      expect(getRecordByKey).toHaveBeenCalledTimes(1);
     });
 
     it("找不到数据时应该返回 null", async () => {

@@ -1,3 +1,10 @@
+/**
+ * @input  function/data/google-control, lib/storage/client-storage
+ * @output createRequest
+ * @pos    Google API 请求 - 带自动刷新令牌的请求封装
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { refreshGoogleToken } from "./google-control";
 import { getString, setString } from "@/lib/storage/client-storage";
 

@@ -8,8 +8,10 @@
  */
 
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
+import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
 import type { MvuData, StatData } from "../types";
 import { updateVariablesFromMessage } from "../core/executor";
+import { initializeVariables, type WorldBookEntry } from "../variable-init";
 
 /** 对话范围参数：使用 sessionId（dialogueKey） */
 interface DialogueScope {
@@ -158,4 +160,123 @@ export async function initCharacterVariables(
   }
 
   return variables;
+}
+
+// ============================================================================
+//                              世界书初始化
+// ============================================================================
+
+/**
+ * 从世界书加载并初始化 MVU 变量
+ *
+ * 【完整初始化流程】
+ * 1. 加载角色世界书和全局世界书
+ * 2. 提取 [InitVar] 条目
+ * 3. 应用开场白 <initvar> 覆盖（如果有）
+ * 4. 保存到开场白节点
+ *
+ * @param params.dialogueKey - 对话树 ID
+ * @param params.characterId - 角色 ID
+ * @param params.openingNodeId - 开场白节点 ID
+ * @param params.greeting - 开场白内容（用于检测 <initvar> 块）
+ */
+export async function initMvuVariablesFromWorldBooks(params: {
+  dialogueKey: string;
+  characterId: string;
+  openingNodeId: string;
+  greeting?: string;
+}): Promise<MvuData | null> {
+  const { dialogueKey, characterId, openingNodeId, greeting } = params;
+
+  try {
+    // ═══════════════════════════════════════════════════════════════════════
+    // Step 1: 并行加载世界书（角色 + 全局）
+    // ═══════════════════════════════════════════════════════════════════════
+    const [characterWB, globalWB] = await Promise.all([
+      loadWorldBookEntries(`character:${characterId}`),
+      loadWorldBookEntries("global"),
+    ]);
+
+    const worldBooks: WorldBookEntry[][] = [];
+    const worldBookNames: string[] = [];
+
+    if (characterWB.length > 0) {
+      worldBooks.push(characterWB);
+      worldBookNames.push(`character:${characterId}`);
+    }
+
+    if (globalWB.length > 0) {
+      worldBooks.push(globalWB);
+      worldBookNames.push("global");
+    }
+
+    // 没有任何世界书，创建空的 MVU 数据
+    if (worldBooks.length === 0 && !greeting) {
+      console.debug("[MVU] 无世界书和开场白变量，跳过初始化");
+      return null;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Step 2: 调用 initializeVariables 执行初始化
+    // ═══════════════════════════════════════════════════════════════════════
+    const result = initializeVariables({
+      worldBooks,
+      worldBookNames,
+      greeting,
+      existingData: null,
+    });
+
+    if (!result.success) {
+      console.warn("[MVU] 变量初始化失败:", result.errors);
+      return null;
+    }
+
+    // 如果没有加载任何变量，不保存
+    if (Object.keys(result.variables.stat_data).length === 0) {
+      console.debug("[MVU] 初始化完成但无变量数据");
+      return null;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Step 3: 保存到开场白节点
+    // ═══════════════════════════════════════════════════════════════════════
+    await saveNodeVariables({
+      dialogueKey,
+      nodeId: openingNodeId,
+      variables: result.variables,
+    });
+
+    console.log("[MVU] 变量初始化完成:", {
+      sources: result.loadedSources,
+      varCount: Object.keys(result.variables.stat_data).length,
+    });
+
+    return result.variables;
+  } catch (error) {
+    console.error("[MVU] 变量初始化异常:", error);
+    return null;
+  }
+}
+
+/**
+ * 加载世界书条目并转换为 MVU 格式
+ */
+async function loadWorldBookEntries(key: string): Promise<WorldBookEntry[]> {
+  try {
+    const worldBook = await WorldBookOperations.getWorldBook(key);
+    if (!worldBook) return [];
+
+    return Object.values(worldBook)
+      .filter((entry) => entry.enabled !== false)
+      .map((entry) => ({
+        uid: entry.entry_id || entry.id || String(Math.random()),
+        comment: entry.comment,
+        content: entry.content,
+        keys: entry.keys,
+        enabled: entry.enabled,
+      }));
+  } catch (error) {
+    console.warn(`[MVU] 加载世界书 ${key} 失败:`, error);
+    return [];
+  }
 }

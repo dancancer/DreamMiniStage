@@ -1,3 +1,10 @@
+/**
+ * @input  @/lib, @/components
+ * @output DesktopSidebarView
+ * @pos    模型配置侧边栏组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 import React from "react";
 import { ChevronRight, Plus, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -83,7 +90,7 @@ export function DesktopSidebarView(props: SidebarViewProps) {
     <div className={containerClassName}>
       <div className={scrollAreaClassName}>
         {!isPanel && (
-          <div className="flex justify-between items-center p-3 border-b border-border bg-gradient-to-r from-canvas to-input">
+          <div className="flex justify-between items-center p-3 border-b border-border bg-input">
             <h1 className={"text-base magical-text "}>{t("modelSettings.title")}</h1>
             <Button
               variant="ghost"
@@ -91,7 +98,7 @@ export function DesktopSidebarView(props: SidebarViewProps) {
               onClick={() => {trackButtonClick("ModelSidebar", "关闭模型设置"); toggleSidebar();}}
               className="w-6 h-6 text-cream bg-surface border border-stroke hover:bg-muted-surface hover:border-stroke-strong hover:text-primary-400 hover:shadow-[0_0_8px_rgba(251,146,60,0.4)]"
             >
-              <ChevronRight className="w-3.5 h-3.5 transition-transform duration-300" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </Button>
           </div>
         )}

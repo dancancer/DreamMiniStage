@@ -6,7 +6,7 @@
 
 宏系统采用三阶段管线架构：
 
-1. **preEnvMacros** - 预处理宏（旧版占位符、变量宏、工具宏）
+1. **preEnvMacros** - 预处理宏（变量宏、工具宏）
 2. **envMacros** - 环境宏（用户名、角色名、注册宏）
 3. **postEnvMacros** - 后处理宏（时间、消息、随机选择）
 
@@ -28,14 +28,7 @@
 
 ### 旧版占位符
 
-为兼容旧版本，支持以下占位符：
-
-| 占位符 | 等效宏 |
-|--------|--------|
-| `<USER>` | `{{user}}` |
-| `<BOT>` | `{{char}}` |
-| `<CHAR>` | `{{char}}` |
-| `<GROUP>` | `{{group}}` |
+旧版尖括号占位符（如 `<USER>`、`<BOT>`）已不再支持运行时替换，请统一改为现代宏格式（如 `{{user}}`、`{{char}}`）。
 
 ## 变量宏
 
@@ -211,16 +204,15 @@ evaluator.unregisterMacro("myMacro");
 
 ## 宏替换顺序
 
-1. 旧版占位符 (`<USER>`, `<BOT>` 等)
-2. 变量宏 (`setvar`, `getvar` 等)
-3. 工具宏 (`trim`, `newline`, `noop`)
-4. 骰子宏 (`roll`)
-5. 环境宏 (`user`, `char` 等)
-6. 时间宏 (`time`, `date` 等)
-7. 消息宏 (`lastMessage` 等)
-8. 随机宏 (`random`, `pick`)
-9. 注释宏 (`//`)
-10. 反转宏 (`reverse`)
+1. 变量宏 (`setvar`, `getvar` 等)
+2. 工具宏 (`trim`, `newline`, `noop`)
+3. 骰子宏 (`roll`)
+4. 环境宏 (`user`, `char` 等)
+5. 时间宏 (`time`, `date` 等)
+6. 消息宏 (`lastMessage` 等)
+7. 随机宏 (`random`, `pick`)
+8. 注释宏 (`//`)
+9. 反转宏 (`reverse`)
 
 ## 最佳实践
 

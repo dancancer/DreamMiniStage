@@ -1,4 +1,9 @@
 /**
+ * @input  types/character-dialogue
+ * @output formatMessages, extractOpeningMessages
+ * @pos    对话消息工具 - 格式化对话消息与开场白抽取
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                    Character Dialogue Message Utils                       ║
  * ║  格式化对话消息与开场白抽取，保持主 Hook 精简                                  ║
@@ -13,6 +18,7 @@ export const formatMessages = (rawMessages: any[]): DialogueMessage[] => {
     role: msg.role === "system" ? "assistant" : msg.role,
     thinkingContent: msg.thinkingContent ?? "",
     content: msg.content,
+    swipe: msg.swipe,
   }));
 };
 

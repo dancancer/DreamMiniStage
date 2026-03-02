@@ -1,4 +1,9 @@
 /**
+ * @input  hooks/script-bridge/types, lib/mvu
+ * @output mvuHandlers
+ * @pos    MVU API Handlers - 脚本沙箱的变量管理与快照控制
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         MVU API Handlers                                   ║
  * ║                                                                            ║

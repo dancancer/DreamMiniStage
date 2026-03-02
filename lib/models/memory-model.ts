@@ -1,3 +1,10 @@
+/**
+ * @input  无外部依赖
+ * @output MemoryEntry, MemoryType, MemoryRAGConfig, MemorySearchQuery, MemoryContext
+ * @pos    记忆系统数据模型,支持 RAG 向量检索、语义搜索、上下文管理
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 // Memory System Models - RAG-based persistent memory for characters
 // Supports vector embeddings, semantic search, and contextual retrieval
 

@@ -1,4 +1,9 @@
 /**
+ * @input  lib/store/dialogue-store, hooks/character-dialogue/useDialoguePreferences, lib/core/dialogue-key, function/dialogue/jsonl
+ * @output useCharacterDialogue, UseCharacterDialogueOptions
+ * @pos    角色对话核心 Hook - 基于 Zustand Store 的对话状态与操作管理
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                    useCharacterDialogue Hook                               ║
  * ║                                                                            ║
@@ -12,10 +17,13 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { useDialogueStore } from "@/lib/store/dialogue-store";
+import { useDialogueStore } from "@/lib/store/dialogue-store/index";
 import { useDialoguePreferences } from "@/hooks/character-dialogue/useDialoguePreferences";
 import { resolveDialogueKey } from "@/lib/core/dialogue-key";
 import type { SendOptions } from "@/lib/slash-command/types";
+import { exportDialogueJsonl, importDialogueJsonl } from "@/function/dialogue/jsonl";
+import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
+import { toast } from "@/lib/store/toast-store";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    类型定义
@@ -127,6 +135,7 @@ export function useCharacterDialogue({
   const truncateMessagesAfter = useDialogueStore((state) => state.truncateMessagesAfter);
   const regenerateMessage = useDialogueStore((state) => state.regenerateMessage);
   const navigateOpening = useDialogueStore((state) => state.navigateOpening);
+  const switchSwipe = useDialogueStore((state) => state.switchSwipe);
   const setMessages = useDialogueStore((state) => state.setMessages);
   const setSuggestedInputs = useDialogueStore((state) => state.setSuggestedInputs);
 
@@ -236,6 +245,60 @@ export function useCharacterDialogue({
     [storeKey, navigateOpening]
   );
 
+  const handleSwipe = useCallback(
+    async (target?: string) => {
+      if (!storeKey) return;
+
+      const currentMessages = useDialogueStore.getState().dialogues[storeKey]?.messages || [];
+      const lastAssistant = [...currentMessages].reverse().find((msg) => msg.role === "assistant");
+      if (!lastAssistant) return;
+
+      const parsedTarget =
+        target === "prev"
+          ? "prev"
+          : target === undefined || target === "next"
+            ? "next"
+            : Number.isFinite(Number(target))
+              ? Math.trunc(Number(target))
+              : "next";
+
+      await switchSwipe(storeKey, lastAssistant.id, parsedTarget);
+    },
+    [storeKey, switchSwipe],
+  );
+
+  const handleExportJsonl = useCallback(async () => {
+    if (!storeKey || !characterId) return;
+
+    const record = await LocalCharacterRecordOperations.getCharacterById(characterId);
+    const characterName = record?.name || "";
+    const jsonl = await exportDialogueJsonl({ dialogueId: storeKey, characterName });
+
+    const blob = new Blob([jsonl], { type: "application/x-ndjson;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${storeKey}.jsonl`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success("已导出 JSONL");
+  }, [storeKey, characterId]);
+
+  const handleImportJsonl = useCallback(async (file: File) => {
+    if (!storeKey || !characterId) return;
+    try {
+      const jsonlText = await file.text();
+      await importDialogueJsonl({ dialogueId: storeKey, characterId, jsonlText });
+      await fetchLatestDialogue(storeKey, characterId, language);
+      toast.success("已导入 JSONL");
+    } catch (error) {
+      console.error("Failed to import JSONL:", error);
+      toast.error("导入 JSONL 失败");
+    }
+  }, [storeKey, characterId, language, fetchLatestDialogue]);
+
   const handleSetMessages = useCallback(
     (messages: any[]) => {
       if (!storeKey) return;
@@ -317,9 +380,12 @@ export function useCharacterDialogue({
     triggerGeneration,
     truncateMessagesAfter: handleTruncateMessagesAfter,
     handleRegenerate,
+    handleSwipe,
     handleOpeningNavigate,
     setMessages: handleSetMessages,
     setSuggestedInputs: handleSetSuggestedInputs,
+    exportJsonl: handleExportJsonl,
+    importJsonl: handleImportJsonl,
 
     // 工具
     readLlmConfig,

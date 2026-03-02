@@ -1,4 +1,9 @@
 /**
+ * @input  @/contexts, @/lib, @/components
+ * @output LeftNav
+ * @pos    应用布局组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔════════════════════════════════════════════════════════════════════╗
  * ║                              LeftNav 导航栏                         ║
  * ║  数据驱动导航：路由项直接跳转，设置项触发右侧抽屉。                   ║
@@ -13,6 +18,7 @@ import {
   Home,
   MessageCircle,
   Users,
+  UserCircle,
   BookOpen,
   Regex,
   SlidersHorizontal,
@@ -51,6 +57,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "创作/世界",
     items: [
       { id: "characters", label: "角色卡", href: "/character-cards", icon: <Users size={16} /> },
+      { id: "personas", label: "用户角色", href: "/personas", icon: <UserCircle size={16} /> },
       { id: "worldbook", label: "世界书", panel: "worldbook", icon: <BookOpen size={16} /> },
     ],
   },
@@ -59,8 +66,6 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: "regex", label: "正则脚本", panel: "regex", icon: <Regex size={16} /> },
       { id: "presets", label: "预设", panel: "presets", icon: <SlidersHorizontal size={16} /> },
-      { id: "modelSettings", label: "模型设置", panel: "modelSettings", icon: <Cpu size={16} /> },
-      { id: "plugins", label: "插件管理", panel: "plugins", icon: <Puzzle size={16} /> },
     ],
   },
   {
@@ -73,6 +78,14 @@ const NAV_GROUPS: NavGroup[] = [
     label: "数据",
     items: [
       { id: "data", label: "数据管理", panel: "data", icon: <Database size={16} /> },
+    ],
+  },
+  {
+    label: "设置",
+    items: [
+      { id: "settingsHub", label: "设置菜单", panel: "settingsHub", icon: <Settings2 size={16} /> },
+      { id: "modelSettings", label: "模型设置", panel: "modelSettings", icon: <Cpu size={16} /> },
+      { id: "plugins", label: "插件管理", panel: "plugins", icon: <Puzzle size={16} /> },
     ],
   },
 ];
@@ -165,7 +178,7 @@ export default function LeftNav({ isOpen, onClose }: LeftNavProps) {
           "md:static md:translate-x-0",
         )}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center justify-between px-4 py-3 h-9 border-b border-border box-content">
           <div className="text-base font-semibold text-foreground">DreamMiniStage</div>
           <Button
             variant="ghost"

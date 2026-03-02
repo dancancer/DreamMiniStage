@@ -1,4 +1,9 @@
 /**
+ * @input  @/components
+ * @output PresetHeader
+ * @pos    预设编辑器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                       PresetHeader                                         ║
  * ║  顶部标题栏：名称/统计/关闭                                                 ║
@@ -37,7 +42,7 @@ export function PresetHeader({
 
   return (
     <div className="p-2 sm:p-3 border-b border-border bg-muted-surface relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-primary-500/5 to-transparent opacity-50"></div>
+      <div className="absolute inset-0 bg-primary/5 opacity-50"></div>
       <div className="relative z-10 flex justify-between items-center min-h-[2rem]">
         <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
           <h2 className="text-base sm:text-lg font-medium text-cream-soft flex-shrink-0">
@@ -87,7 +92,7 @@ export function PresetHeader({
           onClick={onClose}
           className="w-6 h-6 sm:w-7 sm:h-7 text-ink-soft hover:text-cream-soft hover:bg-stroke group flex-shrink-0 ml-2"
         >
-          <X size={12} className="transition-transform duration-300 group-hover:scale-110" />
+          <X size={12} />
         </Button>
       </div>
     </div>

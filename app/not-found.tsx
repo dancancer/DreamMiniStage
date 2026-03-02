@@ -1,3 +1,10 @@
+/**
+ * @input  next/link, lucide-react, app/i18n
+ * @output NotFound (default export)
+ * @pos    404 页面组件 - 自定义"页面未找到"错误页
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 "use client";
 
 import Link from "next/link";
@@ -53,7 +60,7 @@ export default function NotFound() {
           <div className="flex items-center justify-center space-x-4">
             <Link href="/">
               <div
-                className={`text-primary hover:text-foreground px-4 py-2 text-sm border border-border rounded-md cursor-pointer transition-all duration-150 hover:bg-muted hover:scale-105 ${fontClass}`}
+                className={`text-primary hover:text-foreground px-4 py-2 text-sm border border-border rounded-md cursor-pointer transition-all duration-150 hover:bg-muted ${fontClass}`}
               >
                 {t("notFound.backToHome")}
               </div>

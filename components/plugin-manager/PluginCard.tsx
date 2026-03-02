@@ -1,4 +1,9 @@
 /**
+ * @input  @/app
+ * @output PluginCard
+ * @pos    插件管理组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                          PluginCard                                       ║
  * ║                                                                            ║
@@ -71,14 +76,14 @@ export function PluginCard({ plugin, onToggle }: PluginCardProps) {
   const statusText = getPluginStatusText(plugin);
 
   return (
-    <div className="group bg-gradient-to-br from-overlay/30 to-deep/50 rounded-xl p-5 border border-border/30 hover:border-cream/40 transition-all duration-300 backdrop-blur-sm hover:-translate-y-0.5 hover:shadow-cream/10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="group bg-overlay/40 rounded-xl p-5 border border-border/30 hover:border-cream/40 transition-all duration-300 backdrop-blur-sm hover:-translate-y-0.5 hover:shadow-cream/10 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="flex items-start justify-between">
         {/* ═══════════════════════════════════════════════════════════
             插件信息 - Plugin Info
             ═══════════════════════════════════════════════════════════ */}
         <div className="flex items-start space-x-4 flex-1">
           {/* 插件图标 - Plugin Icon */}
-          <div className="w-12 h-12 bg-gradient-to-br from-ink/40 to-overlay/60 rounded-xl flex items-center justify-center overflow-hidden relative group-hover:from-cream/20 group-hover:to-primary/20 transition-all duration-300">
+          <div className="w-12 h-12 bg-ink/30 rounded-xl flex items-center justify-center overflow-hidden relative group-hover:bg-primary/15 transition-all duration-300">
             {plugin.manifest.icon ? (
               plugin.manifest.icon.startsWith("http") || plugin.manifest.icon.startsWith("/") ? (
                 plugin.manifest.id === "dialogue-stats" ? (
@@ -146,7 +151,7 @@ export function PluginCard({ plugin, onToggle }: PluginCardProps) {
         <div className="flex items-center space-x-2 flex-shrink-0">
           <button
             onClick={() => onToggle(plugin.manifest.id, !plugin.enabled)}
-            className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:scale-[1.02] active:scale-95 ${
+            className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 active:scale-95 ${
               plugin.enabled
                 ? "bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30"
                 : "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
@@ -169,7 +174,7 @@ export function PluginCard({ plugin, onToggle }: PluginCardProps) {
               }
             }}
             disabled={!plugin.manifest.homepage}
-            className="p-2 bg-ink/20 hover:bg-ink/40 text-primary-soft rounded-md transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-95"
+            className="p-2 bg-ink/20 hover:bg-ink/40 text-primary-soft rounded-md transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95"
             title={t("plugins.homepage")}
           >
             <ExternalLink className="w-4 h-4" />

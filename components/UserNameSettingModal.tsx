@@ -1,3 +1,10 @@
+/**
+ * @input  @/app, @/utils, @/lib, @/components
+ * @output UserNameSettingModal
+ * @pos    用户名设置模态框
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -137,7 +144,7 @@ export default function UserNameSettingModal({
                   className={"bg-transparent border-0 outline-none w-full text-center text-base text-cream-soft placeholder-ink-soft shadow-none focus:ring-0 focus:border-0 caret-[var(--color-primary-bright)] tracking-[0.05em] "}
                 />
                 <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-0.5 opacity-100 transition-opacity duration-300">
-                  <div className="w-full h-full bg-gradient-to-r from-transparent via-primary-soft to-transparent"></div>
+                  <div className="w-full h-full bg-primary-soft/40"></div>
                 </div>
               </div>
             </div>

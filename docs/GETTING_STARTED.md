@@ -61,6 +61,13 @@ pnpm dev
 | `pnpm test` | 运行 Vitest（非 watch） |
 | `pnpm build:pwa` | 构建 PWA 版本 |
 
+## 聊天数据（JSONL）与 Swipes
+
+- 支持 **SillyTavern 风格 JSONL** 聊天导入/导出，并包含 assistant swipe 元数据。
+- 支持 **assistant 多候选（swipe variants）**：对最后一条 assistant 可 `prev/next` 切换候选，`Regenerate` 会创建新候选而不是覆盖旧回复。
+
+详见：`docs/CHAT_JSONL_IMPORT_EXPORT.md`
+
 ## 打包部署
 
 ### Docker 部署
@@ -129,7 +136,7 @@ DreamMiniStage/
 - [Preset 格式说明](./PRESET_FORMAT.md)
 - [宏系统参考](./MACRO_REFERENCE.md)
 - [事件系统](./EVENT_SYSTEM.md)
-- [SillyTavern 兼容性](./sillytavern-gap-analysis.md)
+- [SillyTavern 兼容性](./analysis/sillytavern-integration-gap-2026-03.md)
 
 ## 测试
 

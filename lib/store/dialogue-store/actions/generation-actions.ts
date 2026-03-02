@@ -3,16 +3,19 @@
  * ║                    Generation Actions                                     ║
  * ║                                                                           ║
  * ║  AI 生成逻辑 - 好品味：消除 sendMessage 和 triggerGeneration 的重复      ║
+ * ║  支持流式和非流式两种响应模式                                              ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
 import { v4 as uuidv4 } from "uuid";
 import { handleCharacterChatRequest } from "@/function/dialogue/chat";
-import { deleteDialogueNode } from "@/function/dialogue/delete";
 import { getDisplayUsername } from "@/utils/username-helper";
 import { formatMessages } from "@/hooks/character-dialogue/message-utils";
 import { emit } from "@/lib/events";
 import { EVENT_TYPES } from "@/lib/events/types";
+import { extractNodeIdFromMessageId } from "@/utils/message-id";
+import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
+import { buildProcessedDialogue } from "@/function/dialogue/processed-dialogue";
 import type {
   DialogueMessage,
   SendMessageParams,
@@ -25,6 +28,17 @@ import type { OpeningPayload } from "@/types/character-dialogue";
 /* ═══════════════════════════════════════════════════════════════════════════
    核心生成逻辑 - 好品味：统一抽象，消除特殊情况
    ═══════════════════════════════════════════════════════════════════════════ */
+
+/** 从 localStorage 读取流式开关状态 */
+function isStreamingEnabled(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    const stored = localStorage.getItem("streamingEnabled");
+    return stored === null ? true : stored === "true";
+  } catch {
+    return true;
+  }
+}
 
 interface GenerateOptions {
   dialogueKey: string;
@@ -90,7 +104,7 @@ async function generateResponse(
       characterId,
       message: userMessage,
       ...llmParams,
-      streaming: true,
+      streaming: isStreamingEnabled(),
       number: llmParams.responseLength,
       nodeId,
       openingMessage: pendingOpening,
@@ -102,6 +116,30 @@ async function generateResponse(
       return false;
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 检测响应类型：SSE 流式 vs JSON
+    // ═══════════════════════════════════════════════════════════════════════════
+    const contentType = response.headers.get("content-type") || "";
+    const isStreaming = contentType.includes("text/event-stream");
+
+    if (isStreaming) {
+      // ─────────────────────────────────────────────────────────────────────────
+      // 流式响应处理
+      // ─────────────────────────────────────────────────────────────────────────
+      return await handleStreamingResponse({
+        response,
+        dialogueKey,
+        nodeId,
+        characterId,
+        startTime,
+        onError,
+        setState,
+      });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 非流式响应处理（保持原有逻辑）
+    // ─────────────────────────────────────────────────────────────────────────
     const result = await response.json();
 
     if (result.success) {
@@ -178,6 +216,215 @@ function emitGenerationEnded(success: boolean, contentOrError: string, startTime
     duration: Date.now() - startTime,
     timestamp: Date.now(),
   });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   流式响应处理
+
+   好品味：将流式逻辑独立封装，保持主函数清晰
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+interface StreamingHandlerParams {
+  response: Response;
+  dialogueKey: string;
+  nodeId: string;
+  characterId: string;
+  startTime: number;
+  onError?: (message: string) => void;
+  setState: (updater: (state: DialogueState) => Partial<DialogueState>) => void;
+}
+
+async function handleStreamingResponse(params: StreamingHandlerParams): Promise<boolean> {
+  const { response, dialogueKey, nodeId, characterId, startTime, onError, setState } = params;
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    onError?.("无法读取流式响应");
+    emitGenerationEnded(false, "无法读取流式响应", startTime);
+    return false;
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let accumulatedContent = "";
+  let thinkingContent = "";
+  let finalResult: {
+    content: string;
+    thinkingContent: string;
+    parsedContent?: { nextPrompts?: string[] };
+  } | null = null;
+
+  // 先创建一个空的助手消息
+  setState((state: DialogueState) => ({
+    dialogues: {
+      ...state.dialogues,
+      [dialogueKey]: {
+        ...state.dialogues[dialogueKey],
+        messages: [
+          ...state.dialogues[dialogueKey].messages,
+          {
+            id: nodeId,
+            role: "assistant",
+            thinkingContent: "",
+            content: "",
+          },
+        ],
+      },
+    },
+  }));
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith(":")) continue;
+
+        if (trimmed.startsWith("data:")) {
+          const data = trimmed.slice(5).trim();
+          if (data === "[DONE]") continue;
+
+          try {
+            const event = JSON.parse(data);
+
+            // 处理不同类型的事件
+            if (event.type === "content") {
+              accumulatedContent = event.accumulated || (accumulatedContent + (event.content || ""));
+
+              // 增量更新消息内容
+              setState((state: DialogueState) => {
+                const dialogue = state.dialogues[dialogueKey];
+                if (!dialogue) return state;
+
+                const messages = [...dialogue.messages];
+                const lastIndex = messages.length - 1;
+                if (lastIndex >= 0 && messages[lastIndex].id === nodeId) {
+                  messages[lastIndex] = {
+                    ...messages[lastIndex],
+                    content: accumulatedContent,
+                  };
+                }
+
+                return {
+                  dialogues: {
+                    ...state.dialogues,
+                    [dialogueKey]: {
+                      ...dialogue,
+                      messages,
+                    },
+                  },
+                };
+              });
+            }
+
+            if (event.type === "reasoning") {
+              thinkingContent = event.thinkingContent || "";
+
+              // 更新思考内容
+              setState((state: DialogueState) => {
+                const dialogue = state.dialogues[dialogueKey];
+                if (!dialogue) return state;
+
+                const messages = [...dialogue.messages];
+                const lastIndex = messages.length - 1;
+                if (lastIndex >= 0 && messages[lastIndex].id === nodeId) {
+                  messages[lastIndex] = {
+                    ...messages[lastIndex],
+                    thinkingContent,
+                  };
+                }
+
+                return {
+                  dialogues: {
+                    ...state.dialogues,
+                    [dialogueKey]: {
+                      ...dialogue,
+                      messages,
+                    },
+                  },
+                };
+              });
+            }
+
+            if (event.type === "complete") {
+              finalResult = {
+                content: event.content || accumulatedContent,
+                thinkingContent: event.thinkingContent || thinkingContent,
+                parsedContent: event.parsedContent,
+              };
+            }
+
+            if (event.type === "error") {
+              onError?.(event.message || "流式响应错误");
+              emitGenerationEnded(false, event.message || "流式响应错误", startTime);
+              return false;
+            }
+          } catch {
+            // 忽略 JSON 解析错误
+          }
+        }
+      }
+    }
+
+    // 最终更新
+    if (finalResult) {
+      setState((state: DialogueState) => {
+        const dialogue = state.dialogues[dialogueKey];
+        if (!dialogue) return state;
+
+        const messages = [...dialogue.messages];
+        const lastIndex = messages.length - 1;
+        if (lastIndex >= 0 && messages[lastIndex].id === nodeId) {
+          messages[lastIndex] = {
+            ...messages[lastIndex],
+            content: finalResult!.content,
+            thinkingContent: finalResult!.thinkingContent,
+          };
+        }
+
+        return {
+          dialogues: {
+            ...state.dialogues,
+            [dialogueKey]: {
+              ...dialogue,
+              messages,
+              suggestedInputs: finalResult!.parsedContent?.nextPrompts || [],
+              pendingOpening: undefined,
+            },
+          },
+        };
+      });
+
+      // 触发消息接收事件
+      emit(EVENT_TYPES.MESSAGE_RECEIVED, {
+        type: EVENT_TYPES.MESSAGE_RECEIVED,
+        messageId: nodeId,
+        content: finalResult.content,
+        sender: "assistant",
+        characterName: characterId,
+        timestamp: Date.now(),
+      });
+
+      emitGenerationEnded(true, finalResult.content, startTime);
+      return true;
+    }
+
+    return false;
+
+  } catch (error) {
+    console.error("Stream processing error:", error);
+    onError?.("流式处理错误");
+    emitGenerationEnded(false, "流式处理错误", startTime);
+    return false;
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -292,7 +539,7 @@ export async function triggerGeneration(
 export async function regenerateMessage(
   dialogueKey: string,
   characterId: string,
-  nodeId: string,
+  messageId: string,
   params: RegenerateParams,
   getState: () => DialogueState,
   setState: (updater: (state: DialogueState) => Partial<DialogueState>) => void,
@@ -304,82 +551,173 @@ export async function regenerateMessage(
   if (!dialogue) return;
 
   try {
-    const messageIndex = dialogue.messages.findIndex(
-      (msg: DialogueMessage) => msg.id === nodeId && msg.role === "assistant",
-    );
-
-    if (messageIndex === -1) {
-      console.warn(`Message not found: ${nodeId}`);
+    const nodeId = extractNodeIdFromMessageId(messageId);
+    const tree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueKey);
+    if (!tree) {
+      console.warn(`[regenerateMessage] Dialogue not found: ${dialogueKey}`);
       return;
     }
 
-    const messageToRegenerate = dialogue.messages[messageIndex];
-    if (messageToRegenerate.role !== "assistant") {
-      console.warn("Can only regenerate assistant messages");
+    if (tree.current_nodeId !== nodeId) {
+      console.warn("[regenerateMessage] Only the last assistant message supports regenerate");
       return;
     }
 
-    // 找到前一条用户消息
-    let userMessage: DialogueMessage | null = null;
-    for (let i = messageIndex - 1; i >= 0; i--) {
-      if (dialogue.messages[i].role === "user") {
-        userMessage = dialogue.messages[i];
-        break;
+    const node = tree.nodes.find((item) => item.nodeId === nodeId);
+    if (!node || !node.userInput) {
+      console.warn("[regenerateMessage] Missing turn node or userInput");
+      return;
+    }
+
+    const { llmType, modelName, baseUrl, apiKey, responseLength, fastModel, language, onError } = params;
+    const username = getDisplayUsername();
+    const newNodeId = uuidv4();
+
+    const startTime = Date.now();
+
+    emit(EVENT_TYPES.GENERATION_STARTED, {
+      type: EVENT_TYPES.GENERATION_STARTED,
+      generationType: "regenerate",
+      characterId,
+      userInput: node.userInput,
+      timestamp: startTime,
+    });
+
+    setState((state: DialogueState) => ({
+      dialogues: {
+        ...state.dialogues,
+        [dialogueKey]: {
+          ...state.dialogues[dialogueKey],
+          isSending: true,
+          suggestedInputs: [],
+        },
+      },
+    }));
+
+    const response = await handleCharacterChatRequest({
+      username,
+      dialogueId: dialogueKey,
+      characterId,
+      message: node.userInput,
+      modelName,
+      baseUrl,
+      apiKey,
+      llmType,
+      language,
+      streaming: isStreamingEnabled(),
+      number: responseLength,
+      nodeId: newNodeId,
+      fastModel,
+      parentNodeId: node.parentNodeId,
+    });
+
+    if (!response.ok) {
+      onError?.("请检查网络连接或 API 配置");
+      emitGenerationEnded(false, "请检查网络连接或 API 配置", startTime);
+      return;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 检测响应类型：SSE 流式 vs JSON
+    // ─────────────────────────────────────────────────────────────────────────
+    const contentType = response.headers.get("content-type") || "";
+    const isStreaming = contentType.includes("text/event-stream");
+
+    if (isStreaming) {
+      // 流式响应：等待流完成后刷新对话
+      const success = await handleStreamingResponse({
+        response,
+        dialogueKey,
+        nodeId: newNodeId,
+        characterId,
+        startTime,
+        onError,
+        setState,
+      });
+
+      if (success) {
+        // 流式完成后从数据库刷新以获取完整状态
+        const updatedTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueKey);
+        if (updatedTree) {
+          const processed = buildProcessedDialogue(updatedTree);
+          const formattedMessages = formatMessages(processed.messages);
+          const lastMessage = processed.messages[processed.messages.length - 1];
+
+          setState((state: DialogueState) => ({
+            dialogues: {
+              ...state.dialogues,
+              [dialogueKey]: {
+                ...state.dialogues[dialogueKey],
+                messages: formattedMessages,
+                suggestedInputs: lastMessage?.parsedContent?.nextPrompts || [],
+                pendingOpening: undefined,
+              },
+            },
+          }));
+        }
       }
-    }
-
-    if (!userMessage) {
-      console.warn("No previous user message found for regeneration");
       return;
     }
 
-    // 删除旧消息
-    const response = await deleteDialogueNode({ dialogueId: dialogueKey, nodeId });
-    if (!response.success) {
-      console.error("Failed to delete message", response);
+    // ─────────────────────────────────────────────────────────────────────────
+    // 非流式响应处理
+    // ─────────────────────────────────────────────────────────────────────────
+    const result = await response.json();
+    if (!result.success) {
+      emitGenerationEnded(false, result.message || "请检查网络连接或 API 配置", startTime);
+      onError?.(result.message || "请检查网络连接或 API 配置");
       return;
     }
 
-    // 触发消息删除事件
-    emit(EVENT_TYPES.MESSAGE_DELETED, {
-      type: EVENT_TYPES.MESSAGE_DELETED,
-      messageId: nodeId,
+    const updatedTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueKey);
+    if (!updatedTree) {
+      console.warn("[regenerateMessage] Failed to retrieve updated dialogue");
+      return;
+    }
+
+    const processed = buildProcessedDialogue(updatedTree);
+    const formattedMessages = formatMessages(processed.messages);
+    const lastMessage = processed.messages[processed.messages.length - 1];
+
+    setState((state: DialogueState) => ({
+      dialogues: {
+        ...state.dialogues,
+        [dialogueKey]: {
+          ...state.dialogues[dialogueKey],
+          messages: formattedMessages,
+          suggestedInputs: lastMessage?.parsedContent?.nextPrompts || [],
+          pendingOpening: undefined,
+        },
+      },
+    }));
+
+    emit(EVENT_TYPES.MESSAGE_RECEIVED, {
+      type: EVENT_TYPES.MESSAGE_RECEIVED,
+      messageId: newNodeId,
+      content: result.content || "",
+      sender: "assistant",
+      characterName: characterId,
       timestamp: Date.now(),
     });
 
-    const dialogueData = response.dialogue;
-    if (dialogueData) {
-      setTimeout(() => {
-        const formattedMessages = formatMessages(dialogueData.messages);
-        const lastMessage = dialogueData.messages[dialogueData.messages.length - 1];
-
-        setState((state: DialogueState) => ({
-          dialogues: {
-            ...state.dialogues,
-            [dialogueKey]: {
-              ...state.dialogues[dialogueKey],
-              messages: formattedMessages,
-              suggestedInputs: lastMessage?.parsedContent?.nextPrompts || [],
-            },
-          },
-        }));
-      }, 100);
-    }
-
-    // 重新发送用户消息
-    setTimeout(async () => {
-      await sendMessage(
-        {
-          dialogueKey,
-          characterId,
-          message: userMessage!.content,
-          ...params,
-        },
-        getState,
-        setState,
-      );
-    }, 300);
+    emitGenerationEnded(true, result.content || "", startTime);
   } catch (error) {
     console.error("Error regenerating message:", error);
+    emit(EVENT_TYPES.ERROR_OCCURRED, {
+      type: EVENT_TYPES.ERROR_OCCURRED,
+      message: error instanceof Error ? error.message : "Unknown error",
+      source: "regenerateMessage",
+      timestamp: Date.now(),
+    });
+  } finally {
+    setState((state: DialogueState) => ({
+      dialogues: {
+        ...state.dialogues,
+        [dialogueKey]: {
+          ...state.dialogues[dialogueKey],
+          isSending: false,
+        },
+      },
+    }));
   }
 }

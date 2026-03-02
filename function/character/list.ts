@@ -1,11 +1,16 @@
-import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
-import { adaptCharacterData } from "@/lib/adapter/tagReplacer";
-
 /**
+ * @input  lib/data/roleplay/character-record-operation, lib/adapter/tagReplacer
+ * @output getAllCharacters
+ * @pos    角色列表 - 获取所有角色卡并格式化输出
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                     Character List Interface                              ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
+
+import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
+import { adaptCharacterData } from "@/lib/adapter/tagReplacer";
 interface FormattedCharacter {
   id: string;
   name: string;

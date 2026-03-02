@@ -1,4 +1,9 @@
 /**
+ * @input  @/components
+ * @output ImportModalFooter
+ * @pos    数据导入模态框组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                       Import Modal Footer                                 ║
  * ║                                                                          ║
@@ -35,7 +40,7 @@ export function ImportModalFooter({
   onImport,
 }: ImportModalFooterProps) {
   return (
-    <div className="relative p-3 border-t border-border/40 bg-gradient-to-r from-muted-surface/80 via-deep/60 to-muted-surface/80 backdrop-blur-sm flex justify-end space-x-2">
+    <div className="relative p-3 border-t border-border/40 bg-muted-surface/80 backdrop-blur-sm flex justify-end space-x-2">
       <Button variant="ghost" size="sm" onClick={onClose}>
         {cancelLabel}
       </Button>

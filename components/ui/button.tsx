@@ -1,3 +1,10 @@
+/**
+ * @input  @/lib
+ * @output ButtonProps
+ * @pos    基础 UI 组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Button Component - shadcn/ui 风格实现
    

@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/utils, @/components, @/lib, @/hooks
+ * @output CharacterSidebar
+ * @pos    角色配置侧边栏入口
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                     Character Sidebar Component                           ║
  * ║                                                                           ║

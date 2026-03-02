@@ -1,4 +1,9 @@
 /**
+ * @input  @/components, @/app, @/utils, @/function, @/hooks
+ * @output DialogueTreeModal
+ * @pos    对话树模态框
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                       DialogueTreeModal                                   ║
  * ║  对话树可视化弹窗：ELK 布局 + 增量刷新 + 节点编辑                          ║

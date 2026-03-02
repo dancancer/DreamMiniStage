@@ -1,3 +1,10 @@
+/**
+ * @input  @/components
+ * @output MobileSidebarView
+ * @pos    模型配置侧边栏组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 import React from "react";
 import { X, Plus, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import type { LLMType, SidebarViewProps } from "./types";
@@ -72,7 +79,7 @@ export function MobileSidebarView(props: SidebarViewProps) {
     <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm">
       <div className="relative w-full h-full   text-text flex flex-col">
         {/* ===== 头部 ===== */}
-        <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border bg-gradient-to-r from-canvas to-input">
+        <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border bg-input">
           <h1 className={"text-lg magical-text "}>{t("modelSettings.title")}</h1>
           <Button
             variant="ghost"

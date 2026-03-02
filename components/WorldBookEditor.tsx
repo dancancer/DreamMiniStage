@@ -1,4 +1,9 @@
 /**
+ * @input  @/lib, @/app, @/components, @/function, @/hooks
+ * @output WorldBookEditor
+ * @pos    世界书编辑器入口
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         WorldBookEditor                                    ║
  * ║  世界书编辑：列表/排序/筛选/展开 + 条目编辑/导入                             ║

@@ -1,4 +1,9 @@
 /**
+ * @input  lib/store/persona-store, lib/models/persona-model
+ * @output useCurrentPersona, UseCurrentPersonaReturn, getPersonaDisplayName, getPersonaDescription, resolvePersonaForDialogue
+ * @pos    Persona 解析 Hook - 在对话上下文中自动解析应该使用的 Persona
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                       useCurrentPersona Hook                              ║
  * ║                                                                            ║

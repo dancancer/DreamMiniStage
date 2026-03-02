@@ -1,9 +1,16 @@
-import { 
-  WORLD_BOOK_FILE, 
-  clearStore, 
-  getAllEntries, 
-  getRecordByKey, 
-  putRecord, 
+/**
+ * @input  lib/data/local-storage, lib/models/world-book-model
+ * @output WorldBookOperations, WorldBookSettings
+ * @pos    世界书数据操作层,管理条目的 CRUD 与设置
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
+import {
+  WORLD_BOOK_FILE,
+  clearStore,
+  getAllEntries,
+  getRecordByKey,
+  putRecord,
 } from "@/lib/data/local-storage";
 import { WorldBookEntry } from "@/lib/models/world-book-model";
 
@@ -75,45 +82,20 @@ export class WorldBookOperations {
   /**
    * 获取世界书条目集合
    *
-   * @param key - 存储键（支持多种格式）
-   *   - 新格式: "global:id", "character:id", "dialogue:id"
-   *   - 旧格式: "characterId" (向后兼容)
+   * @param key - 存储键（如 "global:id", "character:id", "dialogue:id"）
    *
    * @returns 世界书条目字典，失败时返回 null
    *
    * @example
    * ```ts
-   * // 新格式
    * const globalBook = await getWorldBook("global:fantasy_1");
    * const characterBook = await getWorldBook("character:char_123");
    * const dialogueBook = await getWorldBook("dialogue:dlg_xyz");
-   *
-   * // 旧格式（向后兼容）
-   * const legacyBook = await getWorldBook("char_123");
    * ```
    */
   static async getWorldBook(key: string): Promise<Record<string, WorldBookEntry> | null> {
     try {
-      // 尝试新格式键
-      let worldBook = await getRecordByKey<Record<string, WorldBookEntry>>(WORLD_BOOK_FILE, key);
-
-      // ────────────────────────────────────────────────────────────────────
-      // 向后兼容：如果键不包含冒号且找不到，尝试 character: 前缀
-      // ────────────────────────────────────────────────────────────────────
-      if (!worldBook && !key.includes(":")) {
-        const legacyKey = `character:${key}`;
-        worldBook = await getRecordByKey<Record<string, WorldBookEntry>>(
-          WORLD_BOOK_FILE,
-          legacyKey,
-        );
-
-        if (worldBook) {
-          console.warn(
-            `[WorldBook] Using legacy key format for "${key}", consider migrating to "${legacyKey}"`,
-          );
-        }
-      }
-
+      const worldBook = await getRecordByKey<Record<string, WorldBookEntry>>(WORLD_BOOK_FILE, key);
       return worldBook || null;
     } catch (error) {
       console.error("Error getting world book:", error);

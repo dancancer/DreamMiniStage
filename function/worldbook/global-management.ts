@@ -1,6 +1,11 @@
 "use server";
 
 /**
+ * @input  lib/data/roleplay/world-book-operation, lib/models/world-book-model
+ * @output GlobalWorldBookMetadata, listGlobalWorldBooks, createGlobalWorldBook, deleteGlobalWorldBook, toggleGlobalWorldBook, copyCharacterToGlobal, updateGlobalWorldBookMetadata, getGlobalWorldBookDetail
+ * @pos    全局世界书管理 - 全局世界书的 CRUD 操作和启用/禁用管理
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                   全局世界书管理 API                                         ║
  * ║                                                                            ║
@@ -46,18 +51,7 @@ export async function listGlobalWorldBooks(): Promise<GlobalWorldBookMetadata[]>
       if (settings.metadata) {
         books.push(settings.metadata as GlobalWorldBookMetadata);
       } else {
-        // 兼容旧数据：没有元数据的全局世界书
-        const worldBook = await WorldBookOperations.getWorldBook(key);
-        const entryCount = worldBook ? Object.keys(worldBook).length : 0;
-
-        books.push({
-          id: key,
-          name: key.replace("global:", ""),
-          enabled: settings.enabled ?? true,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          entryCount,
-        });
+        console.warn(`[GlobalWB] Skip malformed global world book (missing metadata): ${key}`);
       }
     }
 
@@ -166,11 +160,11 @@ export async function toggleGlobalWorldBook(
     }
 
     const settings = await WorldBookOperations.getWorldBookSettings(globalKey);
+    if (!settings.metadata) {
+      return { success: false, error: "元数据不存在" };
+    }
 
-    // 更新 enabled 状态和元数据
-    const updatedMetadata = settings.metadata
-      ? { ...settings.metadata, enabled, updatedAt: Date.now() }
-      : undefined;
+    const updatedMetadata = { ...settings.metadata, enabled, updatedAt: Date.now() };
 
     await WorldBookOperations.updateWorldBookSettings(globalKey, {
       enabled,
@@ -313,10 +307,13 @@ export async function getGlobalWorldBookDetail(globalKey: string): Promise<{
     if (!worldBook) {
       return { success: false, error: "世界书不存在" };
     }
+    if (!settings.metadata) {
+      return { success: false, error: "元数据不存在" };
+    }
 
     return {
       success: true,
-      metadata: settings.metadata as GlobalWorldBookMetadata | undefined,
+      metadata: settings.metadata as GlobalWorldBookMetadata,
       entries: worldBook,
     };
   } catch (error) {

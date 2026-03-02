@@ -1,4 +1,9 @@
 /**
+ * @input  @/components
+ * @output WorldBookControls
+ * @pos    世界书编辑器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                       WorldBookControls                                    ║
  * ║  顶部控制区：新增/导入/批量 + 排序/筛选（单栏合并，参考预设）                ║
@@ -147,7 +152,7 @@ function Selector({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={"appearance-none bg-gradient-to-br from-deep via-muted-surface to-deep text-cream-soft px-2 sm:px-3 py-1 sm:py-1.5 pr-5 sm:pr-7 rounded-md border border-border/60 focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 hover:border-border backdrop-blur-sm  text-2xs sm:text-xs font-medium  hover: hover:shadow-primary-500/5"}
+          className={"appearance-none bg-muted-surface text-cream-soft px-2 sm:px-3 py-1 sm:py-1.5 pr-5 sm:pr-7 rounded-md border border-border/60 focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 hover:border-border backdrop-blur-sm  text-2xs sm:text-xs font-medium  hover: hover:shadow-primary-500/5"}
         >
           {options.map((opt) => (
             <option key={opt.value} value={opt.value} className=" text-cream-soft">

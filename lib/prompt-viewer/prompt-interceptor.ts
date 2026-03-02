@@ -132,29 +132,42 @@ export class PromptInterceptorImpl implements PromptInterceptor {
     if (typeof window === "undefined") return;
 
     this.boundEventHandler = (e: Event) => {
-      const { dialogueKey, characterId, systemMessage, userMessage, modelName, timestamp, messages } = 
+      const { dialogueKey, characterId, modelName, timestamp, messages } =
         (e as CustomEvent).detail;
       
       const config = this.interceptors.get(dialogueKey);
       if (!config?.isActive) return;
 
-      // 构建消息列表：优先使用事件中的 messages，否则从 systemMessage/userMessage 构建
-      const promptMessages = messages?.map((m: { role: string; content: string }, i: number) => ({
+      const eventMessages = Array.isArray(messages) ? messages : [];
+      if (eventMessages.length === 0) {
+        console.warn("[PromptInterceptor] 忽略空 messages 事件", { dialogueKey });
+        return;
+      }
+
+      const promptMessages = eventMessages.map((m: { role: string; content: string }) => ({
         id: generateId("msg"),
         role: m.role as "system" | "user" | "assistant",
         content: m.content,
-      })) || [
-        { id: generateId("msg"), role: "system" as const, content: systemMessage },
-        { id: generateId("msg"), role: "user" as const, content: userMessage },
-      ];
+      }));
+
+      const systemMessage = promptMessages
+        .filter((m) => m.role === "system")
+        .map((m) => m.content)
+        .join("\n\n");
+      const userMessage = [...promptMessages].reverse().find((m) => m.role === "user")?.content || "";
+      const fullPrompt = buildFullPromptText(
+        systemMessage,
+        userMessage,
+        promptMessages.map(({ role, content }) => ({ role, content })),
+      );
 
       const promptData: PromptData = {
         id: generateId("prompt"),
         timestamp,
         systemMessage,
         userMessage,
-        fullPrompt: buildFullPromptText(systemMessage, userMessage, []),
-        images: extractImages(systemMessage + userMessage),
+        fullPrompt,
+        images: extractImages(fullPrompt),
         metadata: { characterId, dialogueKey, modelName, temperature: 0.7 },
         messages: promptMessages,
       };

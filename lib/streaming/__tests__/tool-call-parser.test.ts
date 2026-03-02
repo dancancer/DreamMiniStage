@@ -12,7 +12,7 @@ import {
 } from "../tool-call-parser";
 
 describe("ToolCallParser 去重与优先级", () => {
-  it("同名同参时优先使用 tool_calls 并去重 legacy function_call", () => {
+  it("同名同参时去重重复 tool_calls", () => {
     const parser = createToolCallParser();
     parser.processDelta({
       content: "",
@@ -23,8 +23,13 @@ describe("ToolCallParser 去重与优先级", () => {
           type: "function",
           function: { name: "ping", arguments: "{\"x\":1}" },
         },
+        {
+          index: 1,
+          id: "modern-2",
+          type: "function",
+          function: { name: "ping", arguments: "{\"x\":1}" },
+        },
       ],
-      function_call: { name: "ping", arguments: "{\"x\":1}" },
     });
     parser.markComplete();
 
@@ -33,7 +38,7 @@ describe("ToolCallParser 去重与优先级", () => {
     expect(result.toolCalls[0].id).toBe("modern-1");
   });
 
-  it("tool_calls 优先但保留参数不同的 legacy function_call", () => {
+  it("保留参数不同的 tool_calls", () => {
     const parser = createToolCallParser();
     parser.processDelta({
       content: "",
@@ -44,8 +49,13 @@ describe("ToolCallParser 去重与优先级", () => {
           type: "function",
           function: { name: "ping", arguments: "{\"x\":1}" },
         },
+        {
+          index: 1,
+          id: "modern-2",
+          type: "function",
+          function: { name: "ping", arguments: "{\"x\":2}" },
+        },
       ],
-      function_call: { name: "ping", arguments: "{\"x\":2}" },
     });
     parser.markComplete();
 
@@ -65,7 +75,6 @@ describe("ToolCallParser 去重与优先级", () => {
               { id: "a", type: "function", function: { name: "dup", arguments: "{\"k\":1}" } },
               { id: "b", type: "function", function: { name: "dup", arguments: "{\"k\":1}" } },
             ],
-            function_call: { name: "dup", arguments: "{\"k\":1}" },
           },
         },
       ],

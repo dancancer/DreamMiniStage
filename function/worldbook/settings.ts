@@ -1,3 +1,10 @@
+/**
+ * @input  lib/data/roleplay/world-book-operation
+ * @output getWorldBookSettings, updateWorldBookSettings
+ * @pos    世界书设置 - 获取和更新世界书配置
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { WorldBookOperations, WorldBookSettings } from "@/lib/data/roleplay/world-book-operation";
 
 export async function getWorldBookSettings(characterId: string) {

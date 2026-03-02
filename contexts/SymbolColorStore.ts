@@ -1,3 +1,10 @@
+/**
+ * @input  zustand, zustand/middleware
+ * @output useSymbolColorStore, SymbolColor, symbolToHtmlTagMap, PREDEFINED_COLORS
+ * @pos    状态管理层 - 管理 Markdown 符号与颜色的映射关系，驱动聊天气泡样式渲染
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { create, StateCreator } from "zustand";
 import { persist, PersistOptions } from "zustand/middleware";
 

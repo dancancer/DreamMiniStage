@@ -1,4 +1,9 @@
 /**
+ * @input  uuid
+ * @output generateMessageId, generateUniqueMessageId, isValidMessageId, extractRoleFromMessageId, extractNodeIdFromMessageId, MessageRole, MessageIdContext
+ * @pos    消息ID生成器 - 确保每条对话消息的唯一标识与角色追溯
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         Message ID Generator                               ║
  * ║                                                                            ║

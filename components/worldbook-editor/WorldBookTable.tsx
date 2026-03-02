@@ -1,4 +1,9 @@
 /**
+ * @input  @/components
+ * @output WorldBookTable
+ * @pos    世界书编辑器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                       WorldBookTable                                       ║
  * ║  世界书条目表格 - 高性能版本                                                 ║
@@ -314,17 +319,17 @@ const KeywordCell = memo(function KeywordCell({
           {entry.primaryKey || t("worldBook.noKeyword")}
         </Badge>
         {entry.constant && (
-          <Badge variant="info">
+          <Badge variant="secondary">
             {t("worldBook.constant")}
           </Badge>
         )}
         {entry.selective && (
-          <Badge variant="success">
+          <Badge variant="outline">
             {t("worldBook.selective")}
           </Badge>
         )}
         {entry.use_regex && (
-          <Badge variant="primary">
+          <Badge variant="secondary">
             regex
           </Badge>
         )}
@@ -393,7 +398,7 @@ const ExpandedRow = memo(function ExpandedRow({
   t: (key: string) => string;
 }) {
   return (
-    <tr className="border-b border-border bg-gradient-to-b from-deep to-coal transition-all duration-300">
+    <tr className="border-b border-border bg-deep transition-all duration-300">
       <td colSpan={6} className="p-2 sm:p-4">
         <div className="space-y-2 sm:space-y-3">
           <div className="flex flex-wrap items-center gap-2 text-2xs sm:text-xs text-ink-soft">

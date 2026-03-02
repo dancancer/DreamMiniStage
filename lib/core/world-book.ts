@@ -8,16 +8,43 @@ export interface WorldBookJson {
 /* ═══════════════════════════════════════════════════════════════════════════
    Position 常量定义
 
-   SillyTavern 世界书位置语义：
-   - 0: before_char (角色定义之前)
-   - 1: after_char  (角色定义之后，但实践中也映射为 before)
-   - 2: after_char  (正式的 after 位置)
-   - 4: 默认位置
+   SillyTavern 世界书位置语义（world_info_position）：
+   - 0: before      (故事字符串之前，wiBefore)
+   - 1: after       (故事字符串之后，wiAfter)
+   - 2: ANTop       (作者笔记之前)
+   - 3: ANBottom    (作者笔记之后)
+   - 4: atDepth     (在对话深度处注入，默认)
+   - 5: EMTop       (示例之前)
+   - 6: EMBottom    (示例之后)
+   - 7: outlet      (自定义出口)
+
+   旧版别名映射：
+   - before_char → 0
+   - after_char  → 2 (历史原因，映射到 ANTop)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const POSITION_MAP: Record<string, number> = {
+  // Position 0: wiBefore
+  before: 0,
   before_char: 0,
+  // Position 1: wiAfter
+  after: 1,
+  // Position 2: ANTop (历史上 after_char 映射到这里)
+  antop: 2,
+  an_top: 2,
   after_char: 2,
+  // Position 3: ANBottom
+  anbottom: 3,
+  an_bottom: 3,
+  // Position 4: atDepth (默认)
+  atdepth: 4,
+  at_depth: 4,
+  // Position 5: EMTop
+  emtop: 5,
+  em_top: 5,
+  // Position 6: EMBottom
+  embottom: 6,
+  em_bottom: 6,
 };
 
 const DEFAULT_POSITION = 4;
@@ -83,7 +110,16 @@ export class WorldBookManager {
       ? worldBook 
       : Object.values(worldBook);
 
-    const enabledEntries = entries.filter(entry => entry.selective !== false);
+    /* ═══════════════════════════════════════════════════════════════════════════
+       过滤禁用条目
+
+       SillyTavern 行为：
+       - enabled: false 的条目不参与匹配
+       - selective: false 的条目不参与匹配
+       ═══════════════════════════════════════════════════════════════════════════ */
+    const enabledEntries = entries.filter(entry =>
+      entry.enabled !== false && entry.selective !== false,
+    );
 
     const constantEntries = enabledEntries.filter(entry => entry.constant);
 

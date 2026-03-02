@@ -7,10 +7,9 @@
  * ║                                                                            ║
  * ║  输出：                                                                     ║
  * ║  - chatHistoryMessages: 结构化历史消息数组（用于 chatHistory marker 展开）  ║
- * ║  - chatHistoryText: 压缩历史文本（用于 UI 展示和兼容层）                    ║
  * ║  - conversationContext: 短上下文（用于 memory/RAG 子系统）                  ║
  * ║                                                                            ║
- * ║  Requirements: 2.1, 2.2, 2.3, 2.4, 2.5                                     ║
+ * ║  Requirements: 2.1, 2.2, 2.4, 2.5                                          ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -47,8 +46,8 @@ export class HistoryPreNode extends NodeBase {
     }
 
     /* ═══════════════════════════════════════════════════════════════════════
-       获取三种历史数据格式
-       Requirements: 2.2, 2.3, 2.4
+       获取历史数据格式
+       Requirements: 2.2, 2.4
        ═══════════════════════════════════════════════════════════════════════ */
 
     // 1. 结构化历史消息数组（用于 chatHistory marker 展开）
@@ -58,14 +57,7 @@ export class HistoryPreNode extends NodeBase {
       memoryLength,
     ) as ChatHistoryMessage[];
 
-    // 2. 压缩历史文本（用于 UI 展示和兼容层）
-    const chatHistoryText = await this.executeTool(
-      "getChatHistoryText",
-      historyKey,
-      memoryLength,
-    ) as string;
-
-    // 3. 短上下文（用于 memory/RAG 子系统）
+    // 2. 短上下文（用于 memory/RAG 子系统）
     const conversationContext = await this.executeTool(
       "getConversationContext",
       historyKey,
@@ -74,8 +66,7 @@ export class HistoryPreNode extends NodeBase {
 
     console.log(
       `[HistoryPreNode] Prepared history for ${historyKey}: ` +
-      `${chatHistoryMessages.length} messages, ` +
-      `${chatHistoryText.length} chars text`,
+      `${chatHistoryMessages.length} messages`,
     );
 
     /* ═══════════════════════════════════════════════════════════════════════
@@ -85,7 +76,6 @@ export class HistoryPreNode extends NodeBase {
 
     return {
       chatHistoryMessages,
-      chatHistoryText,
       conversationContext,
       // 透传 userInput，不做任何修改
       userInput,

@@ -1,0 +1,101 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { scopedVariables } from "../scoped-variables";
+import { variableHandlers } from "../variable-handlers";
+import type { ApiCallContext } from "../types";
+
+function createEmptySnapshot() {
+  return {
+    global: {},
+    preset: {},
+    character: {},
+    chat: {},
+    message: {},
+    script: {},
+  };
+}
+
+function createMockContext(overrides: Partial<ApiCallContext> = {}): ApiCallContext {
+  return {
+    characterId: "char-test",
+    dialogueId: "dialogue-test",
+    chatId: "dialogue-test",
+    messages: [
+      { id: "m0", role: "user", content: "hello" },
+      { id: "m1", role: "assistant", content: "world" },
+      { id: "m2", role: "assistant", content: "latest" },
+    ],
+    setScriptVariable: vi.fn(),
+    deleteScriptVariable: vi.fn(),
+    getVariablesSnapshot: () => ({
+      global: {},
+      character: {},
+    }),
+    ...overrides,
+  };
+}
+
+describe("variable handlers option semantics", () => {
+  beforeEach(() => {
+    scopedVariables.restoreFromSnapshot(createEmptySnapshot());
+  });
+
+  it("defaults collection APIs to chat scope", () => {
+    const ctx = createMockContext();
+
+    variableHandlers.replaceVariables([{ hp: 12 }, { type: "chat" }], ctx);
+    variableHandlers.replaceVariables([{ world: "alpha" }, { type: "global" }], ctx);
+
+    const defaultVars = variableHandlers.getVariables([], ctx) as Record<string, unknown>;
+
+    expect(defaultVars).toMatchObject({ hp: 12 });
+    expect(defaultVars).not.toHaveProperty("world");
+  });
+
+  it("supports upstream type/message_id option shape", () => {
+    const ctx = createMockContext();
+
+    variableHandlers.replaceVariables(
+      [{ hp: 99, stamina: 8 }, { type: "message", message_id: -1 }],
+      ctx,
+    );
+
+    const latestVars = variableHandlers.getVariables(
+      [{ type: "message", message_id: "latest" }],
+      ctx,
+    ) as Record<string, unknown>;
+    const indexedVars = variableHandlers.getVariables(
+      [{ type: "message", message_id: 2 }],
+      ctx,
+    ) as Record<string, unknown>;
+
+    expect(latestVars).toMatchObject({ hp: 99, stamina: 8 });
+    expect(indexedVars).toMatchObject({ hp: 99, stamina: 8 });
+  });
+
+  it("throws on out-of-range message_id", () => {
+    const ctx = createMockContext();
+
+    expect(() => {
+      variableHandlers.getVariables([{ type: "message", message_id: 3 }], ctx);
+    }).toThrow("超出范围");
+  });
+
+  it("accepts legacy string scope and new option object on single variable APIs", () => {
+    const ctx = createMockContext();
+
+    variableHandlers.setVariable(["legacy", "ok", "global"], ctx);
+    variableHandlers.setVariable(["counter", 1, { type: "chat" }], ctx);
+
+    const globalValue = variableHandlers.getVariable(["legacy", "global"], ctx);
+    const chatValue = variableHandlers.getVariable(["counter", { type: "chat" }], ctx);
+
+    expect(globalValue).toBe("ok");
+    expect(chatValue).toBe(1);
+
+    variableHandlers.deleteVariable(["counter", { type: "chat" }], ctx);
+    const deleted = variableHandlers.getVariable(["counter", { type: "chat" }], ctx);
+
+    expect(deleted).toBeUndefined();
+  });
+});

@@ -1,4 +1,9 @@
 /**
+ * @input  React
+ * @output useLocalStorage, useLocalStorageString, useLocalStorageBoolean, useLocalStorageNumber
+ * @pos    本地存储 Hook - 类型安全的 localStorage 封装，支持 SSR
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                        useLocalStorage Hook                               ║
  * ║                                                                           ║

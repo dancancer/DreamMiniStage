@@ -1,14 +1,15 @@
 /**
+ * @input  react, app/metadata, components/HomeContent
+ * @output Home (default export), metadata
+ * @pos    首页组件 - 登陆页面入口与 SEO 元数据
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * Main landing page component for DreamMiniStage
- * 
+ *
  * This file contains the home page implementation with the following features:
  * - Animated landing page with fantasy-themed UI
  * - Multi-language support
  * - Responsive design with mobile support
- * 
- * Dependencies:
- * - next/link: For client-side navigation
- * - Custom hooks: useLanguage
  */
 
 import { homeMetadata } from "./metadata";

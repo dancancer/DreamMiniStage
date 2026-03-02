@@ -1,4 +1,9 @@
 /**
+ * @input  lib/storage/client-storage
+ * @output useTableFilter, filterItems
+ * @pos    表格筛选 Hook - 筛选条件管理与 localStorage 持久化
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         useTableFilter Hook                                ║
  * ║                                                                            ║

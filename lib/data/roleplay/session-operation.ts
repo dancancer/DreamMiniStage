@@ -1,4 +1,9 @@
 /**
+ * @input  lib/data/local-storage, types/session
+ * @output SessionOperations
+ * @pos    会话数据操作层,管理会话记录的 CRUD 与 IndexedDB 交互
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                        Session Operations                                 ║
  * ║  会话 CRUD 操作：创建、查询、更新、删除                                       ║

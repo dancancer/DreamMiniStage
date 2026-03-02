@@ -11,7 +11,6 @@
  * ║                                                                            ║
  * ║  输出：                                                                     ║
  * ║  - messages[]: 最终发送给 LLM 的消息数组                                    ║
- * ║  - systemMessage/userMessage: 兼容旧接口的字符串形式                        ║
  * ║                                                                            ║
  * ║  Requirements: 2.6                                                         ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
@@ -77,19 +76,12 @@ export class PresetNode extends NodeBase {
       dialogueKey,
       currentUserInput,
       chatHistoryMessages, // 传递历史消息给 Tools
-    ) as {
-      systemMessage: string;
-      userMessage: string;
-      messages: ChatMessage[];
-      presetId?: string;
-    };
+    ) as { messages: ChatMessage[]; presetId?: string };
 
     return {
-      systemMessage: result.systemMessage,
-      userMessage: result.userMessage,
       messages: result.messages,
       presetId: result.presetId,
     };
   }
-} 
+}
  

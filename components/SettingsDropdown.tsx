@@ -1,3 +1,10 @@
+/**
+ * @input  @/app/i18n, @/contexts, @/function/data, @/lib/storage, @/components/ui
+ * @output SettingsDropdown
+ * @pos    全局设置下拉菜单组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";

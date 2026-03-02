@@ -1,4 +1,9 @@
 /**
+ * @input  zustand, sonner
+ * @output useToast, toast, ToastType, ToastOptions
+ * @pos    全局通知状态管理,提供统一的 Toast API 供全应用使用
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                          Toast Store                                     ║
  * ║                                                                          ║

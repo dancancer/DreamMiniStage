@@ -5,7 +5,7 @@
  * ║  历史数据前置提供节点的工具类                                               ║
  * ║  职责：在 PresetNode 之前提供结构化的聊天历史数据                           ║
  * ║                                                                            ║
- * ║  Requirements: 2.2, 2.3, 2.4, 2.5                                          ║
+ * ║  Requirements: 2.2, 2.4, 2.5                                               ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -119,31 +119,6 @@ export class HistoryPreNodeTools extends NodeTool {
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════
-     getChatHistoryText - 获取压缩历史文本
-     Requirements: 2.3
-     ═══════════════════════════════════════════════════════════════════════════ */
-
-  /**
-   * 获取压缩的聊天历史文本（用于 UI 展示和兼容层）
-   *
-   * @param dialogueKey - 对话标识符
-   * @param memoryLength - 保留的最近对话轮数
-   * @returns 格式化的历史文本字符串
-   */
-  static async getChatHistoryText(
-    dialogueKey: string,
-    memoryLength: number = 10,
-  ): Promise<string> {
-    try {
-      const historyData = await this.loadHistoryData(dialogueKey);
-      return this.formatHistoryText(historyData, memoryLength);
-    } catch (error) {
-      this.handleError(error as Error, "getChatHistoryText");
-      return "";
-    }
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════════════
      getConversationContext - 获取短上下文
      Requirements: 2.4
      ═══════════════════════════════════════════════════════════════════════════ */
@@ -161,8 +136,7 @@ export class HistoryPreNodeTools extends NodeTool {
     contextLength: number = 3,
   ): Promise<string> {
     try {
-      const historyData = await this.loadHistoryData(dialogueKey);
-      const { recentDialogue } = historyData;
+      const { recentDialogue } = await this.loadHistoryData(dialogueKey);
 
       // 使用 DialogueStory.getStory 获取最近对话
       const startIdx = Math.max(0, recentDialogue.userInput.length - contextLength);
@@ -181,18 +155,14 @@ export class HistoryPreNodeTools extends NodeTool {
    * 加载角色历史数据（从 ContextNodeTools 迁移）
    */
   private static async loadHistoryData(dialogueKey: string): Promise<{
-    systemMessage: string;
     recentDialogue: DialogueStory;
-    historyDialogue: DialogueStory;
   }> {
     const recentDialogue = new DialogueStory("en");
-    const historyDialogue = new DialogueStory("en");
-    let systemMessage = "";
 
     const dialogueTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueKey);
     if (!dialogueTree) {
       console.warn(`[HistoryPreNodeTools] Dialogue tree not found: ${dialogueKey}`);
-      return { systemMessage, recentDialogue, historyDialogue };
+      return { recentDialogue };
     }
 
     const nodePath = dialogueTree.current_nodeId !== "root"
@@ -205,59 +175,18 @@ export class HistoryPreNodeTools extends NodeTool {
     for (const node of nodePath) {
       // 第一条 assistant 消息是开场白
       if (node.parentNodeId === "root" && node.assistantResponse) {
-        systemMessage = node.assistantResponse;
         continue;
       }
 
       if (node.userInput) {
         recentDialogue.userInput.push(node.userInput);
-        historyDialogue.userInput.push(node.userInput);
       }
 
       if (node.assistantResponse) {
         recentDialogue.responses.push(node.assistantResponse);
-        const compressedContent = node.parsedContent?.compressedContent || "";
-        historyDialogue.responses.push(compressedContent);
       }
     }
 
-    return { systemMessage, recentDialogue, historyDialogue };
-  }
-
-  /**
-   * 格式化历史文本（用于 UI 展示）
-   */
-  private static formatHistoryText(
-    historyData: {
-      systemMessage: string;
-      recentDialogue: DialogueStory;
-      historyDialogue: DialogueStory;
-    },
-    memoryLength: number,
-  ): string {
-    const parts: string[] = [];
-
-    if (historyData.systemMessage) {
-      parts.push(`开场白：${historyData.systemMessage}`);
-    }
-
-    // 压缩历史（早期对话）
-    const compressedHistory = historyData.historyDialogue.getStory(
-      0,
-      Math.max(0, historyData.historyDialogue.responses.length - memoryLength),
-    );
-    if (compressedHistory) {
-      parts.push(`历史信息：${compressedHistory}`);
-    }
-
-    // 最近对话
-    const recentHistory = historyData.recentDialogue.getStory(
-      Math.max(0, historyData.recentDialogue.userInput.length - memoryLength),
-    );
-    if (recentHistory) {
-      parts.push(`最近故事：${recentHistory}`);
-    }
-
-    return parts.filter(Boolean).join("\n\n");
+    return { recentDialogue };
   }
 }

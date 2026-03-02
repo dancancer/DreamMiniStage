@@ -1,4 +1,9 @@
 /**
+ * @input  @/utils, @/components
+ * @output ControlPanel
+ * @pos    角色对话交互组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         Control Panel Component                            ║
  * ║                                                                            ║
@@ -9,9 +14,9 @@
 
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { trackButtonClick } from "@/utils/google-analytics";
-import { ArrowRight, Globe, Grid, User, ChevronUp, Link2 } from "lucide-react";
+import { ArrowRight, Globe, Grid, User, ChevronUp, Link2, Upload, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PromptViewerButton from "@/components/prompt-viewer/PromptViewerButton";
 
@@ -40,6 +45,9 @@ interface ControlPanelProps {
   // 提示词查看器所需参数
   dialogueKey?: string;
   characterId?: string;
+  // JSONL I/O
+  onExportJsonl?: () => void | Promise<void>;
+  onImportJsonl?: (file: File) => void | Promise<void>;
 }
 
 // ============================================================================
@@ -54,8 +62,11 @@ export default function ControlPanel({
   t,
   dialogueKey,
   characterId,
+  onExportJsonl,
+  onImportJsonl,
 }: ControlPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleStoryProgress = useCallback(() => {
     trackButtonClick("page", "切换故事进度");
@@ -85,6 +96,23 @@ export default function ControlPanel({
     trackButtonClick("page", "设置用户名称");
     onOpenUserNameModal();
   }, [onOpenUserNameModal]);
+
+  const handleExportClick = useCallback(() => {
+    trackButtonClick("page", "导出 JSONL");
+    onExportJsonl?.();
+  }, [onExportJsonl]);
+
+  const handleImportClick = useCallback(() => {
+    trackButtonClick("page", "导入 JSONL");
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(async () => {
+    const file = fileInputRef.current?.files?.[0];
+    if (!file) return;
+    await onImportJsonl?.(file);
+    fileInputRef.current!.value = "";
+  }, [onImportJsonl]);
 
   const togglePanel = useCallback(() => {
     setIsExpanded((prev) => !prev);
@@ -143,6 +171,28 @@ export default function ControlPanel({
               characterId={characterId}
             />
           )}
+
+          {/* JSONL 导入导出 */}
+          {dialogueKey && characterId && (
+            <>
+              <ControlButton
+                active={false}
+                onClick={handleImportClick}
+                activeColor="primary"
+                inactiveColor="primary-bright"
+                icon={<Upload size={12} className="mr-1" />}
+                label="导入 JSONL"
+              />
+              <ControlButton
+                active={false}
+                onClick={handleExportClick}
+                activeColor="primary"
+                inactiveColor="primary-bright"
+                icon={<Download size={12} className="mr-1" />}
+                label="导出 JSONL"
+              />
+            </>
+          )}
         </div>
       </div>
 
@@ -168,6 +218,14 @@ export default function ControlPanel({
       >
         <Link2 size={12} />
       </Button>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".jsonl,application/x-ndjson,text/plain"
+        className="hidden"
+        onChange={handleFileChange}
+      />
     </div>
   );
 }

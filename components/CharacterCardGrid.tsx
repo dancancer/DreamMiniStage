@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/components, @/utils, @/lib
+ * @output CharacterCardGrid
+ * @pos    角色卡片网格展示
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                      Character Card Grid Component                        ║
  * ║                                                                           ║

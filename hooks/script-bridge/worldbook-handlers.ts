@@ -1,4 +1,9 @@
 /**
+ * @input  hooks/script-bridge/types, lib/data/roleplay/world-book-operation, function/worldbook/*
+ * @output worldbookHandlers
+ * @pos    世界书操作 Handlers - WorldBook 的完整 CRUD 与绑定管理
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         世界书操作 Handlers                                ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝

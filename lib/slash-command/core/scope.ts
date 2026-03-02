@@ -32,6 +32,7 @@ export class ScopeFrame {
 
 export class ScopeChain {
   private current: ScopeFrame;
+  private _depth = 0;
 
   constructor(root?: ScopeFrame) {
     this.current = root ?? new ScopeFrame();
@@ -39,12 +40,18 @@ export class ScopeChain {
 
   push(): void {
     this.current = new ScopeFrame(this.current);
+    this._depth++;
   }
 
   pop(): void {
     if (this.current.parent) {
       this.current = this.current.parent;
+      this._depth--;
     }
+  }
+
+  depth(): number {
+    return this._depth;
   }
 
   get(key: string): unknown {

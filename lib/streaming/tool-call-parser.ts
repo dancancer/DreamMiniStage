@@ -2,7 +2,7 @@
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         流式 Tool Call 解析器                              ║
  * ║                                                                            ║
- * ║  解析流式响应中的 function_call 和 tool_calls                               ║
+ * ║  解析流式响应中的 tool_calls                                                ║
  * ║  支持并行工具调用和增量解析                                                  ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
@@ -40,10 +40,6 @@ export interface StreamDelta {
       arguments?: string;
     };
   }>;
-  function_call?: {
-    name?: string;
-    arguments?: string;
-  };
 }
 
 /** 解析结果 */
@@ -62,7 +58,6 @@ export interface ParseResult {
 export class ToolCallParser {
   private content = "";
   private toolCalls: Map<number, ToolCallEntry> = new Map();
-  private legacyFunctionCall: ToolCallEntry | null = null;
   private isComplete = false;
 
   /** 处理流式 delta */
@@ -75,10 +70,6 @@ export class ToolCallParser {
       for (const tc of delta.tool_calls) {
         this.processToolCallDelta(tc);
       }
-    }
-
-    if (delta.function_call) {
-      this.processFunctionCallDelta(delta.function_call);
     }
   }
 
@@ -102,32 +93,12 @@ export class ToolCallParser {
     if (tc.function?.arguments) entry.function.arguments += tc.function.arguments;
   }
 
-  /** 处理 function_call delta (旧格式) */
-  private processFunctionCallDelta(fc: NonNullable<StreamDelta["function_call"]>): void {
-    if (!this.legacyFunctionCall) {
-      this.legacyFunctionCall = {
-        id: "function_call_0",
-        index: 0,
-        type: "function",
-        function: { name: "", arguments: "" },
-        status: "streaming",
-      };
-    }
-
-    if (fc.name) this.legacyFunctionCall.function.name += fc.name;
-    if (fc.arguments) this.legacyFunctionCall.function.arguments += fc.arguments;
-  }
-
   /** 标记完成 */
   markComplete(): void {
     this.isComplete = true;
 
     for (const entry of this.toolCalls.values()) {
       this.finalizeToolCall(entry);
-    }
-
-    if (this.legacyFunctionCall) {
-      this.finalizeToolCall(this.legacyFunctionCall);
     }
   }
 
@@ -169,29 +140,20 @@ export class ToolCallParser {
 
   /** 检查是否有 tool calls */
   hasToolCalls(): boolean {
-    return this.toolCalls.size > 0 || this.legacyFunctionCall !== null;
+    return this.toolCalls.size > 0;
   }
 
   /** 重置解析器 */
   reset(): void {
     this.content = "";
     this.toolCalls.clear();
-    this.legacyFunctionCall = null;
     this.isComplete = false;
   }
 
-  /** 汇总并按优先级去重 tool calls（tool_calls 优先，legacy 兜底） */
+  /** 汇总并去重 tool calls */
   private collectToolCalls(shouldLog = true): ToolCallEntry[] {
-    const modernCalls = Array.from(this.toolCalls.values());
-    const legacyCalls = this.legacyFunctionCall ? [this.legacyFunctionCall] : [];
-    if (modernCalls.length === 0) {
-      return dedupeToolCalls(
-        legacyCalls,
-        shouldLog ? { logSource: "ToolCallParser" } : undefined,
-      );
-    }
     return dedupeToolCalls(
-      [...modernCalls, ...legacyCalls],
+      Array.from(this.toolCalls.values()),
       shouldLog ? { logSource: "ToolCallParser" } : undefined,
     );
   }
@@ -328,7 +290,6 @@ export function extractToolCallsFromResponse(response: {
         type: "function";
         function: { name: string; arguments: string };
       }>;
-      function_call?: { name: string; arguments: string };
     };
   }>;
 }): ToolCallEntry[] {
@@ -336,7 +297,6 @@ export function extractToolCallsFromResponse(response: {
   if (!choice?.message) return [];
 
   const toolCalls = choice.message.tool_calls || [];
-  const legacyCall = choice.message.function_call;
   const rawEntries: ToolCallEntry[] = [];
 
   for (let i = 0; i < toolCalls.length; i++) {
@@ -348,17 +308,6 @@ export function extractToolCallsFromResponse(response: {
       function: tc.function,
       status: "complete",
       parsedArguments: safeJsonParse(tc.function.arguments),
-    });
-  }
-
-  if (legacyCall) {
-    rawEntries.push({
-      id: "function_call_0",
-      index: 0,
-      type: "function",
-      function: legacyCall,
-      status: "complete",
-      parsedArguments: safeJsonParse(legacyCall.arguments),
     });
   }
 

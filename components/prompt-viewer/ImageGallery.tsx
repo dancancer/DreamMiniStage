@@ -1,4 +1,9 @@
 /**
+ * @input  @/components, @/lib
+ * @output ImageGallery, ImageGallery
+ * @pos    提示词查看器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                        图片画廊组件                                        ║
  * ║                                                                           ║
@@ -225,7 +230,6 @@ function ImageThumbnail({ image, onError }: ImageThumbnailProps) {
             alt={`提示词图片 ${image.id}`}
             className={cn(
               "w-full h-full object-cover transition-all duration-200",
-              "group-hover:scale-105",
               isLoading && "opacity-0",
             )}
             style={{ maxHeight: `${UI_CONFIG.MAX_IMAGE_HEIGHT}px` }}

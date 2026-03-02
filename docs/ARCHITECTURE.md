@@ -16,7 +16,7 @@
 - `function/`：服务端入口与数据操作 API（对话、预设、世界书、正则脚本等）
 - `lib/`
   - `core/`：核心引擎（宏/预设/世界书/正则/记忆管理）
-  - `prompt/`：STPromptManager 及 preset 工具
+  - `core/prompt/`：STPromptManager 及 preset 工具
   - `nodeflow/` + `workflow/`：有向节点工作流执行与定义（对话流水线等）
   - `script-runner/`：脚本执行桥与事件管道
   - `plugins/`：插件发现与注册
@@ -31,12 +31,13 @@
 - **记忆与向量**：`lib/core/memory-manager.ts` 协调记忆检索/写入；`lib/vector-memory/*` 封装 embedding provider 与存储；对应数据操作在 `lib/data/roleplay/memory-operation.ts`。
 - **工作流 (NodeFlow)**：`lib/nodeflow/*` 定义节点基类、上下文与执行；`lib/workflow/*` 包含对话等流水线配置；`function/dialogue/chat.ts` 等入口组装并运行流程。
 - **脚本与插件**：`lib/script-runner/*` 提供脚本沙箱与事件桥；`lib/plugins/*` 负责插件发现/注册，`public/plugins` 作为默认插件目录。
+  - iframe shim API 入口统一为 `window.TavernHelper` / `window.SillyTavern`，不再暴露顶层全局函数别名（如 `window.getVariables`）。
 - **状态与 UI**：Zustand store 位于 `lib/store/*`，通过 `contexts/` 和 `hooks/` 下沉到组件；UI 统一使用 `components/ui` 封装的 Radix/Shadcn 原子组件。
 
 ## 对话与请求流概览
 1. 前端发起请求（角色会话/命令）→ `function/dialogue/*` 服务端处理入口。
-2. 构建 NodeFlow 上下文：加载 preset、世界书、正则脚本、记忆与用户输入。
-3. 通过 `PresetNode/ContextNode/WorldBookNode/LLMNode/RegexNode` 等节点逐步组装消息并调用模型。
+2. 构建 NodeFlow 上下文：`HistoryPreNode` 先准备 `chatHistoryMessages`，`PresetNode` 组装 `messages[]`。
+3. 通过 `ContextNode/WorldBookNode/LLMNode/RegexNode` 等节点串联处理，其中 LLM 调用仅消费 `messages[]`。
 4. 结果经后处理（正则/脚本/插件）后写回本地数据操作层（对话树、记忆、角色状态）。
 
 ## 数据与配置
@@ -51,6 +52,7 @@
 - 测试：`pnpm test`（等价 `vitest run`）；单测建议使用 `pnpm vitest run path/to/file.test.ts`
 
 ## 关联文档
-- `docs/MIGRATION_GUIDE.md`：从旧版/兼容模式迁移
+- `docs/MIGRATION_GUIDE.md`：SillyTavern 资产导入说明（不含历史本地数据迁移）
 - `docs/GETTING_STARTED.md`：环境与命令速查
+- `lib/script-runner/README.md`：脚本执行器与 TavernHelper 能力说明
 - `docs/reports/architecture-review.md`：更详尽的巡检与风险清单

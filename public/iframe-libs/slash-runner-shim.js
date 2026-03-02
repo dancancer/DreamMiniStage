@@ -45,23 +45,18 @@
   }
 
   // ════════════════════════════════════════════════════════════════════════
-  //  未实现方法警告（Requirements 9.4）
+  //  显式失败：开发期不做静默兜底
   // ════════════════════════════════════════════════════════════════════════
 
-  function warnUnimplemented(methodName, returnValue) {
-    console.warn("[TavernHelper] Method '" + methodName + "' is not implemented in DreamMiniStage. Returning default value.");
-    return returnValue;
-  }
-
-  function createStub(methodName, defaultReturn) {
+  function unsupportedSync(methodName) {
     return function() {
-      return warnUnimplemented(methodName, defaultReturn);
+      throw new Error("[TavernHelper] Unsupported API in DreamMiniStage: " + methodName);
     };
   }
 
-  function createAsyncStub(methodName, defaultReturn) {
+  function unsupportedAsync(methodName) {
     return function() {
-      return Promise.resolve(warnUnimplemented(methodName, defaultReturn));
+      return Promise.reject(new Error("[TavernHelper] Unsupported API in DreamMiniStage: " + methodName));
     };
   }
 
@@ -160,6 +155,12 @@
   var eventHandlers = new Map();
   var handlerIdCounter = 0;
   var iframeId = "iframe_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+
+  // ════════════════════════════════════════════════════════════════════════
+  //  Function Tool 本地回调注册表
+  // ════════════════════════════════════════════════════════════════════════
+
+  var functionToolCallbacks = {};
 
   function generateHandlerId() {
     return "h_" + (++handlerIdCounter) + "_" + Date.now();
@@ -340,38 +341,53 @@
 
     // ──────────────────────────────────────────────────────────────────────
     //  Quick Reply API（Requirements 8.1-8.4）
-    //  注：DreamMiniStage 中 Quick Reply 通过 Slash Command 实现
+    //  映射到服务端 handler，复用 Slash Command 基础设施
     // ──────────────────────────────────────────────────────────────────────
-    getQuickReplySetNames: createAsyncStub("getQuickReplySetNames", []),
-    getQuickReplySet: createAsyncStub("getQuickReplySet", null),
-    createQuickReplySet: createAsyncStub("createQuickReplySet", null),
-    deleteQuickReplySet: createAsyncStub("deleteQuickReplySet", false),
-    updateQuickReplySet: createAsyncStub("updateQuickReplySet", false),
+    getQuickReplySetNames: api("getQuickReplySetNames"),
+    getQuickReplySet: api("getQuickReplySet"),
+    createQuickReplySet: api("createQuickReplySet"),
+    deleteQuickReplySet: api("deleteQuickReplySet"),
+    updateQuickReplySet: api("updateQuickReplySet"),
     executeQuickReply: function(setName, label) {
       // 映射到 triggerSlash
       return callApi("triggerSlash", ["/" + label]);
     },
 
     // ──────────────────────────────────────────────────────────────────────
-    //  角色 API（部分实现）
+    //  角色 API
     // ──────────────────────────────────────────────────────────────────────
-    getCharacterNames: createAsyncStub("getCharacterNames", []),
-    getCharacter: createAsyncStub("getCharacter", null),
-    getCurrentCharacter: function() {
-      return Promise.resolve(sessionContext.characterId ? { id: sessionContext.characterId } : null);
-    },
+    getCharacterNames: api("getCharacterNames"),
+    getCharacter: api("getCharacter"),
+    getCurrentCharacter: api("getCurrentCharacter"),
+    getCharacterById: api("getCharacterById"),
 
     // ──────────────────────────────────────────────────────────────────────
-    //  群聊 API（未实现，返回默认值）
+    //  群聊 API（显式未支持）
     // ──────────────────────────────────────────────────────────────────────
-    getGroupMembers: createAsyncStub("getGroupMembers", []),
-    isGroupChat: createStub("isGroupChat", false),
+    getGroupMembers: unsupportedAsync("getGroupMembers"),
+    isGroupChat: unsupportedSync("isGroupChat"),
 
     // ──────────────────────────────────────────────────────────────────────
     //  工具方法
     // ──────────────────────────────────────────────────────────────────────
     utils: { log: log, waitFor: function(ms) { return window.DreamMiniStage.utils.waitFor(ms); } },
     log: log,
+
+    // ──────────────────────────────────────────────────────────────────────
+    //  音频 API
+    // ──────────────────────────────────────────────────────────────────────
+    playAudio: api("playAudio"),
+    pauseAudio: api("pauseAudio"),
+    stopAudio: api("stopAudio"),
+    getAudioList: api("getAudioList"),
+    replaceAudioList: api("replaceAudioList"),
+    appendAudioList: api("appendAudioList"),
+    getAudioSettings: api("getAudioSettings"),
+    setAudioSettings: api("setAudioSettings"),
+    setAudioEnabled: api("setAudioEnabled"),
+    setAudioMode: api("setAudioMode"),
+    setGlobalVolume: api("setGlobalVolume"),
+    muteAll: api("muteAll"),
 
     // ──────────────────────────────────────────────────────────────────────
     //  上下文获取
@@ -387,34 +403,8 @@
     }
   };
 
-  // ════════════════════════════════════════════════════════════════════════
-  //  全局兼容：直接挂到 window 的旧用法
-  // ════════════════════════════════════════════════════════════════════════
-
-  // 消息 API
-  window.getChatMessages = window.TavernHelper.getChatMessages;
-  window.setChatMessages = window.TavernHelper.setChatMessages;
-  window.createChatMessages = window.TavernHelper.createChatMessages;
-  window.deleteChatMessages = window.TavernHelper.deleteChatMessages;
-  window.getCurrentMessageId = window.TavernHelper.getCurrentMessageId;
-
-  // 事件 API
-  window.eventEmit = window.TavernHelper.eventEmit;
-  window.eventOn = window.TavernHelper.eventOn;
-  window.eventOnce = window.TavernHelper.eventOnce;
-  window.eventRemoveListener = window.TavernHelper.eventRemoveListener;
-
-  // Slash API
-  window.triggerSlash = window.TavernHelper.triggerSlash;
-  window.triggerSlashWithResult = window.TavernHelper.triggerSlashWithResult;
-
-  // 变量 API
-  window.getVariables = window.TavernHelper.getVariables;
-  window.replaceVariables = window.TavernHelper.replaceVariables;
-  window.insertOrAssignVariables = window.TavernHelper.insertOrAssignVariables;
-  window.deleteVariable = window.TavernHelper.deleteVariable;
-  window.getVariable = window.TavernHelper.getVariable;
-  window.setVariable = window.TavernHelper.setVariable;
+  // 开发版约束：不再注入 window.getVariables/window.triggerSlash 等顶层别名。
+  // 统一通过 window.TavernHelper 与 window.SillyTavern 命名空间访问 API。
 
   // ════════════════════════════════════════════════════════════════════════
   //  SillyTavern 兼容层（Requirements 9.2）
@@ -445,24 +435,85 @@
     },
 
     /**
-     * registerFunctionTool - 注册函数工具（未实现）
+     * registerFunctionTool - 注册函数工具供 LLM 调用
+     * @param {string} name - 工具名称
+     * @param {string} description - 工具描述
+     * @param {object} parameters - 参数 schema（OpenAI function calling 格式）
+     * @param {boolean} required - 是否必需（保留参数）
+     * @param {function} callback - 回调函数，接收参数对象，返回结果
+     * @returns {Promise<boolean>} 注册成功返回 true
      */
-    registerFunctionTool: createStub("registerFunctionTool", undefined),
+    registerFunctionTool: function(name, description, parameters, required, callback) {
+      // 存储回调到本地注册表
+      if (typeof callback === "function") {
+        functionToolCallbacks[name] = callback;
+      }
+
+      var requiredFlag = typeof required === "boolean" ? required : false;
+      return callApi("registerFunctionTool", [name, description, parameters, requiredFlag, iframeId]);
+    },
 
     /**
-     * registerSlashCommand - 注册自定义 Slash 命令（未实现）
+     * registerSlashCommand - 注册自定义 Slash 命令
+     * @param {object} definition - 命令定义对象
+     *   - name: 命令名称（不含 /）
+     *   - callback: 回调函数 (args, namedArgs, context) => result
+     *   - aliases: 别名数组（可选）
+     *   - helpString: 帮助文本（可选）
+     *   - namedArgumentList: 命名参数列表（可选）
+     *   - unnamedArgumentList: 位置参数列表（可选）
+     * @returns {Promise<boolean>} 注册成功返回 true
      */
-    registerSlashCommand: createStub("registerSlashCommand", undefined),
+    registerSlashCommand: function(definition) {
+      // 注意：callback 函数无法序列化，需要特殊处理
+      // 将回调存储在本地，通过事件机制调用
+      if (definition && typeof definition.callback === "function") {
+        var cmdName = definition.name;
+        var callback = definition.callback;
+
+        // 存储回调到本地注册表
+        if (!window._slashCommandCallbacks) {
+          window._slashCommandCallbacks = {};
+        }
+        window._slashCommandCallbacks[cmdName] = callback;
+
+        // 监听来自主应用的命令调用事件
+        window.addEventListener("DreamMiniStage:slash_command_" + cmdName, function(e) {
+          var detail = e.detail || {};
+          var result = callback(detail.args, detail.namedArgs, detail.context);
+          // 通过事件返回结果
+          if (detail.callbackId) {
+            window.DreamMiniStage.events.emit("slash_command_result_" + detail.callbackId, result);
+          }
+        });
+
+        // 发送注册请求（不含回调函数）
+        var defCopy = Object.assign({}, definition);
+        delete defCopy.callback;
+        defCopy.hasCallback = true;
+        defCopy.iframeId = iframeId;
+
+        return callApi("registerSlashCommand", [defCopy]);
+      }
+
+      return callApi("registerSlashCommand", [definition]);
+    },
 
     /**
-     * getApiUrl - 获取 API URL（未实现）
+     * getApiUrl - 获取当前 LLM API 地址
+     * @returns {Promise<string>} API 基础 URL
      */
-    getApiUrl: createStub("getApiUrl", ""),
+    getApiUrl: function() {
+      return callApi("getApiUrl", []);
+    },
 
     /**
-     * getRequestHeaders - 获取请求头（未实现）
+     * getRequestHeaders - 获取 LLM 请求头
+     * @returns {Promise<object>} 请求头对象
      */
-    getRequestHeaders: createStub("getRequestHeaders", {})
+    getRequestHeaders: function() {
+      return callApi("getRequestHeaders", []);
+    }
   };
 
   // ════════════════════════════════════════════════════════════════════════
@@ -488,6 +539,33 @@
           if (e.data.payload.characterId !== undefined) sessionContext.characterId = e.data.payload.characterId;
           if (e.data.payload.sessionId !== undefined) sessionContext.sessionId = e.data.payload.sessionId;
           if (e.data.payload.chatId !== undefined) sessionContext.chatId = e.data.payload.chatId;
+        }
+        break;
+
+      case "FUNCTION_TOOL_CALL":
+        // 处理来自主应用的函数工具调用
+        var ftPayload = e.data.payload || {};
+        var toolName = ftPayload.name;
+        var toolArgs = ftPayload.args || {};
+        var callbackId = ftPayload.callbackId;
+
+        console.log("[SlashRunner] FUNCTION_TOOL_CALL:", toolName, "callbackId:", callbackId);
+
+        var callback = functionToolCallbacks[toolName];
+        if (callback) {
+          try {
+            var result = callback(toolArgs);
+            // 处理同步和异步结果
+            Promise.resolve(result).then(function(res) {
+              sendMessage("FUNCTION_TOOL_RESULT", { callbackId: callbackId, result: res });
+            }).catch(function(err) {
+              sendMessage("FUNCTION_TOOL_RESULT", { callbackId: callbackId, error: err.message || String(err) });
+            });
+          } catch (err) {
+            sendMessage("FUNCTION_TOOL_RESULT", { callbackId: callbackId, error: err.message || String(err) });
+          }
+        } else {
+          sendMessage("FUNCTION_TOOL_RESULT", { callbackId: callbackId, error: "Function tool not found: " + toolName });
         }
         break;
 

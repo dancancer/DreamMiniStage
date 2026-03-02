@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/components
+ * @output PluginsPanel
+ * @pos    功能面板组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔════════════════════════════════════════════════════════════════════╗
  * ║                         PluginsPanel 插件面板                       ║
  * ║  嵌入插件列表/过滤/统计,复用插件管理逻辑，无额外模态。               ║
@@ -86,7 +91,7 @@ export function PluginsPanel() {
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-cream/20 to-primary/20 rounded-xl">
+          <div className="p-2 bg-primary/10 rounded-xl">
             <Package className="w-5 h-5 text-cream" />
           </div>
           <div>

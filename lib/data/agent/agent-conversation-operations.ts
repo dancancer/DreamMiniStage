@@ -244,11 +244,6 @@ export class ResearchSessionOperations {
   /**
    * Record error
    */
-  // Legacy name kept for backward compatibility
-  static async recinsert_orderror(sessionId: string, error: string): Promise<void> {
-    return this.recordError(sessionId, error);
-  }
-
   static async recordError(sessionId: string, error: string): Promise<void> {
     const session = await this.getSessionById(sessionId);
     if (!session) {

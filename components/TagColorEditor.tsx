@@ -1,3 +1,10 @@
+/**
+ * @input  @/app, @/contexts, @/lib, @/components
+ * @output TagColorEditor
+ * @pos    标签颜色编辑器
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 import React, { useState } from "react";
 import { Loader2, Palette, Plus, Save } from "lucide-react";
 import { useLanguage } from "@/app/i18n";
@@ -82,13 +89,13 @@ export const TagColorEditor: React.FC<TagColorEditorProps> = ({ onSave, onViewSw
   return (
     <div className={`p-2 sm:p-4 ${fontClass} relative`}>
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-gradient-to-br from-primary-500/10 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-gradient-to-tr from-primary-500/10 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl"></div>
       </div>
 
       <div className="relative z-10">
         <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
-          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md bg-gradient-to-br from-primary-500/20 to-primary-600/30 flex items-center justify-center border border-primary-500/30  ">
+          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md bg-primary/20 flex items-center justify-center border border-primary-500/30  ">
             <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary-400" />
           </div>
           <h3 className={"text-base sm:text-lg font-semibold  "}>
@@ -98,23 +105,23 @@ export const TagColorEditor: React.FC<TagColorEditorProps> = ({ onSave, onViewSw
 
         <div className="flex flex-col sm:flex-row gap-2 mb-4 sm:mb-6">
           <div className="flex-1 relative group">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-primary/10 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <input
               type="text"
               value={newSymbol}
               onChange={(e) => setNewSymbol(e.target.value)}
               placeholder={t("characterChat.enterSymbol")}
-              className="relative z-10 w-full px-3 py-2 bg-gradient-to-br from-deep via-muted-surface to-deep text-cream-soft rounded-md border border-border/60 focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 hover:border-border backdrop-blur-sm  text-sm sm:text-base"
+              className="relative z-10 w-full px-3 py-2 bg-muted-surface text-cream-soft rounded-md border border-border/60 focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 hover:border-border backdrop-blur-sm  text-sm sm:text-base"
             />
           </div>
           <Button
             variant="outline"
             onClick={handleAddSymbol}
-            className="h-auto relative group px-3 sm:px-4 py-2 bg-gradient-to-r from-ember to-coal hover:from-muted-surface hover:to-ember text-primary-soft hover:text-primary-soft text-xs sm:text-sm font-medium border-border"
+            className="h-auto relative group px-3 sm:px-4 py-2 bg-ember hover:bg-ember/90 text-primary-soft hover:text-primary-soft text-xs sm:text-sm font-medium border-border"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-primary/10 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <span className="relative z-10 flex items-center space-x-1.5 sm:space-x-2">
-              <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform duration-300 group-hover:scale-110" />
+              <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span>{t("characterChat.add")}</span>
             </span>
           </Button>
@@ -128,7 +135,7 @@ export const TagColorEditor: React.FC<TagColorEditorProps> = ({ onSave, onViewSw
                 activeColorPicker === symbol ? "z-[999]" : "z-0"
               }`}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-transparent rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-primary/5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative z-10 mb-2 sm:mb-0">
                 <span className={" text-base sm:text-lg text-cream-soft"}>{symbol}</span>
               </div>
@@ -139,28 +146,28 @@ export const TagColorEditor: React.FC<TagColorEditorProps> = ({ onSave, onViewSw
                       key={predefinedColor}
                       variant="ghost"
                       size="icon"
-                      className="relative group/color h-5 w-5 sm:h-6 sm:w-6 rounded-full border border-white/20 hover:scale-110 p-0"
+                      className="relative group/color h-5 w-5 sm:h-6 sm:w-6 rounded-full border border-white/20 p-0"
                       style={{ backgroundColor: predefinedColor }}
                       onClick={() => handlePredefinedColorSelect(symbol, predefinedColor)}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-full opacity-0 group-hover/color:opacity-100 transition-opacity duration-300"></div>
+                      <div className="absolute inset-0 bg-white/10 rounded-full opacity-0 group-hover/color:opacity-100 transition-opacity duration-300"></div>
                     </Button>
                   ))}
                 </div>
 
                 <div className="relative">
                   <div
-                    className="relative group/color w-6 h-6 sm:w-8 sm:h-8 rounded cursor-pointer border border-white/20 hover:scale-110 transition-transform  "
+                    className="relative group/color w-6 h-6 sm:w-8 sm:h-8 rounded cursor-pointer border border-white/20"
                     style={{ backgroundColor: color }}
                     onClick={() => setActiveColorPicker(activeColorPicker === symbol ? null : symbol)}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded opacity-0 group-hover/color:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-white/10 rounded opacity-0 group-hover/color:opacity-100 transition-opacity duration-300"></div>
                   </div>
                   {activeColorPicker === symbol && (
                     <div className="absolute right-0 top-full mt-2 z-50">
                       <div className="fixed inset-0" onClick={() => setActiveColorPicker(null)} />
                       <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent rounded-md blur-xl"></div>
+                        <div className="absolute inset-0 bg-primary/10 rounded-md blur-xl"></div>
                         <div className="scale-75 sm:scale-100 origin-top-right">
                           <SketchPicker
                             color={color}
@@ -179,7 +186,7 @@ export const TagColorEditor: React.FC<TagColorEditorProps> = ({ onSave, onViewSw
                     onClick={() => handleDeleteSymbol(symbol)}
                     className="relative group/delete h-auto w-auto p-1 text-red-400 hover:text-red-300"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent rounded opacity-0 group-hover/delete:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-destructive/10 rounded opacity-0 group-hover/delete:opacity-100 transition-opacity duration-300"></div>
                     <span className="relative z-10 text-base sm:text-lg">×</span>
                   </Button>
                 )}
@@ -192,14 +199,14 @@ export const TagColorEditor: React.FC<TagColorEditorProps> = ({ onSave, onViewSw
           variant="outline"
           onClick={handleSave}
           disabled={isSaving}
-          className={`h-auto relative group mt-4 sm:mt-6 w-full px-3 sm:px-4 py-2 bg-gradient-to-r from-ember to-coal hover:from-muted-surface hover:to-ember text-primary-soft hover:text-primary-soft text-xs sm:text-sm font-medium border-border ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+          className={`h-auto relative group mt-4 sm:mt-6 w-full px-3 sm:px-4 py-2 bg-ember hover:bg-ember/90 text-primary-soft hover:text-primary-soft text-xs sm:text-sm font-medium border-border ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-primary/10 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <span className="relative z-10 flex items-center justify-center space-x-1.5 sm:space-x-2">
             {isSaving ? (
               <Loader2 className="h-3 w-3 animate-spin sm:h-4 sm:w-4 text-primary-soft" />
             ) : (
-              <Save className="h-3 w-3 transition-transform duration-300 group-hover:scale-110 sm:h-3.5 sm:w-3.5" />
+              <Save className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             )}
             <span>{isSaving ? t("characterChat.saving") : t("characterChat.saveChanges")}</span>
           </span>

@@ -17,7 +17,7 @@ import { PromptInterceptorImpl } from "../prompt-interceptor";
    Mock 依赖：模拟工作流节点工具
    ═══════════════════════════════════════════════════════════════════════════ */
 
-vi.mock("@/lib/store/dialogue-store", () => ({
+vi.mock("@/lib/store/dialogue-store/index", () => ({
   useDialogueStore: {
     getState: () => ({
       getDialogue: vi.fn(() => ({
@@ -35,8 +35,6 @@ vi.mock("@/lib/nodeflow/PresetNode/PresetNodeTools", () => ({
     // 整改后：buildPromptFramework 接收 chatHistoryMessages 参数
     // STPromptManager 内部展开 chatHistory marker，返回已展开的 messages
     buildPromptFramework: vi.fn(() => Promise.resolve({
-      systemMessage: "测试系统消息（含世界书）",
-      userMessage: "测试用户消息",
       // messages 已由 STPromptManager 展开 chatHistory marker
       messages: [
         { role: "system", content: "测试系统消息" },
@@ -60,16 +58,16 @@ vi.mock("@/lib/nodeflow/HistoryPreNode/HistoryPreNodeTools", () => ({
       { role: "user", content: "历史用户消息" },
       { role: "assistant", content: "历史助手消息" },
     ])),
-    getChatHistoryText: vi.fn(() => Promise.resolve("历史文本摘要")),
   },
 }));
 
 vi.mock("@/lib/nodeflow/WorldBookNode/WorldBookNodeTools", () => ({
   WorldBookNodeTools: {
-    assemblePromptWithWorldBook: vi.fn(() => Promise.resolve({
-      systemMessage: "测试系统消息（含世界书）",
-      userMessage: "测试用户消息（含世界书）",
-    })),
+    modifyMessages: vi.fn(
+      (_characterId: string, messages: Array<{ role: string; content: string }>) => (
+        Promise.resolve(messages)
+      ),
+    ),
   },
 }));
 

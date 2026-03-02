@@ -1,3 +1,10 @@
+/**
+ * @input  lib/core/character, lib/adapter/tagReplacer, lib/data/roleplay/character-record-operation, lib/core/regex-processor
+ * @output OpeningPayload, prepareOpeningGreeting
+ * @pos    开场白准备 - 获取并处理角色首条消息
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { Character } from "@/lib/core/character";
 import { adaptText } from "@/lib/adapter/tagReplacer";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";

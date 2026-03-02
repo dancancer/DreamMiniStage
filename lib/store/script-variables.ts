@@ -1,6 +1,11 @@
 /**
+ * @input  zustand
+ * @output useScriptVariables, VariableScope
+ * @pos    脚本变量状态管理,支持全局、角色、会话三种作用域
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * Script Variables Store
- * 
+ *
  * Manages variables accessible to scripts running in the sandbox.
  * Supports different scopes: global, character-specific, and session-specific.
  * Uses Zustand for state management and persistence.

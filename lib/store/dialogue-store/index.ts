@@ -83,6 +83,10 @@ export const useDialogueStore = create<DialogueState>((set, get) => ({
     await NavigationActions.navigateOpening(dialogueKey, direction, get, set as (updater: (state: DialogueState) => Partial<DialogueState>) => void);
   },
 
+  switchSwipe: async (dialogueKey: string, messageId: string, target: "prev" | "next" | number) => {
+    await NavigationActions.switchSwipe(dialogueKey, messageId, target, get, set as (updater: (state: DialogueState) => Partial<DialogueState>) => void);
+  },
+
   // ========== 简单操作 - 好品味：直接状态更新，无需提取 ==========
   setMessages: (dialogueKey: string, messages: DialogueMessage[]) => {
     set((state) => ({

@@ -1,4 +1,9 @@
 /**
+ * @input  hooks/script-bridge/types, lib/data/roleplay/preset-operation, function/preset/import
+ * @output presetHandlers
+ * @pos    预设操作 Handlers - 预设的 CRUD 与激活控制
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         预设操作 Handlers                                  ║
  * ║                                                                            ║

@@ -1,4 +1,11 @@
 /**
+ * @input  @/app, @/components
+ * @output AgentProgressPanel
+ * @pos    Agent 进度面板
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
+/**
  * Compact AgentProgressPanel Component with Fantasy Styling
  * 
  * An elegant, compact progress panel for displaying AI agent execution status.

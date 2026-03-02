@@ -1,3 +1,10 @@
+/**
+ * @input  无外部依赖
+ * @output WorldBookEntry, SecondaryKeyLogic, WorldBookSource, WorldBookEntryWithSource
+ * @pos    世界书条目数据模型,支持关键词匹配、高级功能(sticky/cooldown/概率)等
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 /* ═══════════════════════════════════════════════════════════════════════════
    WorldBookEntry 扩展属性接口
 

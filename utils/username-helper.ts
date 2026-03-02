@@ -1,4 +1,9 @@
 /**
+ * @input  lib/storage/client-storage, lib/store/user-store
+ * @output getDisplayUsername, setDisplayUsername, resetDisplayUsername
+ * @pos    用户名工具层 - 封装显示用户名的读写与跨组件同步
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                        Username Helper                                   ║
  * ║  显示名的存储与事件通知：读写封装                                            ║

@@ -7,6 +7,7 @@
  */
 
 import { switchDialogueBranch } from "@/function/dialogue/truncate";
+import { switchSwipe as switchSwipeVariant } from "@/function/dialogue/swipe";
 import { extractNodeIdFromMessageId } from "@/utils/message-id";
 import { formatMessages } from "@/hooks/character-dialogue/message-utils";
 import type { DialogueState, DialogueMessage } from "../types";
@@ -74,6 +75,45 @@ export async function truncateMessagesAfter(
     }
   } catch (error) {
     console.error("Error truncating messages:", error);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Swipe 切换（仅最后一条 assistant）
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+export async function switchSwipe(
+  dialogueKey: string,
+  messageId: string,
+  target: "prev" | "next" | number,
+  _getState: () => DialogueState,
+  setState: (updater: (state: DialogueState) => Partial<DialogueState>) => void,
+) {
+  if (!dialogueKey) return;
+
+  try {
+    const actualNodeId = extractNodeIdFromMessageId(messageId);
+    const response = await switchSwipeVariant({ dialogueId: dialogueKey, nodeId: actualNodeId, target });
+    if (!response.success || !response.dialogue) {
+      console.warn("[switchSwipe] Failed to switch swipe:", response.message);
+      return;
+    }
+
+    const formattedMessages = formatMessages(response.dialogue.messages);
+    const lastMessage = response.dialogue.messages[response.dialogue.messages.length - 1];
+
+    setState((state: DialogueState) => ({
+      dialogues: {
+        ...state.dialogues,
+        [dialogueKey]: {
+          ...state.dialogues[dialogueKey],
+          messages: formattedMessages,
+          suggestedInputs: lastMessage?.parsedContent?.nextPrompts || [],
+        },
+      },
+    }));
+  } catch (error) {
+    console.error("Error switching swipe:", error);
   }
 }
 

@@ -1,4 +1,9 @@
 /**
+ * @input  @langchain/openai, @langchain/ollama, lib/core/gemini-client, lib/store/model-store, lib/storage/client-storage
+ * @output useModelSidebarConfig, describeLlmType, getBaseUrlPlaceholder, getModelPlaceholder
+ * @pos    模型侧边栏配置 Hook - ModelSidebar 配置管理核心逻辑
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                     useModelSidebarConfig Hook                           ║
  * ║                                                                          ║

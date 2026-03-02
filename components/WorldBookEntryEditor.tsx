@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/components
+ * @output WorldBookEntryEditor
+ * @pos    世界书条目编辑器
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                   World Book Entry Editor Component                        ║
  * ║                                                                            ║
@@ -108,7 +113,7 @@ export default function WorldBookEntryEditor({
     <>
       <Dialog open={isOpen && !isFullscreen && !!editingEntry} onOpenChange={(open) => !open && onClose()}>
         <DialogContent className="max-w-3xl p-0 overflow-hidden  border-border gap-0 max-h-[85vh]">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-orange-500/5 pointer-events-none"></div>
+          <div className="absolute inset-0 bg-primary/5 pointer-events-none"></div>
           
           {editingEntry && (
             <>
@@ -353,7 +358,7 @@ export default function WorldBookEntryEditor({
       {/* 全屏模式 */}
       <Dialog open={isFullscreen && !!editingEntry} onOpenChange={(open) => !open && setIsFullscreen(false)}>
         <DialogContent className="max-w-5xl p-0 overflow-hidden  border-border gap-0 h-[85vh]">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-orange-500/5 pointer-events-none"></div>
+          <div className="absolute inset-0 bg-primary/5 pointer-events-none"></div>
           
           <div className="p-4 bg-muted-surface/90 border-b border-border/60 relative z-10">
             <DialogHeader>

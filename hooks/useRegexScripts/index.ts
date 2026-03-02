@@ -1,4 +1,9 @@
 /**
+ * @input  hooks/useRegexScripts/data/*, hooks/useRegexScripts/operations/*, hooks/useRegexScripts/types
+ * @output useRegexScripts, filterScripts, sortScripts, truncateText, SortField, SortOrder, FilterType, ScriptWithKey, SourceScripts
+ * @pos    正则脚本管理 Hook - 组合式模块化设计
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                      useRegexScripts Hook                                 ║
  * ║                                                                           ║
@@ -142,7 +147,7 @@ export function useRegexScripts({ characterId }: UseRegexScriptsOptions) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   导出工具函数（保持向后兼容）
+   导出工具函数
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export { filterScripts, sortScripts, truncateText } from "./utils/helpers";

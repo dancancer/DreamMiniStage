@@ -21,7 +21,7 @@ export class MemoryRetrievalNode extends NodeBase {
   protected async _call(input: NodeInput): Promise<NodeOutput> {
     const characterId = input.characterId;
     const userInput = input.userInput || "";
-    const systemMessage = input.systemMessage || "";
+    const messages = input.messages as Array<{ role: string; content: string }> | undefined;
     const apiKey = input.apiKey;
     const baseUrl = input.baseUrl;
     const language = input.language || "zh";
@@ -35,29 +35,29 @@ export class MemoryRetrievalNode extends NodeBase {
       throw new Error("API key is required for MemoryRetrievalNode");
     }
 
-    if (!systemMessage) {
-      throw new Error("System message is required for MemoryRetrievalNode");
+    if (!messages || messages.length === 0) {
+      throw new Error("messages[] is required for MemoryRetrievalNode");
     }
 
-    // Use the memory tool to retrieve and enhance system message with memories
+    // Use the memory tool to retrieve memories and inject into messages[]
     const result = await this.executeTool(
-      "retrieveAndEnhanceSystemMessage",
+      "retrieveAndInjectMemories",
       characterId,
       userInput,
-      systemMessage,
+      messages,
       apiKey,
       baseUrl,
       language,
       maxMemories,
     ) as {
-      enhancedSystemMessage: string;
+      messages: Array<{ role: string; content: string }>;
       memoryPrompt: string;
       retrievedMemories: unknown[];
       memoryCount: number;
     };
 
     return {
-      systemMessage: result.enhancedSystemMessage,
+      messages: result.messages,
       memoryPrompt: result.memoryPrompt,
       retrievedMemories: result.retrievedMemories,
       memoryCount: result.memoryCount,

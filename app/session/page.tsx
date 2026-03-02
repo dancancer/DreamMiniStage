@@ -1,4 +1,9 @@
 /**
+ * @input  react, next/navigation, next/link, app/i18n, components/*, hooks/*, lib/store/*, contexts/*
+ * @output SessionPage (default export)
+ * @pos    页面组件 - 会话交互页面，聊天/世界书/正则/预设管理
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                          Session Page Component                            ║
  * ║                                                                            ║
@@ -327,6 +332,9 @@ function SessionPageContent() {
             onSendSystem={(text) => dialogue.addRoleMessage("system", text)}
             onImpersonate={(text) => dialogue.addRoleMessage("assistant", text)}
             onContinue={dialogue.triggerGeneration}
+            onSwipe={dialogue.handleSwipe}
+            onExportJsonl={dialogue.exportJsonl}
+            onImportJsonl={dialogue.importJsonl}
           />
         ) : characterView === "worldbook" ? (
           <WorldBookEditor

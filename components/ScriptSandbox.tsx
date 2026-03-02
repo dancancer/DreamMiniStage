@@ -1,4 +1,9 @@
 /**
+ * @input  @/hooks
+ * @output ScriptSandbox
+ * @pos    脚本沙箱运行环境
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         ScriptSandbox 组件                                 ║
  * ║                                                                            ║
@@ -12,6 +17,11 @@
 import { useRef, useEffect, useCallback, useState, memo, useLayoutEffect } from "react";
 import type { ScriptMessageData } from "@/types/script-message";
 import { clearIframeListeners } from "@/hooks/script-bridge";
+import {
+  handleFunctionToolResult,
+  registerIframeDispatcher,
+  unregisterIframeDispatcher,
+} from "@/hooks/script-bridge/extension-handlers";
 
 // API Shim 脚本标签（实际代码位于 public/iframe-libs/slash-runner-shim.js）
 const SLASH_RUNNER_API_SHIM = "<script src=\"/iframe-libs/slash-runner-shim.js\"></script>";
@@ -44,6 +54,7 @@ export const ScriptSandbox = memo(function ScriptSandbox({
   const lastHeightRef = useRef(240);
   const heightChangedRef = useRef(false);
   const onHeightChangeRef = useRef(onHeightChange);
+  const iframeInternalIdRef = useRef<string | null>(null);
 
   // 保持回调引用最新，避免依赖数组变化
   onHeightChangeRef.current = onHeightChange;
@@ -101,6 +112,28 @@ export const ScriptSandbox = memo(function ScriptSandbox({
       // 控制台日志
       if (type === "CONSOLE_LOG" && onMessage) {
         onMessage(e.data);
+      }
+
+      // Function Tool 调用结果返回
+      if (type === "FUNCTION_TOOL_RESULT" && payload?.callbackId) {
+        handleFunctionToolResult(payload.callbackId, payload.result, payload.error);
+      }
+
+      // iframe shim 就绪，注册派发函数
+      if (type === "SHIM_READY" && payload?.iframeId) {
+        const iframeId = payload.iframeId as string;
+        iframeInternalIdRef.current = iframeId;
+
+        // 创建派发函数
+        const dispatcher = (msgType: string, msgPayload: unknown) => {
+          const iframeEl = iframeRef.current;
+          if (iframeEl?.contentWindow) {
+            iframeEl.contentWindow.postMessage({ type: msgType, payload: msgPayload }, "*");
+          }
+        };
+
+        registerIframeDispatcher(iframeId, dispatcher);
+        console.log("[ScriptSandbox] Registered dispatcher for iframe:", iframeId);
       }
     },
     [onMessage],
@@ -161,12 +194,16 @@ export const ScriptSandbox = memo(function ScriptSandbox({
   }, [handleMessage]);
 
   // ╔══════════════════════════════════════════════════════════════════╗
-  // ║  iframe 销毁时清理事件监听器                                       ║
+  // ║  iframe 销毁时清理事件监听器和派发函数                             ║
   // ╚══════════════════════════════════════════════════════════════════╝
   useEffect(() => {
     const sandboxId = id;
     return () => {
       clearIframeListeners(sandboxId);
+      // 清理 iframe 派发函数
+      if (iframeInternalIdRef.current) {
+        unregisterIframeDispatcher(iframeInternalIdRef.current);
+      }
     };
   }, [id]);
 

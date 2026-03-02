@@ -1,4 +1,9 @@
 /**
+ * @input  lib/plugins/plugin-types
+ * @output PluginManifest, PluginInstance, PluginEntry, PluginRegistry, PluginDiscovery (+ Window 扩展)
+ * @pos    类型定义层 - 扩展 Window 全局对象的插件系统类型
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         Global Type Declarations                          ║
  * ║                                                                            ║

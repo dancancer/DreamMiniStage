@@ -88,6 +88,15 @@ function parseSegment(segment: string): ParseResult<AstNode> {
   }
 
   const head = tokens[0];
+  // 纯块段：{: /cmd :} 直接解析内部脚本为一个 block 节点
+  if (head.kind === "block" && tokens.length === 1) {
+    const parsed = parseKernelScript(head.value);
+    if (parsed.isError) {
+      return { ok: false, error: parsed.errorMessage ?? "Invalid block" };
+    }
+    return { ok: true, value: { type: "block", body: parsed.script, raw: segment } };
+  }
+
   if (head.kind !== "word" || !head.value.startsWith("/")) {
     return { ok: false, error: `Invalid command head: ${head.raw}` };
   }

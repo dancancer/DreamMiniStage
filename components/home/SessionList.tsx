@@ -1,4 +1,9 @@
 /**
+ * @input  @/types, @/app
+ * @output SessionList, SessionListProps
+ * @pos    首页会话管理组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                           SessionList                                     ║
  * ║                                                                           ║

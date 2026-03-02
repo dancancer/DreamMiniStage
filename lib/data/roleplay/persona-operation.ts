@@ -1,4 +1,9 @@
 /**
+ * @input  lib/models/persona-model
+ * @output PersonaOperations
+ * @pos    Persona 辅助操作层,提供头像转换、导入导出等功能(核心 CRUD 在 persona-store)
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                        Persona Operations                                  ║
  * ║  Persona 辅助操作：头像处理、导入导出、批量操作                                ║

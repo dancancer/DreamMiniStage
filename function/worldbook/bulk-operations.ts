@@ -1,3 +1,10 @@
+/**
+ * @input  lib/data/roleplay/world-book-operation
+ * @output bulkToggleWorldBookEntries
+ * @pos    世界书批量操作 - 批量启用/禁用世界书条目
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
 
 export async function bulkToggleWorldBookEntries(

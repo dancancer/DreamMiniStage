@@ -77,8 +77,8 @@ describe("消息拼装回归测试", () => {
   let testOutput: TestOutput;
 
   const USER_INPUT = "推进剧情";
-  const CHARACTER_CARD_PATH = path.join(process.cwd(), "Sgw3.card.json");
-  const PRESET_PATH = path.join(process.cwd(), "明月秋青v3.94.json");
+  const CHARACTER_CARD_PATH = path.join(process.cwd(), "test-baseline-assets/character-card/Sgw3.card.json");
+  const PRESET_PATH = path.join(process.cwd(), "test-baseline-assets/preset/明月秋青v3.94.json");
 
   beforeAll(() => {
     // 加载角色卡
@@ -191,7 +191,12 @@ describe("消息拼装回归测试", () => {
       // 测试 MERGE 模式（合并连续同角色消息）
       const messagesMerge = promptManager.buildMessages(env, {
         postProcessingMode: PostProcessingMode.MERGE,
-        promptNames: { charName: "角色", userName: "用户", groupNames: [] },
+        promptNames: {
+          charName: "角色",
+          userName: "用户",
+          groupNames: [],
+          startsWithGroupName: () => false,
+        },
       });
       expect(messagesMerge.length).toBeGreaterThan(0);
 

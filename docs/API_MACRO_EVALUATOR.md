@@ -178,7 +178,6 @@ clearGlobalVariables(): void
 
 ### 1. preEnvMacros
 
-- 旧版占位符 (`<USER>`, `<BOT>`)
 - 变量宏 (`setvar`, `getvar`, `incvar`, `decvar`)
 - 工具宏 (`trim`, `newline`, `noop`)
 - 骰子宏 (`roll`)

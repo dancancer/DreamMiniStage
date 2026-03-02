@@ -522,7 +522,7 @@ interface HeaderBarProps {
 function HeaderBar({ characterName, stats, filteredCount, filterBy, serifFontClass, fontClass, t, onClose }: HeaderBarProps) {
   return (
     <div className="p-2 sm:p-3 border-b border-border bg-muted-surface relative overflow-hidden">
-      <div className="absolute inset-0 bg-linear-to-r from-primary-500/5 to-transparent opacity-50" />
+      <div className="absolute inset-0 bg-primary/5 opacity-50" />
       <div className="relative z-10 flex justify-between items-center min-h-8">
         <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
           <h2 className="text-base sm:text-lg font-medium text-cream-soft shrink-0">
@@ -564,7 +564,7 @@ function HeaderBar({ characterName, stats, filteredCount, filterBy, serifFontCla
           onClick={() => { trackButtonClick("page", "关闭正则编辑器"); onClose(); }}
           className="h-6 w-6 sm:h-7 sm:w-7 text-ink-soft hover:text-cream-soft hover:bg-stroke group shrink-0 ml-2"
         >
-          <X size={12} className="transition-transform duration-300 group-hover:scale-110" />
+          <X size={12} />
         </Button>
       </div>
     </div>
@@ -646,7 +646,7 @@ function Toolbar({
                 className="h-auto px-2 sm:px-3 py-1 sm:py-1.5 text-primary-soft hover:text-primary-soft text-xs sm:text-sm font-medium group shrink-0 border-border"
               >
                 <span className="flex items-center">
-                  <Plus size={10} className="mr-1 sm:mr-1.5 transition-transform duration-300 group-hover:scale-110" />
+                  <Plus size={10} className="mr-1 sm:mr-1.5" />
                   {t("regexScriptEditor.addNewScript")}
                 </span>
               </Button>
@@ -655,10 +655,10 @@ function Toolbar({
                 variant="outline"
                 onClick={onOpenImport}
                 disabled={readOnly || disableImport}
-                className="h-auto px-2 sm:px-3 py-1 sm:py-1.5 bg-linear-to-r from-overlay to-coal text-xs sm:text-sm font-medium group shrink-0 border-stroke-strong"
+                className="h-auto px-2 sm:px-3 py-1 sm:py-1.5 bg-overlay text-xs sm:text-sm font-medium group shrink-0 border-stroke-strong"
               >
                 <span className="flex items-center">
-                  <Download size={10} className="mr-1 sm:mr-1.5 transition-transform duration-300 group-hover:scale-110" />
+                  <Download size={10} className="mr-1 sm:mr-1.5" />
                   {t("regexScriptEditor.importScript")}
                 </span>
               </Button>

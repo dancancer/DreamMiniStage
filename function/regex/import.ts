@@ -1,3 +1,10 @@
+/**
+ * @input  lib/data/roleplay/regex-script-operation, lib/models/regex-script-model, lib/adapters/import, uuid
+ * @output ImportRegexScriptResult, importRegexScriptFromJson
+ * @pos    正则脚本导入 - 从 JSON 解析并导入正则脚本
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { RegexScriptOperations } from "@/lib/data/roleplay/regex-script-operation";
 import { RegexScript } from "@/lib/models/regex-script-model";
 import { importRegexScripts, canImportRegexScripts, NoAdapterMatchError } from "@/lib/adapters/import";
@@ -176,18 +183,4 @@ export async function importRegexScriptFromJson(
     result.message = `Import failed: ${errorMessage}`;
     return result;
   }
-}
-
-/**
- * 验证正则脚本 JSON 格式
- *
- * @deprecated 使用 canImportRegexScripts 代替
- * 此函数保留用于向后兼容
- */
-export function validateRegexScriptJson(jsonData: unknown): { valid: boolean; errors: string[] } {
-  const valid = canImportRegexScripts(jsonData);
-  return {
-    valid,
-    errors: valid ? [] : ["Unsupported JSON format"],
-  };
 }

@@ -1,4 +1,11 @@
 /**
+ * @input  @/components
+ * @output InlineUserInput
+ * @pos    内联用户输入组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
+/**
  * InlineUserInput Component
  * 
  * Provides an elegant inline user input interface inspired by cursor-style design.
@@ -83,7 +90,7 @@ const InlineUserInput: React.FC<InlineUserInputProps> = ({
         <div className="pl-6 mb-4">
           <div className="bg-black/20 border border-primary-500/25 rounded-xl p-4 mb-3 backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-1 h-4 bg-gradient-to-b from-primary-400 to-primary-600 rounded-full"></div>
+              <div className="w-1 h-4 bg-primary-500 rounded-full"></div>
               <span className="text-xs text-primary-400/90 font-medium tracking-wide">参考选项</span>
             </div>
             <div className="flex flex-wrap gap-2">

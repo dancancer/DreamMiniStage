@@ -187,15 +187,20 @@ export function extractCommands(inputText: string): MvuCommand[] {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 步骤2：提取 _.set() 等函数调用格式的命令
+  // 步骤2：规范化空白字符（支持多行命令）
+  // ═══════════════════════════════════════════════════════════════════════════
+  const normalizedText = inputText.replace(/\s+/g, " ");
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 步骤3：提取 _.set() 等函数调用格式的命令
   // ═══════════════════════════════════════════════════════════════════════════
   let i = 0;
 
-  while (i < inputText.length) {
+  while (i < normalizedText.length) {
     // 匹配 _.set(、_.assign( 等命令
-    const cmdMatch = inputText
+    const cmdMatch = normalizedText
       .substring(i)
-      .match(/_\.(set|insert|assign|remove|unset|delete|add)\(/);
+      .match(/_\.(set|insert|assign|remove|unset|delete|add)\s*\(/);
 
     if (!cmdMatch || cmdMatch.index === undefined) break;
 
@@ -204,41 +209,73 @@ export function extractCommands(inputText: string): MvuCommand[] {
     const openParen = cmdStart + cmdMatch[0].length;
 
     // 找到匹配的闭括号
-    const closeParen = findMatchingCloseParen(inputText, openParen);
+    const closeParen = findMatchingCloseParen(normalizedText, openParen);
     if (closeParen === -1) {
       i = openParen;
       continue;
     }
 
-    // 检查分号
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 分号可选（SillyTavern 兼容）
+    // ═══════════════════════════════════════════════════════════════════════════
     let endPos = closeParen + 1;
-    if (endPos >= inputText.length || inputText[endPos] !== ";") {
-      i = closeParen + 1;
-      continue;
+    const hasSemicolon = endPos < normalizedText.length && normalizedText[endPos] === ";";
+    if (hasSemicolon) {
+      endPos++;
     }
-    endPos++;
 
-    // 提取注释
+    // 提取注释（限制在下一个命令之前，或下一个空格之前）
     let comment = "";
-    const commentMatch = inputText.substring(endPos).match(/^\s*\/\/(.*)/);
+    const commentMatch = normalizedText.substring(endPos).match(/^\s*\/\/([^_]*?)(?=\s*_\.|$)/);
     if (commentMatch) {
       comment = commentMatch[1].trim();
       endPos += commentMatch[0].length;
     }
 
-    const fullMatch = inputText.substring(cmdStart, endPos);
-    const paramsString = inputText.substring(openParen, closeParen);
+    const fullMatch = normalizedText.substring(cmdStart, endPos);
+    const paramsString = normalizedText.substring(openParen, closeParen);
     const params = parseParameters(paramsString);
 
     // 验证命令有效性
     const isValid = validateCommand(commandType, params);
 
     if (isValid) {
+      const normalizedType = normalizeCommandType(commandType);
+      const parsedPath = trimQuotes(params[0]);
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // 解析 oldValue 和 newValue（SillyTavern 兼容）
+      // ═══════════════════════════════════════════════════════════════════════
+      let oldValue: unknown;
+      let newValue: unknown;
+
+      if (normalizedType === "set" || normalizedType === "insert") {
+        if (params.length >= 3) {
+          // _.set(path, oldValue, newValue)
+          oldValue = parseCommandValue(params[1]);
+          newValue = parseCommandValue(params[2]);
+        } else if (params.length >= 2) {
+          // _.set(path, newValue) 或 _.insert(path, value)
+          newValue = parseCommandValue(params[1]);
+        }
+      } else if (normalizedType === "delete") {
+        // _.delete(path) - 无 newValue
+      } else if (normalizedType === "add") {
+        // _.add(path) 或 _.add(path, delta)
+        if (params.length >= 2) {
+          newValue = parseCommandValue(params[1]);
+        }
+      }
+
       results.push({
-        type: normalizeCommandType(commandType),
+        type: normalizedType,
+        name: normalizedType,
         fullMatch,
         args: params,
         reason: comment,
+        path: parsedPath,
+        oldValue,
+        newValue,
       });
     }
 

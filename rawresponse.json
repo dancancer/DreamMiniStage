@@ -1,0 +1,8 @@
+{
+    "error": {
+        "message": "Invalid consecutive assistant message at message index 7",
+        "type": "invalid_request_error",
+        "param": null,
+        "code": "invalid_request_error"
+    }
+}

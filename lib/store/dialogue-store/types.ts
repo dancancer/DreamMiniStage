@@ -96,6 +96,13 @@ export interface DialogueState {
     params: RegenerateParams
   ) => Promise<void>;
 
+  // ========== Swipe 操作 ==========
+  switchSwipe: (
+    dialogueKey: string,
+    messageId: string,
+    target: "prev" | "next" | number
+  ) => Promise<void>;
+
   // ========== 导航操作 ==========
   navigateOpening: (dialogueKey: string, direction: "prev" | "next") => Promise<void>;
   truncateMessagesAfter: (dialogueKey: string, nodeId: string) => Promise<void>;

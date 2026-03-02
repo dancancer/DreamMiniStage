@@ -18,6 +18,14 @@ import type {
   WhileNode,
 } from "./types";
 import { ScopeChain } from "./scope";
+import {
+  getDebugMonitor,
+  createCommandStartEvent,
+  createCommandEndEvent,
+  createControlSignalEvent,
+  createScopeChangeEvent,
+  createScriptLifecycleEvent,
+} from "./debug";
 
 // =============================================================================
 //                              对外 API
@@ -27,25 +35,35 @@ export async function* runScript(
   script: AstNode[],
   options: ExecutorOptions,
 ): AsyncGenerator<ExecutionSnapshot, KernelExecutionResult> {
+  const monitor = getDebugMonitor();
+  const startTime = Date.now();
   const scope = options.scope ?? new ScopeChain();
   let pipe = options.initialPipe ?? "";
 
+  monitor.emit(createScriptLifecycleEvent("script:start", { nodeCount: script.length }));
+
   for (const node of script) {
-    const execResult = await executeNode(node, {
-      pipe,
-      scope,
-      options,
-    });
+    const execResult = await executeNode(node, { pipe, scope, options });
 
     pipe = execResult.pipe;
     const snapshot: ExecutionSnapshot = { node, pipe, signal: execResult.signal };
     yield snapshot;
 
     if (execResult.signal) {
+      monitor.emit(createControlSignalEvent(execResult.signal, node));
+      monitor.emit(createScriptLifecycleEvent("script:end", {
+        totalDuration: Date.now() - startTime,
+        finalPipe: pipe,
+        aborted: execResult.signal.kind === "abort",
+      }));
       return { pipe, signal: execResult.signal };
     }
   }
 
+  monitor.emit(createScriptLifecycleEvent("script:end", {
+    totalDuration: Date.now() - startTime,
+    finalPipe: pipe,
+  }));
   return { pipe };
 }
 
@@ -76,6 +94,7 @@ interface ExecResult {
 }
 
 async function executeNode(node: AstNode, ctx: ExecContext): Promise<ExecResult> {
+  if (node.type === "block") return runBlock(node.body, ctx);
   if (node.type === "command") return executeCommand(node, ctx);
   if (node.type === "if") return executeIf(node, ctx);
   if (node.type === "while") return executeWhile(node, ctx);
@@ -90,6 +109,8 @@ async function executeNode(node: AstNode, ctx: ExecContext): Promise<ExecResult>
 }
 
 async function executeCommand(node: CommandNode, ctx: ExecContext): Promise<ExecResult> {
+  const monitor = getDebugMonitor();
+
   if (node.name === "let" || node.name === "var") {
     return handleLet(node, ctx);
   }
@@ -98,6 +119,15 @@ async function executeCommand(node: CommandNode, ctx: ExecContext): Promise<Exec
   if (!descriptor) {
     return { pipe: ctx.pipe, signal: { kind: "abort", value: `Unknown command: /${node.name}` } };
   }
+
+  const startTime = Date.now();
+  monitor.emit(createCommandStartEvent(
+    node.name,
+    node.args,
+    node.namedArgs,
+    ctx.pipe,
+    node.raw,
+  ));
 
   try {
     const result = await descriptor.handler(
@@ -109,9 +139,11 @@ async function executeCommand(node: CommandNode, ctx: ExecContext): Promise<Exec
     );
 
     const nextPipe = typeof result === "string" ? result : ctx.pipe;
+    monitor.emit(createCommandEndEvent(node.name, startTime, nextPipe, true));
     return { pipe: nextPipe };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    monitor.emit(createCommandEndEvent(node.name, startTime, ctx.pipe, false, message));
     return { pipe: ctx.pipe, signal: { kind: "abort", value: `Command /${node.name} failed: ${message}` } };
   }
 }
@@ -155,7 +187,11 @@ async function executeTimes(node: TimesNode, ctx: ExecContext): Promise<ExecResu
 }
 
 async function runBlock(body: AstNode[], ctx: ExecContext): Promise<ExecResult> {
+  const monitor = getDebugMonitor();
   ctx.scope.push();
+  const depth = ctx.scope.depth();
+  monitor.emit(createScopeChangeEvent("scope:push", depth));
+
   try {
     let pipe = ctx.pipe;
     for (const node of body) {
@@ -166,6 +202,7 @@ async function runBlock(body: AstNode[], ctx: ExecContext): Promise<ExecResult> 
     return { pipe };
   } finally {
     ctx.scope.pop();
+    monitor.emit(createScopeChangeEvent("scope:pop", ctx.scope.depth()));
   }
 }
 

@@ -96,6 +96,7 @@ export {
   processMessageVariables,
   saveNodeVariables,
   initCharacterVariables,
+  initMvuVariablesFromWorldBooks,
 } from "./data/persistence";
 
 // ============================================================================

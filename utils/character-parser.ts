@@ -1,3 +1,10 @@
+/**
+ * @input  png-chunks-extract, png-chunks-encode, png-chunk-text
+ * @output writeCharacterToPng, readCharacterFromPng, parseCharacterCard
+ * @pos    角色卡解析器 - 读写 PNG 中的 chara/ccv3 元数据，支持 V2/V3 规范
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import extract from "png-chunks-extract";
 import encode from "png-chunks-encode";
 import PNGtext from "png-chunk-text";

@@ -117,7 +117,6 @@ export class DialogueWorkflow extends BaseWorkflow {
            
            输出：
            - chatHistoryMessages: 结构化历史消息数组 → PresetNode
-           - chatHistoryText: 压缩历史文本 → ContextNode
            - conversationContext: 短上下文 → memory/RAG 子系统
            ═══════════════════════════════════════════════════════════════════ */
         {
@@ -127,7 +126,7 @@ export class DialogueWorkflow extends BaseWorkflow {
           next: ["preset-1"],
           initParams: [],
           inputFields: ["dialogueKey", "characterId", "userInput"],
-          outputFields: ["chatHistoryMessages", "chatHistoryText", "conversationContext", "userInput"],
+          outputFields: ["chatHistoryMessages", "conversationContext", "userInput"],
         },
 
         /* ═══════════════════════════════════════════════════════════════════
@@ -141,15 +140,14 @@ export class DialogueWorkflow extends BaseWorkflow {
           next: ["context-1"],
           initParams: [],
           inputFields: ["characterId", "language", "username", "number", "fastModel", "systemPresetType", "dialogueKey", "userInput", "chatHistoryMessages"],
-          outputFields: ["systemMessage", "userMessage", "messages", "presetId"],
+          outputFields: ["messages", "presetId"],
           inputMapping: {
             "userInput": "currentUserInput",
           },
         },
 
         /* ═══════════════════════════════════════════════════════════════════
-           上下文节点：UI/兼容层，处理 userMessage 中的 {{chatHistory}} 文本替换
-           接收 chatHistoryText 用于兼容旧 preset 的文本替换
+           上下文节点：消息中转层（不做字符串兼容替换）
            ═══════════════════════════════════════════════════════════════════ */
         {
           id: "context-1",
@@ -157,8 +155,8 @@ export class DialogueWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["world-book-1"],
           initParams: [],
-          inputFields: ["userMessage", "dialogueKey", "characterId", "userInput", "messages", "chatHistoryText"],
-          outputFields: ["userMessage", "messages"],
+          inputFields: ["messages"],
+          outputFields: ["messages"],
         },
         {
           id: "world-book-1",
@@ -166,8 +164,8 @@ export class DialogueWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["llm-1"],
           initParams: [],
-          inputFields: ["systemMessage", "userMessage", "dialogueKey", "characterId", "language", "username", "userInput", "messages"],
-          outputFields: ["systemMessage", "userMessage", "messages"],
+          inputFields: ["dialogueKey", "characterId", "userInput", "messages"],
+          outputFields: ["messages"],
           inputMapping: {
             "userInput": "currentUserInput",
           },
@@ -178,7 +176,7 @@ export class DialogueWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["regex-1"],
           initParams: [],
-          inputFields: ["systemMessage", "userMessage", "messages", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "language", "streaming", "streamUsage", "dialogueKey", "characterId"],
+          inputFields: ["messages", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "language", "streaming", "streamUsage", "dialogueKey", "characterId"],
           outputFields: ["llmResponse"],
         },
         {

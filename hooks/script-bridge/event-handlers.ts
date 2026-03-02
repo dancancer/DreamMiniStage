@@ -1,4 +1,9 @@
 /**
+ * @input  hooks/script-bridge/types
+ * @output eventHandlers, registerListener, removeListener, clearIframeListeners, emitEvent
+ * @pos    事件系统 Handlers - iframe 作用域的事件监听器注册与管理
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         事件系统 Handlers                                  ║
  * ║                                                                            ║

@@ -1,3 +1,10 @@
+/**
+ * @input  @/app/i18n, @/components/ui
+ * @output PWAInstallButton
+ * @pos    PWA 安装按钮组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 "use client";
 
 import { useState } from "react";

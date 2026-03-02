@@ -1,4 +1,9 @@
 /**
+ * @input  hooks/script-bridge/types, types/character-dialogue
+ * @output messageHandlers
+ * @pos    消息操作 Handlers - SillyTavern 兼容的聊天消息 CRUD
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         消息操作 Handlers                                  ║
  * ║                                                                            ║

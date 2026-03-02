@@ -30,6 +30,7 @@ vi.mock("@/lib/vector-memory/manager", () => ({
 
 vi.mock("@/lib/mvu", () => ({
   processMessageVariables: (...args: unknown[]) => processMessageVariables(...args),
+  initMvuVariablesFromWorldBooks: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/lib/data/roleplay/character-dialogue-operation", () => ({

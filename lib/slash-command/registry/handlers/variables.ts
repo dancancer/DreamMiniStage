@@ -90,9 +90,12 @@ export const handleDumpVar: CommandHandler = async (_args, _namedArgs, ctx, pipe
 export const handleIncVar: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
   if (args.length === 0) return pipe;
   const key = args[0];
-  const amount = args.length > 1 ? parseFloat(args[1]) : 1;
+  const rawAmount = args.length > 1 ? parseFloat(args[1]) : 1;
+  const amount = Number.isFinite(rawAmount) ? rawAmount : 1;
   const current = ctx.getVariable(key);
-  const newValue = (typeof current === "number" ? current : 0) + amount;
+  const parsed = typeof current === "number" ? current : parseFloat(String(current));
+  const base = Number.isFinite(parsed) ? parsed : 0;
+  const newValue = base + amount;
   ctx.setVariable(key, newValue);
   return String(newValue);
 };
@@ -101,9 +104,12 @@ export const handleIncVar: CommandHandler = async (args, _namedArgs, ctx, pipe) 
 export const handleDecVar: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
   if (args.length === 0) return pipe;
   const key = args[0];
-  const amount = args.length > 1 ? parseFloat(args[1]) : 1;
+  const rawAmount = args.length > 1 ? parseFloat(args[1]) : 1;
+  const amount = Number.isFinite(rawAmount) ? rawAmount : 1;
   const current = ctx.getVariable(key);
-  const newValue = (typeof current === "number" ? current : 0) - amount;
+  const parsed = typeof current === "number" ? current : parseFloat(String(current));
+  const base = Number.isFinite(parsed) ? parsed : 0;
+  const newValue = base - amount;
   ctx.setVariable(key, newValue);
   return String(newValue);
 };

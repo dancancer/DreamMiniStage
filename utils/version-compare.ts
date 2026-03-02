@@ -1,4 +1,11 @@
 /**
+ * @input  (none)
+ * @output isUpdateAvailable, fetchLatestRelease
+ * @pos    版本比较工具 - 语义版本比较与 GitHub Release 更新检测
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
+/**
  * Compare two semantic version strings
  * @param current Current version (e.g., "0.1.0")
  * @param latest Latest version (e.g., "1.1.5")

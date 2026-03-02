@@ -188,5 +188,9 @@ export function getExpectedPrefix(name: string, names: PromptNames): string {
   if (name === "example_user") {
     return names.userName ? `${names.userName}: ` : "";
   }
+  // 群聊成员名
+  if (names.groupNames.includes(name)) {
+    return `${name}: `;
+  }
   return name ? `${name}: ` : "";
 }

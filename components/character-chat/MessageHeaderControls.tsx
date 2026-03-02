@@ -1,4 +1,9 @@
 /**
+ * @input  @/utils, @/components
+ * @output MessageHeaderControls
+ * @pos    角色对话交互组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                    Message Header Controls Component                       ║
  * ║                                                                            ║

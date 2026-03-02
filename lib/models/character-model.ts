@@ -1,4 +1,11 @@
 /**
+ * @input  无外部依赖
+ * @output CharacterData, TavernHelperScript, TavernHelperScriptValue
+ * @pos    角色卡数据模型,定义角色基本信息、扩展属性、脚本配置
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
+/**
  * TavernHelper Script Button Configuration
  */
 export interface TavernHelperScriptButton {

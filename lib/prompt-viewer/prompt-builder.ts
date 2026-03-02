@@ -13,11 +13,12 @@
 
 import type { PromptData, PromptImage, PromptMessage } from "@/types/prompt-viewer";
 import { generateId } from "@/lib/prompt-viewer/constants";
-import { useDialogueStore } from "@/lib/store/dialogue-store";
+import { useDialogueStore } from "@/lib/store/dialogue-store/index";
 import { PresetNodeTools } from "@/lib/nodeflow/PresetNode/PresetNodeTools";
 import { WorldBookNodeTools } from "@/lib/nodeflow/WorldBookNode/WorldBookNodeTools";
 import { HistoryPreNodeTools } from "@/lib/nodeflow/HistoryPreNode/HistoryPreNodeTools";
 import { getCurrentSystemPresetType } from "@/function/preset/download";
+import type { ChatMessage } from "@/lib/core/st-preset-types";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    图片提取工具
@@ -140,10 +141,6 @@ export async function buildPromptFromDialogue(
     dialogueKey,
     10,
   );
-  const chatHistoryText = await HistoryPreNodeTools.getChatHistoryText(
-    dialogueKey,
-    10,
-  );
 
   /* ═══════════════════════════════════════════════════════════════════════════
      Step 2: PresetNode - 使用 STPromptManager 构建消息数组
@@ -167,33 +164,38 @@ export async function buildPromptFromDialogue(
      Step 3: WorldBookNode - 注入世界书内容
      Requirements: 4.1
      ═══════════════════════════════════════════════════════════════════════════ */
-  const worldBookResult = await WorldBookNodeTools.assemblePromptWithWorldBook(
-    characterId,
-    presetResult.systemMessage,
-    presetResult.userMessage,
-    currentUserInput,
-    "zh",
-    5,
-    "用户",
-    undefined,
-    dialogueKey,
-  );
+  const baseMessages: ChatMessage[] = presetResult.messages || [];
 
-  const { systemMessage, userMessage } = worldBookResult;
+  const worldBookMessages = baseMessages.length > 0
+    ? await WorldBookNodeTools.modifyMessages(
+      characterId,
+      baseMessages,
+      currentUserInput,
+      dialogueKey,
+    )
+    : baseMessages;
+
+  const systemMessage = worldBookMessages
+    .filter(m => m.role === "system")
+    .map(m => m.content)
+    .join("\n\n");
+
+  const lastUserMessage = [...worldBookMessages].reverse().find(m => m.role === "user")?.content;
+  const userMessage = lastUserMessage || currentUserInput;
+
   const fullPrompt = buildFullPromptText(systemMessage, userMessage, dialogueMessages);
 
   /* ═══════════════════════════════════════════════════════════════════════════
      Step 4: 构建最终消息数组
-     优先使用 presetResult.messages（已由 STPromptManager 展开 chatHistory）
-     若无则回退为 system + user
+     使用注入世界书后的 worldBookMessages
+     若无则仅回退当前用户输入，避免再引入字符串兼容层
      Requirements: 1.1
      ═══════════════════════════════════════════════════════════════════════════ */
-  const llmMessages = presetResult.messages && presetResult.messages.length > 0
-    ? presetResult.messages.map(m => ({ role: m.role, content: m.content }))
-    : [
-      { role: "system", content: systemMessage },
-      { role: "user", content: userMessage },
-    ];
+  const llmMessages = worldBookMessages.length > 0
+    ? worldBookMessages.map(m => ({ role: m.role, content: m.content }))
+    : currentUserInput
+      ? [{ role: "user", content: currentUserInput }]
+      : [];
 
   const promptMessages: PromptMessage[] = llmMessages.map(msg => ({
     id: generateId("msg"),

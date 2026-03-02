@@ -135,6 +135,7 @@ export function mergeContent(
  * 处理逻辑：
  * - example_assistant → charName 前缀
  * - example_user → userName 前缀
+ * - 群聊成员名 → 成员名前缀
  * - 普通 name → name 前缀
  * - system 角色不添加前缀
  * - 处理后移除 name 字段
@@ -172,7 +173,7 @@ export function normalizeNames(
 
     // 检查是否已有前缀（幂等性）
     const textContent = getTextContent(msg.content);
-    if (textContent.startsWith(prefix)) {
+    if (textContent.startsWith(prefix) || names.startsWithGroupName(textContent)) {
       const { name: _, ...rest } = msg;
       return rest as ExtendedChatMessage;
     }
@@ -189,6 +190,12 @@ export function normalizeNames(
 /**
  * 解析名称前缀
  *
+ * 优先级：
+ * 1. example_assistant → charName
+ * 2. example_user → userName
+ * 3. 群聊成员名 → 成员名
+ * 4. 普通 name → name
+ *
  * @param name - 消息的 name 字段
  * @param names - 角色名称集合
  * @returns 前缀字符串（含 ": " 后缀），或空字符串
@@ -200,6 +207,11 @@ function resolveNamePrefix(name: string, names: PromptNames): string {
 
   if (name === "example_user") {
     return names.userName ? `${names.userName}: ` : "";
+  }
+
+  // 检查是否为群聊成员名
+  if (names.groupNames.includes(name)) {
+    return `${name}: `;
   }
 
   // 普通 name：直接使用

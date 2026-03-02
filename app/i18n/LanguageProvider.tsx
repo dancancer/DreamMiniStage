@@ -1,3 +1,10 @@
+/**
+ * @input  react, app/i18n/index, app/i18n/fonts, hooks/useLocalStorage
+ * @output LanguageProvider
+ * @pos    语言 Provider - 管理语言切换、翻译函数与字体类名状态
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 "use client";
 
 import { ReactNode, useEffect, useMemo, useState } from "react";

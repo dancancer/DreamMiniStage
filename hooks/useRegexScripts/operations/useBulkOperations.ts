@@ -1,4 +1,9 @@
 /**
+ * @input  lib/data/roleplay/regex-script-operation, function/regex/global
+ * @output useBulkOperations
+ * @pos    正则脚本批量操作 Hook - 批量启用/禁用/删除/导出
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                    Bulk Operations Hook                                   ║
  * ║                                                                           ║

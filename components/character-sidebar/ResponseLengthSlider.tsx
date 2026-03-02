@@ -1,4 +1,9 @@
 /**
+ * @input  React, UI 基础组件
+ * @output ResponseLengthSlider
+ * @pos    角色侧边栏配置组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                      Response Length Slider                               ║
  * ║                                                                           ║
@@ -49,7 +54,7 @@ const ResponseLengthSlider: React.FC<ResponseLengthSliderProps> = ({
         {/* 填充区域 + 隐藏的原生滑块 */}
         <div className="relative w-full h-1.5 rounded-full overflow-hidden">
           <div
-            className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary-500 to-primary-400 transition-all duration-200"
+            className="absolute left-0 top-0 h-full bg-primary transition-all duration-200"
             style={{
               width: `${percentage}%`,
               clipPath: "polygon(0 100%, calc(100% - 5px) 100%, 100% 0, 5px 0, 0 100%)",

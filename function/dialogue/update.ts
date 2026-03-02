@@ -1,3 +1,10 @@
+/**
+ * @input  lib/data/roleplay/character-record-operation
+ * @output updateCharacter
+ * @pos    角色更新 - 更新角色数据
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 
 export async function updateCharacter(

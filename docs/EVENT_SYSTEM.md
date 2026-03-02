@@ -245,4 +245,4 @@ DreamMiniStage 的事件系统设计兼容 SillyTavern 的 `eventSource`：
 
 - [Preset 格式说明](./PRESET_FORMAT.md)
 - [宏系统参考](./MACRO_REFERENCE.md)
-- [SillyTavern 兼容性分析](./sillytavern-gap-analysis.md)
+- [SillyTavern 兼容性分析](./analysis/sillytavern-integration-gap-2026-03.md)

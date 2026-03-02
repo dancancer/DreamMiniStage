@@ -1,4 +1,9 @@
 /**
+ * @input  @/components, @/utils
+ * @output HeaderBar
+ * @pos    正则脚本编辑器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                        Header Bar Component                               ║
  * ║                                                                           ║
@@ -9,7 +14,7 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackButtonClick } from "@/utils/google-analytics";
-import type { FilterType } from "@/hooks/useRegexScripts";
+import type { FilterType } from "@/hooks/useRegexScripts/index";
 
 interface HeaderBarProps {
   characterName: string;
@@ -34,7 +39,7 @@ export function HeaderBar({
 }: HeaderBarProps) {
   return (
     <div className="p-2 sm:p-3 border-b border-border bg-muted-surface relative overflow-hidden">
-      <div className="absolute inset-0 bg-linear-to-r from-primary-500/5 to-transparent opacity-50" />
+      <div className="absolute inset-0 bg-primary/5 opacity-50" />
       <div className="relative z-10 flex justify-between items-center min-h-8">
         <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
           <h2 className="text-base sm:text-lg font-medium text-cream-soft shrink-0">
@@ -82,7 +87,7 @@ export function HeaderBar({
           }}
           className="h-6 w-6 sm:h-7 sm:w-7 text-ink-soft hover:text-cream-soft hover:bg-stroke group shrink-0 ml-2"
         >
-          <X size={12} className="transition-transform duration-300 group-hover:scale-110" />
+          <X size={12} />
         </Button>
       </div>
     </div>

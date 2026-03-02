@@ -1,4 +1,9 @@
 /**
+ * @input  @/contexts, @/lib, @/components
+ * @output RightPanel
+ * @pos    应用布局组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔════════════════════════════════════════════════════════════════════╗
  * ║                             RightPanel 抽屉                         ║
  * ║  通过 panelId 映射渲染内容，所有入口集中于左侧导航。                   ║
@@ -21,6 +26,7 @@ import { WorldbookPanel } from "@/components/panels/WorldbookPanel";
 import { RegexPanel } from "@/components/panels/RegexPanel";
 import { PresetsPanel } from "@/components/panels/PresetsPanel";
 import { AdvancedSettingsPanel } from "@/components/panels/AdvancedSettingsPanel";
+import { SettingsHubPanel } from "@/components/panels/SettingsHubPanel";
 
 const PANEL_META: Record<PanelId, { title: string; description: string }> = {
   characters: { title: "角色卡", description: "管理与编辑角色卡信息。" },
@@ -32,6 +38,7 @@ const PANEL_META: Record<PanelId, { title: string; description: string }> = {
   tagColors: { title: "标签颜色", description: "调整标签颜色方案。" },
   advancedSettings: { title: "高级设置", description: "高级选项与偏好。" },
   data: { title: "数据管理", description: "导入/导出与云端同步。" },
+  settingsHub: { title: "设置菜单", description: "集中管理模型、插件、标签、数据与向量检索。" },
 };
 
 function PanelPlaceholder({ panelId }: { panelId: PanelId }) {
@@ -59,6 +66,7 @@ const PANEL_COMPONENTS: Record<PanelId, () => React.ReactNode> = {
   tagColors: TagColorsPanel,
   advancedSettings: AdvancedSettingsPanel,
   data: DataPanel,
+  settingsHub: SettingsHubPanel,
 };
 
 export default function RightPanel() {

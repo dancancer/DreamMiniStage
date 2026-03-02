@@ -96,21 +96,17 @@ export class CharacterTool extends BaseTool {
     if (parameters.mes_example) characterUpdates.mes_example = parameters.mes_example as string;
     if (parameters.creator_notes) characterUpdates.creator_notes = parameters.creator_notes as string;
     if (parameters.alternate_greetings) {
-      // Support both array and comma-separated string formats
       if (Array.isArray(parameters.alternate_greetings)) {
         characterUpdates.alternate_greetings = parameters.alternate_greetings.filter((greeting: string) => greeting && greeting.trim().length > 0);
-      } else if (typeof parameters.alternate_greetings === "string") {
-        // Convert comma-separated string to array for backward compatibility
-        characterUpdates.alternate_greetings = parameters.alternate_greetings.split("|").map((greeting: string) => greeting.trim()).filter((greeting: string) => greeting.length > 0);
+      } else {
+        return this.createFailureResult("CHARACTER tool requires 'alternate_greetings' to be an array of strings.");
       }
     }
     if (parameters.tags) {
-      // Support both array and comma-separated string formats
       if (Array.isArray(parameters.tags)) {
         characterUpdates.tags = parameters.tags.filter((tag: string) => tag && tag.trim().length > 0);
-      } else if (typeof parameters.tags === "string") {
-        // Convert comma-separated string to array for backward compatibility
-        characterUpdates.tags = parameters.tags.split(",").map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0);
+      } else {
+        return this.createFailureResult("CHARACTER tool requires 'tags' to be an array of strings.");
       }
     }
 

@@ -1,3 +1,10 @@
+/**
+ * @input  react, hooks/useLocalStorage
+ * @output ThemeProvider, useTheme
+ * @pos    主题状态层 - 管理 light/dark 模式切换与本地持久化
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 "use client";
 
 import { createContext, useContext, useEffect, useMemo } from "react";

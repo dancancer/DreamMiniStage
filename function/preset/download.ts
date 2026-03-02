@@ -1,3 +1,10 @@
+/**
+ * @input  function/preset/import, lib/data/roleplay/preset-operation, lib/storage/client-storage, lib/nodeflow/PresetNode/PresetNodeTools
+ * @output getAvailableGithubPresets, getPresetDisplayName, getPresetDescription, getCurrentSystemPresetType
+ * @pos    预设下载层 - GitHub 预设仓库集成与系统预设管理
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { importPresetFromJson } from "@/function/preset/import";
 import { PresetOperations } from "@/lib/data/roleplay/preset-operation";
 import { getJSON, setJSON } from "@/lib/storage/client-storage";

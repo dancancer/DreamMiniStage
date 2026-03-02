@@ -1,3 +1,10 @@
+/**
+ * @input  lib/data/roleplay/world-book-operation, lib/models/world-book-model
+ * @output saveAdvancedWorldBookEntry
+ * @pos    世界书条目编辑 - 保存高级世界书条目
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
 import { WorldBookEntry } from "@/lib/models/world-book-model";
 

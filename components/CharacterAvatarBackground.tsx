@@ -1,3 +1,10 @@
+/**
+ * @input  @/lib
+ * @output CharacterAvatarBackground
+ * @pos    角色头像背景组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 import { useEffect, useState } from "react";
 import { getBlob } from "@/lib/data/local-storage";
 

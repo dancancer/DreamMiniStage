@@ -1,4 +1,11 @@
 /**
+ * @input  @/app, @/utils, @/function, @/components, @/lib
+ * @output EditCharacterModal
+ * @pos    角色编辑模态框
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
+/**
  * Edit Character Modal Component
  * 
  * This component provides a comprehensive character editing interface with the following features:

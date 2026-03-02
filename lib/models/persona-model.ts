@@ -1,4 +1,9 @@
 /**
+ * @input  无外部依赖
+ * @output Persona, PersonaDescriptionPosition, PersonaConnection, PersonaLockType, createDefaultPersona
+ * @pos    Persona 数据模型定义,支持多身份管理、注入配置、角色连接
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                           Persona 数据模型                                 ║
  * ║                                                                            ║

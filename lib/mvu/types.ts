@@ -125,10 +125,25 @@ export type CommandName = "set" | "insert" | "assign" | "remove" | "unset" | "de
 
 /** 解析后的命令 */
 export interface MvuCommand {
+  /** 命令类型（内部使用） */
   type: CommandName;
+  /** 命令名称（SillyTavern 兼容别名，同 type） */
+  name: CommandName;
+  /** 原始匹配文本 */
   fullMatch: string;
+  /** 原始参数数组 */
   args: string[];
+  /** 注释/原因 */
   reason: string;
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SillyTavern 兼容字段（从 args 解析）
+  // ═══════════════════════════════════════════════════════════════════════════
+  /** 变量路径 */
+  path: string;
+  /** 旧值（set 命令的第二个参数，如果有三个参数的话） */
+  oldValue?: unknown;
+  /** 新值（set 命令的最后一个参数） */
+  newValue?: unknown;
 }
 
 /** 命令执行结果 */

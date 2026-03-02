@@ -1,4 +1,9 @@
 /**
+ * @input  lib/models/regex-script-model, function/regex/global
+ * @output SortField, SortOrder, FilterType, ScriptWithKey, SourceScripts, UseRegexScriptsOptions, ExportOptions, ExportResult, DEFAULT_SETTINGS
+ * @pos    正则脚本类型定义 - useRegexScripts Hook 类型
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                  useRegexScripts Types                                    ║
  * ║                                                                           ║

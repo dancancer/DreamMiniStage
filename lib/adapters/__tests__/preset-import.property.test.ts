@@ -14,22 +14,13 @@ import * as fc from "fast-check";
 import {
   importPreset,
   canImportPreset,
-  convertLegacyPlaceholders,
-  hasLegacyPlaceholders,
   convertPromptOrder,
   normalizePreset,
-  type NormalizedPreset,
-  type NormalizedPresetPrompt,
 } from "../import/preset-import";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    生成器定义
    ═══════════════════════════════════════════════════════════════════════════ */
-
-/**
- * Legacy 占位符列表
- */
-const LEGACY_PLACEHOLDERS = ["<USER>", "<BOT>", "<CHAR>", "<GROUP>", "<CONTEXT>", "<USERINPUT>"];
 
 /**
  * 现代占位符列表
@@ -43,17 +34,6 @@ const MODERN_PLACEHOLDERS = [
   "{{persona}}",
   "{{description}}",
 ];
-
-/**
- * 生成包含 legacy 占位符的内容
- */
-const legacyContentArb = fc
-  .tuple(
-    fc.string({ minLength: 0, maxLength: 50 }),
-    fc.constantFrom(...LEGACY_PLACEHOLDERS),
-    fc.string({ minLength: 0, maxLength: 50 }),
-  )
-  .map(([before, placeholder, after]) => `${before}${placeholder}${after}`);
 
 /**
  * 生成包含现代占位符的内容
@@ -81,16 +61,6 @@ const rawPromptArb = fc.record({
   enabled: fc.option(fc.boolean(), { nil: undefined }),
   marker: fc.option(fc.boolean(), { nil: undefined }),
   role: fc.option(fc.constantFrom("system", "user", "assistant"), { nil: undefined }),
-});
-
-/**
- * 生成包含 legacy 占位符的 Prompt
- */
-const legacyPromptArb = fc.record({
-  identifier: identifierArb,
-  name: fc.option(fc.string({ minLength: 1, maxLength: 50 }), { nil: undefined }),
-  content: fc.option(legacyContentArb, { nil: undefined }),
-  enabled: fc.option(fc.boolean(), { nil: undefined }),
 });
 
 /**
@@ -149,84 +119,11 @@ const sillyTavernPresetArb = fc
     return { name, prompts, prompt_order: adjustedOrder };
   });
 
-/**
- * 生成包含 legacy 占位符的 Preset
- */
-const legacyPlaceholderPresetArb = fc.record({
-  name: fc.string({ minLength: 1, maxLength: 50 }),
-  prompts: fc.array(legacyPromptArb, { minLength: 1, maxLength: 10 }),
-});
-
 /* ═══════════════════════════════════════════════════════════════════════════
    Property 2: 导入格式规范化 Round-Trip
    ═══════════════════════════════════════════════════════════════════════════ */
 
 describe("Property 2: 导入格式规范化 Round-Trip", () => {
-  /**
-   * **Feature: compatibility-debt-remediation, Property 2**
-   * **Validates: Requirements 3.1, 4.2**
-   *
-   * 所有 legacy 占位符应该被转换为现代格式
-   */
-  it("*For any* content with legacy placeholders, convertLegacyPlaceholders SHALL convert them to modern format", () => {
-    fc.assert(
-      fc.property(legacyContentArb, (content) => {
-        const result = convertLegacyPlaceholders(content);
-
-        // 结果不应该包含 legacy 占位符
-        expect(hasLegacyPlaceholders(result)).toBe(false);
-
-        // 结果应该包含至少一个现代格式占位符（如果原内容有 legacy 占位符）
-        if (hasLegacyPlaceholders(content)) {
-          expect(result.includes("{{")).toBe(true);
-        }
-      }),
-      { numRuns: 100 },
-    );
-  });
-
-  /**
-   * **Feature: compatibility-debt-remediation, Property 2**
-   * **Validates: Requirements 3.1**
-   *
-   * 现代格式占位符应该保持不变
-   */
-  it("*For any* content with modern placeholders only, convertLegacyPlaceholders SHALL preserve them", () => {
-    fc.assert(
-      fc.property(modernContentArb, (content) => {
-        const result = convertLegacyPlaceholders(content);
-
-        // 现代格式不应该被修改（除非恰好包含 legacy 格式）
-        if (!hasLegacyPlaceholders(content)) {
-          expect(result).toBe(content);
-        }
-      }),
-      { numRuns: 100 },
-    );
-  });
-
-  /**
-   * **Feature: compatibility-debt-remediation, Property 2**
-   * **Validates: Requirements 3.2, 4.2**
-   *
-   * 导入后的 Preset 不应该包含 legacy 占位符
-   */
-  it("*For any* preset with legacy placeholders, after import, prompts SHALL contain only modern format", () => {
-    fc.assert(
-      fc.property(legacyPlaceholderPresetArb, (preset) => {
-        const normalized = normalizePreset(preset);
-
-        // 检查所有 prompt 内容
-        for (const prompt of normalized.prompts) {
-          if (prompt.content) {
-            expect(hasLegacyPlaceholders(prompt.content)).toBe(false);
-          }
-        }
-      }),
-      { numRuns: 100 },
-    );
-  });
-
   /**
    * **Feature: compatibility-debt-remediation, Property 2**
    * **Validates: Requirements 3.5**
@@ -244,9 +141,9 @@ describe("Property 2: 导入格式规范化 Round-Trip", () => {
           expect(prompt.position).toBeDefined();
           expect(typeof prompt.position).toBe("number");
 
-          // 内容不应该包含 legacy 占位符
+          // 内容应保持原样传递（仅做排序结构规范化）
           if (prompt.content) {
-            expect(hasLegacyPlaceholders(prompt.content)).toBe(false);
+            expect(typeof prompt.content).toBe("string");
           }
         }
       }),

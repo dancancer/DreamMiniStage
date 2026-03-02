@@ -1,3 +1,10 @@
+/**
+ * @input  function/data/google-request, lib/storage/client-storage
+ * @output getGoogleLoginUrl, getGoogleToken, refreshGoogleToken, getGoogleCodeByUrl, backupToGoogle, getFolderList, getBackUpFile
+ * @pos    Google Drive 控制 - OAuth 认证与云端备份操作
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { createRequest } from "@/function/data/google-request";
 import { getString, setString } from "@/lib/storage/client-storage";
 

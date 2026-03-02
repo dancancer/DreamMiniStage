@@ -1,4 +1,9 @@
 /**
+ * @input  (none)
+ * @output PromptImage, PromptMessage, PromptData, SearchResult, SearchState, ViewerUIState, PromptViewerState, PromptInterceptor, SearchProcessor, PromptViewerActions, PromptViewerError, PROMPT_VIEWER_CONSTANTS, PROMPT_VIEWER_CLASSES ...
+ * @pos    类型定义层 - 提示词查看器的完整类型系统与常量
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                     提示词查看器类型定义                                    ║
  * ║                                                                            ║

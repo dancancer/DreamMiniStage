@@ -1,4 +1,9 @@
 /**
+ * @input  lib/store/script-variables, hooks/script-bridge, types/character-dialogue, types/script-message, lib/slash-command/types
+ * @output useScriptBridge, ScriptStatus
+ * @pos    脚本桥接 Hook - 脚本系统与 React 组件之间的通信层
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         useScriptBridge Hook                               ║
  * ║                                                                            ║
@@ -30,6 +35,7 @@ export interface ScriptStatus {
 interface UseScriptBridgeOptions {
   characterId?: string;
   characterName?: string;
+  dialogueId?: string;
   messages?: DialogueMessage[];
   maxStatusHistory?: number;
   // ─── Slash Command 回调 ───
@@ -58,6 +64,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
   const {
     characterId,
     characterName,
+    dialogueId,
     messages = [],
     maxStatusHistory = 50,
     onSend,
@@ -105,6 +112,9 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
         console.log("[useScriptBridge] 处理 API_CALL:", method, "args:", args);
         const result = await handleApiCall(method, args, {
           characterId,
+          dialogueId,
+          chatId: dialogueId,
+          messageId: messagesRef.current[messagesRef.current.length - 1]?.id,
           messages: messagesRef.current,  // 通过 ref 获取最新 messages
           setScriptVariable,
           deleteScriptVariable,
@@ -147,6 +157,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     },
     [
       characterId,
+      dialogueId,
       setScriptVariable,
       deleteScriptVariable,
       maxStatusHistory,

@@ -1,4 +1,9 @@
 /**
+ * @input  @/lib
+ * @output isMobileDevice, isTouchDevice, useMobileDetection, MOBILE_STYLES, getResponsiveStyles, useMobileStyles, useTouchGestures, useVirtualKeyboard, useSafeArea, MOBILE_PERFORMANCE, getMobileOptimizedStyles, mobileUtils
+ * @pos    提示词查看器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                    提示词查看器移动端适配                                  ║
  * ║                                                                           ║

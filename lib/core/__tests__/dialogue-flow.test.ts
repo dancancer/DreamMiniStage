@@ -23,7 +23,7 @@ describe("完整对话流程集成测试", () => {
 
   beforeAll(() => {
     // 加载真实 Preset
-    const filePath = join(process.cwd(), "明月秋青v3.94.json");
+    const filePath = join(process.cwd(), "test-baseline-assets/preset/明月秋青v3.94.json");
     const fileContent = readFileSync(filePath, "utf-8");
     presetData = JSON.parse(fileContent);
 

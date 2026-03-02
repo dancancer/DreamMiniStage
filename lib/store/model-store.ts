@@ -1,4 +1,9 @@
 /**
+ * @input  zustand
+ * @output useModelStore, APIConfig, LLMType
+ * @pos    模型配置状态管理,管理多个 LLM API 配置与激活状态
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                         Model Configuration Store                         ║
  * ║                                                                           ║

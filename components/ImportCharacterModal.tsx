@@ -1,4 +1,9 @@
 /**
+ * @input  @/app, @/utils, @/function, @/lib, @/components
+ * @output ImportCharacterModal
+ * @pos    角色导入模态框
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                    Import Character Modal Component                        ║
  * ║                                                                            ║

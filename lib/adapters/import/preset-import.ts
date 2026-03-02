@@ -3,7 +3,6 @@
 
    设计理念：
    - 边界转换：在导入时一次性完成所有格式规范化
-   - Legacy Placeholder 转换：<USER> → {{user}}
    - prompt_order → group_id/position 转换
    - 消除运行时格式检测
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -41,9 +40,7 @@ interface RawPreset {
   [key: string]: unknown;
 }
 
-/**
- * 原始 PresetPrompt（可能包含旧格式占位符）
- */
+/** 原始 PresetPrompt */
 interface RawPresetPrompt {
   identifier: string;
   name?: string;
@@ -54,52 +51,6 @@ interface RawPresetPrompt {
   group_id?: string | number;
   position?: number;
   [key: string]: unknown;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Legacy Placeholder 转换
-   ───────────────────────────────────────────────────────────────────────────── */
-
-/**
- * Legacy 占位符映射表
- *
- * SillyTavern 旧版使用大写尖括号格式
- * 现代版本使用双花括号格式
- */
-const LEGACY_PLACEHOLDER_MAP: Record<string, string> = {
-  "<USER>": "{{user}}",
-  "<BOT>": "{{char}}",
-  "<CHAR>": "{{char}}",
-  "<GROUP>": "{{group}}",
-  "<CHARIFNOTGROUP>": "{{charifnotgroup}}",
-  "<CONTEXT>": "{{scenario}}",
-  "<USERINPUT>": "{{lastUserMessage}}",
-};
-
-/**
- * 将 legacy 占位符转换为现代格式
- *
- * @param content - 可能包含旧格式占位符的内容
- * @returns 转换后的内容
- */
-export function convertLegacyPlaceholders(content: string): string {
-  if (!content) return content;
-
-  let result = content;
-  for (const [legacy, modern] of Object.entries(LEGACY_PLACEHOLDER_MAP)) {
-    result = result.replace(new RegExp(legacy, "gi"), modern);
-  }
-  return result;
-}
-
-/**
- * 检查内容是否包含 legacy 占位符
- */
-export function hasLegacyPlaceholders(content: string): boolean {
-  if (!content) return false;
-  return Object.keys(LEGACY_PLACEHOLDER_MAP).some((legacy) =>
-    new RegExp(legacy, "i").test(content),
-  );
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -187,7 +138,6 @@ export function convertPromptOrder(
 /**
  * 规范化单个 Prompt
  *
- * - 转换 legacy 占位符
  * - 确保 group_id/position 存在
  */
 function normalizePrompt(prompt: RawPresetPrompt & {
@@ -200,7 +150,7 @@ function normalizePrompt(prompt: RawPresetPrompt & {
     enabled: prompt.enabled !== false,
     marker: prompt.marker,
     role: prompt.role,
-    content: prompt.content ? convertLegacyPlaceholders(prompt.content) : prompt.content,
+    content: prompt.content,
     forbid_overrides: prompt.forbid_overrides as boolean | undefined,
     injection_position: prompt.injection_position as number | undefined,
     injection_depth: prompt.injection_depth as number | undefined,
@@ -241,8 +191,7 @@ function hasPromptOrder(preset: RawPreset): preset is RawPreset & { prompt_order
  * 规范化 Preset
  *
  * 1. 如果有 prompt_order，转换为 group_id/position
- * 2. 转换所有 prompt 中的 legacy 占位符
- * 3. 移除 prompt_order 字段
+ * 2. 移除 prompt_order 字段
  */
 export function normalizePreset(raw: RawPreset): NormalizedPreset {
   const prompts = raw.prompts ?? [];

@@ -181,7 +181,7 @@ export function createTavernHelper(
   // ═══════════════════════════════════════════════════════════════════════
   const getDialogueStore = () => {
     try {
-      const { dialogueStore } = require("@/lib/store/dialogue-store");
+      const { dialogueStore } = require("@/lib/store/dialogue-store/index");
       return dialogueStore;
     } catch {
       // 测试环境或模块未加载时的fallback

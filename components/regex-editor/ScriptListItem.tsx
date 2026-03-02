@@ -1,4 +1,9 @@
 /**
+ * @input  @/lib, @/components
+ * @output ScriptListItem
+ * @pos    正则脚本编辑器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                         ScriptListItem Component                         ║
  * ║                                                                          ║
@@ -196,10 +201,10 @@ function ActionButtons({ scriptId, script, fontClass, serifFontClass, t, onEdit,
         variant="outline"
         size="sm"
         onClick={() => onEdit({ ...script, scriptKey: scriptId })}
-        className="text-2xs sm:text-xs px-1.5 sm:px-3 py-1 sm:py-1.5 h-auto bg-linear-to-r from-overlay to-coal hover:from-muted-surface hover:to-overlay text-success hover:text-success font-medium hover:shadow-success/20 group shrink-0 border border-border"
+        className="text-2xs sm:text-xs px-1.5 sm:px-3 py-1 sm:py-1.5 h-auto bg-overlay hover:bg-muted-surface text-success hover:text-success font-medium hover:shadow-success/20 group shrink-0 border border-border"
       >
         <span className={"flex items-center "}>
-          <Edit3 className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5 sm:mr-1 transition-transform duration-300 group-hover:scale-110" />
+          <Edit3 className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5 sm:mr-1" />
           {t("regexScriptEditor.edit")}
         </span>
       </Button>
@@ -211,15 +216,15 @@ function ActionButtons({ scriptId, script, fontClass, serifFontClass, t, onEdit,
         onClick={() => onToggle(scriptId)}
         className={`text-2xs sm:text-xs px-1.5 sm:px-3 py-1 sm:py-1.5 h-auto font-medium group shrink-0 ${
           script.disabled
-            ? "bg-linear-to-r from-overlay to-coal hover:from-muted-surface hover:to-overlay text-success hover:text-success border border-border hover:shadow-success/20"
-            : "bg-linear-to-r from-ember to-coal hover:from-muted-surface hover:to-ember text-primary-soft hover:text-primary-soft border border-border hover:shadow-primary-bright/20"
+            ? "bg-overlay hover:bg-muted-surface text-success hover:text-success border border-border hover:shadow-success/20"
+            : "bg-ember hover:bg-ember/90 text-primary-soft hover:text-primary-soft border border-border hover:shadow-primary-bright/20"
         }`}
       >
         <span className={"flex items-center "}>
           {script.disabled ? (
-            <Play className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5 sm:mr-1 transition-transform duration-300 group-hover:scale-110" />
+            <Play className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5 sm:mr-1" />
           ) : (
-            <Pause className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5 sm:mr-1 transition-transform duration-300 group-hover:scale-110" />
+            <Pause className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5 sm:mr-1" />
           )}
           {script.disabled ? t("regexScriptEditor.enable") : t("regexScriptEditor.disable")}
         </span>
@@ -230,10 +235,10 @@ function ActionButtons({ scriptId, script, fontClass, serifFontClass, t, onEdit,
         variant="outline"
         size="sm"
         onClick={() => onDelete(scriptId)}
-        className="text-2xs sm:text-xs px-1.5 sm:px-3 py-1 sm:py-1.5 h-auto bg-linear-to-r from-ember to-coal hover:from-layer hover:to-deep text-rose-300 hover:text-rose-200 font-medium hover:shadow-rose-400/20 group shrink-0 border border-border"
+        className="text-2xs sm:text-xs px-1.5 sm:px-3 py-1 sm:py-1.5 h-auto hover:text-destructive text-destructive  font-medium  group shrink-0 border border-border"
       >
         <span className={"flex items-center "}>
-          <Trash2 className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5 sm:mr-1 transition-transform duration-300 group-hover:scale-110" />
+          <Trash2 className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5 sm:mr-1 " />
           {t("regexScriptEditor.delete")}
         </span>
       </Button>
@@ -255,17 +260,17 @@ function StatusBadges({ script, t }: StatusBadgesProps) {
     <div className="flex items-center space-x-1.5 sm:space-x-2 mb-1.5 sm:mb-2 flex-wrap">
       <span className={`inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-2xs sm:text-xs font-medium transition-all duration-300 backdrop-blur-sm border ${
         !script.disabled
-          ? "bg-linear-to-br from-slate-800/60 via-primary-900/40 to-slate-800/60 text-primary-200/90 border-primary-600/30"
-          : "bg-linear-to-br from-slate-800/60 via-stone-700/40 to-slate-800/60 text-stone-300/90 border-stone-500/30"
+          ? "bg-primary/10 text-primary-400 border-primary-500/30"
+          : "bg-muted/40 text-muted-foreground border-border/60"
       }`}>
         <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 sm:mr-2 ${
-          !script.disabled ? "bg-primary-400/80" : "bg-stone-400/80"
+          !script.disabled ? "bg-success" : "bg-stone-400"
         }`} />
         {script.disabled ? t("regexScriptEditor.disabled") : t("regexScriptEditor.enabled")}
       </span>
 
       {script.extensions?.imported && (
-        <span className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-2xs sm:text-xs font-medium transition-all duration-300 backdrop-blur-sm border bg-linear-to-br from-slate-800/60 via-blue-700/40 to-slate-800/60 text-blue-300/90 border-blue-500/30 hover:from-slate-700/70 hover:via-blue-600/50 hover:to-slate-700/70 hover:border-blue-400/40 hover:text-blue-200 hover: hover:shadow-blue-500/10">
+        <span className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-2xs sm:text-xs font-medium transition-all duration-300 backdrop-blur-sm border bg-info/15 text-info border-info/30 hover:bg-info/25 hover:border-info/40 hover:text-info">
           <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400/80 rounded-full mr-1 sm:mr-2  shadow-blue-400/50" />
           {t("worldBook.imported")}
         </span>

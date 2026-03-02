@@ -1,3 +1,10 @@
+/**
+ * @input  react, hooks/useLocalStorage
+ * @output SoundProvider, useSoundContext
+ * @pos    音效状态层 - 管理全局音效开关与本地持久化
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 "use client";
 
 import { createContext, useContext, useCallback, ReactNode } from "react";

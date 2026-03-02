@@ -1,7 +1,14 @@
+/**
+ * @input  lib/data/roleplay/character-dialogue-operation, lib/data/roleplay/character-record-operation, lib/core/character, function/dialogue/processed-dialogue
+ * @output getCharacterDialogue
+ * @pos    对话信息获取 - 获取角色对话完整信息
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import { Character } from "@/lib/core/character";
-import { generateMessageId } from "@/utils/message-id";
+import { buildProcessedDialogue } from "@/function/dialogue/processed-dialogue";
 
 /**
  * 获取角色对话信息
@@ -34,56 +41,7 @@ export async function getCharacterDialogue(
     let processedDialogue = null;
 
     if (dialogueTree) {
-      const currentPath = dialogueTree.current_nodeId !== "root"
-        ? await LocalCharacterDialogueOperations.getDialoguePathToNode(dialogueKey, dialogueTree.current_nodeId)
-        : [];
-
-      const messages = [];
-
-      for (const node of currentPath) {
-        if (node.userInput) {
-          messages.push({
-            id: generateMessageId({ nodeId: node.nodeId, role: "user" }),
-            role: "user",
-            thinkingContent: node.thinkingContent || "",
-            content: node.userInput,
-            parsedContent: null,
-          });
-        }
-
-        if (node.assistantResponse) {
-          const assistantId = generateMessageId({ nodeId: node.nodeId, role: "assistant" });
-          
-          if (node.parsedContent?.regexResult) {
-            messages.push({
-              id: assistantId,
-              role: "assistant",
-              thinkingContent: node.thinkingContent || "",
-              content: node.parsedContent.regexResult,
-              parsedContent: node.parsedContent,
-            });
-          } else {
-            messages.push({
-              id: assistantId,
-              role: "assistant",
-              thinkingContent: node.thinkingContent || "",
-              content: node.assistantResponse,
-              parsedContent: node.parsedContent,
-            });
-          }
-        }
-      }
-
-      processedDialogue = {
-        id: dialogueTree.id,
-        character_id: dialogueTree.character_id,
-        current_nodeId: dialogueTree.current_nodeId,
-        messages,
-        tree: {
-          nodes: dialogueTree.nodes,
-          currentNodeId: dialogueTree.current_nodeId,
-        },
-      };
+      processedDialogue = buildProcessedDialogue(dialogueTree);
     }
 
     return {

@@ -1,9 +1,16 @@
-import { 
-  REGEX_SCRIPTS_FILE, 
-  clearStore, 
-  getAllEntries, 
-  getRecordByKey, 
-  putRecord, 
+/**
+ * @input  lib/data/local-storage, lib/models/regex-script-model, lib/data/roleplay/regex-allow-list-operation
+ * @output RegexScriptOperations
+ * @pos    正则脚本数据操作层,管理脚本存储、合并、授权控制
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
+import {
+  REGEX_SCRIPTS_FILE,
+  clearStore,
+  getAllEntries,
+  getRecordByKey,
+  putRecord,
 } from "@/lib/data/local-storage";
 import {
   RegexScript,

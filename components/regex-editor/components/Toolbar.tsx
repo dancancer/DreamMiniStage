@@ -1,4 +1,9 @@
 /**
+ * @input  @/components
+ * @output Toolbar
+ * @pos    正则脚本编辑器组件
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                        Toolbar Component                                  ║
  * ║                                                                           ║
@@ -9,7 +14,7 @@
 import { Plus, Download, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SortFilterControls } from "@/components/regex-editor";
-import type { SortField, SortOrder, FilterType } from "@/hooks/useRegexScripts";
+import type { SortField, SortOrder, FilterType } from "@/hooks/useRegexScripts/index";
 
 interface ToolbarProps {
   settings: { enabled: boolean; applyToResponse: boolean };
@@ -82,7 +87,7 @@ export function Toolbar({
                 className="h-auto px-2 sm:px-3 py-1 sm:py-1.5 text-primary-soft hover:text-primary-soft text-xs sm:text-sm font-medium group shrink-0 border-border"
               >
                 <span className="flex items-center">
-                  <Plus size={10} className="mr-1 sm:mr-1.5 transition-transform duration-300 group-hover:scale-110" />
+                  <Plus size={10} className="mr-1 sm:mr-1.5" />
                   {t("regexScriptEditor.addNewScript")}
                 </span>
               </Button>
@@ -91,10 +96,10 @@ export function Toolbar({
                 variant="outline"
                 onClick={onOpenImport}
                 disabled={readOnly || disableImport}
-                className="h-auto px-2 sm:px-3 py-1 sm:py-1.5 bg-linear-to-r from-overlay to-coal text-xs sm:text-sm font-medium group shrink-0 border-stroke-strong"
+                className="h-auto px-2 sm:px-3 py-1 sm:py-1.5 bg-overlay text-xs sm:text-sm font-medium group shrink-0 border-stroke-strong"
               >
                 <span className="flex items-center">
-                  <Download size={10} className="mr-1 sm:mr-1.5 transition-transform duration-300 group-hover:scale-110" />
+                  <Download size={10} className="mr-1 sm:mr-1.5" />
                   {t("regexScriptEditor.importScript")}
                 </span>
               </Button>

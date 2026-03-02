@@ -1,3 +1,10 @@
+/**
+ * @input  无外部依赖
+ * @output RegexScript, RegexPlacement, SubstituteRegexMode, ScriptSource, RegexAllowList, RegexPresetConfig
+ * @pos    正则脚本数据模型,定义脚本结构、执行位置、授权控制等
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ */
+
 /* ═══════════════════════════════════════════════════════════════════════════
    枚举定义 - Placement、SubstituteRegex、ScriptSource
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -199,23 +206,23 @@ export interface RegexPresetConfig {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   数据规范化函数 - 向后兼容处理
+   数据规范化函数
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════════════════════════════
    规范化正则脚本数据
 
-   处理旧格式数据的向后兼容：
+   设计目标：
    - 填充缺失字段的默认值
-   - 转换 numeric substituteRegex 到枚举
-   - 转换单数字 placement 到数组
+   - 限定关键字段到当前支持格式
+   - 消除运行时分支和异常输入扩散
 
    参数类型使用 unknown：
    - 因为输入可能来自用户上传、API 响应等不可控源
    - 内部通过 as 断言安全访问属性
    - 设计理念：边界处用 unknown，内部逻辑通过明确断言保证类型正确性
 
-   @param script - 原始脚本数据（可能是旧格式、非法格式）
+   @param script - 原始脚本数据（可能是非法格式）
    @returns 规范化后的脚本数据
    ═══════════════════════════════════════════════════════════════════════════ */
 export function normalizeRegexScript(script: unknown): RegexScript {
@@ -227,31 +234,29 @@ export function normalizeRegexScript(script: unknown): RegexScript {
 
   /* ─────────────────────────────────────────────────────────────────────────
      第一步：placement 规范化
-     单数字 → 数组，数组 → 保持不变
+     仅接受数组格式，缺失或非法时使用默认值
      ───────────────────────────────────────────────────────────────────────── */
 
   const placement = Array.isArray(raw.placement)
     ? raw.placement
-    : typeof raw.placement === "number"
-      ? [raw.placement]
-      : [RegexPlacement.AI_OUTPUT]; // 默认作用于 AI 输出
+    : [RegexPlacement.AI_OUTPUT]; // 默认作用于 AI 输出
   
   /* ─────────────────────────────────────────────────────────────────────────
      第二步：substituteRegex 规范化
-     number → enum，enum → 保持不变，undefined → NONE
+     仅接受当前枚举值，缺失或非法时降级为 NONE
      ───────────────────────────────────────────────────────────────────────── */
 
   let substituteRegex: SubstituteRegexMode;
 
-  if (raw.substituteRegex === undefined || raw.substituteRegex === null) {
-    substituteRegex = SubstituteRegexMode.NONE;
-  } else if (typeof raw.substituteRegex === "number") {
-    // 向后兼容：0 → NONE, 1 → RAW, 其他 → NONE
-    substituteRegex = raw.substituteRegex === 1
-      ? SubstituteRegexMode.RAW
-      : SubstituteRegexMode.NONE;
+  if (
+    typeof raw.substituteRegex === "number" &&
+    (raw.substituteRegex === SubstituteRegexMode.NONE ||
+      raw.substituteRegex === SubstituteRegexMode.RAW ||
+      raw.substituteRegex === SubstituteRegexMode.ESCAPED)
+  ) {
+    substituteRegex = raw.substituteRegex;
   } else {
-    substituteRegex = raw.substituteRegex as SubstituteRegexMode;
+    substituteRegex = SubstituteRegexMode.NONE;
   }
   
   /* ─────────────────────────────────────────────────────────────────────────

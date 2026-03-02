@@ -1,4 +1,9 @@
 /**
+ * @input  @/lib, @/app, @/function
+ * @output GlobalWorldBookPanel
+ * @pos    全局世界书面板
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                    GlobalWorldBookPanel                                    ║
  * ║  全局世界书管理：创建/编辑/删除/启用/禁用全局世界书                          ║

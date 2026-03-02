@@ -1,3 +1,10 @@
+/**
+ * @input  react, app/i18n/index
+ * @output FontWrapper, TitleFontWrapper
+ * @pos    字体包装组件 - 为子组件注入语言对应的字体类名
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 "use client";
 
 import { ReactNode } from "react";

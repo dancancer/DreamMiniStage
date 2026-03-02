@@ -1,3 +1,10 @@
+/**
+ * @input  lib/data/roleplay/character-record-operation
+ * @output saveCharacterPrompts
+ * @pos    提示词保存 - 保存角色自定义提示词
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ */
+
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 
 interface SaveCharacterPromptsOptions {

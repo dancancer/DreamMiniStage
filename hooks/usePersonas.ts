@@ -1,4 +1,9 @@
 /**
+ * @input  lib/store/persona-store, lib/models/persona-model, lib/data/roleplay/persona-operation
+ * @output usePersonas, UsePersonasReturn, PersonaCreateInput
+ * @pos    Persona 管理 Hook - 封装 Persona Store 操作，为 UI 组件提供统一接口
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                           usePersonas Hook                                ║
  * ║                                                                            ║

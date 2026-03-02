@@ -1,4 +1,9 @@
 /**
+ * @input  @/lib, @/app, @/function, @/components
+ * @output ImportRegexScriptModal
+ * @pos    正则脚本导入模态框
+ * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
+ *
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                   Import Regex Script Modal                               ║
  * ║                                                                          ║
@@ -264,7 +269,7 @@ export default function ImportRegexScriptModal({ isOpen, characterId, onClose, o
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-xl p-0 overflow-hidden  border-border gap-0">
         <DialogTitle className="sr-only">{t("regexScriptEditor.importRegexScript")}</DialogTitle>
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-blue-500/5 opacity-50 animate-pulse pointer-events-none" />
+        <div className="absolute inset-0 bg-primary/5 opacity-50 animate-pulse pointer-events-none" />
 
         <ImportModalHeader
           title={t("regexScriptEditor.importRegexScript")}

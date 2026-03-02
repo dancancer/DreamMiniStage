@@ -1,10 +1,15 @@
-"use client";
-
 /**
+ * @input  react, lib/script-runner/executor
+ * @output ScriptRunnerTest (default export)
+ * @pos    测试页面 - 脚本执行器功能验证
+ * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
+ *
  * Script Runner Test Page
- * 
+ *
  * Basic test to verify the script executor functionality
  */
+
+"use client";
 
 import { useState } from "react";
 import { ScriptExecutor } from "@/lib/script-runner/executor";
