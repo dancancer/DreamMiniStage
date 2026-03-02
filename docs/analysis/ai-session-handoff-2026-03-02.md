@@ -89,6 +89,25 @@
 - 相关测试：
   - `hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts`
 
+### 2.8 Slash 命令覆盖补齐（P2 第三批：变量族）
+
+- 已新增变量高频命令与别名（对齐 SillyTavern 示例脚本常见写法）：
+  - 本地/别名：`/addvar`、`/setchatvar`、`/getchatvar`、`/addchatvar`、`/incchatvar`、`/decchatvar`、`/flushchatvar`
+  - 全局：`/setglobalvar`、`/getglobalvar`、`/addglobalvar`、`/incglobalvar`、`/decglobalvar`、`/flushglobalvar`
+- 行为约定（当前实现）：
+  - `addvar/addglobalvar` 支持数值累加、字符串拼接、以及 JSON 数组追加（与 ST add*var 的核心路径对齐）。
+  - 全局变量命令优先走 `ExecutionContext` 的 scoped 变量接口；若宿主未提供 scoped 能力，则回退到本地变量接口。
+  - Script Bridge 侧已拆分本地/全局变量视图，避免 `setglobalvar/getglobalvar` 被角色变量覆盖。
+- 相关实现：
+  - `lib/slash-command/registry/handlers/variables.ts`
+  - `lib/slash-command/registry/index.ts`
+  - `hooks/script-bridge/slash-handlers.ts`
+  - `lib/slash-command/types.ts`
+  - `hooks/script-bridge/capability-matrix.ts`
+- 相关测试：
+  - `lib/slash-command/__tests__/p2-variable-scope.test.ts`
+  - `hooks/script-bridge/__tests__/api-surface-contract.test.ts`
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -100,6 +119,10 @@
   - 群聊 API 改为 fail-fast
 - `hooks/script-bridge/capability-matrix.ts`
   - 新增脚本桥接能力矩阵单源（shim API + slash command）
+- `lib/slash-command/registry/handlers/variables.ts`
+  - 新增 add/global 变量命令族与 scoped 变量回退逻辑
+- `hooks/script-bridge/slash-handlers.ts`
+  - 变量上下文拆分为 local/global，并暴露 scoped 读写接口
 
 ### 3.2 测试
 
@@ -116,6 +139,8 @@
   - 覆盖 MVU `{ type, message_id }` 参数语义与会话键优先级
 - `hooks/script-bridge/__tests__/api-surface-contract.test.ts`
   - 通过 `capability-matrix.ts` 同步校验 shim/handler/slash 三侧能力面一致性
+- `lib/slash-command/__tests__/p2-variable-scope.test.ts`
+  - 覆盖 `addvar/globalvar` 及 chat/global alias 命令行为
 
 ### 3.3 文档
 
@@ -139,6 +164,8 @@
 - `pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
 - `pnpm vitest run hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts`
 - `pnpm vitest run hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts`
+- `pnpm vitest run lib/slash-command/__tests__/p2-variable-scope.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts`
+- `pnpm vitest run hooks/script-bridge/__tests__/slash-handlers.integration.test.ts`
 
 结果：全部通过。
 
@@ -168,6 +195,7 @@
 
 3. **Slash 命令覆盖继续补齐**（P2 第二批已完成）
 - 已补：`mul/div/mod/rand/split/join/replace(re)/pow/max/min`。
+- 本轮新增变量族：`addvar/set|get|add|inc|dec|flush globalvar` 与 `set|get|add|inc|dec|flush chatvar` 别名。
 - 下一批建议优先：消息/角色侧真实脚本高频缺口（按插件脚本采样决定）。
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 

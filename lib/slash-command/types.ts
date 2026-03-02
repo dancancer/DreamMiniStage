@@ -67,6 +67,11 @@ export interface ExecutionContext {
   listVariables?: () => string[];
   flushVariables?: () => void;
   dumpVariables?: () => Record<string, unknown>;
+  getScopedVariable?: (scope: VariableScope, key: string) => unknown;
+  setScopedVariable?: (scope: VariableScope, key: string, value: unknown) => void;
+  deleteScopedVariable?: (scope: VariableScope, key: string) => void;
+  listScopedVariables?: (scope: VariableScope) => string[];
+  dumpScopedVariables?: (scope: VariableScope) => Record<string, unknown>;
 
   // 扩展操作 - 消息管理
   getMessage?: (index: number) => DialogueMessage | undefined;
@@ -150,6 +155,9 @@ export interface AudioChannelSnapshot {
   playlist: Array<{ url: string; title?: string }>;
   isPlaying: boolean;
 }
+
+/** 变量作用域 */
+export type VariableScope = "local" | "global";
 
 /** World Book 条目数据 */
 export interface WorldBookEntryData {

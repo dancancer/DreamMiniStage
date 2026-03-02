@@ -36,14 +36,66 @@ import type { WorldBookEntry } from "@/lib/models/world-book-model";
  * 将 ApiCallContext 适配为 ExecutionContext
  */
 function adaptContext(ctx: ApiCallContext): ExecutionContext {
-  const variables: Record<string, unknown> = Object.create(null);
   const snapshot = ctx.getVariablesSnapshot();
+  const globalVariables: Record<string, unknown> = { ...snapshot.global };
+  const characterVariables: Record<string, unknown> = ctx.characterId && snapshot.character[ctx.characterId]
+    ? { ...snapshot.character[ctx.characterId] }
+    : {};
 
-  // 合并全局变量和角色变量
-  Object.assign(variables, snapshot.global);
-  if (ctx.characterId && snapshot.character[ctx.characterId]) {
-    Object.assign(variables, snapshot.character[ctx.characterId]);
-  }
+  const hasCharacterVariable = (key: string): boolean =>
+    Object.prototype.hasOwnProperty.call(characterVariables, key);
+
+  const getLocalVariable = (key: string): unknown => {
+    if (hasCharacterVariable(key)) {
+      return characterVariables[key];
+    }
+    return globalVariables[key];
+  };
+
+  const setLocalVariable = (key: string, value: unknown): void => {
+    if (ctx.characterId) {
+      characterVariables[key] = value;
+      ctx.setScriptVariable(key, value, "character", ctx.characterId);
+      return;
+    }
+
+    globalVariables[key] = value;
+    ctx.setScriptVariable(key, value, "global");
+  };
+
+  const deleteLocalVariable = (key: string): void => {
+    if (ctx.characterId) {
+      delete characterVariables[key];
+      ctx.deleteScriptVariable(key, "character", ctx.characterId);
+      return;
+    }
+
+    delete globalVariables[key];
+    ctx.deleteScriptVariable(key, "global");
+  };
+
+  const setGlobalVariable = (key: string, value: unknown): void => {
+    globalVariables[key] = value;
+    ctx.setScriptVariable(key, value, "global");
+  };
+
+  const deleteGlobalVariable = (key: string): void => {
+    delete globalVariables[key];
+    ctx.deleteScriptVariable(key, "global");
+  };
+
+  const listLocalVariables = (): string[] => {
+    const keys = new Set<string>(Object.keys(globalVariables));
+    for (const key of Object.keys(characterVariables)) {
+      keys.add(key);
+    }
+    return Array.from(keys);
+  };
+
+  const dumpLocalVariables = (): Record<string, unknown> => ({
+    ...globalVariables,
+    ...characterVariables,
+  });
 
   const onSend = ctx.onSend ?? (async (_text?: string, _options?: SendOptions) => { console.warn("[adaptContext] onSend 未提供"); });
   const onTrigger = ctx.onTrigger ?? (async (_member?: string) => { console.warn("[adaptContext] onTrigger 未提供"); });
@@ -212,17 +264,32 @@ function adaptContext(ctx: ApiCallContext): ExecutionContext {
     onImpersonate,
     onContinue,
     onSwipe,
-    getVariable: (key) => variables[key],
-    setVariable: (key, value) => {
-      variables[key] = value;
-      ctx.setScriptVariable(key, value, ctx.characterId ? "character" : "global", ctx.characterId);
+    getVariable: getLocalVariable,
+    setVariable: setLocalVariable,
+    deleteVariable: deleteLocalVariable,
+    listVariables: listLocalVariables,
+    dumpVariables: dumpLocalVariables,
+    getScopedVariable: (scope, key) => scope === "global" ? globalVariables[key] : getLocalVariable(key),
+    setScopedVariable: (scope, key, value) => {
+      if (scope === "global") {
+        setGlobalVariable(key, value);
+        return;
+      }
+      setLocalVariable(key, value);
     },
-    deleteVariable: (key) => {
-      delete variables[key];
-      ctx.deleteScriptVariable(key, ctx.characterId ? "character" : "global", ctx.characterId);
+    deleteScopedVariable: (scope, key) => {
+      if (scope === "global") {
+        deleteGlobalVariable(key);
+        return;
+      }
+      deleteLocalVariable(key);
     },
-    listVariables: () => Object.keys(variables),
-    dumpVariables: () => ({ ...variables }),
+    listScopedVariables: (scope) => scope === "global"
+      ? Object.keys(globalVariables)
+      : listLocalVariables(),
+    dumpScopedVariables: (scope) => scope === "global"
+      ? { ...globalVariables }
+      : dumpLocalVariables(),
     // ─── WorldBook 扩展 ───
     getWorldBookEntry,
     searchWorldBook,

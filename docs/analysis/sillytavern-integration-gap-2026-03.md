@@ -69,6 +69,7 @@
   - 交集：约 `30`
 - 当前注册表主要覆盖基础命令与少量扩展：`lib/slash-command/registry/index.ts`
   - 最新已补齐的 P2 数学/字符串命令：`mul/div/mod/rand/split/join/replace(re)/pow/max/min`
+  - 最新已补齐的变量命令族：`addvar/addglobalvar/setglobalvar/getglobalvar/incglobalvar/decglobalvar/flushglobalvar` 与 `*chatvar` 别名
 - 缺失大量命令族（如 db / qr / profile / checkpoint / tools / ui 等），导致脚本直接迁移失败概率高。
 
 ## 3.2 JS-Slash-Runner 兼容差距

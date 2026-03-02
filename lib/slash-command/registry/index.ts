@@ -38,13 +38,26 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
 
   // ─── 变量命令 ───
   ["setvar", VariableHandlers.handleSetVar],
+  ["setchatvar", VariableHandlers.handleSetVar],
+  ["setglobalvar", VariableHandlers.handleSetGlobalVar],
   ["getvar", VariableHandlers.handleGetVar],
+  ["getchatvar", VariableHandlers.handleGetVar],
+  ["getglobalvar", VariableHandlers.handleGetGlobalVar],
   ["delvar", VariableHandlers.handleDelVar],
   ["listvar", VariableHandlers.handleListVar],
   ["flushvar", VariableHandlers.handleFlushVar],
+  ["flushchatvar", VariableHandlers.handleFlushVar],
+  ["flushglobalvar", VariableHandlers.handleFlushGlobalVar],
   ["dumpvar", VariableHandlers.handleDumpVar],
+  ["addvar", VariableHandlers.handleAddVar],
+  ["addchatvar", VariableHandlers.handleAddVar],
+  ["addglobalvar", VariableHandlers.handleAddGlobalVar],
   ["incvar", VariableHandlers.handleIncVar],
+  ["incchatvar", VariableHandlers.handleIncVar],
+  ["incglobalvar", VariableHandlers.handleIncGlobalVar],
   ["decvar", VariableHandlers.handleDecVar],
+  ["decchatvar", VariableHandlers.handleDecVar],
+  ["decglobalvar", VariableHandlers.handleDecGlobalVar],
   ["push", VariableHandlers.handlePush],
 
   // ─── 消息管理命令 ───
