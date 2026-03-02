@@ -217,7 +217,10 @@
 - 已补：`mul/div/mod/rand/split/join/replace(re)/pow/max/min`。
 - 本轮新增变量族：`addvar/set|get|add|inc|dec|flush globalvar` 与 `set|get|add|inc|dec|flush chatvar` 别名。
 - 本轮新增数学族：`sin/cos/log/abs/sqrt/round`。
-- 下一批建议优先：消息/角色侧真实脚本高频缺口（按插件脚本采样决定）。
+- 下一批建议优先（按插件脚本采样）：
+  - `/match`（SillyTavern 示例脚本高频缺口之一）
+  - `set/getglobalvar` 的 `index/as` 参数语义对齐（对象/数组下标写入与类型转换）
+  - 然后再推进消息/角色侧高频缺口
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
 ### 5.2 中优先
