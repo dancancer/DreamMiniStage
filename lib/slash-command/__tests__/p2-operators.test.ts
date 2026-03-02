@@ -6,7 +6,7 @@
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { parseSlashCommands } from "../parser";
 import { executeSlashCommands, createMinimalContext } from "../executor";
 
@@ -29,6 +29,63 @@ describe("P2 utility commands", () => {
     expect(result.pipe).toBe("5");
   });
 
+  it("/mul /div /mod 覆盖基础数学语义", async () => {
+    const ctx = createMinimalContext();
+
+    const mulParsed = parseSlashCommands("/echo 2|/mul 3 4");
+    const mulResult = await executeSlashCommands(mulParsed.commands, ctx);
+    expect(mulResult.isError).toBe(false);
+    expect(mulResult.pipe).toBe("24");
+
+    const divParsed = parseSlashCommands("/div 20 5");
+    const divResult = await executeSlashCommands(divParsed.commands, ctx);
+    expect(divResult.isError).toBe(false);
+    expect(divResult.pipe).toBe("4");
+
+    const modParsed = parseSlashCommands("/mod 20 6");
+    const modResult = await executeSlashCommands(modParsed.commands, ctx);
+    expect(modResult.isError).toBe(false);
+    expect(modResult.pipe).toBe("2");
+  });
+
+  it("/div 和 /mod 在除数为 0 时显式失败", async () => {
+    const ctx = createMinimalContext();
+
+    const divParsed = parseSlashCommands("/div 10 0");
+    const divResult = await executeSlashCommands(divParsed.commands, ctx);
+    expect(divResult.isError).toBe(true);
+    expect(divResult.errorMessage).toContain("Division by zero");
+
+    const modParsed = parseSlashCommands("/mod 10 0");
+    const modResult = await executeSlashCommands(modParsed.commands, ctx);
+    expect(modResult.isError).toBe(true);
+    expect(modResult.errorMessage).toContain("Division by zero");
+  });
+
+  it("/rand 支持位置参数与 round 模式", async () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.5);
+    try {
+      const ctx = createMinimalContext();
+
+      const defaultParsed = parseSlashCommands("/rand");
+      const defaultResult = await executeSlashCommands(defaultParsed.commands, ctx);
+      expect(defaultResult.isError).toBe(false);
+      expect(defaultResult.pipe).toBe("0.5");
+
+      const rangedParsed = parseSlashCommands("/rand 10");
+      const rangedResult = await executeSlashCommands(rangedParsed.commands, ctx);
+      expect(rangedResult.isError).toBe(false);
+      expect(rangedResult.pipe).toBe("5");
+
+      const roundParsed = parseSlashCommands("/rand from=1 to=4 round=ceil");
+      const roundResult = await executeSlashCommands(roundParsed.commands, ctx);
+      expect(roundResult.isError).toBe(false);
+      expect(roundResult.pipe).toBe("3");
+    } finally {
+      randomSpy.mockRestore();
+    }
+  });
+
   it("/len 默认使用 pipe 或参数文本长度", async () => {
     const parsed = parseSlashCommands("/len hello world");
     const ctx = createMinimalContext();
@@ -47,6 +104,34 @@ describe("P2 utility commands", () => {
 
     expect(result.isError).toBe(false);
     expect(result.pipe).toBe("hi");
+  });
+
+  it("/split 与 /join 可串联处理列表文本", async () => {
+    const parsed = parseSlashCommands("/echo apple, banana, cherry|/split \", \"|/join -");
+    const ctx = createMinimalContext();
+    const result = await executeSlashCommands(parsed.commands, ctx);
+
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("apple-banana-cherry");
+  });
+
+  it("/replace 支持 literal / regex 以及 /re 别名", async () => {
+    const ctx = createMinimalContext();
+
+    const literalParsed = parseSlashCommands("/replace pattern=blue replacer=red \"blue house and blue car\"");
+    const literalResult = await executeSlashCommands(literalParsed.commands, ctx);
+    expect(literalResult.isError).toBe(false);
+    expect(literalResult.pipe).toBe("red house and red car");
+
+    const regexParsed = parseSlashCommands("/replace mode=regex pattern=/blue/gi replacer=red \"Blue house and blue car\"");
+    const regexResult = await executeSlashCommands(regexParsed.commands, ctx);
+    expect(regexResult.isError).toBe(false);
+    expect(regexResult.pipe).toBe("red house and red car");
+
+    const aliasParsed = parseSlashCommands("/echo blue blue|/re pattern=blue replacer=green");
+    const aliasResult = await executeSlashCommands(aliasParsed.commands, ctx);
+    expect(aliasResult.isError).toBe(false);
+    expect(aliasResult.pipe).toBe("green green");
   });
 
   it("/push 维护数组变量并返回 JSON 字符串", async () => {
@@ -75,5 +160,14 @@ describe("P2 utility commands", () => {
 
     expect(result.isError).toBe(true);
     expect(result.errorMessage).toContain("Invalid number");
+  });
+
+  it("/replace 非法模式时返回错误", async () => {
+    const parsed = parseSlashCommands("/replace mode=bad pattern=x foo");
+    const ctx = createMinimalContext();
+    const result = await executeSlashCommands(parsed.commands, ctx);
+
+    expect(result.isError).toBe(true);
+    expect(result.errorMessage).toContain("Invalid replace mode");
   });
 });

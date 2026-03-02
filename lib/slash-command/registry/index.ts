@@ -14,6 +14,7 @@ import * as VariableHandlers from "./handlers/variables";
 import * as MessageHandlers from "./handlers/messages";
 import * as GenerationHandlers from "./handlers/generation";
 import * as OperatorHandlers from "./handlers/operators";
+import * as JSSlashRunnerHandlers from "./handlers/js-slash-runner";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -91,8 +92,31 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   // ─── 算子命令 ───
   ["add", OperatorHandlers.handleAdd],
   ["sub", OperatorHandlers.handleSub],
+  ["mul", OperatorHandlers.handleMul],
+  ["div", OperatorHandlers.handleDiv],
+  ["mod", OperatorHandlers.handleMod],
+  ["rand", OperatorHandlers.handleRand],
   ["len", OperatorHandlers.handleLen],
   ["trim", OperatorHandlers.handleTrim],
+  ["split", OperatorHandlers.handleSplit],
+  ["join", OperatorHandlers.handleJoin],
+  ["replace", OperatorHandlers.handleReplace],
+  ["re", OperatorHandlers.handleReplace],
+
+  // ─── JS-Slash-Runner 兼容命令 ───
+  ["event-emit", JSSlashRunnerHandlers.handleEventEmit],
+  ["eventemit", JSSlashRunnerHandlers.handleEventEmit],
+  ["audioenable", JSSlashRunnerHandlers.handleAudioEnable],
+  ["audioplay", JSSlashRunnerHandlers.handleAudioPlay],
+  ["audioimport", JSSlashRunnerHandlers.handleAudioImport],
+  ["audioselect", JSSlashRunnerHandlers.handleAudioSelect],
+  ["audiomode", JSSlashRunnerHandlers.handleAudioMode],
+  ["audiopause", JSSlashRunnerHandlers.handleAudioPause],
+  ["audioresume", JSSlashRunnerHandlers.handleAudioResume],
+  ["audiostop", JSSlashRunnerHandlers.handleAudioStop],
+  ["audiovolume", JSSlashRunnerHandlers.handleAudioVolume],
+  ["audioqueue", JSSlashRunnerHandlers.handleAudioQueue],
+  ["audioclear", JSSlashRunnerHandlers.handleAudioClear],
 ]);
 
 /* ═══════════════════════════════════════════════════════════════════════════
