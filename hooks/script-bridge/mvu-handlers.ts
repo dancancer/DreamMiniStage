@@ -26,56 +26,192 @@ import type { MvuData, StatData } from "@/lib/mvu";
 //                              变量获取
 // ============================================================================
 
+type MvuScope = "chat" | "message" | "global" | "character" | "script";
+type MvuCategory = "stat" | "display" | "delta";
+type MessageRef = number | string | "latest";
+
+interface MvuVariableOptions {
+  type?: string;
+  scope?: string;
+  message_id?: MessageRef;
+  messageId?: MessageRef;
+  category?: string;
+}
+
+const MVU_SCOPE_ALIASES: Record<string, MvuScope> = {
+  chat: "chat",
+  message: "message",
+  global: "global",
+  character: "character",
+  script: "script",
+  local: "chat",
+  cache: "script",
+};
+
+function resolveDialogueKey(ctx: ApiCallContext): string | undefined {
+  return ctx.chatId ?? ctx.dialogueId ?? ctx.characterId;
+}
+
+function resolveSessionKey(ctx: ApiCallContext): string {
+  return getSessionKey(resolveDialogueKey(ctx) || "global");
+}
+
+function parseScope(rawScope: unknown): MvuScope {
+  if (typeof rawScope !== "string") {
+    return "chat";
+  }
+  return MVU_SCOPE_ALIASES[rawScope.trim().toLowerCase()] ?? "chat";
+}
+
+function parseCategory(rawCategory: unknown): MvuCategory {
+  if (rawCategory === "display" || rawCategory === "delta") {
+    return rawCategory;
+  }
+  return "stat";
+}
+
+function isScopeToken(raw: string): boolean {
+  return MVU_SCOPE_ALIASES[raw.trim().toLowerCase()] !== undefined;
+}
+
+function normalizeVariableOptions(rawOption: unknown): MvuVariableOptions {
+  if (rawOption === undefined || rawOption === null) {
+    return {};
+  }
+
+  if (typeof rawOption === "number") {
+    return { type: "message", message_id: rawOption };
+  }
+
+  if (typeof rawOption === "string") {
+    if (isScopeToken(rawOption)) {
+      return { type: rawOption };
+    }
+    return { type: "message", message_id: rawOption };
+  }
+
+  if (typeof rawOption === "object") {
+    return rawOption as MvuVariableOptions;
+  }
+
+  return {};
+}
+
+function resolveMessageId(rawMessageId: unknown, ctx: ApiCallContext, scope: MvuScope): string | undefined {
+  if (scope !== "message" && rawMessageId === undefined) {
+    return undefined;
+  }
+
+  const messages = ctx.messages;
+  const total = messages.length;
+
+  if (rawMessageId === undefined || rawMessageId === "latest") {
+    const latestId = messages[total - 1]?.id;
+    if (!latestId) {
+      throw new Error("message 作用域需要有效的 message_id，但当前会话没有消息");
+    }
+    return latestId;
+  }
+
+  if (typeof rawMessageId === "number") {
+    if (!Number.isInteger(rawMessageId)) {
+      throw new Error(`message_id 必须是整数，收到: ${rawMessageId}`);
+    }
+    if (rawMessageId < -total || rawMessageId >= total) {
+      throw new Error(`message_id '${rawMessageId}' 超出范围 [${-total}, ${total})`);
+    }
+
+    const normalizedIndex = rawMessageId < 0 ? total + rawMessageId : rawMessageId;
+    const resolvedId = messages[normalizedIndex]?.id;
+    if (!resolvedId) {
+      throw new Error(`无法解析 message_id '${rawMessageId}' 对应的消息`);
+    }
+    return resolvedId;
+  }
+
+  if (typeof rawMessageId === "string") {
+    const matched = messages.find((message) => message.id === rawMessageId);
+    if (matched?.id) {
+      return matched.id;
+    }
+
+    const parsed = Number(rawMessageId);
+    if (rawMessageId.trim() !== "" && Number.isInteger(parsed)) {
+      return resolveMessageId(parsed, ctx, scope);
+    }
+    return rawMessageId;
+  }
+
+  throw new Error(`不支持的 message_id 类型: ${typeof rawMessageId}`);
+}
+
+function resolveOption(rawOption: unknown, ctx: ApiCallContext): {
+  scope: MvuScope;
+  category: MvuCategory;
+  messageId?: string;
+} {
+  const option = normalizeVariableOptions(rawOption);
+  const scope = parseScope(option.type ?? option.scope);
+  const category = parseCategory(option.category);
+  const messageId = resolveMessageId(option.message_id ?? option.messageId, ctx, scope);
+  return { scope, category, messageId };
+}
+
+function pickCategoryData(variables: MvuData, category: MvuCategory): unknown {
+  if (category === "display") return variables.display_data;
+  if (category === "delta") return variables.delta_data;
+  return variables.stat_data;
+}
+
 /** 获取变量 - 兼容 TavernHelper.getVariables */
 async function getMessageVariable(args: unknown[], ctx: ApiCallContext): Promise<unknown> {
-  const [options] = args as [{ type?: string; message_id?: string; category?: string }?];
+  const [rawOption] = args as [unknown];
+  const { scope, category, messageId } = resolveOption(rawOption, ctx);
+  const dialogueKey = resolveDialogueKey(ctx);
 
   // 优先从持久化层读取
-  if (ctx.characterId) {
-    const variables = options?.message_id
-      ? await getNodeVariables({ dialogueKey: ctx.characterId }, options.message_id)
-      : await getCharacterVariables({ dialogueKey: ctx.characterId });
+  if (dialogueKey) {
+    const variables = scope === "message" && messageId
+      ? await getNodeVariables({ dialogueKey }, messageId)
+      : await getCharacterVariables({ dialogueKey });
 
     if (variables) {
-      const category = options?.category || "stat";
-      switch (category) {
-        case "display": return variables.display_data;
-        case "delta": return variables.delta_data;
-        default: return variables.stat_data;
-      }
+      return pickCategoryData(variables, category);
     }
   }
 
   // 回退到内存 store
-  const sessionKey = getSessionKey(ctx.characterId || "global");
+  const sessionKey = resolveSessionKey(ctx);
   const store = useMvuStore.getState();
-  const variables = store.getVariables(sessionKey);
+  const variables = scope === "message" && messageId
+    ? store.getMessageVariables(sessionKey, messageId)
+    : store.getVariables(sessionKey);
   if (!variables) return null;
 
-  const category = options?.category || "stat";
-  switch (category) {
-    case "display": return variables.display_data;
-    case "delta": return variables.delta_data;
-    default: return variables.stat_data;
-  }
+  return pickCategoryData(variables, category);
 }
 
 /** 获取指定消息的变量快照 */
 async function getMessageVariables(args: unknown[], ctx: ApiCallContext): Promise<MvuData | null> {
-  const [messageId] = args as [string?];
+  const [rawOption] = args as [unknown];
+  const option = rawOption && typeof rawOption === "object"
+    ? rawOption
+    : normalizeVariableOptions(rawOption);
+  const { scope, messageId } = resolveOption(option, ctx);
+  const dialogueKey = resolveDialogueKey(ctx);
 
   // 优先从持久化层读取
-  if (ctx.characterId) {
-    if (messageId) {
-      return getNodeVariables({ dialogueKey: ctx.characterId }, messageId);
+  if (dialogueKey) {
+    if (scope === "message" && messageId) {
+      return getNodeVariables({ dialogueKey }, messageId);
     }
-    return getCharacterVariables({ dialogueKey: ctx.characterId });
+    return getCharacterVariables({ dialogueKey });
   }
 
   // 回退到内存 store
-  const sessionKey = getSessionKey(ctx.characterId || "global");
+  const sessionKey = resolveSessionKey(ctx);
   const store = useMvuStore.getState();
-  return messageId
+  return scope === "message" && messageId
     ? store.getMessageVariables(sessionKey, messageId)
     : store.getVariables(sessionKey);
 }
@@ -93,7 +229,7 @@ function getSafeValue(args: unknown[]): unknown {
 /** 初始化变量 */
 function initVariables(args: unknown[], ctx: ApiCallContext): boolean {
   const [initialData] = args as [StatData];
-  const sessionKey = getSessionKey(ctx.characterId || "global");
+  const sessionKey = resolveSessionKey(ctx);
   const store = useMvuStore.getState();
 
   store.initSession(sessionKey, initialData || {});
@@ -103,7 +239,7 @@ function initVariables(args: unknown[], ctx: ApiCallContext): boolean {
 /** 设置单个变量 */
 function setMvuVariable(args: unknown[], ctx: ApiCallContext): boolean {
   const [path, value, reason] = args as [string, unknown, string?];
-  const sessionKey = getSessionKey(ctx.characterId || "global");
+  const sessionKey = resolveSessionKey(ctx);
   const store = useMvuStore.getState();
 
   return store.setVariable(sessionKey, path, value, reason);
@@ -112,7 +248,7 @@ function setMvuVariable(args: unknown[], ctx: ApiCallContext): boolean {
 /** 批量设置变量 */
 function setMvuVariables(args: unknown[], ctx: ApiCallContext): void {
   const [updates] = args as [Array<{ path: string; value: unknown; reason?: string }>];
-  const sessionKey = getSessionKey(ctx.characterId || "global");
+  const sessionKey = resolveSessionKey(ctx);
   const store = useMvuStore.getState();
 
   store.setVariables(sessionKey, updates);
@@ -121,7 +257,7 @@ function setMvuVariables(args: unknown[], ctx: ApiCallContext): void {
 /** 从消息内容更新变量 */
 function updateFromMessage(args: unknown[], ctx: ApiCallContext): { modified: boolean } {
   const [messageId, messageContent] = args as [string, string];
-  const sessionKey = getSessionKey(ctx.characterId || "global");
+  const sessionKey = resolveSessionKey(ctx);
   const store = useMvuStore.getState();
 
   return store.updateFromMessage(sessionKey, messageId, messageContent);
@@ -134,7 +270,7 @@ function updateFromMessage(args: unknown[], ctx: ApiCallContext): { modified: bo
 /** 保存变量快照 */
 function saveSnapshot(args: unknown[], ctx: ApiCallContext): void {
   const [messageId] = args as [string];
-  const sessionKey = getSessionKey(ctx.characterId || "global");
+  const sessionKey = resolveSessionKey(ctx);
   const store = useMvuStore.getState();
 
   store.saveSnapshot(sessionKey, messageId);
@@ -143,7 +279,7 @@ function saveSnapshot(args: unknown[], ctx: ApiCallContext): void {
 /** 回滚到快照 */
 function rollbackToSnapshot(args: unknown[], ctx: ApiCallContext): boolean {
   const [messageId] = args as [string];
-  const sessionKey = getSessionKey(ctx.characterId || "global");
+  const sessionKey = resolveSessionKey(ctx);
   const store = useMvuStore.getState();
 
   return store.rollbackToSnapshot(sessionKey, messageId);
@@ -152,7 +288,7 @@ function rollbackToSnapshot(args: unknown[], ctx: ApiCallContext): boolean {
 /** 清理旧快照 */
 function cleanupSnapshots(args: unknown[], ctx: ApiCallContext): void {
   const [keepCount = 20] = args as [number?];
-  const sessionKey = getSessionKey(ctx.characterId || "global");
+  const sessionKey = resolveSessionKey(ctx);
   const store = useMvuStore.getState();
 
   store.cleanupSnapshots(sessionKey, keepCount);
@@ -164,7 +300,7 @@ function cleanupSnapshots(args: unknown[], ctx: ApiCallContext): void {
 
 /** 检查是否已初始化 */
 function isInitialized(_args: unknown[], ctx: ApiCallContext): boolean {
-  const sessionKey = getSessionKey(ctx.characterId || "global");
+  const sessionKey = resolveSessionKey(ctx);
   const store = useMvuStore.getState();
 
   return store.isInitialized(sessionKey);
@@ -172,7 +308,7 @@ function isInitialized(_args: unknown[], ctx: ApiCallContext): boolean {
 
 /** 清除会话变量 */
 function clearSession(_args: unknown[], ctx: ApiCallContext): void {
-  const sessionKey = getSessionKey(ctx.characterId || "global");
+  const sessionKey = resolveSessionKey(ctx);
   const store = useMvuStore.getState();
 
   store.clearSession(sessionKey);
@@ -185,7 +321,7 @@ function clearSession(_args: unknown[], ctx: ApiCallContext): void {
 /** 兼容 getvar 宏 */
 function getvar(args: unknown[], ctx: ApiCallContext): unknown {
   const [key] = args as [string];
-  const sessionKey = getSessionKey(ctx.characterId || "global");
+  const sessionKey = resolveSessionKey(ctx);
   const store = useMvuStore.getState();
   const variables = store.getVariables(sessionKey);
 

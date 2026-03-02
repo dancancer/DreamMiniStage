@@ -85,6 +85,9 @@
 
 ## 3.3 MagVarUpdate 兼容差距
 
+- 变量 API 参数语义已补齐常见路径：
+  - `mvu.getVariable/mvu.getVariables` 支持 `{ type, message_id }`（含 `latest`、负索引、数字字符串）
+  - 覆盖测试：`hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts`
 - 命令框架已落地，但值解析语义未等价：
   - 当前 `parseCommandValue` 仅覆盖基础 JSON/数字/简算：`lib/mvu/core/parser.ts`
   - 上游包含更完整的 mathjs/YAML 场景：`sillytavern-plugins/MagVarUpdate/src/function.ts`

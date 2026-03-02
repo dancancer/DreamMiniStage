@@ -75,6 +75,20 @@
 - 相关测试：
   - `lib/slash-command/__tests__/p2-operators.test.ts`
 
+### 2.7 变量 API 参数语义对齐（MagVarUpdate 高频路径）
+
+- `mvu.getVariable/mvu.getVariables` 已补齐上游常见参数形态：
+  - `{ type: "chat" | "message" | "global" | "character" | "script", message_id }`
+  - 兼容 `messageId` 与 legacy 位置参数（字符串/数字消息引用）
+- `message_id` 语义与变量主链路保持一致：
+  - 支持 `latest`、负索引、数字字符串
+  - 越界时显式报错（fail-fast）
+- MVU 会话键选择已收敛为 `chatId > dialogueId > characterId > global`，减少跨会话串写风险。
+- 相关实现：
+  - `hooks/script-bridge/mvu-handlers.ts`
+- 相关测试：
+  - `hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts`
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -117,6 +131,7 @@
 - `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts lib/slash-command/__tests__/js-slash-runner-audio.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts`
 - `pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
+- `pnpm vitest run hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts`
 
 结果：全部通过。
 
@@ -126,9 +141,10 @@
 
 ### 5.1 高优先（建议先做）
 
-1. **变量 API 参数语义对齐**（MagVarUpdate 高频路径）
-   - 当前 `variable-handlers` 更偏 `{ scope }`。
-   - 需补齐/对齐上游常见 `{ type: "chat" | "message" | "global" | "character" | "script", message_id }` 参数语义。
+1. **变量 API 参数语义对齐**（MagVarUpdate 高频路径）✅ 已完成
+   - `mvu.getVariable/mvu.getVariables` 已支持 `{ type, message_id }` 与 `messageId`。
+   - `message_id` 已支持 `latest`、负索引、数字字符串，越界 fail-fast。
+   - 新增回归：`hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts`。
 
 2. **音频命令语义对齐**（JS-Slash-Runner）✅ 已完成（本会话）
    - `audio*` 已按上游常用参数语义对齐：
