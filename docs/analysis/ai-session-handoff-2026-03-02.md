@@ -242,6 +242,17 @@
   - `CharacterChatPanel -> useScriptBridge -> ApiCallContext(onSwitchCharacter) -> slashHandlers`.
 - 补齐桥接层回归，防止后续回调链路断裂。
 
+### 2.18 MVU `parseCommandValue` 语义收敛（math/YAML）
+
+- 已扩展 `parseCommandValue` 的高频表达式能力：
+  - 支持 `Math.*`、`math.*` 以及常用数学函数别名（`sqrt/log/pow/sin/cos/...`）。
+  - 对未知符号保持原样字符串，不做隐式符号求值（避免把业务变量名误当数学符号）。
+- 已补齐 YAML 片段解析路径：
+  - 支持对象/数组 YAML 文本（例如多行 `key: value`、`- item`）直接转结构化数据。
+- 依赖策略结论：
+  - **引入 `yaml` 作为显式直接依赖**；
+  - **暂不引入 `mathjs`**，当前先采用白名单数学求值覆盖高频脚本表达式，控制包体与执行复杂度。
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -271,6 +282,10 @@
   - 向脚本桥接注入 `onSwitchCharacter`
 - `hooks/useScriptBridge.ts`
   - 扩展 `UseScriptBridgeOptions`，透传 `onSwitchCharacter`
+- `lib/mvu/core/parser.ts`
+  - 扩展 math 表达式白名单求值与 YAML 解析
+- `package.json`
+  - 新增 `yaml` 直接依赖（显式化 MVU 解析路径）
 
 ### 3.2 测试
 
@@ -299,6 +314,10 @@
   - 新增 `/character` -> `onSwitchCharacter` 回调链路回归，并更新 `setvar/getvar` 用例到 `key/value` 单路径语义
 - `hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
   - 新增最小链路回归：`triggerSlash("/character ...")` 可触达宿主切换回调
+- `lib/mvu/__tests__/parser.test.ts`
+  - 新增扩展 math 语义（`Math/math` 别名）与 YAML 解析回归
+- `lib/core/__tests__/st-baseline-mvu.test.ts`
+  - 新增基线回归：扩展 math 别名与 YAML 片段解析
 
 ### 3.3 文档
 
@@ -333,6 +352,8 @@
 - `pnpm vitest run lib/slash-command/__tests__/p2-message-command-aliases.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-character-command-gaps.test.ts lib/slash-command/__tests__/p2-message-command-aliases.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`
 - `pnpm vitest run hooks/script-bridge/__tests__/slash-handlers.integration.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts lib/slash-command/__tests__/p2-character-command-gaps.test.ts`
+- `pnpm vitest run lib/mvu/__tests__/parser.test.ts lib/core/__tests__/st-baseline-mvu.test.ts`
+- `pnpm vitest run hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
 
 结果：全部通过。
 
@@ -376,8 +397,8 @@
   - `/edit`：5 次（已补齐）
   - `/character`：2 次（已补最小路径）、`/char-find`：1 次（已补）
 - 下一批建议优先（按插件脚本采样）：
-  - 并行评估 MVU `parseCommandValue` 的 mathjs/YAML 差距并确定是否引入外部依赖
   - 继续补齐 `char/character` 切换后的端到端体验（例如：切换后会话命名策略、脚本侧可观测事件）
+  - 评估 `parseCommandValue` 仍未覆盖的重表达式场景（complex/matrix/date）是否需要二阶段引入 `mathjs`
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
 ### 5.2 中优先
@@ -419,4 +440,4 @@ pnpm vitest run \
   hooks/script-bridge/__tests__/variable-handlers.test.ts
 ```
 
-然后优先评估并收敛 MVU `parseCommandValue` 在 mathjs/YAML 场景的语义差距（明确是否引入外部依赖）；并继续补齐 `char/character` 切换后的端到端体验回归（会话跳转、事件可观测性）；持续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。
+然后优先补齐 `char/character` 切换后的端到端体验回归（会话跳转后命名策略、脚本事件可观测性）；并评估 `parseCommandValue` 在 complex/matrix/date 等重表达式场景是否需要二阶段引入 `mathjs`；持续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。

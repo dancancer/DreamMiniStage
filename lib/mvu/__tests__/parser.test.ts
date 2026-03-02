@@ -38,6 +38,26 @@ describe("parseCommandValue", () => {
     expect(parseCommandValue("10 + 5")).toBe(15);
     expect(parseCommandValue("100 / 4")).toBe(25);
   });
+
+  it("解析扩展数学表达式（Math/math 别名）", () => {
+    expect(parseCommandValue("sqrt(144)")).toBe(12);
+    expect(parseCommandValue("log(1000, 10)")).toBe(3);
+    expect(parseCommandValue("math.sqrt(16) + pow(2, 3)")).toBe(12);
+    expect(parseCommandValue("Math.cos(Math.PI) + 2")).toBeCloseTo(1, 12);
+  });
+
+  it("未知数学符号保持原样字符串", () => {
+    expect(parseCommandValue("hp + bonus")).toBe("hp + bonus");
+    expect(parseCommandValue("'10 + 2'")).toBe("10 + 2");
+  });
+
+  it("解析 YAML 片段", () => {
+    expect(parseCommandValue("name: Alice\nhp: 10")).toEqual({
+      name: "Alice",
+      hp: 10,
+    });
+    expect(parseCommandValue("- sword\n- shield")).toEqual(["sword", "shield"]);
+  });
 });
 
 describe("fixPath", () => {

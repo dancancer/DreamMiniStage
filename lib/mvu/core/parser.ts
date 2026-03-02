@@ -10,6 +10,7 @@
 
 import type { MvuCommand, CommandName } from "../types";
 import { extractJsonPatch, patchToMvuCommands } from "../json-patch";
+import { parse as parseYaml } from "yaml";
 
 // ============================================================================
 //                              字符串工具
@@ -24,6 +25,79 @@ export function trimQuotes(str: string): string {
 // ============================================================================
 //                              值解析
 // ============================================================================
+
+const MATH_ALIAS = Object.freeze({
+  abs: Math.abs,
+  acos: Math.acos,
+  asin: Math.asin,
+  atan: Math.atan,
+  ceil: Math.ceil,
+  cos: Math.cos,
+  exp: Math.exp,
+  floor: Math.floor,
+  log: (value: number, base = Math.E): number => Math.log(value) / Math.log(base),
+  log10: Math.log10,
+  log2: Math.log2,
+  max: Math.max,
+  min: Math.min,
+  pow: Math.pow,
+  random: Math.random,
+  round: Math.round,
+  sign: Math.sign,
+  sin: Math.sin,
+  sqrt: Math.sqrt,
+  tan: Math.tan,
+  trunc: Math.trunc,
+  PI: Math.PI,
+  E: Math.E,
+  pi: Math.PI,
+  e: Math.E,
+});
+
+const MATH_SCOPE: Record<string, unknown> = Object.freeze({
+  Math,
+  math: MATH_ALIAS,
+  ...MATH_ALIAS,
+});
+
+const MATH_SCOPE_KEYS = Object.keys(MATH_SCOPE);
+const MATH_SCOPE_VALUES = MATH_SCOPE_KEYS.map((key) => MATH_SCOPE[key]);
+const MATH_IDENTIFIER_WHITELIST = new Set(MATH_SCOPE_KEYS);
+
+function evaluateMathExpression(expression: string): number | undefined {
+  const source = expression.trim();
+  if (!source) return undefined;
+  if (!/^[A-Za-z0-9_+\-*/%().,\s]+$/.test(source)) {
+    return undefined;
+  }
+
+  const identifiers = source.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? [];
+  for (const identifier of identifiers) {
+    if (!MATH_IDENTIFIER_WHITELIST.has(identifier)) {
+      return undefined;
+    }
+  }
+
+  try {
+    const evaluator = new Function(...MATH_SCOPE_KEYS, `"use strict"; return (${source});`);
+    const result = evaluator(...MATH_SCOPE_VALUES);
+    if (typeof result !== "number" || !Number.isFinite(result)) {
+      return undefined;
+    }
+    return Number.parseFloat(result.toPrecision(12));
+  } catch {
+    return undefined;
+  }
+}
+
+function tryParseYaml(value: string): unknown {
+  if (!value.trim()) return undefined;
+  try {
+    return parseYaml(value);
+  } catch {
+    return undefined;
+  }
+}
 
 /** 解析命令参数值 - 支持 JSON、布尔、数字、数学表达式 */
 export function parseCommandValue(valStr: string): unknown {
@@ -60,14 +134,16 @@ export function parseCommandValue(valStr: string): unknown {
   const num = Number(trimmed);
   if (!isNaN(num) && trimmed !== "") return num;
 
-  // 简单数学表达式
-  if (/^[\d\s+\-*/().]+$/.test(trimmed)) {
-    try {
-      const result = new Function(`return ${trimmed};`)();
-      if (typeof result === "number" && !isNaN(result)) return result;
-    } catch {
-      // 解析失败
-    }
+  // 数学表达式（支持 Math.* / math.* / 常用函数）
+  const mathValue = evaluateMathExpression(trimmed);
+  if (mathValue !== undefined) {
+    return mathValue;
+  }
+
+  // YAML（用于对齐 MagVarUpdate 高频配置片段）
+  const yamlValue = tryParseYaml(trimmed);
+  if (yamlValue !== undefined) {
+    return yamlValue;
   }
 
   // 返回去除引号的字符串

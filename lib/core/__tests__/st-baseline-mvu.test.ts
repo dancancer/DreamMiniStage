@@ -523,9 +523,22 @@ describe("MVU 变量管理系统基线测试", () => {
       expect(parseCommandValue("2 * 3")).toBe(6);
     });
 
+    it("应解析扩展数学表达式别名", () => {
+      expect(parseCommandValue("sqrt(144)")).toBe(12);
+      expect(parseCommandValue("math.sqrt(16) + pow(2, 3)")).toBe(12);
+      expect(parseCommandValue("Math.cos(Math.PI) + 2")).toBeCloseTo(1, 12);
+    });
+
     it("应解析 JavaScript 对象字面量", () => {
       const result = parseCommandValue("{ name: 'Alice', age: 25 }");
       expect(result).toEqual({ name: "Alice", age: 25 });
+    });
+
+    it("应解析 YAML 片段", () => {
+      expect(parseCommandValue("name: Alice\nhp: 10")).toEqual({
+        name: "Alice",
+        hp: 10,
+      });
     });
   });
 
