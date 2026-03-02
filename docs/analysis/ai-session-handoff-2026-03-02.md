@@ -294,6 +294,19 @@
   - `lib/mvu/__tests__/parser.test.ts`
   - `lib/core/__tests__/st-baseline-mvu.test.ts`
 
+### 2.21 `character:switch_*` 跨 iframe 生命周期回归（监听器清理/重建）
+
+- 已修复路由切换/iframe 重建时的监听器清理作用域错误：
+  - `ScriptSandbox` 卸载阶段不再使用外层 `segment id` 清理监听器。
+  - 改为优先使用 shim 握手返回的内部 `iframeId` 清理，避免旧监听器残留导致重复触发。
+- 已补齐回归测试，覆盖销毁与重建两个关键路径：
+  - 销毁：`character:switch_completed` 监听器在 unmount 后必须被清空。
+  - 重建：新 iframe 注册后只触发新监听器，旧监听器不得“穿透”到新生命周期。
+- 相关实现：
+  - `components/ScriptSandbox.tsx`
+- 相关测试：
+  - `components/__tests__/ScriptSandbox.lifecycle.test.tsx`
+
 ---
 
 ## 3. 本轮新增/关键文件
@@ -327,6 +340,8 @@
   - 向脚本桥接注入结构化 `onSwitchCharacter` 回调
 - `hooks/useScriptBridge.ts`
   - 扩展 `UseScriptBridgeOptions`，并在切换回调路径中广播 `requested/completed/failed` 事件
+- `components/ScriptSandbox.tsx`
+  - iframe 卸载时按内部 `iframeId` 清理事件监听器，避免 `character:switch_*` 跨生命周期残留
 - `lib/mvu/core/parser.ts`
   - 扩展 math 表达式白名单求值（新增 `complex/date/now`）与 YAML 解析
 - `package.json`
@@ -365,6 +380,8 @@
   - 新增扩展 math 语义（`Math/math` 别名 + `complex/date/now`）与 YAML 解析回归
 - `lib/core/__tests__/st-baseline-mvu.test.ts`
   - 新增基线回归：扩展 math 别名、`complex/date` 与 YAML 片段解析
+- `components/__tests__/ScriptSandbox.lifecycle.test.tsx`
+  - 覆盖 `character:switch_*` 在 iframe 销毁/重建过程中的监听器清理与重建回归
 
 ### 3.3 文档
 
@@ -403,6 +420,8 @@
 - `pnpm vitest run hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
 - `pnpm vitest run app/session/__tests__/session-switch.test.ts lib/slash-command/__tests__/p2-character-command-gaps.test.ts hooks/script-bridge/__tests__/slash-handlers.integration.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
 - `pnpm vitest run lib/mvu/__tests__/parser.test.ts lib/core/__tests__/st-baseline-mvu.test.ts`
+- `pnpm vitest run components/__tests__/ScriptSandbox.lifecycle.test.tsx`
+- `pnpm vitest run components/__tests__/ScriptSandbox.lifecycle.test.tsx hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
 
 结果：全部通过。
 
@@ -447,9 +466,11 @@
   - `/character`：2 次（已补最小路径）、`/char-find`：1 次（已补）
 - 角色切换端到端体验已补齐：
   - 已完成切换命名策略与脚本侧可观测事件（`character:switch_*`）。
+- 角色切换跨 iframe 生命周期回归已补齐：
+  - 已覆盖 `character:switch_*` 监听器在 iframe 销毁/重建场景的清理与重建，不再残留旧监听器。
 - 下一批建议优先（按插件脚本采样）：
-  - 补 `character:switch_*` 的跨 iframe 生命周期回归（路由切换后监听器清理/重建）。
   - 评估 `parseCommandValue` 的 `matrix` 场景是否需要二阶段引入 `mathjs`（complex/date 已在一阶段补齐）。
+  - 若确认 `matrix` 仍是高频需求，再决定是否引入 `mathjs`；否则保持 fail-fast + 原样字符串单路径。
 - 仍需按真实插件脚本使用频率推进，不追求盲目全量。
 
 ### 5.2 中优先
@@ -481,6 +502,7 @@
 
 ```bash
 pnpm vitest run \
+  components/__tests__/ScriptSandbox.lifecycle.test.tsx \
   app/session/__tests__/session-switch.test.ts \
   lib/slash-command/__tests__/p2-variable-scope.test.ts \
   lib/slash-command/__tests__/js-slash-runner-audio.test.ts \
@@ -489,7 +511,9 @@ pnpm vitest run \
   lib/slash-command/__tests__/p2-character-command-gaps.test.ts \
   hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts \
   hooks/script-bridge/__tests__/api-surface-contract.test.ts \
-  hooks/script-bridge/__tests__/variable-handlers.test.ts
+  hooks/script-bridge/__tests__/variable-handlers.test.ts \
+  lib/mvu/__tests__/parser.test.ts \
+  lib/core/__tests__/st-baseline-mvu.test.ts
 ```
 
-然后优先补 `character:switch_*` 在 iframe 销毁/重建场景下的监听器生命周期回归，并评估 `parseCommandValue` 的 `matrix` 重表达式场景是否需要二阶段引入 `mathjs`；持续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。
+然后优先评估 `parseCommandValue` 的 `matrix` 重表达式场景是否需要二阶段引入 `mathjs`（先做插件脚本频率与表达式复杂度采样，再决定依赖策略）；持续排查变量/脚本桥接链路中的“兼容旧路径”分支，发现即删并补 fail-fast 测试。

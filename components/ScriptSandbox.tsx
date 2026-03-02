@@ -14,7 +14,7 @@
 
 "use client";
 
-import { useRef, useEffect, useCallback, useState, memo, useLayoutEffect } from "react";
+import React, { useRef, useEffect, useCallback, useState, memo, useLayoutEffect } from "react";
 import type { ScriptMessageData } from "@/types/script-message";
 import { clearIframeListeners } from "@/hooks/script-bridge";
 import {
@@ -197,9 +197,9 @@ export const ScriptSandbox = memo(function ScriptSandbox({
   // ║  iframe 销毁时清理事件监听器和派发函数                             ║
   // ╚══════════════════════════════════════════════════════════════════╝
   useEffect(() => {
-    const sandboxId = id;
     return () => {
-      clearIframeListeners(sandboxId);
+      const listenerScopeId = iframeInternalIdRef.current || id;
+      clearIframeListeners(listenerScopeId);
       // 清理 iframe 派发函数
       if (iframeInternalIdRef.current) {
         unregisterIframeDispatcher(iframeInternalIdRef.current);
@@ -263,4 +263,3 @@ function injectTransparentBackground(html: string): string {
   // 兜底：直接前置
   return style + html;
 }
-
