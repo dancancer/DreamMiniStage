@@ -94,6 +94,8 @@
   - 校验 shim API 面与 handler 注册面一致
 - `hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
   - JS-Slash-Runner/MagVarUpdate 最小链路回归
+- `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`
+  - 覆盖 `registerFunctionTool/registerSlashCommand` 的注册、调用、清理、再注册链路
 
 ### 3.3 文档
 
@@ -114,6 +116,7 @@
 - `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts lib/slash-command/__tests__/js-slash-runner-audio.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
 - `pnpm vitest run lib/slash-command/__tests__/p2-operators.test.ts`
+- `pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
 
 结果：全部通过。
 
@@ -147,8 +150,9 @@
 
 ### 5.2 中优先
 
-4. `registerFunctionTool/registerSlashCommand` 生命周期测试继续加深：
-   - 注册 -> 调用 -> iframe 清理 -> 再注册。
+4. `registerFunctionTool/registerSlashCommand` 生命周期测试继续加深：✅ 已补齐最小回归
+   - 已覆盖：注册 -> 调用 -> iframe 清理 -> 再注册。
+   - 相关测试：`hooks/script-bridge/__tests__/extension-lifecycle.test.ts`
 
 5. 能力清单单源化：
    - 将 shim 暴露面、script-bridge handlers、slash registry 能力形成单一“能力矩阵”文件（生成或校验）。

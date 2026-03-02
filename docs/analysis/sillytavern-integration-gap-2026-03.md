@@ -108,6 +108,7 @@
 1. 以 `JS-Slash-Runner/src/function/index.ts` 作为 API 白名单矩阵。
 2. 在 `hooks/script-bridge/` 补齐缺失 handler，并统一错误返回契约（避免 timeout 型失败）。
 3. 补足 `registerFunctionTool/registerSlashCommand` 的全生命周期测试（注册、调用、卸载、iframe 清理）。
+   - 当前已补最小回归：`hooks/script-bridge/__tests__/extension-lifecycle.test.ts`（注册、调用、清理、再注册）。
 
 ### Phase C：MagVarUpdate 行为等价
 
