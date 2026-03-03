@@ -1,4 +1,4 @@
-# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮 + 三轮 + 四轮 + 五轮 + 六轮 + 七轮）
+# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮 + 三轮 + 四轮 + 五轮 + 六轮 + 七轮 + 八轮）
 
 ## 1. 目标与范围
 
@@ -42,6 +42,12 @@
 | `session-ui-refresh-persistence-verify` | 回归复验 | slash 执行后刷新 `session-a` | 同上 | 刷新后仍可见用户消息（不回退到 opening-only） |
 | `session-ui-switch-isolation-recheck-round7` | 回归复验 | 切换 `session-a -> session-b` | 同上 | `session-b` 仅显示 `P4 Round7 Opening B`，无跨会话污染 |
 
+### 2.4 八轮附加场景（普通输入 `401` 独立证据）
+
+| 场景 ID | 场景类型 | 能力链路 | 关联资产 | 验收标准 |
+|---|---|---|---|---|
+| `session-ui-plain-input-401-refresh-verify` | 回归复验 + 故障注入 | 普通输入 -> `api.openai.com` `401` -> 同会话刷新 | `IndexedDB` 注入单会话测试数据 | 刷新后仍保留用户消息，且 `pre-refresh` 日志可观测 `401` + `No response returned from workflow` |
+
 ## 3. 执行步骤（Playwright MCP）
 
 1. 执行 `scripts/p4-playwright-preflight.sh` 清理 `mcp-chrome/Playwright` 残留进程。
@@ -50,7 +56,8 @@
 4. 五轮额外打开 `/session`，注入测试数据并执行“输入提交 + 会话切换”链路。
 5. 六轮在 `/session` 追加“slash 输入链路 + 刷新后持久化 + 会话隔离复验”审计。
 6. 七轮在 `/session` 执行“修复后复验”（slash 直达 + 刷新持久化 + 隔离复验）。
-7. 采集：页面全屏截图、console 消息、network 请求摘要。
+7. 八轮在 `/session` 执行“普通输入 `401` 独立证据”复验（`pre-refresh` 故障日志 + `post-refresh` 持久化截图）。
+8. 采集：页面全屏截图、console 消息、network 请求摘要。
 
 ## 4. 本轮结果
 
@@ -170,6 +177,25 @@
 }
 ```
 
+### 4.8 八轮（`/session` 普通输入 `401` 独立证据）
+
+- 汇总：`1/1` 复验检查通过（独立验证“普通输入失败路径”持久化语义）。
+- 八轮执行时间：`2026-03-03T12:07:xxZ` ~ `2026-03-03T12:10:xxZ`。
+- 关键结论：
+  - `pre-refresh`：普通输入 `P4 Round8 Plain401 Message A3` 命中 `https://api.openai.com/v1/chat/completions -> 401`，并出现 `No response returned from workflow`。
+  - `post-refresh`：刷新 `session-a` 后仍可见 `P4 Round8 Plain401 Message A2/A3`，用户输入未丢失。
+  - 失败链路证据已从“单测主导”升级为“浏览器实跑 + 原始日志”双证据。
+
+```json
+{
+  "phase": "P4-Playwright-MCP-E2E-session-ui-round8-verify",
+  "checks": 1,
+  "passed": 1,
+  "findings": 0,
+  "allPassed": true
+}
+```
+
 ## 5. 证据资产
 
 - 首轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
@@ -203,12 +229,23 @@
 - 七轮原始日志：
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-console.log`
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-network.log`
+- 八轮截图（失败后刷新持久化通过）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-plain-refresh-pass.png`
+- 八轮日志摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-console-network.md`
+- 八轮原始日志（刷新前）：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-pre-refresh-console.log`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-pre-refresh-network.log`
+- 八轮原始日志（刷新后）：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-console.log`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-network.log`
 - 五轮前置清理脚本：`scripts/p4-playwright-preflight.sh`
+- 固定入口脚本：`pnpm p4:preflight`、`pnpm p4:session-dev`
 
 ## 6. 备注
 
 - 五轮已补齐 `/session` 真实 UI 最小链路（输入提交 + 会话切换隔离），P4 回归资产从“脚本执行页”扩展到“真实交互页”。
 - 六轮已将“slash 直达执行 + 失败后刷新一致性”从建议项推进为已执行审计项，并固化证据。
 - 七轮已完成两项 UI 缺口修复复验：slash 直达执行恢复、刷新后用户输入持久化恢复。
+- 八轮已补齐“普通输入触发 `401` 后刷新仍保留用户输入”独立证据，并固化 pre/post 日志。
 - 当前待补强项：
-  1. 在真实浏览器链路补一条“普通输入触发 `401` 后刷新仍保留用户输入”的独立证据，避免只依赖单测覆盖失败路径。
+  1. 将 round7/round8 `/session` 复验固化为可重放脚本（可供 CI 直接消费）。
+  2. 对 `background_*.png 404` 与节点工具类告警做分层降噪，降低回归判读成本。

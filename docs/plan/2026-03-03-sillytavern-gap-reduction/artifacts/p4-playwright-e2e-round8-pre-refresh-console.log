@@ -1,0 +1,215 @@
+Total messages: 195 (Errors: 4, Warnings: 4)
+Returning 190 messages for level "info"
+
+[LOG] [ResourceManager] 页面卸载，执行清理 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20169
+[LOG] [ResourceManager] 开始清理所有资源: 2 个 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20052
+[LOG] [PromptViewerModal] 资源管理器清理: p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/components_d7c63ed1._.js:3299
+[LOG] [PromptViewerButton] 资源管理器清理: p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/components_d7c63ed1._.js:3722
+[LOG] [PromptViewerStore] 清理对话资源: p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20506
+[LOG] [ResourceManager] 清理完成: PromptViewerButton-p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20056
+[LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14744
+[LOG] [PromptInterceptor] 启动清理定时器 @ http://127.0.0.1:3303/_next/static/chunks/lib_prompt-viewer_2a13eb99._.js:443
+[LOG] [ResourceManager] 注册清理函数: prompt-interceptor @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20021
+[LOG] [PromptInterceptor] 已注册事件监听器 @ http://127.0.0.1:3303/_next/static/chunks/lib_prompt-viewer_2a13eb99._.js:398
+[LOG] [PromptInterceptor] 停止拦截: p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_prompt-viewer_2a13eb99._.js:299
+[LOG] [PromptViewer] 停止拦截: p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20465
+[LOG] [PromptViewerStore] 清理对话资源: p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20506
+[LOG] [ResourceManager] 清理完成: PromptViewerModal-p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20056
+[LOG] [ResourceManager] 所有资源清理完成 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20063
+[LOG] [Fast Refresh] done in 45ms @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14584
+[LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14744
+[LOG] [Fast Refresh] done in 792ms @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14584
+[LOG] [ResourceManager] 页面隐藏，执行轻量清理 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20179
+[LOG] [ResourceManager] 定期清理完成 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20121
+[INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_compiled_01461c36._.js:16329
+[LOG] 🔧 Tool Registry initialized with 9 tools (including 4 specialized worldbook tools) @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1237
+[LOG] [ResourceManager] 启动定期清理 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20102
+[LOG] [ResourceManager] 注册全局清理处理器 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20147
+[LOG] 🔌 Initializing Enhanced Plugin Registry... @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1962
+[LOG] 🔍 Discovering plugins from registry... @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1382
+[LOG] 📋 Loaded 1 plugins from registry @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1557
+[LOG] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats) @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1404
+[LOG] 🎯 Plugin discovery complete: 1 found, 0 errors @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1414
+[LOG] 🔍 Discovery complete: 1 plugins found @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1966
+[LOG] 📦 Loading plugin: dialogue-stats @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1986
+[LOG] 📦 Loading plugin: dialogue-stats @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1428
+[LOG] %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit @ https://va.vercel-scripts.com/v1/script.debug.js:0
+[LOG] %c[Vercel Web Analytics]%c [view] http://127.0.0.1:3303/session?id=p4r8-1772539665354-session-a color: rgb(120, 120, 120) color: inherit {o: http://127.0.0.1:3303/session?id=p4r8-1772539665354-session-a, sv: 0.1.3, sdkn: @vercel/analytics/react, sdkv: 1.6.1, ts: 1772539698855} /_vercel/insights/view @ https://va.vercel-scripts.com/v1/script.debug.js:0
+[LOG] 📊 Dialogue Stats Plugin loaded @ :120
+[LOG] ✅ Dialogue Statistics plugin loaded successfully @ :132
+[LOG] ✅ Plugin loaded: 对话统计 (Dialogue Statistics) @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1475
+[LOG] 🔌 Enabling plugin: dialogue-stats @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:2014
+[LOG] 📊 Dialogue Statistics plugin enabling... @ :143
+[LOG] ✅ Dialogue Statistics plugin enabled @ :146
+[LOG] ✅ Plugin enabled: dialogue-stats @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:2036
+[LOG] ✅ Enhanced Plugin Registry initialized @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1973
+[LOG] 🔍 Discovering plugins from registry... @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1382
+[LOG] 📋 Loaded 1 plugins from registry @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1557
+[LOG] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats) @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1404
+[LOG] 🎯 Plugin discovery complete: 1 found, 0 errors @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1414
+[LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14744
+[LOG] [Fast Refresh] done in 29ms @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14584
+[LOG] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4r8-1772539665354-char-a, placement=2 ━━━ @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][ASYNC] 1. 调用 RegexProcessor... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ResourceManager] 注册清理函数: PromptViewerModal-p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20021
+[LOG] [ResourceManager] 注册清理函数: PromptViewerButton-p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20021
+[LOG] [PromptViewerButton] 组件卸载，清理资源: p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/components_d7c63ed1._.js:3729
+[LOG] [ResourceManager] 取消注册清理函数: PromptViewerButton-p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20028
+[LOG] [PromptViewerModal] 组件卸载，清理所有资源: p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/components_d7c63ed1._.js:3307
+[LOG] [ResourceManager] 取消注册清理函数: PromptViewerModal-p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20028
+[LOG] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4r8-1772539665354-char-a, placement=2 ━━━ @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][ASYNC] 1. 调用 RegexProcessor... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ResourceManager] 注册清理函数: PromptViewerModal-p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20021
+[LOG] [ResourceManager] 注册清理函数: PromptViewerButton-p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20021
+[LOG] [PromptViewerStore] 清理对话资源: p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20506
+[LOG] [PromptViewerStore] 清理对话资源: p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20506
+[LOG] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无) @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][START] ━━━ 开始解析内容 ━━━ @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][START] 输入长度=19 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][INPUT] 前300字符: P4 Round8 Opening A... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][STEP] 1. 提取沙箱内容... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][SANDBOX] 提取到 0 个沙箱 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [MarkdownConverter][START] 输入长度=19 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][INPUT] 前200字符: P4 Round8 Opening A... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][HR_REMOVE] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][HR_REMOVE] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][CODE_BLOCK] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BOLD] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BOLD] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][ITALIC] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][ITALIC] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][TALK] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][TALK] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BRACKET] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BRACKET] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][DONE] 输出长度=19 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][OUTPUT] 前200字符: P4 Round8 Opening A... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [TagReplacer][START] 输入长度=19 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21417
+[LOG] [TagReplacer][INPUT] 前200字符: P4 Round8 Opening A... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21417
+[LOG] [TagReplacer][DETECT] 检测到标签: 0 种 -  @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21417
+[LOG] [TagReplacer][SKIP] 无标签，跳过处理 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21417
+[LOG] [ContentParser][STEP] 3. 分割为段落... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][DONE] 生成 1 个段落 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][SEGMENT] [0] type=html, len=19 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无) @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][START] ━━━ 开始解析内容 ━━━ @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][START] 输入长度=19 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][INPUT] 前300字符: P4 Round8 Opening A... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][STEP] 1. 提取沙箱内容... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][SANDBOX] 提取到 0 个沙箱 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [MarkdownConverter][START] 输入长度=19 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][INPUT] 前200字符: P4 Round8 Opening A... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][HR_REMOVE] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][HR_REMOVE] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][CODE_BLOCK] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BOLD] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BOLD] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][ITALIC] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][ITALIC] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][TALK] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][TALK] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BRACKET] 匹配: 0 处 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][BRACKET] ✗ 未变化 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][DONE] 输出长度=19 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [MarkdownConverter][OUTPUT] 前200字符: P4 Round8 Opening A... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:20954
+[LOG] [TagReplacer][START] 输入长度=19 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21417
+[LOG] [TagReplacer][INPUT] 前200字符: P4 Round8 Opening A... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21417
+[LOG] [TagReplacer][DETECT] 检测到标签: 0 种 -  @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21417
+[LOG] [TagReplacer][SKIP] 无标签，跳过处理 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21417
+[LOG] [ContentParser][STEP] 3. 分割为段落... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][DONE] 生成 1 个段落 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [ContentParser][SEGMENT] [0] type=html, len=19 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:21564
+[LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14744
+[LOG] [Fast Refresh] done in 36ms @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14584
+[LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14744
+[LOG] [Fast Refresh] done in 32ms @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14584
+[WARNING] 找不到节点类型的工具类: userInput @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1133
+[WARNING] 找不到节点类型的工具类: pluginMessage @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1133
+[WARNING] 找不到节点类型的工具类: plugin @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1133
+[WARNING] 找不到节点类型的工具类: output @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1133
+[LOG] Node user-input-1: Processing workflow beforeExecute @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1223
+[LOG] Node user-input-1: Processing workflow afterExecute @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1226
+[LOG] Node plugin-message-1: Processing workflow beforeExecute @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1223
+[LOG] 🔌 PluginMessageNode: Processing user input {userInputLength: 36, characterId: p4r8-1772539665354-char-a, userInputPreview: 玩家输入指令：P4 Round8 Plain401 Message A3...} @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:13860
+[LOG] 🔌 PluginMessageNode: Initializing plugin system... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:13892
+[LOG] ✅ PluginMessageNode: Plugin system initialized @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:13894
+[LOG] 🔌 PluginMessageNode: Processing onMessage hooks... @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:13903
+[LOG] 📝 Dialogue Stats: Message received: 玩家输入指令：P4 Round8 Plain401 Message A3... @ :186
+[LOG] ✅ PluginMessageNode: onMessage hooks processed {originalLength: 36, processedLength: 36, changed: false} @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:13916
+[LOG] ✅ PluginMessageNode: Processing complete {originalLength: 36, processedLength: 36, changed: false} @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:13874
+[LOG] Node plugin-message-1: Processing workflow afterExecute @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1226
+[LOG] Node history-pre-1: Processing workflow beforeExecute @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1223
+[LOG] [historyPreTool] Executing getChatHistoryMessages [p4r8-1772539665354-session-a, 10] @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:979
+[LOG] [HistoryPreNodeTools] Got 3 chat history messages for p4r8-1772539665354-session-a @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1481
+[LOG] [historyPreTool] Executing getConversationContext [p4r8-1772539665354-session-a, 3] @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:979
+[LOG] [HistoryPreNode] Prepared history for p4r8-1772539665354-session-a: 3 messages @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1602
+[LOG] Node history-pre-1: Processing workflow afterExecute @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1226
+[LOG] Node preset-1: Processing workflow beforeExecute @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1223
+[LOG] [presetTool] Executing buildPromptFramework [p4r8-1772539665354-char-a, zh, , undefined, 200, false, none, p4r8-1772539665354-session-a, 玩家输入指令：P4 Round8 Plain401 Message A3, Array(3)] @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:979
+[LOG] [PresetNodeTools] Found 0 presets in IndexedDB @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:5519
+[LOG] [PresetNodeTools] No enabled preset found in IndexedDB @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:5542
+[LOG] [PresetNodeTools] Falling back to minimal default preset @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:5545
+[LOG] [PresetNodeTools] Built: preset=default, msgs=7, historyMsgs=3 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:5503
+[LOG] Node preset-1: Processing workflow afterExecute @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1226
+[LOG] Node context-1: Processing workflow beforeExecute @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1223
+[LOG] [ContextNode] Pass-through messages=7 @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1713
+[LOG] Node context-1: Processing workflow afterExecute @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1226
+[LOG] Node world-book-1: Processing workflow beforeExecute @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1223
+[LOG] [worldBookTool] Executing modifyMessages [p4r8-1772539665354-char-a, Array(7), 玩家输入指令：P4 Round8 Plain401 Message A3, p4r8-1772539665354-session-a] @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:979
+[LOG] Node world-book-1: Processing workflow afterExecute @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1226
+[LOG] Node llm-1: Processing workflow beforeExecute @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:1223
+[LOG] [llmTool] Executing invokeLLM [Object] @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:979
+[LOG] invokeLLM @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:12361
+[LOG] [LLMNodeTools:invokeLLM] 广播 llm-prompt-captured 事件: {dialogueKey: p4r8-1772539665354-session-a, characterId: p4r8-1772539665354-char-a, messagesCount: 7} @ http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:12400
+[ERROR] Failed to load resource: the server responded with a status of 401 () @ https://api.openai.com/v1/chat/completions:0
+[ERROR] Method execution failed: invokeLLM Error: [llmTool.invokeLLM] 401 You didn't provide an API key. You need to provide your API key in an Authorization header using Bearer auth (i.e. Authorization: Bearer YOUR_KEY), or as the password field (with blank username) if you're accessing the API from your browser and are prompted for a username and password. You can obtain an API key from https://platform.openai.com/account/api-keys.
+
+Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/
+
+    at APIError.generate (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:149:20)
+    at OpenAI.makeStatusError (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8658:260)
+    at OpenAI.makeRequest (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8829:30)
+    at async http://127.0.0.1:3303/_next/static/chunks/fd141_@langchain_openai_c9e0528c._.js:2101:29
+    at async RetryOperation._fn (http://127.0.0.1:3303/_next/static/chunks/node_modules__pnpm_9b4ad42b._.js:5393:25) @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:1193
+[ERROR] Error: [llmTool.invokeLLM] 401 You didn't provide an API key. You need to provide your API key in an Authorization header using Bearer auth (i.e. Authorization: Bearer YOUR_KEY), or as the password field (with blank username) if you're accessing the API from your browser and are prompted for a username and password. You can obtain an API key from https://platform.openai.com/account/api-keys.
+
+Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/
+
+    at APIError.generate (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:149:20)
+    at OpenAI.makeStatusError (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8658:260)
+    at OpenAI.makeRequest (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8829:30)
+    at async http://127.0.0.1:3303/_next/static/chunks/fd141_@langchain_openai_c9e0528c._.js:2101:29
+    at async RetryOperation._fn (http://127.0.0.1:3303/_next/static/chunks/node_modules__pnpm_9b4ad42b._.js:5393:25) @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:1193
+[ERROR] Processing error: Error: No response returned from workflow
+    at handleCharacterChatRequest (http://127.0.0.1:3303/_next/static/chunks/_c6730766._.js:495:23)
+    at async generateResponse (http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:22417:26)
+    at async sendMessage (http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:22736:5)
+    at async sendMessage (http://127.0.0.1:3303/_next/static/chunks/lib_74b94104._.js:23158:13)
+    at async useCharacterDialogue.useCallback[handleSendMessage] [as handleSendMessage] (http://127.0.0.1:3303/_next/static/chunks/hooks_70bda5e7._.js:4236:13)
+    at async SessionPageContent.useCallback[handleSubmit] (http://127.0.0.1:3303/_next/static/chunks/_c6730766._.js:1881:13) @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:1193
+[LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14744
+[LOG] [Fast Refresh] done in 38ms @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14584

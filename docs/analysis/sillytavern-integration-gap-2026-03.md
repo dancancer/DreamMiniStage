@@ -8,11 +8,11 @@
 
 ## 1. 本轮复评结论（先给结论）
 
-- 当前 gap **仍不算小**，但 P4 已从“真实 UI 缺口显式化”进入“关键交互链路收敛”阶段。
+- 当前 gap **仍不算小**，但 P4 已从“关键交互链路收敛”进入“失败路径独立证据固化”阶段。
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**30.23%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
-- 结论：P2/P3 gate 持续达标；P4 七轮已完成（四轮脚本执行面 + 五轮 `/session` 交互面 + 六轮缺口审计 + 七轮修复复验），`slash` 直达与失败后输入持久化两项 UI 缺口已完成修复闭环。
+- 结论：P2/P3 gate 持续达标；P4 八轮已完成（四轮脚本执行面 + 五轮 `/session` 交互面 + 六轮缺口审计 + 七轮修复复验 + 八轮普通输入失败链路独立证据），关键 UI 缺口已形成“修复 + 浏览器证据”闭环。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -261,6 +261,24 @@
   - 原始日志：
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-console.log`
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-network.log`
+
+### 1.18 2026-03-03 P4 增量执行结果（八轮：普通输入 `401` 独立证据）
+
+- 八轮执行目标：补齐“普通输入触发 `401` 后刷新仍保留 user 节点”的浏览器独立证据，并与七轮 slash 场景解耦。
+- 八轮关键结果：
+  - `session-a` 普通输入 `P4 Round8 Plain401 Message A3` 命中 `https://api.openai.com/v1/chat/completions -> 401`。
+  - 同链路出现 `No response returned from workflow`（fail-fast 语义可见）。
+  - 刷新 `session-a` 后仍保留 `P4 Round8 Plain401 Message A2/A3`，输入持久化不回退。
+  - 本轮同步补齐固定入口：`pnpm p4:preflight`、`pnpm p4:session-dev`。
+- 八轮证据已固化：
+  - 截图（失败后刷新持久化通过）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-plain-refresh-pass.png`
+  - console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-console-network.md`
+  - 原始日志（刷新前）：
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-pre-refresh-console.log`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-pre-refresh-network.log`
+  - 原始日志（刷新后）：
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-console.log`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-network.log`
 
 ## 2. 审计口径与量化结果
 
@@ -547,6 +565,18 @@ pnpm vitest run \
   - 发现缺口：`2`（slash 直达未命中、失败后输入未持久化）
   - Console：关键错误集中在 `401` 与 `No response returned from workflow`。
 
+### 3.17 P4 Playwright MCP E2E（八轮 `/session` 普通输入 `401` 独立证据）
+
+- 执行路径：
+  - 执行 `scripts/p4-playwright-preflight.sh` 清理残留浏览器进程。
+  - 使用 Playwright MCP 注入 `IndexedDB` 单会话测试数据并打开 `/session?id=p4r8-1772539665354-session-a`。
+  - 提交普通输入 `P4 Round8 Plain401 Message A3`，命中 LLM `401` 链路。
+  - 导出 `pre-refresh` 原始日志后刷新同会话，复验消息持久化。
+- 结果：
+  - 复验检查：`1/1` 通过。
+  - `pre-refresh`：`Errors=4 / Warnings=4`，关键错误为 `401` + `No response returned from workflow`。
+  - `post-refresh`：`Errors=0 / Warnings=0`，无新增业务错误，用户消息保持可见。
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -586,22 +616,23 @@ pnpm vitest run \
 - 头部缺口已进一步后移到低频命令与深语义能力（如 parser flags/debug/scope chain 细节），短期更适合通过 E2E 曝露真实阻塞点。
 - 建议从“继续堆命令数”转向“以 E2E 场景驱动补缺”，优先修复能复现实际迁移失败的路径。
 
-### 4.6 P4 现阶段风险（七轮后）
+### 4.6 P4 现阶段风险（八轮后）
 
-- 七轮已完成六轮两项缺口的修复复验：slash 直达执行恢复、刷新后用户输入持久化恢复。
-- 仍待补强的是“普通输入触发 `401` 的失败链路”浏览器级独立证据，目前该路径主要由单测保障。
-- `mcp-chrome` 抢占风险已通过 `scripts/p4-playwright-preflight.sh` 收敛为可执行模板，仍需在 CI/自动化流水线中落地调用。
+- 八轮已补齐“普通输入触发 `401` 后刷新仍保留 user 节点”浏览器独立证据，失败路径不再只依赖单测。
+- `mcp-chrome` 抢占风险已通过 `scripts/p4-playwright-preflight.sh` + `pnpm p4:preflight` 收敛为固定入口，仍需在 CI/自动化流水线落地调用。
+- 噪音风险仍在：`background_*.png 404` 与节点工具类警告会干扰回归判读，需要分层降噪。
 
-## 5. P4 七轮结论
+## 5. P4 八轮结论
 
-本轮判定：**P4 已完成“可回归 + 缺口显式化 + 关键缺口修复复验”三目标**。
+本轮判定：**P4 已完成“可回归 + 缺口显式化 + 修复复验 + 普通输入失败链路独立证据”四目标**。
 
 1. 脚本执行面保持 `9/9` 全绿（`4` 主链路 + `5` 故障注入）。  
-2. `/session` 真实 UI 基线保持有效（五轮 `1/1` + 六轮隔离复验 + 七轮修复复验）。  
-3. 六轮暴露的两项阻塞已在七轮闭环：slash 直达链路恢复、失败后输入持久化恢复。
+2. `/session` 真实 UI 链路已覆盖输入、slash、刷新、隔离四类关键路径。  
+3. 六轮暴露的两项阻塞已在七轮闭环，八轮进一步补齐普通输入 `401` 失败链路浏览器证据。  
+4. preflight 入口已固定化，可复用性提升（`pnpm p4:preflight` / `pnpm p4:session-dev`）。
 
-## 6. 下一阶段建议（P4 八轮）
+## 6. 下一阶段建议（P4 九轮）
 
-1. 补一条浏览器独立证据：普通输入触发 `401` 后刷新，确认 user 节点仍保留。  
-2. 把 `scripts/p4-playwright-preflight.sh` 接入固定入口（`pnpm` 脚本或 CI step），并将七轮 `/session` 复验场景纳入常规回归模板。  
-3. 对 `background_*.png 404` 与节点工具类告警做降噪分层，减少非阻断日志对回归判读的干扰。
+1. 将 round7 + round8 `/session` 复验流程脚本化（单命令驱动 + 产物命名规范），便于 CI 直接调用。  
+2. 在 CI 中接入 `pnpm p4:preflight`，降低 `mcp-chrome` 残留导致的环境波动。  
+3. 对 `background_*.png 404` 和节点工具类警告做分级降噪，回归报告按“阻断/非阻断”拆分展示。
