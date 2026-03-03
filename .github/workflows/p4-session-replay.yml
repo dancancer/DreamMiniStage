@@ -1,0 +1,55 @@
+name: P4 Session Replay
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "app/session/**"
+      - "components/character-chat/**"
+      - "function/dialogue/**"
+      - "lib/store/dialogue-store/**"
+      - "scripts/p4-*.sh"
+      - "scripts/p4-session-replay-*.mjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+
+jobs:
+  replay:
+    name: Replay /session Mainline
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Preflight cleanup
+        run: pnpm p4:preflight
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run P4 session replay
+        run: pnpm p4:session-replay
+
+      - name: Upload replay artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p4-session-replay-artifacts
+          path: docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-*
+          if-no-files-found: warn

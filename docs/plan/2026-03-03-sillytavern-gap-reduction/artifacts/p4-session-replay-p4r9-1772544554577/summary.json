@@ -1,0 +1,92 @@
+{
+  "runId": "p4r9-1772544554577",
+  "startedAt": "2026-03-03T13:29:14.577Z",
+  "finishedAt": "2026-03-03T13:29:31.618Z",
+  "baseUrl": "http://127.0.0.1:3303",
+  "allPassed": true,
+  "checkpoints": [
+    {
+      "name": "seed-indexeddb",
+      "passed": true,
+      "detail": {
+        "sessions": 3,
+        "dialogues": 3
+      },
+      "timestamp": "2026-03-03T13:29:21.148Z"
+    },
+    {
+      "name": "round7-open-session-a",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round9 Opening A"
+      },
+      "timestamp": "2026-03-03T13:29:25.196Z"
+    },
+    {
+      "name": "round7-slash-direct",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round9 SlashPathMessage"
+      },
+      "timestamp": "2026-03-03T13:29:25.256Z"
+    },
+    {
+      "name": "round7-refresh-persistence",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round9 SlashPathMessage"
+      },
+      "timestamp": "2026-03-03T13:29:26.793Z"
+    },
+    {
+      "name": "round7-session-b-opened",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round9 Opening B"
+      },
+      "timestamp": "2026-03-03T13:29:28.530Z"
+    },
+    {
+      "name": "round7-session-isolation",
+      "passed": true,
+      "detail": {
+        "leakedCount": 0
+      },
+      "timestamp": "2026-03-03T13:29:28.533Z"
+    },
+    {
+      "name": "round8-open-session-plain",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round9 Opening Plain"
+      },
+      "timestamp": "2026-03-03T13:29:30.020Z"
+    },
+    {
+      "name": "round8-plain-input-401",
+      "passed": true,
+      "detail": {
+        "status": 401
+      },
+      "timestamp": "2026-03-03T13:29:30.079Z"
+    },
+    {
+      "name": "round8-pre-refresh-message-visible",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round9 Plain401 Message A3"
+      },
+      "timestamp": "2026-03-03T13:29:30.101Z"
+    },
+    {
+      "name": "round8-refresh-persistence",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round9 Plain401 Message A3"
+      },
+      "timestamp": "2026-03-03T13:29:31.581Z"
+    }
+  ],
+  "runDir": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577",
+  "startedDevServer": true
+}

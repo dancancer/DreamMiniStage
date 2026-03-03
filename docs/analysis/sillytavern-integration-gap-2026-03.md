@@ -8,11 +8,11 @@
 
 ## 1. 本轮复评结论（先给结论）
 
-- 当前 gap **仍不算小**，但 P4 已从“关键交互链路收敛”进入“失败路径独立证据固化”阶段。
+- 当前 gap **仍不算小**，但 P4 已从“关键交互链路收敛”进入“自动回放 + CI 固化”阶段。
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**30.23%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
-- 结论：P2/P3 gate 持续达标；P4 八轮已完成（四轮脚本执行面 + 五轮 `/session` 交互面 + 六轮缺口审计 + 七轮修复复验 + 八轮普通输入失败链路独立证据），关键 UI 缺口已形成“修复 + 浏览器证据”闭环。
+- 结论：P2/P3 gate 持续达标；P4 九轮已完成（四轮脚本执行面 + 五轮 `/session` 交互面 + 六轮缺口审计 + 七轮修复复验 + 八轮普通输入失败链路独立证据 + 九轮自动回放与 CI 固化），关键 UI 缺口已形成“修复 + 浏览器证据 + 自动回归”闭环。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -279,6 +279,24 @@
   - 原始日志（刷新后）：
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-console.log`
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-network.log`
+
+### 1.19 2026-03-03 P4 增量执行结果（九轮：round7+8 自动回放 + CI）
+
+- 九轮执行目标：将 round7 + round8 `/session` 复验收敛为“单命令 + 可归档产物 + CI 可执行”路径。
+- 九轮关键结果：
+  - 新增自动回放脚本：
+    - `scripts/p4-session-replay-e2e.mjs`
+    - `scripts/p4-session-replay-lib.mjs`
+  - 新增单命令入口：
+    - `pnpm p4:session-replay`
+  - 自动回放实跑通过：`10/10` checkpoints 全绿（slash 直达、刷新持久化、会话隔离、普通输入 `401`）。
+  - 新增 CI 工作流：
+    - `.github/workflows/p4-session-replay.yml`
+    - 工作流已接入 `pnpm p4:preflight` + `pnpm p4:session-replay` + 产物上传。
+- 九轮证据已固化（示例 run）：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/summary.md`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round7-slash-direct-pass.png`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round8-plain-refresh-pass.png`
 
 ## 2. 审计口径与量化结果
 
@@ -616,23 +634,25 @@ pnpm vitest run \
 - 头部缺口已进一步后移到低频命令与深语义能力（如 parser flags/debug/scope chain 细节），短期更适合通过 E2E 曝露真实阻塞点。
 - 建议从“继续堆命令数”转向“以 E2E 场景驱动补缺”，优先修复能复现实际迁移失败的路径。
 
-### 4.6 P4 现阶段风险（八轮后）
+### 4.6 P4 现阶段风险（九轮后）
 
 - 八轮已补齐“普通输入触发 `401` 后刷新仍保留 user 节点”浏览器独立证据，失败路径不再只依赖单测。
-- `mcp-chrome` 抢占风险已通过 `scripts/p4-playwright-preflight.sh` + `pnpm p4:preflight` 收敛为固定入口，仍需在 CI/自动化流水线落地调用。
+- `mcp-chrome` 抢占风险已通过 `scripts/p4-playwright-preflight.sh` + `pnpm p4:preflight` 收敛，并在 CI 工作流中落地调用。
 - 噪音风险仍在：`background_*.png 404` 与节点工具类警告会干扰回归判读，需要分层降噪。
 
-## 5. P4 八轮结论
+## 5. P4 九轮结论
 
-本轮判定：**P4 已完成“可回归 + 缺口显式化 + 修复复验 + 普通输入失败链路独立证据”四目标**。
+本轮判定：**P4 已完成“可回归 + 缺口显式化 + 修复复验 + 普通输入失败链路独立证据 + 自动回放固化 + CI 落地”六目标**。
 
 1. 脚本执行面保持 `9/9` 全绿（`4` 主链路 + `5` 故障注入）。  
 2. `/session` 真实 UI 链路已覆盖输入、slash、刷新、隔离四类关键路径。  
 3. 六轮暴露的两项阻塞已在七轮闭环，八轮进一步补齐普通输入 `401` 失败链路浏览器证据。  
 4. preflight 入口已固定化，可复用性提升（`pnpm p4:preflight` / `pnpm p4:session-dev`）。
+5. round7+round8 已收敛为单命令回放（`pnpm p4:session-replay`），并形成 runId 产物目录。
+6. CI 已接入 `p4:preflight + p4:session-replay`，回归资产可自动上传归档。
 
-## 6. 下一阶段建议（P4 九轮）
+## 6. 下一阶段建议（P4 十轮）
 
-1. 将 round7 + round8 `/session` 复验流程脚本化（单命令驱动 + 产物命名规范），便于 CI 直接调用。  
-2. 在 CI 中接入 `pnpm p4:preflight`，降低 `mcp-chrome` 残留导致的环境波动。  
-3. 对 `background_*.png 404` 和节点工具类警告做分级降噪，回归报告按“阻断/非阻断”拆分展示。
+1. 对 `background_*.png 404` 和节点工具类警告做分级降噪，回归报告按“阻断/非阻断”拆分展示。  
+2. 在自动回放脚本中增加 `noise baseline` 输出（错误签名白名单 + 新增噪音差分）。  
+3. 将 `p4-session-replay` 的 runId 摘要聚合为单文件索引，便于跨轮对比趋势。

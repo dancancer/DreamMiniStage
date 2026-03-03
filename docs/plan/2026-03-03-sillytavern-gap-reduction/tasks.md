@@ -72,6 +72,9 @@
 - [x] 七轮回归：`pnpm vitest run function/dialogue/__tests__/chat-first-message.test.ts app/session/__tests__/session-switch.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`；`pnpm exec eslint app/session/page.tsx function/dialogue/chat.ts function/dialogue/__tests__/chat-first-message.test.ts`；`pnpm exec tsc --noEmit`。
 - [x] 八轮增量：补齐“普通输入触发 `401` 后刷新仍保留用户输入”浏览器独立证据（与七轮 slash 场景分离），并同步 pre/post 日志。
 - [x] 八轮固化：新增 `pnpm p4:preflight` / `pnpm p4:session-dev` 固定入口，收敛 preflight + 本地调试启动路径。
+- [x] 九轮增量：新增 `scripts/p4-session-replay-e2e.mjs` + `scripts/p4-session-replay-lib.mjs`，将 round7/round8 `/session` 复验收敛为单命令自动回放（自动注入 IndexedDB、自动断言、自动产物落盘）。
+- [x] 九轮执行：`pnpm p4:session-replay` 实跑通过（`10` checkpoints 全绿：slash 直达、刷新持久化、会话隔离、普通输入 `401`）。
+- [x] 九轮 CI 接入：新增 `.github/workflows/p4-session-replay.yml`，在 workflow 中接入 `pnpm p4:preflight` + `pnpm p4:session-replay` + 产物上传。
 - [x] 固化失败截图/日志与复现步骤，纳入回归文档。
   - 场景映射与执行记录：`docs/plan/2026-03-03-sillytavern-gap-reduction/p4-playwright-e2e.md`
   - 运行截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
@@ -110,6 +113,14 @@
   - 八轮原始日志（刷新后）：
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-console.log`
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-network.log`
+  - 九轮自动回放产物目录（示例 run）：
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/summary.md`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round7-slash-direct-pass.png`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round7-refresh-persistence-pass.png`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round7-session-b-isolation-pass.png`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round8-plain-refresh-pass.png`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round8-pre-refresh-console.log`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round8-pre-refresh-network.log`
 
 ## 每轮完成后的固定动作
 

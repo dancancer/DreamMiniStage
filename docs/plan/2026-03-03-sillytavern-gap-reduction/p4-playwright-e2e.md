@@ -1,4 +1,4 @@
-# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮 + 三轮 + 四轮 + 五轮 + 六轮 + 七轮 + 八轮）
+# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮 + 三轮 + 四轮 + 五轮 + 六轮 + 七轮 + 八轮 + 九轮）
 
 ## 1. 目标与范围
 
@@ -48,6 +48,12 @@
 |---|---|---|---|---|
 | `session-ui-plain-input-401-refresh-verify` | 回归复验 + 故障注入 | 普通输入 -> `api.openai.com` `401` -> 同会话刷新 | `IndexedDB` 注入单会话测试数据 | 刷新后仍保留用户消息，且 `pre-refresh` 日志可观测 `401` + `No response returned from workflow` |
 
+### 2.5 九轮附加场景（自动回放脚本）
+
+| 场景 ID | 场景类型 | 能力链路 | 关联资产 | 验收标准 |
+|---|---|---|---|---|
+| `session-replay-round7-round8` | 主链路 + 故障注入 | `seedIndexedDB -> slash 输入 -> 刷新 -> 会话切换 -> 普通输入 -> 401 -> 刷新` | `scripts/p4-session-replay-e2e.mjs` + `scripts/p4-session-replay-lib.mjs` | 单命令 `pnpm p4:session-replay` 产出 runId 目录，`10` checkpoints 全绿 |
+
 ## 3. 执行步骤（Playwright MCP）
 
 1. 执行 `scripts/p4-playwright-preflight.sh` 清理 `mcp-chrome/Playwright` 残留进程。
@@ -57,7 +63,8 @@
 5. 六轮在 `/session` 追加“slash 输入链路 + 刷新后持久化 + 会话隔离复验”审计。
 6. 七轮在 `/session` 执行“修复后复验”（slash 直达 + 刷新持久化 + 隔离复验）。
 7. 八轮在 `/session` 执行“普通输入 `401` 独立证据”复验（`pre-refresh` 故障日志 + `post-refresh` 持久化截图）。
-8. 采集：页面全屏截图、console 消息、network 请求摘要。
+8. 九轮执行 `pnpm p4:session-replay`，自动完成 round7+8 断言并写入 runId 证据目录。
+9. 采集：页面全屏截图、console 消息、network 请求摘要。
 
 ## 4. 本轮结果
 
@@ -196,6 +203,25 @@
 }
 ```
 
+### 4.9 九轮（`/session` round7+8 自动回放）
+
+- 汇总：`10/10` checkpoints 通过，单命令脚本可重复执行。
+- 九轮执行时间：`2026-03-03T13:29:14.577Z` ~ `2026-03-03T13:29:31.757Z`。
+- 关键结论：
+  - 已形成单入口：`pnpm p4:session-replay`（内置 `p4:preflight` + 自动启动/复用 dev server）。
+  - 自动回放同时覆盖 round7（slash 直达、刷新持久化、会话隔离）与 round8（普通输入 `401` + 刷新持久化）。
+  - 产物按 runId 目录落盘，避免多轮执行互相覆盖。
+
+```json
+{
+  "phase": "P4-Playwright-MCP-E2E-session-ui-round9-replay",
+  "checks": 10,
+  "passed": 10,
+  "findings": 0,
+  "allPassed": true
+}
+```
+
 ## 5. 证据资产
 
 - 首轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
@@ -237,6 +263,18 @@
 - 八轮原始日志（刷新后）：
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-console.log`
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round8-network.log`
+- 九轮自动回放产物目录（示例 run）：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/summary.md`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round7-slash-direct-pass.png`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round7-refresh-persistence-pass.png`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round7-session-b-isolation-pass.png`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round8-plain-refresh-pass.png`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round8-pre-refresh-console.log`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round8-pre-refresh-network.log`
+- 九轮自动回放脚本：
+  - `scripts/p4-session-replay-e2e.mjs`
+  - `scripts/p4-session-replay-lib.mjs`
+- 九轮 CI 工作流：`.github/workflows/p4-session-replay.yml`
 - 五轮前置清理脚本：`scripts/p4-playwright-preflight.sh`
 - 固定入口脚本：`pnpm p4:preflight`、`pnpm p4:session-dev`
 
@@ -246,6 +284,6 @@
 - 六轮已将“slash 直达执行 + 失败后刷新一致性”从建议项推进为已执行审计项，并固化证据。
 - 七轮已完成两项 UI 缺口修复复验：slash 直达执行恢复、刷新后用户输入持久化恢复。
 - 八轮已补齐“普通输入触发 `401` 后刷新仍保留用户输入”独立证据，并固化 pre/post 日志。
+- 九轮已将 round7+8 收敛为单命令自动回放，并接入 CI 可执行入口。
 - 当前待补强项：
-  1. 将 round7/round8 `/session` 复验固化为可重放脚本（可供 CI 直接消费）。
-  2. 对 `background_*.png 404` 与节点工具类告警做分层降噪，降低回归判读成本。
+  1. 对 `background_*.png 404` 与节点工具类告警做分层降噪，降低回归判读成本。
