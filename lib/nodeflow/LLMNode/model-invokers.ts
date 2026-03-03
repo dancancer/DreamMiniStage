@@ -26,8 +26,40 @@ import {
   type ToolCallBatches,
   type OpenAITool,
 } from "@/lib/mvu/function-call";
+import { invokeScriptTool } from "@/hooks/script-bridge";
 
 type ChatMessage = { role: string; content: string };
+
+function parseScriptToolArguments(toolName: string, rawArgs: unknown): Record<string, unknown> {
+  if (rawArgs === undefined || rawArgs === null) {
+    return {};
+  }
+
+  if (typeof rawArgs === "string") {
+    const parsed = JSON.parse(rawArgs) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+    throw new Error(`Tool '${toolName}' arguments JSON 必须为对象`);
+  }
+
+  if (typeof rawArgs === "object" && !Array.isArray(rawArgs)) {
+    return rawArgs as Record<string, unknown>;
+  }
+
+  throw new Error(`Tool '${toolName}' arguments 类型不受支持: ${typeof rawArgs}`);
+}
+
+function serializeToolResult(result: unknown): string {
+  if (typeof result === "string") {
+    return result;
+  }
+  try {
+    return JSON.stringify(result);
+  } catch {
+    return String(result);
+  }
+}
 
 /** 流式回调接口 */
 export interface StreamingCallbacks {
@@ -121,8 +153,9 @@ export async function invokeClaudeModel(
     if (config.mvuToolEnabled) {
       allTools.push(getMvuTool());
     }
-    if (config.scriptTools) {
-      allTools.push(...config.scriptTools);
+    const scriptTools = config.scriptTools || [];
+    if (scriptTools.length > 0) {
+      allTools.push(...scriptTools);
     }
 
     const boundModel = openaiLlm.bindTools(allTools, { tool_choice: "auto" });
@@ -147,7 +180,20 @@ export async function invokeClaudeModel(
         console.log("[Claude] MVU 函数调用转换完成:", mvuArgs.analysis);
       }
 
-      // 脚本工具调用将在响应后由调用方处理
+      const scriptToolNames = new Set(scriptTools.map((tool) => tool.function.name));
+      const scriptOutputs: string[] = [];
+      for (const call of aiMessage.tool_calls) {
+        if (!scriptToolNames.has(call.name)) {
+          continue;
+        }
+        const args = parseScriptToolArguments(call.name, call.args);
+        const result = await invokeScriptTool(call.name, args);
+        scriptOutputs.push(`[tool:${call.name}] ${serializeToolResult(result)}`);
+      }
+      if (scriptOutputs.length > 0) {
+        const outputText = scriptOutputs.join("\n");
+        textContent = textContent ? `${textContent}\n\n${outputText}` : outputText;
+      }
     }
 
     return textContent;

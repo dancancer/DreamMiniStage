@@ -238,7 +238,23 @@
     },
     getVariables: api("getVariables"),
     replaceVariables: api("replaceVariables"),
+    registerVariableSchema: api("registerVariableSchema"),
+    updateVariablesWith: function(updater, option) {
+      if (typeof updater !== "function") {
+        throw new Error("updateVariablesWith 需要 updater 函数参数");
+      }
+
+      return callApi("getVariables", [option]).then(function(currentVariables) {
+        return Promise.resolve(updater(currentVariables)).then(function(nextVariables) {
+          if (!nextVariables || typeof nextVariables !== "object" || Array.isArray(nextVariables)) {
+            throw new Error("updateVariablesWith 的 updater 必须返回 plain object");
+          }
+          return callApi("updateVariablesWith", [nextVariables, option]);
+        });
+      });
+    },
     insertOrAssignVariables: api("insertOrAssignVariables"),
+    insertVariables: api("insertVariables"),
     deleteVariable: api("deleteVariable"),
     getVariable: api("getVariable"),
     setVariable: api("setVariable"),

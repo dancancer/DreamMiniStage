@@ -87,6 +87,115 @@ describe("extension handlers lifecycle", () => {
     unregisterIframeDispatcher(iframeId);
   });
 
+  it("supports sync and async function tool callbacks", async () => {
+    const iframeId = "iframe_function_callback_modes";
+    const syncTool = "tool_sync_callback";
+    const asyncTool = "tool_async_callback";
+
+    registerIframeDispatcher(iframeId, (_type, payload) => {
+      const { name, args, callbackId } = payload as {
+        name: string;
+        args: Record<string, unknown>;
+        callbackId: string;
+      };
+      if (name === syncTool) {
+        handleFunctionToolResult(callbackId, {
+          mode: "sync",
+          echo: args.input,
+        });
+        return;
+      }
+      if (name === asyncTool) {
+        setTimeout(() => {
+          handleFunctionToolResult(callbackId, {
+            mode: "async",
+            echo: args.input,
+          });
+        }, 5);
+      }
+    });
+
+    const ctx = createApiContext(iframeId);
+    expect(extensionHandlers.registerFunctionTool([
+      syncTool,
+      "sync callback",
+      { type: "object", properties: {} },
+      false,
+      iframeId,
+    ], ctx)).toBe(true);
+    expect(extensionHandlers.registerFunctionTool([
+      asyncTool,
+      "async callback",
+      { type: "object", properties: {} },
+      false,
+      iframeId,
+    ], ctx)).toBe(true);
+
+    await expect(invokeFunctionTool(syncTool, { input: "S" })).resolves.toEqual({
+      mode: "sync",
+      echo: "S",
+    });
+    await expect(invokeFunctionTool(asyncTool, { input: "A" })).resolves.toEqual({
+      mode: "async",
+      echo: "A",
+    });
+
+    clearIframeFunctionTools(iframeId);
+    unregisterIframeDispatcher(iframeId);
+  });
+
+  it("fails fast when iframe callback reports error", async () => {
+    const iframeId = "iframe_function_callback_error";
+    const toolName = "tool_callback_error";
+
+    registerIframeDispatcher(iframeId, (_type, payload) => {
+      const { callbackId } = payload as { callbackId: string };
+      handleFunctionToolResult(callbackId, undefined, "boom");
+    });
+
+    const ctx = createApiContext(iframeId);
+    expect(extensionHandlers.registerFunctionTool([
+      toolName,
+      "error callback",
+      { type: "object", properties: {} },
+      false,
+      iframeId,
+    ], ctx)).toBe(true);
+
+    await expect(invokeFunctionTool(toolName, { input: "x" })).rejects.toThrow("boom");
+
+    clearIframeFunctionTools(iframeId);
+    unregisterIframeDispatcher(iframeId);
+  });
+
+  it("times out when iframe never returns callback result", async () => {
+    vi.useFakeTimers();
+    const iframeId = "iframe_function_timeout";
+    const toolName = "tool_callback_timeout";
+
+    registerIframeDispatcher(iframeId, () => {
+      // 故意不回传 callback 结果，触发超时分支
+    });
+
+    const ctx = createApiContext(iframeId);
+    expect(extensionHandlers.registerFunctionTool([
+      toolName,
+      "timeout callback",
+      { type: "object", properties: {} },
+      false,
+      iframeId,
+    ], ctx)).toBe(true);
+
+    const pending = invokeFunctionTool(toolName, { input: "wait" });
+    const assertion = expect(pending).rejects.toThrow("Function tool timeout");
+    await vi.advanceTimersByTimeAsync(30001);
+    await assertion;
+
+    clearIframeFunctionTools(iframeId);
+    unregisterIframeDispatcher(iframeId);
+    vi.useRealTimers();
+  });
+
   it("covers register/call/clear/re-register for slash commands", async () => {
     const iframeId = "iframe_slash_lifecycle";
     const commandName = "lifecyclecmdxyz";

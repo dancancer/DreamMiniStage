@@ -31,8 +31,8 @@ import {
 //                              类型定义
 // ============================================================================
 
-type VariableValue = string | number | boolean | null | undefined;
-type VariablesObject = Record<string, VariableValue>;
+type VariableValue = unknown;
+type VariablesObject = Record<string, unknown>;
 type VariableOptionType =
   | "global"
   | "character"
@@ -50,6 +50,11 @@ interface VariableApiOptions {
   messageId?: number | string | "latest";
 }
 
+interface VariableSchemaOptions {
+  type?: VariableOptionType;
+  scope?: VariableOptionType;
+}
+
 const DEFAULT_COLLECTION_SCOPE: VariableScope = "chat";
 const SCOPE_ALIASES: Record<string, VariableScope> = {
   global: "global",
@@ -62,6 +67,16 @@ const SCOPE_ALIASES: Record<string, VariableScope> = {
   local: "chat",
   cache: "script",
 };
+
+const VARIABLE_SCHEMA_SCOPES = new Set<VariableScope>([
+  "global",
+  "preset",
+  "character",
+  "chat",
+  "message",
+]);
+
+const variableSchemaRegistry = new Map<VariableScope, unknown>();
 
 // ============================================================================
 //                              辅助函数
@@ -192,9 +207,60 @@ function resolveVariableOption(
   };
 }
 
+function assertPlainObject(value: unknown, apiName: string): VariablesObject {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`${apiName} 仅接受 plain object 作为变量输入`);
+  }
+  return value as VariablesObject;
+}
+
+function isPlainObject(value: unknown): value is VariablesObject {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function mergeInsertOnly(
+  existing: VariablesObject,
+  incoming: VariablesObject,
+): VariablesObject {
+  const next: VariablesObject = { ...existing };
+
+  for (const [key, incomingValue] of Object.entries(incoming)) {
+    const hasKey = Object.prototype.hasOwnProperty.call(next, key);
+    if (!hasKey) {
+      next[key] = incomingValue;
+      continue;
+    }
+
+    const existingValue = next[key];
+    if (isPlainObject(existingValue) && isPlainObject(incomingValue)) {
+      next[key] = mergeInsertOnly(existingValue, incomingValue);
+    }
+  }
+
+  return next;
+}
+
 // ============================================================================
 //                              核心 Handler 实现
 // ============================================================================
+
+/**
+ * 注册变量 schema（当前只做能力声明存储，不做运行时校验）
+ */
+function registerVariableSchema(args: unknown[], _ctx: ApiCallContext): boolean {
+  const [schema, rawOption] = args as [unknown, VariableSchemaOptions | undefined];
+  if (schema === undefined || schema === null) {
+    throw new Error("registerVariableSchema 需要 schema 参数");
+  }
+
+  const scope = parseScope(rawOption?.type ?? rawOption?.scope, DEFAULT_COLLECTION_SCOPE);
+  if (!VARIABLE_SCHEMA_SCOPES.has(scope)) {
+    throw new Error(`registerVariableSchema 不支持作用域: ${scope}`);
+  }
+
+  variableSchemaRegistry.set(scope, schema);
+  return true;
+}
 
 /**
  * 获取变量
@@ -242,6 +308,28 @@ function insertOrAssignVariables(args: unknown[], ctx: ApiCallContext): boolean 
     scopedVariables.set(key, value, scope, varCtx);
   }
   return true;
+}
+
+/**
+ * 更新变量（由 shim 先执行 updater，再把目标变量对象传回）
+ */
+function updateVariablesWith(args: unknown[], ctx: ApiCallContext): VariablesObject {
+  const [nextVariables, optionArg] = args as [unknown, VariableApiOptions | string | undefined];
+  const vars = assertPlainObject(nextVariables, "updateVariablesWith");
+  replaceVariables([vars, optionArg], ctx);
+  return vars;
+}
+
+/**
+ * 只插入不存在的变量（存在则保持原值）
+ */
+function insertVariables(args: unknown[], ctx: ApiCallContext): VariablesObject {
+  const [incoming, optionArg] = args as [unknown, VariableApiOptions | string | undefined];
+  const incomingVariables = assertPlainObject(incoming, "insertVariables");
+  const current = getVariables([optionArg], ctx) as VariablesObject;
+  const merged = mergeInsertOnly(current, incomingVariables);
+  replaceVariables([merged, optionArg], ctx);
+  return merged;
 }
 
 /**
@@ -326,7 +414,10 @@ export const variableHandlers: ApiHandlerMap = {
   // SillyTavern 兼容 API
   "getVariables": getVariables,
   "replaceVariables": replaceVariables,
+  "registerVariableSchema": registerVariableSchema,
+  "updateVariablesWith": updateVariablesWith,
   "insertOrAssignVariables": insertOrAssignVariables,
+  "insertVariables": insertVariables,
   "deleteVariable": deleteVariable,
 
   // 单值操作 API

@@ -98,4 +98,47 @@ describe("variable handlers option semantics", () => {
 
     expect(deleted).toBeUndefined();
   });
+
+  it("supports registerVariableSchema/updateVariablesWith/insertVariables", () => {
+    const ctx = createMockContext();
+
+    const registered = variableHandlers.registerVariableSchema(
+      [{ type: "object", properties: { hp: { type: "number" } } }, { type: "chat" }],
+      ctx,
+    );
+    expect(registered).toBe(true);
+
+    variableHandlers.replaceVariables([{ hp: 10, nested: { level: 1 } }, { type: "chat" }], ctx);
+    const updated = variableHandlers.updateVariablesWith(
+      [{ hp: 15, nested: { level: 2 } }, { type: "chat" }],
+      ctx,
+    ) as Record<string, unknown>;
+    expect(updated).toMatchObject({ hp: 15, nested: { level: 2 } });
+
+    const inserted = variableHandlers.insertVariables(
+      [{ hp: 100, nested: { level: 9, bonus: 3 }, fresh: true }, { type: "chat" }],
+      ctx,
+    ) as Record<string, unknown>;
+    expect(inserted).toMatchObject({
+      hp: 15,
+      nested: { level: 2, bonus: 3 },
+      fresh: true,
+    });
+  });
+
+  it("fails fast on invalid registerVariableSchema/updateVariablesWith inputs", () => {
+    const ctx = createMockContext();
+
+    expect(() => {
+      variableHandlers.registerVariableSchema([undefined, { type: "chat" }], ctx);
+    }).toThrow("schema 参数");
+
+    expect(() => {
+      variableHandlers.registerVariableSchema([{}, { type: "script" }], ctx);
+    }).toThrow("不支持作用域");
+
+    expect(() => {
+      variableHandlers.updateVariablesWith([42, { type: "chat" }], ctx);
+    }).toThrow("plain object");
+  });
 });

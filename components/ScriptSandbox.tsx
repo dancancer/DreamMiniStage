@@ -18,6 +18,8 @@ import React, { useRef, useEffect, useCallback, useState, memo, useLayoutEffect 
 import type { ScriptMessageData } from "@/types/script-message";
 import { clearIframeListeners } from "@/hooks/script-bridge";
 import {
+  clearIframeFunctionTools,
+  clearIframeSlashCommands,
   handleFunctionToolResult,
   registerIframeDispatcher,
   unregisterIframeDispatcher,
@@ -200,6 +202,8 @@ export const ScriptSandbox = memo(function ScriptSandbox({
     return () => {
       const listenerScopeId = iframeInternalIdRef.current || id;
       clearIframeListeners(listenerScopeId);
+      clearIframeFunctionTools(listenerScopeId);
+      clearIframeSlashCommands(listenerScopeId);
       // 清理 iframe 派发函数
       if (iframeInternalIdRef.current) {
         unregisterIframeDispatcher(iframeInternalIdRef.current);

@@ -2,6 +2,7 @@ import { NodeBase } from "@/lib/nodeflow/NodeBase";
 import { NodeConfig, NodeInput, NodeOutput, NodeCategory } from "@/lib/nodeflow/types";
 import { LLMNodeTools } from "./LLMNodeTools";
 import { NodeToolRegistry } from "../NodeTool";
+import { getScriptToolsAsOpenAI } from "@/hooks/script-bridge";
 
 export class LLMNode extends NodeBase {
   static readonly nodeName = "llm";
@@ -39,6 +40,7 @@ export class LLMNode extends NodeBase {
     const tools = input.tools;
     const prefill = input.prefill;
     const placeholder = input.placeholder;
+    const scriptTools = getScriptToolsAsOpenAI();
 
     /* ═══════════════════════════════════════════════════════════════════════
        messages-only 架构：messages[] 是唯一事实源
@@ -70,6 +72,7 @@ export class LLMNode extends NodeBase {
         tools,
         prefill,
         placeholder,
+        scriptTools,
       },
     ) as string;
 

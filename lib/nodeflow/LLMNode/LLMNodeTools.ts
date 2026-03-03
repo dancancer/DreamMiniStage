@@ -13,6 +13,7 @@ import {
   type ToolCallBatches,
   type OpenAITool,
 } from "@/lib/mvu/function-call";
+import { invokeScriptTool } from "@/hooks/script-bridge";
 
 // 为window对象添加lastTokenUsage属性的类型声明
 declare global {
@@ -111,6 +112,59 @@ function toSimpleMessages(messages: ExtendedChatMessage[]): ChatMessage[] {
     role: msg.role,
     content: typeof msg.content === "string" ? msg.content : getTextContent(msg.content),
   }));
+}
+
+function parseScriptToolArguments(toolName: string, rawArgs: unknown): Record<string, unknown> {
+  if (rawArgs === undefined || rawArgs === null) {
+    return {};
+  }
+
+  if (typeof rawArgs === "string") {
+    try {
+      const parsed = JSON.parse(rawArgs) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+      throw new Error(`Tool '${toolName}' arguments JSON 必须为对象`);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(`Tool '${toolName}' arguments 解析失败: ${detail}`);
+    }
+  }
+
+  if (typeof rawArgs === "object" && !Array.isArray(rawArgs)) {
+    return rawArgs as Record<string, unknown>;
+  }
+
+  throw new Error(`Tool '${toolName}' arguments 类型不受支持: ${typeof rawArgs}`);
+}
+
+function serializeToolResult(result: unknown): string {
+  if (typeof result === "string") {
+    return result;
+  }
+
+  try {
+    return JSON.stringify(result);
+  } catch {
+    return String(result);
+  }
+}
+
+async function executeScriptToolCalls(
+  rawToolCalls: Array<{ name: string; args: unknown }>,
+  scriptToolNames: Set<string>,
+): Promise<string[]> {
+  const outputs: string[] = [];
+  for (const call of rawToolCalls) {
+    if (!scriptToolNames.has(call.name)) {
+      continue;
+    }
+    const args = parseScriptToolArguments(call.name, call.args);
+    const result = await invokeScriptTool(call.name, args);
+    outputs.push(`[tool:${call.name}] ${serializeToolResult(result)}`);
+  }
+  return outputs;
 }
 export class LLMNodeTools extends NodeTool {
   protected static readonly toolType: string = "llm";
@@ -254,8 +308,9 @@ export class LLMNodeTools extends NodeTool {
           if (config.mvuToolEnabled) {
             allTools.push(getMvuTool());
           }
-          if (config.scriptTools) {
-            allTools.push(...config.scriptTools);
+          const scriptTools = config.scriptTools || [];
+          if (scriptTools.length > 0) {
+            allTools.push(...scriptTools);
           }
 
           const boundModel = openaiLlm.bindTools(allTools, { tool_choice: "auto" });
@@ -291,7 +346,19 @@ export class LLMNodeTools extends NodeTool {
               console.log("[LLMNodeTools] MVU 函数调用转换完成:", mvuArgs.analysis);
             }
 
-            // 脚本工具调用将在响应后由调用方处理（返回原始 tool_calls）
+            // 脚本工具调用：直接桥接到 script-bridge 注册表执行并回传结果
+            const scriptToolNames = new Set(scriptTools.map((tool) => tool.function.name));
+            const scriptOutputs = await executeScriptToolCalls(
+              aiMessage.tool_calls.map((call) => ({
+                name: call.name,
+                args: call.args,
+              })),
+              scriptToolNames,
+            );
+            if (scriptOutputs.length > 0) {
+              const outputText = scriptOutputs.join("\n");
+              textContent = textContent ? `${textContent}\n\n${outputText}` : outputText;
+            }
           }
 
           return textContent;

@@ -1,7 +1,54 @@
 # AI 会话交接文档（2026-03-02）
 
 > 目的：给下一次 AI 会话提供可直接执行的上下文，避免重复审计与重复改造。
-> 当前日期：2026-03-02
+> 当前日期：2026-03-03（本次已更新）
+
+## 0. 2026-03-03 本次执行摘要（P0 收敛轮次）
+
+### 0.1 已完成
+
+1. **Function Tool 单路径收敛（P0）**
+   - `registerFunctionTool` 已收敛到 `extension-handlers` 单一注册表。
+   - `tool-handlers` 改为适配层导出，移除同名 handler 覆盖，消除双状态源漂移。
+2. **LLM tool_calls 闭环打通（P0）**
+   - `LLMNodeTools` 与 `model-invokers(Claude)` 已接入脚本工具执行：
+     `tool_calls -> invokeScriptTool -> iframe callback -> 结果拼接回传`。
+3. **变量 API 补齐（P0）**
+   - shim + handler 已补齐：
+     - `registerVariableSchema`
+     - `updateVariablesWith`
+     - `insertVariables`
+   - 输入非法参数走 fail-fast（显式抛错）。
+4. **生命周期清理增强**
+   - `ScriptSandbox` 卸载时新增工具清理：
+     - `clearIframeFunctionTools`
+     - `clearIframeSlashCommands`
+5. **测试与回归补强**
+   - 新增：`lib/nodeflow/__tests__/llm-node-script-tools.test.ts`
+   - 扩展：`hooks/script-bridge/__tests__/extension-lifecycle.test.ts`（同步/异步 callback、错误、超时）
+   - 扩展：`hooks/script-bridge/__tests__/variable-handlers.test.ts`（新增变量 API 语义）
+
+### 0.2 本次已执行并通过
+
+```bash
+pnpm vitest run \
+  hooks/script-bridge/__tests__/extension-lifecycle.test.ts \
+  hooks/script-bridge/__tests__/api-surface-contract.test.ts \
+  hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts \
+  hooks/script-bridge/__tests__/variable-handlers.test.ts \
+  lib/nodeflow/__tests__/llm-node-script-tools.test.ts
+
+pnpm vitest run \
+  components/__tests__/ScriptSandbox.lifecycle.test.tsx \
+  hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts \
+  hooks/script-bridge/__tests__/api-surface-contract.test.ts
+```
+
+### 0.3 下一步建议（按优先级）
+
+1. 进入 **P1**：在 `lib/mvu/core/executor.ts` 落地 `strictSet / strictTemplate / concatTemplateArray` 真正执行语义。
+2. 解除 `lib/core/__tests__/st-baseline-slash-command.test.ts` 的宏条件流 skip（`{{getvar::}}`）。
+3. 复核 `registerSlashCommand` 的 callback 回流路径（当前 shim 注册形态与宿主执行路径仍有等价性风险）。
 
 ## 1. 项目目标（本轮不变）
 

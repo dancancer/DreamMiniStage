@@ -1,135 +1,159 @@
 # DreamMiniStage 对齐审计（SillyTavern + JS-Slash-Runner + MagVarUpdate）
 
-> 审计日期：2026-03-02
->
-> 目标基线：
-> - SillyTavern `fbf789fa7`
-> - JS-Slash-Runner `9779129`
-> - MagVarUpdate `2396984`
+> 审计日期：2026-03-03  
+> 对比目标：
+> - `sillytavern-plugins/SillyTavern`
+> - `sillytavern-plugins/JS-Slash-Runner`
+> - `sillytavern-plugins/MagVarUpdate`
 
-## 1. 审计范围与方法
+## 1. 本轮复评结论（先给结论）
 
-本次审计基于以下路径做静态对比与回归验证：
+- 当前 gap **仍不算小**，不满足“进入 Playwright E2E”条件。
+- 相比上一轮，基础能力和回归稳定性已明显改善，但核心迁移指标仍偏低：
+  - SillyTavern Slash 命令覆盖：**21.71%**
+  - JS-Slash-Runner TavernHelper API 覆盖：**43.08%**
+- 结论：继续做“高价值缺口收敛”比直接做 E2E 更划算，E2E 先作为下一阶段 gate。
 
-- 当前项目：`lib/`、`hooks/script-bridge/`、`public/iframe-libs/`、`function/dialogue/`
-- 目标项目：`sillytavern-plugins/SillyTavern/`、`sillytavern-plugins/JS-Slash-Runner/`、`sillytavern-plugins/MagVarUpdate/`
-- 回归验证：`pnpm vitest run`（当前通过）
+### 1.1 2026-03-03 P0 增量执行结果
 
-## 2. 当前状态快照（事实）
+- `registerFunctionTool` 已收敛到单一状态源：`extension-handlers` 负责注册/调用/清理，`tool-handlers` 仅保留适配导出，消除双注册表漂移。
+- `LLMNodeTools`（含 Claude 分支）已打通 `tool_calls -> invokeScriptTool -> iframe callback -> 结果拼接回传` 链路。
+- 变量 API 已补齐：`registerVariableSchema`、`updateVariablesWith`、`insertVariables`（shim + handler 同步，参数不合法 fail-fast）。
+- `ScriptSandbox` 卸载链路已增加工具清理：除监听器外同步清理 function tools / slash ownership，避免跨 iframe 生命周期残留。
+- 新增回归覆盖：
+  - `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`（同步/异步 callback + 错误 + 超时）
+  - `lib/nodeflow/__tests__/llm-node-script-tools.test.ts`（LLM tool_calls 闭环）
 
-### 2.1 稳定性基线
+## 2. 审计口径与量化结果
 
-- 当前仓库测试通过：`96` 个测试文件，`1284` 个测试通过，`5` 个跳过。
-- 结论：现有实现在当前契约下稳定，但与目标项目“无改动迁移”仍有差距。
+### 2.1 SillyTavern Slash 覆盖（核心差距）
 
-### 2.2 已具备能力（可复用）
+- 上游命令总量：`258`
+  - 统计口径：`SillyTavern/public/scripts` 下 `SlashCommand.fromProps({ name: ... })` 唯一命令名。
+- 当前命令总量：`119`
+  - 统计口径：
+    - `lib/slash-command/registry/index.ts` 中 `COMMAND_REGISTRY`；
+    - `lib/slash-command/core/parser.ts` 控制命令（`if/while/times/return/break/abort`）；
+    - `lib/slash-command/core/executor.ts` 特殊命令（`let/var`）。
+- 交集：`56`
+- 覆盖率：`56 / 258 = 21.71%`
 
-- Prompt 组装与后处理链路：`lib/core/prompt/manager.ts`、`lib/core/prompt/post-processor.ts`
-- WorldBook 级联加载与高级匹配：`lib/core/world-book-cascade-loader.ts`、`lib/core/world-book-advanced.ts`
-- Slash 执行内核：`lib/slash-command/core/parser.ts`、`lib/slash-command/core/executor.ts`
-- Script Bridge 与 iframe shim：`hooks/script-bridge/index.ts`、`public/iframe-libs/slash-runner-shim.js`
-- MVU 主链路：`lib/mvu/core/parser.ts`、`lib/mvu/core/executor.ts`、`lib/mvu/function-call.ts`
+### 2.2 JS-Slash-Runner TavernHelper API 覆盖
 
-### 2.3 近期兼容层清理（开发分支）
+- 上游聚合 API：`130`
+  - 统计口径：`JS-Slash-Runner/src/function/index.ts` 中 `getTavernHelper()` 返回对象顶层 key。
+- 当前 shim 顶层 API：`94`
+  - 统计口径：`public/iframe-libs/slash-runner-shim.js` 中 `window.TavernHelper` 顶层 key。
+- 交集：`56`
+- 覆盖率：`56 / 130 = 43.08%`
 
-- Script Bridge 变量写入已收敛到 `scopedVariables` 单路径，不再回写 legacy store。
-- 流式工具调用解析仅保留 `tool_calls` 契约，移除 `function_call` 兼容分支。
-- Regex 规范化仅接受当前枚举/结构，不再执行历史格式迁移。
-- WorldBook 节点已切到 `messages[]` 单轨处理：
-  - 删除 `WorldBookNodeTools.assemblePromptWithWorldBook`；
-  - `WorldBookNode` 不再改写 `systemMessage/userMessage`；
-  - Prompt Viewer 改为先构建 `messages[]` 再注入世界书。
-- ContextNode 已收敛为纯中转节点：
-  - 不再替换 `{{chatHistory}}` 字符串占位符；
-  - 仅透传 `messages[]`。
-- HistoryPreNode 已移除 `chatHistoryText` 输出：
-  - 仅保留 `chatHistoryMessages` 与 `conversationContext`。
-- LLMNode/LLMNodeTools 已移除字符串回退组装：
-  - `messages[]` 为空时直接报错；
-  - 不再自动补注入 fallback user 消息。
-- RAG 记忆注入链路已切到 `messages[]`：
-  - `MemoryRetrievalNode` 不再依赖 `systemMessage` 字符串输入；
-  - 记忆命中后直接注入到 `messages[]` 的 system 段。
-- PresetNode 已移除 `systemMessage/userMessage` 兼容输出：
-  - Workflow 主链路仅保留 `messages[]` 与必要元信息（`presetId`）。
-- Slash bridge 已移除 `triggerSlash` 的 options 覆盖分支：
-  - 回调统一从 `ApiCallContext` 注入，避免双路径上下文来源。
-- iframe shim 已移除 `window.getVariables/window.triggerSlash` 等顶层全局别名：
-  - 统一保留 `window.TavernHelper` 与 `window.SillyTavern` 命名空间入口，减少双入口漂移。
-- iframe shim 中未实现的群聊接口改为显式失败（fail-fast）：
-  - `getGroupMembers` / `isGroupChat` 不再返回静默默认值，避免脚本误判能力可用。
+### 2.3 JS-Slash-Runner slash_command 子集
 
-## 3. 关键差距
+- 子集范围：`event-emit` + `audioenable/audioplay/audioselect/audioimport/audiomode`
+- 结果：**6/6 已接入（100%）**
+  - 注册点：`lib/slash-command/registry/index.ts`
+  - 上游参考：`JS-Slash-Runner/src/slash_command/audio.ts`、`event.ts`
 
-## 3.1 SillyTavern 核心 Slash 生态
+## 3. 回归测试现状
 
-- 命令覆盖量存在明显差距：
-  - SillyTavern 可检测命令：`258`
-  - 当前项目（注册表 + 控制语法）：约 `74`
-  - 交集：约 `30`
-- 当前注册表主要覆盖基础命令与少量扩展：`lib/slash-command/registry/index.ts`
-  - 最新已补齐的 P2 数学/字符串命令：`mul/div/mod/rand/split/join/replace(re)/pow/max/min/sin/cos/log/abs/sqrt/round`
-  - 最新已补齐的变量命令族：`addvar/addglobalvar/setglobalvar/getglobalvar/incglobalvar/decglobalvar/flushglobalvar` 与 `*chatvar` 别名
-- 缺失大量命令族（如 db / qr / profile / checkpoint / tools / ui 等），导致脚本直接迁移失败概率高。
+### 3.1 基线回归（本轮已复跑）
 
-## 3.2 JS-Slash-Runner 兼容差距
+执行命令：
 
-- 当前已接入 `/event-emit` 与 `audio*` 命令名，但语义尚未完全对齐：
-  - 本地实现：`lib/slash-command/registry/handlers/js-slash-runner.ts`
-  - 上游实现：`sillytavern-plugins/JS-Slash-Runner/src/slash_command/audio.ts`
-- 典型语义差异：
-  - 上游 `audioplay` 是对 `bgm|ambient` 播放状态控制；当前实现更偏 URL 播放。
-  - 上游 `audiomode` 使用 `repeat/random/single/stop`；当前实现使用 `single/loop/queue`。
-- TavernHelper 能力面仍不完整：
-  - shim 暴露了大量兼容入口（`public/iframe-libs/slash-runner-shim.js`）
-  - 但与上游聚合 API（`src/function/index.ts`）相比，extension 管理、raw import、脚本按钮、版本管理等仍缺。
+```bash
+pnpm vitest run \
+  lib/core/__tests__/st-baseline-assembly.test.ts \
+  lib/core/__tests__/st-baseline-dialogue-flow.test.ts \
+  lib/core/__tests__/st-baseline-macro.test.ts \
+  lib/core/__tests__/st-baseline-mvu.test.ts \
+  lib/core/__tests__/st-baseline-plugin-integration.test.ts \
+  lib/core/__tests__/st-baseline-regex.test.ts \
+  lib/core/__tests__/st-baseline-slash-command.test.ts \
+  lib/core/__tests__/st-baseline-worldbook.test.ts
+```
 
-## 3.3 MagVarUpdate 兼容差距
+结果：
 
-- 变量 API 参数语义已补齐常见路径：
-  - `mvu.getVariable/mvu.getVariables` 支持 `{ type, message_id }`（含 `latest`、负索引、数字字符串）
-  - 覆盖测试：`hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts`
-- 命令框架已落地，但值解析语义未等价：
-  - 当前 `parseCommandValue` 仅覆盖基础 JSON/数字/简算：`lib/mvu/core/parser.ts`
-  - 上游包含更完整的 mathjs/YAML 场景：`sillytavern-plugins/MagVarUpdate/src/function.ts`
-- Schema 元信息兼容不完整：
-  - 当前主链路未完整覆盖 `strictSet`、`strictTemplate`、`concatTemplateArray` 的等价行为
-  - 相关代码：`lib/mvu/types.ts`、`lib/mvu/core/schema.ts`
-- 函数调用路径可用，但仍偏最小实现：
-  - 工具定义/转换存在：`lib/mvu/function-call.ts`
-  - 缺少上游那套更细粒度策略开关与治理约束。
+- `8` files passed
+- `267` tests passed
+- `5` skipped
 
-## 4. 分阶段改进方案
+### 3.2 高风险增量回归（本轮已复跑）
 
-### Phase A：先打通可迁移最短路径
+执行命令：
 
-1. 明确定义兼容等级（L1/L2/L3）和每级验收标准。
-2. 补齐高频命令族（优先真实脚本高使用率，而非一次性追满 258）。
-3. 对齐 `audio*` 命令参数签名与行为语义。
+```bash
+pnpm vitest run \
+  lib/slash-command/__tests__/p2-operators.test.ts \
+  lib/slash-command/__tests__/p2-message-command-aliases.test.ts \
+  lib/slash-command/__tests__/p2-character-command-gaps.test.ts \
+  lib/slash-command/__tests__/p2-variable-scope.test.ts \
+  lib/slash-command/__tests__/js-slash-runner-audio.test.ts \
+  hooks/script-bridge/__tests__/extension-lifecycle.test.ts \
+  hooks/script-bridge/__tests__/api-surface-contract.test.ts \
+  hooks/script-bridge/__tests__/mvu-handlers-option-semantics.test.ts
+```
 
-### Phase B：插件 API 等价层
+结果：
 
-1. 以 `JS-Slash-Runner/src/function/index.ts` 作为 API 白名单矩阵。
-2. 在 `hooks/script-bridge/` 补齐缺失 handler，并统一错误返回契约（避免 timeout 型失败）。
-3. 补足 `registerFunctionTool/registerSlashCommand` 的全生命周期测试（注册、调用、卸载、iframe 清理）。
-   - 当前已补最小回归：`hooks/script-bridge/__tests__/extension-lifecycle.test.ts`（注册、调用、清理、再注册）。
+- `8` files passed
+- `55` tests passed
 
-### Phase C：MagVarUpdate 行为等价
+### 3.3 仍存在的 skip（影响“等价迁移”）
 
-1. 扩展 `parseCommandValue`（mathjs、YAML、日期/数值边界行为）。
-2. 将 `strictSet/strictTemplate/concatTemplateArray` 从类型到执行器全链路贯通。
-3. 引入上游样例的 golden tests（`example` / `example_src`）。
+主要集中在 Slash 宏条件流（`{{getvar::}}`）能力缺口：
 
-### Phase D：稳定性与可维护性
+- `lib/core/__tests__/st-baseline-slash-command.test.ts:338`
+- `lib/core/__tests__/st-baseline-slash-command.test.ts:366`
+- `lib/core/__tests__/st-baseline-slash-command.test.ts:374`
+- `lib/core/__tests__/st-baseline-slash-command.test.ts:396`
+- `lib/core/__tests__/st-baseline-slash-command.test.ts:405`
 
-1. 建立兼容性快照测试（目标版本变化可追踪）。
-2. 合并 shim API、script-bridge handler、slash registry 的能力声明为单一来源。
-   - 当前已落地首版：`hooks/script-bridge/capability-matrix.ts` + `api-surface-contract.test.ts` 契约校验。
-3. 清理重复入口（尤其 audio/event/variables）以降低回归面。
+## 4. 关键缺口（按影响面排序）
 
-## 5. 验收指标建议
+### 4.1 Slash 内核能力仍偏轻
 
-- M1：代表性脚本无改动迁移成功率 >= 80%（至少 10 个样本）。
-- M2：JS-Slash-Runner 关键 API 覆盖 >= 90%（按函数名统计）。
-- M3：MagVarUpdate 示例变量链路全通过（文本块 + function-calling）。
-- M4：兼容性回归进入 CI，版本升级可量化评估。
+- 当前 parser/executor 已支持基础控制流，但缺少上游 parser 的 flags/debug/scope 等完整语义。
+- 关键位置：
+  - 当前：`lib/slash-command/core/parser.ts`
+  - 上游：`SillyTavern/public/scripts/slash-commands/SlashCommandParser.js`
+
+### 4.2 TavernHelper 能力面不完整
+
+- shim 可用但仍是“可运行子集”，与上游聚合 API 仍有明显缺口。
+- 关键位置：
+  - 当前：`public/iframe-libs/slash-runner-shim.js`
+  - 上游：`JS-Slash-Runner/src/function/index.ts`
+
+### 4.3 MVU 语义缺口：`strictSet` 等未执行落地
+
+- 当前类型/结构位已存在，但执行层未真正贯通。
+- 关键位置：
+  - 当前：`lib/mvu/core/executor.ts`
+  - 上游：`MagVarUpdate/src/function.ts`
+
+### 4.4 Tool 注册与调用闭环（P0 已完成首轮收敛）
+
+- `registerFunctionTool` 已完成单路径收敛，`tool_calls` 执行闭环可回归通过。
+- 剩余风险主要在 `registerSlashCommand` 的 callback 回流形态（当前 shim 注册与宿主执行路径仍未完全等价）。
+- 关键位置：
+  - `hooks/script-bridge/extension-handlers.ts`
+  - `hooks/script-bridge/tool-handlers.ts`
+  - `lib/nodeflow/LLMNode/LLMNodeTools.ts`
+
+## 5. 为什么本轮不做 Playwright E2E
+
+本轮判定：**暂缓 E2E，先补核心缺口**。原因：
+
+1. 当前两条主指标仍偏低（`21.71%` / `43.08%`），E2E 的失败将主要反映“已知缺口”，不是新信息。  
+2. slash 宏条件流存在明确 skip，E2E 结果会被该类已知缺陷主导。  
+3. 先完成下一阶段 P0/P1 收敛后，再用 `test-baseline-assets` 做 Playwright 场景回归，信噪比更高。
+
+## 6. 下一阶段门槛（建议）
+
+进入 Playwright MCP E2E 前，建议至少达到：
+
+- Slash 覆盖率 ≥ `30%`
+- TavernHelper API 覆盖率 ≥ `55%`
+- `st-baseline-slash-command` 中宏条件流 skip 清零或降到可接受白名单
+- Function tool 从注册到 LLM 调用结果回传形成可重复闭环

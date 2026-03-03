@@ -88,6 +88,56 @@ interface RegisteredTool {
 
 const functionToolRegistry = new Map<string, RegisteredTool>();
 
+/**
+ * 注册函数工具到单一注册表
+ */
+export function registerFunctionTool(
+  name: string,
+  description: string,
+  parameters: FunctionToolDefinition["parameters"],
+  iframeId?: string,
+): boolean {
+  if (!name || typeof name !== "string") {
+    console.warn("[registerFunctionTool] Invalid name:", name);
+    return false;
+  }
+
+  const definition: FunctionToolDefinition = {
+    name,
+    description: description || "",
+    parameters: parameters || { type: "object", properties: {} },
+  };
+
+  // handler 为占位实现，实际调用通过 invokeFunctionTool 走 iframe 消息机制
+  functionToolRegistry.set(name, {
+    definition,
+    handler: async (toolArgs) => {
+      console.log(`[registerFunctionTool] Tool called: ${name}`, toolArgs);
+      return { success: true, args: toolArgs };
+    },
+    sourceIframe: iframeId,
+  });
+
+  console.log("[registerFunctionTool] Registered:", name, "iframeId:", iframeId);
+  return true;
+}
+
+/**
+ * 注销函数工具（可选校验 source iframe）
+ */
+export function unregisterFunctionTool(name: string, iframeId?: string): boolean {
+  const tool = functionToolRegistry.get(name);
+  if (!tool) {
+    return false;
+  }
+
+  if (iframeId && tool.sourceIframe && tool.sourceIframe !== iframeId) {
+    return false;
+  }
+
+  return functionToolRegistry.delete(name);
+}
+
 // ============================================================================
 //                              函数工具调用等待机制
 // ============================================================================
@@ -250,35 +300,33 @@ export const extensionHandlers: ApiHandlerMap = {
       boolean?,
       string?
     ];
+    const iframeId = explicitIframeId || ctx.iframeId;
+    return registerFunctionTool(name, description, parameters, iframeId);
+  },
 
-    if (!name || typeof name !== "string") {
-      console.warn("[registerFunctionTool] Invalid name:", name);
+  /**
+   * unregisterFunctionTool - 注销函数工具
+   */
+  "unregisterFunctionTool": (args: unknown[], ctx: ApiCallContext): boolean => {
+    const [name, explicitIframeId] = args as [string, string?];
+    if (typeof name !== "string" || name.length === 0) {
       return false;
     }
+    return unregisterFunctionTool(name, explicitIframeId || ctx.iframeId);
+  },
 
-    // 获取 iframeId：优先使用显式传入的，否则从 context 获取
-    const iframeId = explicitIframeId || ctx.iframeId;
-
-    // 构建工具定义
-    const definition: FunctionToolDefinition = {
-      name,
-      description: description || "",
-      parameters: parameters || { type: "object", properties: {} },
-    };
-
-    // 注册工具
-    // handler 为占位实现，实际调用通过 invokeFunctionTool 走 iframe 消息机制
-    functionToolRegistry.set(name, {
-      definition,
-      handler: async (toolArgs) => {
-        console.log(`[registerFunctionTool] Tool called: ${name}`, toolArgs);
-        return { success: true, args: toolArgs };
-      },
-      sourceIframe: iframeId,
-    });
-
-    console.log("[registerFunctionTool] Registered:", name, "iframeId:", iframeId);
-    return true;
+  /**
+   * getRegisteredTools - 获取当前 iframe 已注册的函数工具名
+   */
+  "getRegisteredTools": (_args: unknown[], ctx: ApiCallContext): string[] => {
+    const names: string[] = [];
+    const targetIframeId = ctx.iframeId;
+    for (const [name, tool] of functionToolRegistry.entries()) {
+      if (!targetIframeId || !tool.sourceIframe || tool.sourceIframe === targetIframeId) {
+        names.push(name);
+      }
+    }
+    return names;
   },
 
   /**
