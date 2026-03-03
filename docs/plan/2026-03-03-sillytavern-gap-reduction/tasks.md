@@ -37,6 +37,9 @@
 - [x] 四轮增量：补齐 `chat-manager / chat-history / manage-chats / chat-reload` 最小子集，宿主缺回调路径显式 fail-fast。
 - [x] 四轮回归：`pnpm vitest run lib/slash-command/__tests__/p2-chat-command-gaps.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`。
 - [x] 四轮指标：Slash 覆盖率更新为 `68 / 258 = 26.36%`。
+- [x] 五轮增量：补齐 `run / trimtokens / reload-page` 最小子集（`run` 支持变量脚本与 `{{arg::}}` 注入；`trimtokens` 支持 `limit + direction` 并在无 tokenizer 时按比例降级；`reload-page` 走宿主回调，缺失时 fail-fast）。
+- [x] 五轮回归：`pnpm vitest run lib/slash-command/__tests__/p2-utility-command-gaps.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`。
+- [x] 五轮指标：Slash 覆盖率更新为 `71 / 258 = 27.52%`。
 - [ ] 目标：Slash 覆盖率提升到 `>= 30%`。
 
 ## P3 - TavernHelper API 缺口收敛

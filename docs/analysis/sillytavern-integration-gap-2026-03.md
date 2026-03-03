@@ -10,7 +10,7 @@
 
 - 当前 gap **仍不算小**，不满足“进入 Playwright E2E”条件。
 - 相比上一轮，基础能力和回归稳定性已明显改善，但核心迁移指标仍偏低：
-  - SillyTavern Slash 命令覆盖：**26.36%**
+  - SillyTavern Slash 命令覆盖：**27.52%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
 - 结论：继续做“高价值缺口收敛”比直接做 E2E 更划算，E2E 先作为下一阶段 gate。
 
@@ -122,19 +122,36 @@
 - 新增回归覆盖：
   - `lib/slash-command/__tests__/p2-chat-command-gaps.test.ts`
 
+### 1.9 2026-03-03 P2 增量执行结果（五轮：run / trimtokens / reload-page）
+
+- Slash Registry 已补齐高频缺口最小子集：
+  - `run`（含 `call` / `exec` 别名）
+  - `trimtokens`
+  - `reload-page`
+- 命令语义对齐：
+  - `/run` 支持两条执行路径：直接执行 slash script，或从变量读取脚本后执行；支持 `{{arg::key}}` 形态的命名参数注入。
+  - `/trimtokens` 支持 `limit + direction(start|end)`；优先走宿主 tokenizer 回调，缺失时按字符比例做可解释降级；非法参数统一 fail-fast。
+  - `/reload-page` 走宿主 `reloadPage` 回调；宿主未注入时显式 fail-fast。
+- Script Bridge 上下文补齐：
+  - `slash-handlers` 在执行上下文内注入 `runSlashCommand`，收敛 `/run` 到单一执行入口。
+  - `ApiCallContext` 新增 `onReloadPage` 注入位，与 `reload-page` 命令保持单路径映射。
+- 新增回归覆盖：
+  - `lib/slash-command/__tests__/p2-utility-command-gaps.test.ts`
+  - `hooks/script-bridge/__tests__/api-surface-contract.test.ts`
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
 
 - 上游命令总量：`258`
   - 统计口径：`SillyTavern/public/scripts` 下 `SlashCommand.fromProps({ name: ... })` 唯一命令名。
-- 当前命令总量：`134`
+- 当前命令总量：`139`
   - 统计口径：
     - `lib/slash-command/registry/index.ts` 中 `COMMAND_REGISTRY`；
     - `lib/slash-command/core/parser.ts` 控制命令（`if/while/times/return/break/abort`）；
     - `lib/slash-command/core/executor.ts` 特殊命令（`let/var`）。
-- 交集：`68`
-- 覆盖率：`68 / 258 = 26.36%`
+- 交集：`71`
+- 覆盖率：`71 / 258 = 27.52%`
 
 ### 2.2 JS-Slash-Runner TavernHelper API 覆盖
 
@@ -288,6 +305,21 @@ pnpm vitest run \
   - `2` files passed
   - `57` tests passed
 
+### 3.9 P2 run / trimtokens / reload-page 命令回归（本轮新增）
+
+- 执行命令：
+
+```bash
+pnpm vitest run \
+  lib/slash-command/__tests__/p2-utility-command-gaps.test.ts \
+  lib/core/__tests__/st-baseline-slash-command.test.ts \
+  hooks/script-bridge/__tests__/api-surface-contract.test.ts
+```
+
+- 结果：
+  - `3` files passed
+  - `65` tests passed
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -321,19 +353,17 @@ pnpm vitest run \
   - `hooks/script-bridge/tool-handlers.ts`
   - `lib/nodeflow/LLMNode/LLMNodeTools.ts`
 
-### 4.5 P2 高频缺口头部（四轮后）
+### 4.5 P2 高频缺口头部（五轮后）
 
-- `api`、`fuzzy`、`chat-manager/chat-reload` 已从高频缺口头部移除，剩余头部集中在：
-  - `run`
-  - `trimtokens`
-  - `reload-page`
-- 建议下一轮优先继续补单族命令（先 `run` 或 `trimtokens` 最小可运行语义），持续保持“每轮一族 + 回归 + 覆盖率快照”节奏。
+- `run`、`trimtokens`、`reload-page` 已从高频缺口头部移除。
+- 剩余头部已转移到下一批命令族（优先评估 `branch / ui` 等迁移脚本常用能力）。
+- 建议继续保持“每轮一族 + 回归 + 覆盖率快照”节奏，优先挑“命中频次高 + 语义闭环短”的命令补齐。
 
 ## 5. 为什么本轮不做 Playwright E2E
 
 本轮判定：**暂缓 E2E，先补核心缺口**。原因：
 
-1. 关键瓶颈已收敛到 Slash 侧：命令覆盖率虽提升到 `26.36%`，但仍低于 `30%` gate，E2E 失败仍将以“已知缺命令”为主。  
+1. 关键瓶颈已收敛到 Slash 侧：命令覆盖率虽提升到 `27.52%`，但仍低于 `30%` gate，E2E 失败仍将以“已知缺命令”为主。  
 2. 虽然 TavernHelper API 覆盖已达 `60.77%`，但 Slash 命令族与 parser 语义仍未达可观测新信息的阶段。  
 3. 先完成下一阶段 P2 的命令族补齐后，再用 `test-baseline-assets` 做 Playwright 场景回归，信噪比更高。
 

@@ -106,6 +106,7 @@ function adaptContext(ctx: ApiCallContext): ExecutionContext {
   const onImpersonate = ctx.onImpersonate;
   const onContinue = ctx.onContinue;
   const onSwipe = ctx.onSwipe;
+  const onReloadPage = ctx.onReloadPage;
   const onSwitchCharacter = ctx.onSwitchCharacter;
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -279,7 +280,7 @@ function adaptContext(ctx: ApiCallContext): ExecutionContext {
     return records.map(toCharacterSummary);
   };
 
-  return {
+  const executionContext: ExecutionContext = {
     characterId: ctx.characterId,
     messages: ctx.messages,
     onSend,
@@ -289,6 +290,7 @@ function adaptContext(ctx: ApiCallContext): ExecutionContext {
     onImpersonate,
     onContinue,
     onSwipe,
+    reloadPage: onReloadPage,
     switchCharacter: onSwitchCharacter,
     getVariable: getLocalVariable,
     setVariable: setLocalVariable,
@@ -343,6 +345,16 @@ function adaptContext(ctx: ApiCallContext): ExecutionContext {
     getCurrentCharacter,
     listCharacters,
   };
+
+  executionContext.runSlashCommand = async (script: string) => {
+    const result = await executeSlashCommandScript(script, executionContext);
+    if (result.isError) {
+      throw new Error(result.errorMessage || "runSlashCommand failed");
+    }
+    return result.pipe;
+  };
+
+  return executionContext;
 }
 
 // ============================================================================

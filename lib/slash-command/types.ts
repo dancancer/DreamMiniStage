@@ -146,6 +146,16 @@ export interface ExecutionContext {
   // 扩展操作 - API 读取（P2 高频命令族）
   getApiSource?: () => string | undefined | Promise<string | undefined>;
   getApiUrl?: (api?: string) => string | undefined | Promise<string | undefined>;
+
+  // 扩展操作 - P2 高频缺口（run / trimtokens / reload-page）
+  runSlashCommand?: (script: string) => string | Promise<string>;
+  countTokens?: (text: string) => number | Promise<number>;
+  sliceByTokens?: (
+    text: string,
+    limit: number,
+    direction: "start" | "end",
+  ) => string | Promise<string>;
+  reloadPage?: () => void | Promise<void>;
 }
 
 /** Preset 信息 */

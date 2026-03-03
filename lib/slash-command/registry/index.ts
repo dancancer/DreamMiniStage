@@ -19,6 +19,7 @@ import * as JSSlashRunnerHandlers from "./handlers/js-slash-runner";
 import * as ApiHandlers from "./handlers/api";
 import * as FuzzyHandlers from "./handlers/fuzzy";
 import * as ChatHandlers from "./handlers/chat";
+import * as UtilityHandlers from "./handlers/utility";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -43,6 +44,11 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["checkpoint-go", CoreHandlers.handleCheckpointGo],
   ["checkpoint-exit", CoreHandlers.handleCheckpointExit],
   ["checkpoint-parent", CoreHandlers.handleCheckpointParent],
+  ["run", UtilityHandlers.handleRun],
+  ["call", UtilityHandlers.handleRun],
+  ["exec", UtilityHandlers.handleRun],
+  ["trimtokens", UtilityHandlers.handleTrimTokens],
+  ["reload-page", UtilityHandlers.handleReloadPage],
   ["api", ApiHandlers.handleApi],
   ["api-url", ApiHandlers.handleApiUrl],
   ["server", ApiHandlers.handleApiUrl],
