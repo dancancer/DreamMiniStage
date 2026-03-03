@@ -19,6 +19,8 @@ export default function ScriptRunnerTestPage() {
   const [results, setResults] = useState<P4ScenarioResult[]>([]);
 
   const total = scenarios.length;
+  const happyPathCount = scenarios.filter((scenario) => scenario.category === "happy-path").length;
+  const failureInjectionCount = total - happyPathCount;
   const passedCount = results.filter((scenario) => scenario.passed).length;
   const allPassed = results.length === total && passedCount === total;
 
@@ -69,7 +71,7 @@ export default function ScriptRunnerTestPage() {
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold">SillyTavern P4 Playwright E2E 控制台</h1>
         <p className="text-sm text-muted-foreground">
-          基于 test-baseline-assets 的四条主场景：脚本工具、Slash 控制流、MVU 变量链路、音频事件链路。
+          基于 test-baseline-assets 的 {happyPathCount} 条主链路 + {failureInjectionCount} 条故障注入链路。
         </p>
       </header>
 
@@ -106,12 +108,17 @@ export default function ScriptRunnerTestPage() {
             <article className="rounded-lg border border-border bg-card p-4" key={scenario.id}>
               <div className="mb-3 flex items-start justify-between gap-3">
                 <h2 className="text-base font-medium">{scenario.title}</h2>
-                <span
-                  className={`text-xs font-semibold ${statusClass}`}
-                  data-testid={`scenario-${scenario.id}-status`}
-                >
-                  {statusLabel}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="rounded border border-border bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+                    {scenario.category === "failure-injection" ? "故障注入" : "主链路"}
+                  </span>
+                  <span
+                    className={`text-xs font-semibold ${statusClass}`}
+                    data-testid={`scenario-${scenario.id}-status`}
+                  >
+                    {statusLabel}
+                  </span>
+                </div>
               </div>
 
               <p className="mb-2 text-xs text-muted-foreground">{scenario.expectation}</p>

@@ -20,6 +20,7 @@ export interface P4ScenarioDefinition {
   title: string;
   assetReferences: string[];
   expectation: string;
+  category: "happy-path" | "failure-injection";
 }
 
 export interface P4ScenarioResult {
@@ -38,6 +39,7 @@ const scenarioDefinitions: P4ScenarioDefinition[] = [
       "test-baseline-assets/character-card/Sgw3.card.json",
     ],
     expectation: "registerFunctionTool -> invokeFunctionTool 返回 iframe 回调结果",
+    category: "happy-path",
   },
   {
     id: "slash-control-flow",
@@ -47,6 +49,7 @@ const scenarioDefinitions: P4ScenarioDefinition[] = [
       "test-baseline-assets/preset/明月秋青v3.94.json",
     ],
     expectation: "while + if 宏条件收敛到稳定输出 control-flow-ok",
+    category: "happy-path",
   },
   {
     id: "mvu-variable-chain",
@@ -55,6 +58,7 @@ const scenarioDefinitions: P4ScenarioDefinition[] = [
       "test-baseline-assets/worldbook/服装随机化.json",
     ],
     expectation: "replace -> updateVariablesWith -> insertVariables 结果一致",
+    category: "happy-path",
   },
   {
     id: "audio-event-chain",
@@ -63,8 +67,56 @@ const scenarioDefinitions: P4ScenarioDefinition[] = [
       "test-baseline-assets/preset/夏瑾 Pro - Beta 0.70.json",
     ],
     expectation: "audioimport/audioplay/event-emit 全链路执行且事件可观测",
+    category: "happy-path",
+  },
+  {
+    id: "tool-timeout-failfast",
+    title: "故障注入：函数工具超时",
+    assetReferences: [
+      "test-baseline-assets/character-card/Sgw3.card.json",
+    ],
+    expectation: "未回调的 tool call 应显式超时报错（fail-fast）",
+    category: "failure-injection",
+  },
+  {
+    id: "macro-unknown-failfast",
+    title: "故障注入：未知宏表达式",
+    assetReferences: [
+      "test-baseline-assets/preset/明月秋青v3.94.json",
+    ],
+    expectation: "{{unknown::}} 在条件表达式中应显式失败",
+    category: "failure-injection",
+  },
+  {
+    id: "reload-page-failfast",
+    title: "故障注入：缺失 reload-page 回调",
+    assetReferences: [
+      "test-baseline-assets/character-card/Sgw3.card.json",
+    ],
+    expectation: "/reload-page 在宿主缺失回调时应显式失败",
+    category: "failure-injection",
   },
 ];
+
+function capFunctionToolTimeout(maxTimeoutMs: number): () => void {
+  const timerGlobal = globalThis as typeof globalThis & { setTimeout: typeof setTimeout };
+  const originalSetTimeout = timerGlobal.setTimeout;
+
+  timerGlobal.setTimeout = ((
+    handler: TimerHandler,
+    timeout?: number,
+    ...args: unknown[]
+  ) => {
+    const timeoutValue = typeof timeout === "number" && timeout > maxTimeoutMs
+      ? maxTimeoutMs
+      : timeout;
+    return originalSetTimeout(handler, timeoutValue, ...(args as []));
+  }) as typeof setTimeout;
+
+  return () => {
+    timerGlobal.setTimeout = originalSetTimeout;
+  };
+}
 
 async function runScriptToolLoopScenario(): Promise<P4ScenarioResult> {
   const startedAt = performance.now();
@@ -280,22 +332,144 @@ async function runAudioEventChainScenario(): Promise<P4ScenarioResult> {
   };
 }
 
+async function runToolTimeoutFailfastScenario(): Promise<P4ScenarioResult> {
+  const startedAt = performance.now();
+  const iframeId = `p4_timeout_${Date.now()}`;
+  const toolName = "p4_tool_timeout";
+  let passed = false;
+  let detail: Record<string, unknown> = {};
+  let restoreTimeoutPatch: (() => void) | null = null;
+
+  try {
+    registerIframeDispatcher(iframeId, () => undefined);
+    restoreTimeoutPatch = capFunctionToolTimeout(100);
+
+    const context = createApiContext(iframeId);
+    const registered = extensionHandlers.registerFunctionTool(
+      [
+        toolName,
+        "P4 timeout fail-fast tool",
+        { type: "object", properties: {} },
+        false,
+        iframeId,
+      ],
+      context,
+    ) === true;
+
+    let errorMessage = "";
+    try {
+      await invokeFunctionTool(toolName, { input: "ping" });
+    } catch (error) {
+      errorMessage = error instanceof Error ? error.message : String(error);
+    }
+
+    passed = registered && errorMessage.includes("Function tool timeout");
+    detail = {
+      registered,
+      errorMessage,
+    };
+  } catch (error) {
+    detail = {
+      error: error instanceof Error ? error.message : String(error),
+    };
+  } finally {
+    if (restoreTimeoutPatch) {
+      restoreTimeoutPatch();
+    }
+    clearIframeFunctionTools(iframeId);
+    unregisterIframeDispatcher(iframeId);
+  }
+
+  return {
+    id: "tool-timeout-failfast",
+    title: "故障注入：函数工具超时",
+    passed,
+    durationMs: Math.round(performance.now() - startedAt),
+    detail,
+  };
+}
+
+async function runUnknownMacroFailfastScenario(): Promise<P4ScenarioResult> {
+  const startedAt = performance.now();
+  let passed = false;
+  let detail: Record<string, unknown> = {};
+
+  try {
+    const ctx = createMinimalContext();
+    const result = await executeSlashCommandScript(
+      "/if {{unknown::p4_case}} == 1 {: /echo should-not-pass :} {: /echo should-not-run :}",
+      ctx,
+    );
+    const errorMessage = result.errorMessage ?? "";
+
+    passed = result.isError && errorMessage.includes("unsupported macro");
+    detail = {
+      result,
+      errorMessage,
+    };
+  } catch (error) {
+    detail = {
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  return {
+    id: "macro-unknown-failfast",
+    title: "故障注入：未知宏表达式",
+    passed,
+    durationMs: Math.round(performance.now() - startedAt),
+    detail,
+  };
+}
+
+async function runReloadPageFailfastScenario(): Promise<P4ScenarioResult> {
+  const startedAt = performance.now();
+  let passed = false;
+  let detail: Record<string, unknown> = {};
+
+  try {
+    const ctx = createMinimalContext();
+    const result = await executeSlashCommandScript("/reload-page", ctx);
+    const errorMessage = result.errorMessage ?? "";
+
+    passed = result.isError && errorMessage.includes("/reload-page is not available");
+    detail = {
+      result,
+      errorMessage,
+    };
+  } catch (error) {
+    detail = {
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  return {
+    id: "reload-page-failfast",
+    title: "故障注入：缺失 reload-page 回调",
+    passed,
+    durationMs: Math.round(performance.now() - startedAt),
+    detail,
+  };
+}
+
+const scenarioRunners: Record<string, () => Promise<P4ScenarioResult>> = {
+  "script-tool-loop": runScriptToolLoopScenario,
+  "slash-control-flow": runSlashControlFlowScenario,
+  "mvu-variable-chain": runMvuVariableChainScenario,
+  "audio-event-chain": runAudioEventChainScenario,
+  "tool-timeout-failfast": runToolTimeoutFailfastScenario,
+  "macro-unknown-failfast": runUnknownMacroFailfastScenario,
+  "reload-page-failfast": runReloadPageFailfastScenario,
+};
+
 export function getP4ScenarioDefinitions(): P4ScenarioDefinition[] {
   return scenarioDefinitions.map((scenario) => ({ ...scenario }));
 }
 
 export async function runP4ScenarioById(id: string): Promise<P4ScenarioResult> {
-  if (id === "script-tool-loop") {
-    return runScriptToolLoopScenario();
-  }
-  if (id === "slash-control-flow") {
-    return runSlashControlFlowScenario();
-  }
-  if (id === "mvu-variable-chain") {
-    return runMvuVariableChainScenario();
-  }
-  if (id === "audio-event-chain") {
-    return runAudioEventChainScenario();
+  const runner = scenarioRunners[id];
+  if (runner) {
+    return runner();
   }
 
   return {
@@ -312,7 +486,20 @@ export async function runP4ScenarioById(id: string): Promise<P4ScenarioResult> {
 export async function runAllP4Scenarios(): Promise<P4ScenarioResult[]> {
   const results: P4ScenarioResult[] = [];
   for (const scenario of scenarioDefinitions) {
-    const result = await runP4ScenarioById(scenario.id);
+    const runner = scenarioRunners[scenario.id];
+    if (!runner) {
+      results.push({
+        id: scenario.id,
+        title: scenario.title,
+        passed: false,
+        durationMs: 0,
+        detail: {
+          error: `Scenario runner not found: ${scenario.id}`,
+        },
+      });
+      continue;
+    }
+    const result = await runner();
     results.push(result);
   }
   return results;

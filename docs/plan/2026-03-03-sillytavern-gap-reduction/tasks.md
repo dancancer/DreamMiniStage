@@ -56,10 +56,14 @@
 
 - [x] 准备 `test-baseline-assets` 场景映射（脚本、会话、变量链路）。
 - [x] 编写并执行 Playwright MCP E2E（脚本工具、Slash 控制流、MVU 更新、音频事件）。
+- [x] 二轮增量：新增故障注入场景（`tool-timeout-failfast`、`macro-unknown-failfast`、`reload-page-failfast`）。
+- [x] 二轮执行：Playwright MCP 实跑 `7/7` 通过（`4` 主链路 + `3` 故障注入）。
 - [x] 固化失败截图/日志与复现步骤，纳入回归文档。
   - 场景映射与执行记录：`docs/plan/2026-03-03-sillytavern-gap-reduction/p4-playwright-e2e.md`
   - 运行截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
   - console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-console-network.md`
+  - 二轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round2-pass.png`
+  - 二轮 console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round2-console-network.md`
 
 ## 每轮完成后的固定动作
 

@@ -8,11 +8,11 @@
 
 ## 1. 本轮复评结论（先给结论）
 
-- 当前 gap **仍不算小**，但已跨过“进入 Playwright E2E”门槛。
+- 当前 gap **仍不算小**，但 P4 已进入“主链路 + 故障注入”双轨回归阶段。
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**30.23%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
-- 结论：P2/P3 gate 已达标，下一阶段应转入 P4（Playwright MCP E2E），用端到端场景验证真实迁移脚本行为。
+- 结论：P2/P3 gate 持续达标，P4 二轮已全绿；下一阶段应推进 `/session` 真实 UI 场景，验证端到端用户交互。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -172,6 +172,18 @@
   - 截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
   - console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-console-network.md`
 - 首轮结果：`4/4` 场景通过，`0` 失败。
+
+### 1.12 2026-03-03 P4 增量执行结果（二轮：故障注入补齐）
+
+- `app/test-script-runner/scenarios.ts` 已补齐 3 条故障注入场景：
+  - `tool-timeout-failfast`
+  - `macro-unknown-failfast`
+  - `reload-page-failfast`
+- `app/test-script-runner/page.tsx` 已支持主链路/故障注入分类展示，避免“失败即红”误读（故障注入命中预期失败同样记 PASS）。
+- 二轮实跑结果：`7/7` 通过（`4` 主链路 + `3` 故障注入），无额外失败样本。
+- 二轮证据已固化：
+  - 截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round2-pass.png`
+  - console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round2-console-network.md`
 
 ## 2. 审计口径与量化结果
 
@@ -384,6 +396,21 @@ pnpm vitest run \
     - `[registerFunctionTool] Registered: p4_tool_echo`
     - `[/event-emit] Emitted: stage_change {source: p4-audio}`
 
+### 3.12 P4 Playwright MCP E2E（二轮故障注入）
+
+- 执行路径：
+  - 启动 `pnpm dev`（`3303`）
+  - Playwright MCP 打开 `/test-script-runner`
+  - 点击 `运行全部 P4 场景`（含故障注入）
+- 结果：
+  - 场景通过：`7/7`
+  - 失败：`0`
+  - Console：`0 error / 0 warning`（总日志 `63`）
+  - 故障注入命中：
+    - `Function tool timeout: p4_tool_timeout`
+    - `unsupported macro '{{unknown::p4_case}}'`
+    - `/reload-page is not available in current context`
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -423,22 +450,22 @@ pnpm vitest run \
 - 头部缺口已进一步后移到低频命令与深语义能力（如 parser flags/debug/scope chain 细节），短期更适合通过 E2E 曝露真实阻塞点。
 - 建议从“继续堆命令数”转向“以 E2E 场景驱动补缺”，优先修复能复现实际迁移失败的路径。
 
-### 4.6 P4 现阶段风险（首轮后）
+### 4.6 P4 现阶段风险（二轮后）
 
-- 当前 P4 场景覆盖的是“能力闭环最小真链路”，仍未覆盖真实 session 页面的人机交互路径（输入框、消息渲染、会话切换）。
-- 本轮无失败样本，说明基础链路健康；但也意味着尚未触发“深语义回归”与“真实 UI 联动回归”。
-- 下一轮应引入“故障注入 + 真实页面路径”双轨执行，避免只停留在 happy path。
+- 当前 P4 已覆盖主链路 + fail-fast 故障注入，但仍未覆盖 `/session` 真实交互路径（输入框、消息渲染、会话切换）。
+- 故障注入已覆盖 `tool timeout`、`unknown macro`、`reload-page callback missing`，尚未覆盖音频回调缺失与多命令串联回滚场景。
+- Playwright MCP 运行依赖本地浏览器 profile 状态，若 `mcp-chrome` 残留进程未回收会导致会话抢占，需在执行脚本中前置清理。
 
-## 5. P4 首轮结论
+## 5. P4 二轮结论
 
-本轮判定：**P4 已正式启动且首轮全绿**。
+本轮判定：**P4 二轮已达成“主链路 + 故障注入”双轨全绿**。
 
-1. 四条主场景已落地浏览器执行面，并完成 Playwright MCP 实跑。  
-2. 首轮结果 `4/4` 通过，关键链路日志和截图已固化。  
-3. 覆盖策略已从“命令计数驱动”切到“E2E 场景驱动”，可继续按失败单推进补缺。
+1. 场景集由 `4` 扩展到 `7`，新增 3 条 fail-fast 注入链路。  
+2. 二轮结果 `7/7` 通过，且错误日志、网络失败请求均为 `0`。  
+3. 回归资产已形成“首轮 vs 二轮”可对比基线，可继续按真实页面失败单推进。
 
-## 6. 下一阶段建议（P4 二轮）
+## 6. 下一阶段建议（P4 三轮）
 
-1. 引入故障注入场景：对 `tool callback timeout`、`unknown macro`、`缺失音频回调` 做显式失败快照采集。  
-2. 增加真实页面链路：将至少一条场景迁移到 `/session` 用户交互路径（输入 slash -> UI 反馈 -> 状态验证）。  
-3. 建立每轮 E2E 差异对比：固定截图区域与日志字段，形成“上一轮 vs 本轮”快速 diff。
+1. 增加 `/session` 真实 UI 场景：覆盖“输入 slash -> 消息渲染 -> 状态验证”的端到端路径。  
+2. 补齐音频失败注入：显式验证宿主缺失音频回调时的 fail-fast 行为与错误信息稳定性。  
+3. 固化执行前置清理脚本：自动回收 `mcp-chrome` 残留进程，避免 Playwright MCP 会话抢占导致假失败。
