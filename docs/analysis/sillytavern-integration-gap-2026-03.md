@@ -11,7 +11,7 @@
 - 当前 gap **仍不算小**，不满足“进入 Playwright E2E”条件。
 - 相比上一轮，基础能力和回归稳定性已明显改善，但核心迁移指标仍偏低：
   - SillyTavern Slash 命令覆盖：**21.71%**
-  - JS-Slash-Runner TavernHelper API 覆盖：**53.85%**
+  - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
 - 结论：继续做“高价值缺口收敛”比直接做 E2E 更划算，E2E 先作为下一阶段 gate。
 
 ### 1.1 2026-03-03 P0 增量执行结果
@@ -50,6 +50,19 @@
 - 新增回归覆盖：
   - `hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts`
 
+### 1.4 2026-03-03 P3 增量执行结果（二轮：extension 管理最小集）
+
+- Script Bridge 已补齐 extension 管理最小 API：
+  - `isAdmin`
+  - `getTavernHelperExtensionId`
+  - `getExtensionType`
+  - `getExtensionStatus`
+  - `isInstalledExtension`
+  - `installExtension` / `uninstallExtension` / `reinstallExtension` / `updateExtension`（宿主模式显式 fail-fast）
+- `shim + handler + capability matrix` 已同步收敛到单一声明面，`api-surface-contract` 继续全绿。
+- 新增/增强回归覆盖：
+  - `hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts`（extension 读接口 + 写接口 fail-fast）
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
@@ -68,10 +81,10 @@
 
 - 上游聚合 API：`130`
   - 统计口径：`JS-Slash-Runner/src/function/index.ts` 中 `getTavernHelper()` 返回对象顶层 key。
-- 当前 shim 顶层 API：`108`
+- 当前 shim 顶层 API：`117`
   - 统计口径：`public/iframe-libs/slash-runner-shim.js` 中 `window.TavernHelper` 顶层 key。
-- 交集：`70`
-- 覆盖率：`70 / 130 = 53.85%`
+- 交集：`79`
+- 覆盖率：`79 / 130 = 60.77%`
 
 ### 2.3 JS-Slash-Runner slash_command 子集
 
@@ -157,7 +170,7 @@ pnpm vitest run \
 
 - 结果：
   - `5` files passed
-  - `20` tests passed
+  - `21` tests passed
 
 ## 4. 关键缺口（按影响面排序）
 
@@ -170,7 +183,7 @@ pnpm vitest run \
 
 ### 4.2 TavernHelper 能力面不完整
 
-- shim 可用但仍是“可运行子集”，与上游聚合 API 仍有明显缺口。
+- API 覆盖率已提升到 `60.77%` 并跨过 `55%` 门槛，但 shim 仍是“可运行子集”，与上游聚合 API 仍有可见缺口（主要在低频 util/regex/displayed-message 等簇）。
 - 关键位置：
   - 当前：`public/iframe-libs/slash-runner-shim.js`
   - 上游：`JS-Slash-Runner/src/function/index.ts`
@@ -196,9 +209,9 @@ pnpm vitest run \
 
 本轮判定：**暂缓 E2E，先补核心缺口**。原因：
 
-1. 当前两条主指标仍偏低（`21.71%` / `53.85%`），E2E 的失败将主要反映“已知缺口”，不是新信息。  
-2. slash 宏条件流虽已收敛，但命令/API 覆盖率尚未达到门槛，E2E 仍会被覆盖缺口主导。  
-3. 先完成下一阶段 P2/P3 的覆盖率收敛后，再用 `test-baseline-assets` 做 Playwright 场景回归，信噪比更高。
+1. 关键瓶颈已收敛到 Slash 侧：命令覆盖率仍为 `21.71%`（低于 `30%` gate），E2E 失败仍将以“已知缺命令”为主。  
+2. 虽然 TavernHelper API 覆盖已达 `60.77%`，但 Slash 命令族与 parser 语义仍未达可观测新信息的阶段。  
+3. 先完成下一阶段 P2 的命令族补齐后，再用 `test-baseline-assets` 做 Playwright 场景回归，信噪比更高。
 
 ## 6. 下一阶段门槛（建议）
 

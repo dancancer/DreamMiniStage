@@ -88,6 +88,26 @@ describe("P3 compat API gaps", () => {
     });
   });
 
+  it("supports extension discovery APIs and keeps host status deterministic", () => {
+    expect(compatHandlers.isAdmin([], createMockContext())).toBe(false);
+    expect(compatHandlers.getTavernHelperExtensionId([], createMockContext())).toBe("JS-Slash-Runner");
+
+    expect(compatHandlers.getExtensionType(["JS-Slash-Runner"], createMockContext())).toBe("system");
+    expect(compatHandlers.getExtensionType(["DreamMiniStage"], createMockContext())).toBe("system");
+    expect(compatHandlers.getExtensionType(["unknown-extension"], createMockContext())).toBeNull();
+
+    expect(compatHandlers.isInstalledExtension(["JS-Slash-Runner"], createMockContext())).toBe(true);
+    expect(compatHandlers.isInstalledExtension(["unknown-extension"], createMockContext())).toBe(false);
+
+    expect(compatHandlers.getExtensionStatus(["JS-Slash-Runner"], createMockContext())).toEqual({
+      current_branch_name: "host-mode",
+      current_commit_hash: expect.any(String),
+      is_up_to_date: true,
+      remote_url: "dreamministage://extensions/JS-Slash-Runner",
+    });
+    expect(compatHandlers.getExtensionStatus(["unknown-extension"], createMockContext())).toBeNull();
+  });
+
   it("imports raw preset and fails fast on import error", async () => {
     mocks.importPresetFromJson.mockResolvedValueOnce({ success: true });
     await expect(compatHandlers.importRawPreset(
@@ -167,6 +187,18 @@ describe("P3 compat API gaps", () => {
 
   it("keeps unsupported import/update paths fail-fast", () => {
     expect(() => compatHandlers.importRawCharacter([], createMockContext()))
+      .toThrow("not supported");
+
+    expect(() => compatHandlers.installExtension([], createMockContext()))
+      .toThrow("not supported");
+
+    expect(() => compatHandlers.uninstallExtension([], createMockContext()))
+      .toThrow("not supported");
+
+    expect(() => compatHandlers.reinstallExtension([], createMockContext()))
+      .toThrow("not supported");
+
+    expect(() => compatHandlers.updateExtension([], createMockContext()))
       .toThrow("not supported");
 
     expect(() => compatHandlers.updateTavernHelper([], createMockContext()))

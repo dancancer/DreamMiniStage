@@ -1,14 +1,14 @@
 /**
  * @input  hooks/script-bridge/types, function/*, lib/script-runner/script-storage
  * @output compatHandlers
- * @pos    JS-Slash-Runner 高价值兼容 API（import_raw / script buttons / version）
+ * @pos    JS-Slash-Runner 高价值兼容 API（import_raw / extension / script buttons / version）
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
  *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                       Script Bridge Compatibility Handlers                ║
  * ║                                                                           ║
  * ║  目标：补齐迁移高频 API，统一走 Script Bridge 单路径                           ║
- * ║  覆盖：import_raw / getAllEnabledScriptButtons / version 相关接口         ║
+ * ║  覆盖：import_raw / extension / script buttons / version 相关接口         ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -21,6 +21,18 @@ import { RegexScriptOperations } from "@/lib/data/roleplay/regex-script-operatio
 import { getScriptButtons } from "@/lib/script-runner/script-storage";
 
 const DEFAULT_FRONTEND_VERSION = "0.1.0";
+const DEFAULT_EXTENSION_ID = "JS-Slash-Runner";
+const HOST_EXTENSION_TYPES: Record<string, "local" | "global" | "system"> = {
+  "JS-Slash-Runner": "system",
+  "DreamMiniStage": "system",
+};
+
+interface ExtensionInstallationInfo {
+  current_branch_name: string;
+  current_commit_hash: string;
+  is_up_to_date: boolean;
+  remote_url: string;
+}
 
 function getFrontendVersionValue(): string {
   const globalVersion = (globalThis as { __DREAM_FRONTEND_VERSION__?: string }).__DREAM_FRONTEND_VERSION__;
@@ -72,7 +84,65 @@ function parseStructuredContent(content: unknown, apiName: string): unknown {
   throw new Error(`${apiName} requires JSON object/array content`);
 }
 
+function parseExtensionId(args: unknown[], apiName: string): string {
+  const extensionId = args[0];
+  if (typeof extensionId !== "string" || extensionId.trim().length === 0) {
+    throw new Error(`${apiName} requires extension id`);
+  }
+
+  return extensionId.trim();
+}
+
+function getHostExtensionType(extensionId: string): "local" | "global" | "system" | null {
+  return HOST_EXTENSION_TYPES[extensionId] ?? null;
+}
+
 export const compatHandlers: ApiHandlerMap = {
+  "isAdmin": (): boolean => false,
+
+  "getTavernHelperExtensionId": (): string => DEFAULT_EXTENSION_ID,
+
+  "getExtensionType": (args: unknown[]): "local" | "global" | "system" | null => {
+    const extensionId = parseExtensionId(args, "getExtensionType");
+    return getHostExtensionType(extensionId);
+  },
+
+  "getExtensionStatus": (args: unknown[]): ExtensionInstallationInfo | null => {
+    const extensionId = parseExtensionId(args, "getExtensionStatus");
+    const extensionType = getHostExtensionType(extensionId);
+    if (!extensionType) {
+      return null;
+    }
+
+    return {
+      current_branch_name: "host-mode",
+      current_commit_hash: getFrontendVersionValue(),
+      is_up_to_date: true,
+      remote_url: `dreamministage://extensions/${extensionId}`,
+    };
+  },
+
+  "isInstalledExtension": (args: unknown[]): boolean => {
+    const extensionId = parseExtensionId(args, "isInstalledExtension");
+    return getHostExtensionType(extensionId) !== null;
+  },
+
+  "installExtension": (): never => {
+    throw new Error("installExtension is not supported in DreamMiniStage host mode");
+  },
+
+  "uninstallExtension": (): never => {
+    throw new Error("uninstallExtension is not supported in DreamMiniStage host mode");
+  },
+
+  "reinstallExtension": (): never => {
+    throw new Error("reinstallExtension is not supported in DreamMiniStage host mode");
+  },
+
+  "updateExtension": (): never => {
+    throw new Error("updateExtension is not supported in DreamMiniStage host mode");
+  },
+
   "getAllEnabledScriptButtons": (_args: unknown[], ctx: ApiCallContext): Record<string, Array<{
     button_id: string;
     button_name: string;
@@ -188,4 +258,3 @@ export const compatHandlers: ApiHandlerMap = {
 
   "getTavernVersion": (): string => `DreamMiniStage/${getFrontendVersionValue()}`,
 };
-

@@ -388,6 +388,19 @@
     getAllEnabledScriptButtons: api("getAllEnabledScriptButtons"),
 
     // ──────────────────────────────────────────────────────────────────────
+    //  Extension API（宿主模式：读接口可用，写接口 fail-fast）
+    // ──────────────────────────────────────────────────────────────────────
+    isAdmin: api("isAdmin"),
+    getTavernHelperExtensionId: api("getTavernHelperExtensionId"),
+    getExtensionType: api("getExtensionType"),
+    getExtensionStatus: api("getExtensionStatus"),
+    isInstalledExtension: api("isInstalledExtension"),
+    installExtension: api("installExtension"),
+    uninstallExtension: api("uninstallExtension"),
+    reinstallExtension: api("reinstallExtension"),
+    updateExtension: api("updateExtension"),
+
+    // ──────────────────────────────────────────────────────────────────────
     //  版本 API（JS-Slash-Runner 兼容）
     // ──────────────────────────────────────────────────────────────────────
     getTavernHelperVersion: api("getTavernHelperVersion"),

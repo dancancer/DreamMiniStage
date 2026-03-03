@@ -1,29 +1,27 @@
-# Handoff（2026-03-03 / P3 首轮）
+# Handoff（2026-03-03 / P3 二轮）
 
-## 本轮完成（P3 - import_raw / script buttons / version）
+## 本轮完成（P3 - extension 管理最小集）
 
-- 已新增 `hooks/script-bridge/compat-handlers.ts`，补齐 JS-Slash-Runner 高频迁移 API：
-  - `importRawPreset`
-  - `importRawWorldbook`
-  - `importRawTavernRegex`
-  - `importRawChat`
-  - `importRawCharacter`（宿主不支持二进制上传，显式 fail-fast）
-  - `getAllEnabledScriptButtons`
-  - `getTavernHelperVersion` / `getFrontendVersion` / `getTavernVersion`
-  - `updateTavernHelper` / `updateFrontendVersion`（宿主模式显式 fail-fast）
+- 已在 `hooks/script-bridge/compat-handlers.ts` 补齐 extension 管理兼容 API：
+  - `isAdmin`
+  - `getTavernHelperExtensionId`
+  - `getExtensionType`
+  - `getExtensionStatus`
+  - `isInstalledExtension`
+  - `installExtension` / `uninstallExtension` / `reinstallExtension` / `updateExtension`（宿主模式显式 fail-fast）
 - 已完成能力面单源同步：
-  - `public/iframe-libs/slash-runner-shim.js` 增加上述 API 暴露。
-  - `hooks/script-bridge/capability-matrix.ts` 同步新增能力声明。
-  - `hooks/script-bridge/index.ts` 注入 `compatHandlers`，统一纳入 `handleApiCall` 调度。
-- API 合同校验已保持一致：
-  - `hooks/script-bridge/__tests__/api-surface-contract.test.ts` 已纳入 `compatHandlers` 注册面。
-  - `hooks/script-bridge/README.md` 文件清单和约束说明已更新。
+  - `public/iframe-libs/slash-runner-shim.js` 新增 extension API 暴露。
+  - `hooks/script-bridge/capability-matrix.ts` 同步新增 extension API 声明。
+  - `hooks/script-bridge/README.md` 同步更新兼容面说明。
+- `api-surface-contract` 持续全绿，shim/handler/matrix 无漂移。
 
 ## 新增/更新测试
 
-- 新增：`hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts`
-  - 覆盖 `import_raw` 参数语义、fail-fast 路径、按钮聚合、version API。
+- 更新：`hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts`
+  - 新增 extension 读接口行为断言（installed/type/status/id/admin）
+  - 新增 extension 写接口 fail-fast 断言（install/uninstall/reinstall/update）
 - 回归复跑：
+  - `hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts`
   - `hooks/script-bridge/__tests__/api-surface-contract.test.ts`
   - `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`
   - `hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
@@ -40,22 +38,21 @@ pnpm vitest run \
   lib/script-runner/__tests__/slash-runner-shim-contract.test.ts
 ```
 
-- 结果：`5` files passed，`20` tests passed。
+- 结果：`5` files passed，`21` tests passed。
 
 ## 指标快照（本轮更新）
 
 - Slash 覆盖率：`21.71%`（本轮未改 Slash 命令族）
-- TavernHelper API 覆盖率：`53.85%`
+- TavernHelper API 覆盖率：`60.77%`
   - 上游：`130`
-  - 当前 shim 顶层：`108`
-  - 交集：`70`
+  - 当前 shim 顶层：`117`
+  - 交集：`79`
 
-## 下一步建议（继续 P3 + 进入 P2）
+## 下一步建议（切到 P2）
 
-1. **先完成 P3 收口（冲线 55%）**  
-   优先补 extension 管理最小集（`isInstalledExtension/getExtensionType/getExtensionStatus`），宿主不支持路径保持 fail-fast，可将 API 覆盖率从 `53.85%` 推到 `>=55%`。
-2. **并行推进 P2 一族命令（建议 checkpoint）**  
-   从 `checkpoint-create/get/list/go/exit/parent` 这一族入手，按“参数签名 + 失败路径 + 回归”一次性补齐，减少迁移脚本硬阻塞。
-3. **每轮固定动作保持不变**  
-   每次补齐后都更新 `docs/analysis/sillytavern-integration-gap-2026-03.md` 与本 handoff，持续记录覆盖率快照与 gate 状态。
-
+1. **优先推进 P2 高频 Slash 命令族（建议 checkpoint）**  
+   先补 `checkpoint-create/get/list/go/exit/parent`，按“参数签名 + 失败路径 + 回归”一轮收敛，直接拉动 `21.71% -> 30%` gate。
+2. **做一轮命令频次采样并固定 Top N backlog**  
+   用 `test-baseline-assets` + 现有脚本样本产出可追踪频次表，避免命令补齐顺序拍脑袋。
+3. **保持每轮固定动作**  
+   每次命令族补齐后同步更新 `docs/analysis/sillytavern-integration-gap-2026-03.md` 与本 handoff，记录覆盖率和 gate 状态。

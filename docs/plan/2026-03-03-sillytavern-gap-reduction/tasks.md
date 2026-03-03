@@ -33,9 +33,9 @@
 ## P3 - TavernHelper API 缺口收敛
 
 - [x] 优先补 import_raw / script buttons / version 相关 API。
-- [ ] 按需补 extension 管理 API（不支持路径需 fail-fast）。
+- [x] 按需补 extension 管理 API（不支持路径需 fail-fast）。
 - [x] 保持 shim 与 capability matrix 同步更新。
-- [ ] 目标：TavernHelper API 覆盖率提升到 `>= 55%`。
+- [x] 目标：TavernHelper API 覆盖率提升到 `>= 55%`。
 
 ## P4 - Playwright MCP E2E（满足门槛后执行）
 

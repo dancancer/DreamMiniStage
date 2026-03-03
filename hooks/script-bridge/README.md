@@ -13,7 +13,7 @@
 | `audio-handlers.ts` | 处理器 | 音频事件处理 |
 | `capability-matrix.ts` | 能力矩阵 | shim/handler/slash 单一能力声明 |
 | `character-handlers.ts` | 处理器 | 角色事件处理 |
-| `compat-handlers.ts` | 处理器 | JS-Slash-Runner 高频兼容 API（import_raw / script buttons / version） |
+| `compat-handlers.ts` | 处理器 | JS-Slash-Runner 高频兼容 API（import_raw / extension / script buttons / version） |
 | `event-handlers.ts` | 处理器 | 通用事件处理 |
 | `extension-handlers.ts` | 处理器 | 扩展事件处理 |
 | `generation-handlers.ts` | 处理器 | 生成事件处理 |
@@ -39,6 +39,6 @@
 - `registerFunctionTool` 已收敛为单一注册表路径：`extension-handlers` 统一负责注册、调度、回调落地；`tool-handlers` 仅保留适配导出，避免双状态源漂移。
 - `ScriptSandbox` 卸载时会同时清理 `event listeners + function tools + slash command ownership`，避免跨 iframe 生命周期残留。
 - 变量 API 已补齐 `registerVariableSchema / updateVariablesWith / insertVariables`：其中 `updateVariablesWith` 在 shim 内先执行 updater，再通过 handler 单路径回写并 fail-fast 校验对象输入。
-- 已新增 `compat-handlers.ts`，补齐 `importRaw* / getAllEnabledScriptButtons / getTavernHelperVersion` 等高频迁移 API；其中不支持的更新能力（`updateTavernHelper/updateFrontendVersion`）保持显式 fail-fast。
+- 已新增 `compat-handlers.ts`，补齐 `importRaw* / extension 管理最小集 / getAllEnabledScriptButtons / getTavernHelperVersion` 等高频迁移 API；其中宿主不支持的写能力（`installExtension/uninstallExtension/reinstallExtension/updateExtension/updateTavernHelper/updateFrontendVersion`）保持显式 fail-fast。
 - 群聊相关 `getGroupMembers` / `isGroupChat` 目前为显式未支持（fail-fast），不再返回静默默认值。
 - 新增 `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`，覆盖 `registerFunctionTool/registerSlashCommand` 的注册→调用→清理→再注册回归链路。
