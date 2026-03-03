@@ -18,6 +18,7 @@ import * as OperatorHandlers from "./handlers/operators";
 import * as JSSlashRunnerHandlers from "./handlers/js-slash-runner";
 import * as ApiHandlers from "./handlers/api";
 import * as FuzzyHandlers from "./handlers/fuzzy";
+import * as ChatHandlers from "./handlers/chat";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -46,6 +47,10 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["api-url", ApiHandlers.handleApiUrl],
   ["server", ApiHandlers.handleApiUrl],
   ["fuzzy", FuzzyHandlers.handleFuzzy],
+  ["chat-manager", ChatHandlers.handleChatManager],
+  ["chat-history", ChatHandlers.handleChatManager],
+  ["manage-chats", ChatHandlers.handleChatManager],
+  ["chat-reload", ChatHandlers.handleChatReload],
 
   // ─── 工具命令 ───
   ["echo", CoreHandlers.handleEcho],

@@ -34,6 +34,9 @@
 - [x] 三轮增量：补齐 `fuzzy` 命令最小子集（`list + threshold + mode(first|best)`），参数错误显式 fail-fast。
 - [x] 三轮回归：`pnpm vitest run lib/slash-command/__tests__/p2-fuzzy-command-gaps.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`。
 - [x] 三轮指标：Slash 覆盖率更新为 `66 / 258 = 25.58%`。
+- [x] 四轮增量：补齐 `chat-manager / chat-history / manage-chats / chat-reload` 最小子集，宿主缺回调路径显式 fail-fast。
+- [x] 四轮回归：`pnpm vitest run lib/slash-command/__tests__/p2-chat-command-gaps.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`。
+- [x] 四轮指标：Slash 覆盖率更新为 `68 / 258 = 26.36%`。
 - [ ] 目标：Slash 覆盖率提升到 `>= 30%`。
 
 ## P3 - TavernHelper API 缺口收敛

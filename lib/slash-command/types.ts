@@ -74,6 +74,8 @@ export interface ExecutionContext {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
+  openChatManager?: () => void | Promise<void>;
+  reloadCurrentChat?: () => void | Promise<void>;
   getVariable: (key: string) => unknown;
   setVariable: (key: string, value: unknown) => void;
   deleteVariable: (key: string) => void;
