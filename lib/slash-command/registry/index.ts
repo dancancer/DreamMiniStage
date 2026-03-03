@@ -16,6 +16,7 @@ import * as CharacterHandlers from "./handlers/characters";
 import * as GenerationHandlers from "./handlers/generation";
 import * as OperatorHandlers from "./handlers/operators";
 import * as JSSlashRunnerHandlers from "./handlers/js-slash-runner";
+import * as ApiHandlers from "./handlers/api";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -40,6 +41,9 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["checkpoint-go", CoreHandlers.handleCheckpointGo],
   ["checkpoint-exit", CoreHandlers.handleCheckpointExit],
   ["checkpoint-parent", CoreHandlers.handleCheckpointParent],
+  ["api", ApiHandlers.handleApi],
+  ["api-url", ApiHandlers.handleApiUrl],
+  ["server", ApiHandlers.handleApiUrl],
 
   // ─── 工具命令 ───
   ["echo", CoreHandlers.handleEcho],

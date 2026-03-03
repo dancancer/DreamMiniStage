@@ -140,6 +140,10 @@ export interface ExecutionContext {
   replaceAudioListByType?: (type: AudioChannelType, list: Array<{ url: string; title?: string }>) => void | Promise<void>;
   appendAudioListByType?: (type: AudioChannelType, list: Array<{ url: string; title?: string }>) => void | Promise<void>;
   getAudioStateByType?: (type: AudioChannelType) => AudioChannelSnapshot | undefined;
+
+  // 扩展操作 - API 读取（P2 高频命令族）
+  getApiSource?: () => string | undefined | Promise<string | undefined>;
+  getApiUrl?: (api?: string) => string | undefined | Promise<string | undefined>;
 }
 
 /** Preset 信息 */

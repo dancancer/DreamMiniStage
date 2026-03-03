@@ -28,6 +28,9 @@
 - [x] 从 `test-baseline-assets` 与现有脚本样本统计 Top N 高频缺失命令。
 - [x] 每次仅补一个命令族（参数签名 + 错误语义 + 测试）。
 - [x] 每次补齐后更新覆盖率快照（总量/交集/覆盖率）。
+- [x] 二轮增量：补齐 `api / api-url / server` 最小只读子集，并为写路径显式 fail-fast。
+- [x] 二轮回归：`pnpm vitest run lib/slash-command/__tests__/p2-api-command-gaps.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`。
+- [x] 二轮指标：Slash 覆盖率更新为 `65 / 258 = 25.19%`。
 - [ ] 目标：Slash 覆盖率提升到 `>= 30%`。
 
 ## P3 - TavernHelper API 缺口收敛

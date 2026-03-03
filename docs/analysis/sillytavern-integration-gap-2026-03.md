@@ -10,7 +10,7 @@
 
 - 当前 gap **仍不算小**，不满足“进入 Playwright E2E”条件。
 - 相比上一轮，基础能力和回归稳定性已明显改善，但核心迁移指标仍偏低：
-  - SillyTavern Slash 命令覆盖：**24.42%**
+  - SillyTavern Slash 命令覆盖：**25.19%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
 - 结论：继续做“高价值缺口收敛”比直接做 E2E 更划算，E2E 先作为下一阶段 gate。
 
@@ -82,19 +82,32 @@
 - 样本频次采样：
   - 基于 `test-baseline-assets` + 上游脚本样本（`SillyTavern/public/scripts`）抽样，当前高频缺口头部集中在 `api / fuzzy / reload-page`，checkpoint 家族已从缺口头部移除。
 
+### 1.6 2026-03-03 P2 增量执行结果（二轮：api 命令族最小子集）
+
+- Slash Registry 已补齐 API 高频命令最小只读子集：
+  - `api`
+  - `api-url`
+  - `server`（`api-url` 别名）
+- 命令语义对齐：
+  - `/api` 无参返回当前 API 类型（支持上下文读取 + `localStorage.llmType` 回落）。
+  - `/api-url` 支持 `api=` 命名参数读取目标源 URL，兼容 `custom/zai -> openai`、`kobold/textgenerationwebui -> ollama` 别名。
+  - 写路径（`/api <value>`、`/api-url <url>`）在宿主模式统一 fail-fast，避免静默半实现。
+- 新增回归覆盖：
+  - `lib/slash-command/__tests__/p2-api-command-gaps.test.ts`
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
 
 - 上游命令总量：`258`
   - 统计口径：`SillyTavern/public/scripts` 下 `SlashCommand.fromProps({ name: ... })` 唯一命令名。
-- 当前命令总量：`126`
+- 当前命令总量：`129`
   - 统计口径：
     - `lib/slash-command/registry/index.ts` 中 `COMMAND_REGISTRY`；
     - `lib/slash-command/core/parser.ts` 控制命令（`if/while/times/return/break/abort`）；
     - `lib/slash-command/core/executor.ts` 特殊命令（`let/var`）。
-- 交集：`63`
-- 覆盖率：`63 / 258 = 24.42%`
+- 交集：`65`
+- 覆盖率：`65 / 258 = 25.19%`
 
 ### 2.2 JS-Slash-Runner TavernHelper API 覆盖
 
@@ -206,6 +219,20 @@ pnpm vitest run \
   - `3` files passed
   - `67` tests passed
 
+### 3.6 P2 api 命令族回归（本轮新增）
+
+- 执行命令：
+
+```bash
+pnpm vitest run \
+  lib/slash-command/__tests__/p2-api-command-gaps.test.ts \
+  lib/core/__tests__/st-baseline-slash-command.test.ts
+```
+
+- 结果：
+  - `2` files passed
+  - `60` tests passed
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -238,6 +265,15 @@ pnpm vitest run \
   - `hooks/script-bridge/extension-handlers.ts`
   - `hooks/script-bridge/tool-handlers.ts`
   - `lib/nodeflow/LLMNode/LLMNodeTools.ts`
+
+### 4.5 P2 高频缺口头部（二轮后）
+
+- `api` 命令族已从高频缺口头部移除，剩余头部集中在：
+  - `fuzzy`
+  - `reload-page`
+  - `run`
+  - `trimtokens`
+- 建议下一轮优先继续补单族命令（先 `fuzzy` 或 `reload-page` 只读/无副作用路径），持续保持“每轮一族 + 回归 + 覆盖率快照”节奏。
 
 ## 5. 为什么本轮不做 Playwright E2E
 
