@@ -183,4 +183,26 @@ describe("JS-Slash-Runner audio semantics", () => {
     expect(importResult.isError).toBe(true);
     expect(importResult.errorMessage).toContain("/audioimport is not available in current context");
   });
+
+  it("halts chained commands after fail-fast and keeps pre-failure state", async () => {
+    const { ctx, channels } = createAudioContext();
+
+    await executeSlashCommandScript(
+      "/audioimport type=bgm play=false https://a.example/main.mp3",
+      ctx,
+    );
+    await executeSlashCommandScript("/audioplay type=bgm", ctx);
+    expect(channels.bgm.isPlaying).toBe(true);
+
+    const result = await executeSlashCommandScript(
+      "/setvar guard pre-fail|/reload-page|/audiostop type=bgm|/setvar tail should-not-run",
+      ctx,
+    );
+
+    expect(result.isError).toBe(true);
+    expect(result.errorMessage).toContain("/reload-page is not available in current context");
+    expect(ctx.getVariable("guard")).toBe("pre-fail");
+    expect(ctx.getVariable("tail")).toBeUndefined();
+    expect(channels.bgm.isPlaying).toBe(true);
+  });
 });

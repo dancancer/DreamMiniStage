@@ -12,7 +12,7 @@
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**30.23%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
-- 结论：P2/P3 gate 持续达标，P4 三轮（含音频回调缺失注入）已全绿；下一阶段应推进 `/session` 真实 UI 场景，验证端到端用户交互。
+- 结论：P2/P3 gate 持续达标，P4 四轮（含串联命令 fail-fast 一致性注入）已全绿；下一阶段应推进 `/session` 真实 UI 场景，验证端到端用户交互。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -196,6 +196,21 @@
 - 三轮证据已固化：
   - 截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round3-pass.png`
   - console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round3-console-network.md`
+
+### 1.14 2026-03-03 P4 增量执行结果（四轮：串联命令一致性注入）
+
+- `app/test-script-runner/scenarios.ts` 已新增故障注入场景：
+  - `chain-failfast-consistency`
+- `lib/slash-command/__tests__/js-slash-runner-audio.test.ts` 已新增串联命令断言：
+  - `/setvar guard -> /reload-page(fail-fast) -> /audiostop -> /setvar tail`
+  - 验证前置副作用保留、后续命令截断、音频状态不回退。
+- 四轮实跑结果：`9/9` 通过（`4` 主链路 + `5` 故障注入），无额外失败样本。
+- 四轮证据已固化：
+  - 截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-pass.png`
+  - console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-console-network.md`
+  - 原始日志：
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-console.log`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-network.log`
 
 ## 2. 审计口径与量化结果
 
@@ -436,6 +451,22 @@ pnpm vitest run \
   - 故障注入新增命中：
     - `/audioplay is not available in current context`
 
+### 3.14 P4 Playwright MCP E2E（四轮串联一致性注入）
+
+- 执行路径：
+  - 启动 `pnpm dev`（`3303`）
+  - Playwright MCP 打开 `/test-script-runner`
+  - 点击 `运行全部 P4 场景`（含串联命令一致性注入）
+- 结果：
+  - 场景通过：`9/9`
+  - 失败：`0`
+  - Console：`0 error / 0 warning`（总日志 `31`）
+  - 四轮新增命中：
+    - `Command /reload-page failed: /reload-page is not available in current context`
+    - `guard=before-fail`
+    - `tail` 未写入
+    - `isPlayingBeforeChain=true` 且 `isPlayingAfterChain=true`
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -475,22 +506,22 @@ pnpm vitest run \
 - 头部缺口已进一步后移到低频命令与深语义能力（如 parser flags/debug/scope chain 细节），短期更适合通过 E2E 曝露真实阻塞点。
 - 建议从“继续堆命令数”转向“以 E2E 场景驱动补缺”，优先修复能复现实际迁移失败的路径。
 
-### 4.6 P4 现阶段风险（三轮后）
+### 4.6 P4 现阶段风险（四轮后）
 
 - 当前 P4 已覆盖主链路 + fail-fast 故障注入，但仍未覆盖 `/session` 真实交互路径（输入框、消息渲染、会话切换）。
-- 故障注入已覆盖 `tool timeout`、`unknown macro`、`reload-page callback missing`、`audio callback missing`，仍未覆盖多命令串联回滚场景。
+- 故障注入已覆盖 `tool timeout`、`unknown macro`、`reload-page callback missing`、`audio callback missing`、`chain fail-fast consistency`；仍缺“消息副作用 + 会话切换”的真实页面注入。
 - Playwright MCP 运行依赖本地浏览器 profile 状态，若 `mcp-chrome` 残留进程未回收会导致会话抢占，需在执行脚本中前置清理。
 
-## 5. P4 三轮结论
+## 5. P4 四轮结论
 
-本轮判定：**P4 三轮已达成“主链路 + 故障注入”双轨全绿**。
+本轮判定：**P4 四轮已达成“主链路 + 故障注入”双轨全绿**。
 
-1. 场景集由 `7` 扩展到 `8`，新增 1 条音频回调缺失 fail-fast 注入链路。  
-2. 三轮结果 `8/8` 通过，且错误日志、网络失败请求均为 `0`。  
-3. 回归资产已形成“首轮 vs 二轮 vs 三轮”可对比基线，可继续按真实页面失败单推进。
+1. 场景集由 `8` 扩展到 `9`，新增 1 条串联命令一致性 fail-fast 注入链路。  
+2. 四轮结果 `9/9` 通过，且错误日志、网络失败请求均为 `0`。  
+3. 回归资产已形成“首轮 vs 二轮 vs 三轮 vs 四轮”可对比基线，可继续按真实页面失败单推进。
 
-## 6. 下一阶段建议（P4 四轮）
+## 6. 下一阶段建议（P4 五轮）
 
 1. 增加 `/session` 真实 UI 场景：覆盖“输入 slash -> 消息渲染 -> 状态验证”的端到端路径。  
-2. 增补多命令串联回滚注入：验证“前半段成功 + 中段 fail-fast”时状态一致性。  
+2. 增补“消息副作用 + 会话切换”注入：验证中段 fail-fast 后消息列表与会话状态不被后续命令污染。  
 3. 固化执行前置清理脚本：自动回收 `mcp-chrome` 残留进程，避免 Playwright MCP 会话抢占导致假失败。

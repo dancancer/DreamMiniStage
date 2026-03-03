@@ -1,4 +1,4 @@
-# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮 + 三轮）
+# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮 + 三轮 + 四轮）
 
 ## 1. 目标与范围
 
@@ -18,6 +18,7 @@
 | `macro-unknown-failfast` | 故障注入 | 条件表达式未知宏路径 | `test-baseline-assets/preset/明月秋青v3.94.json` | 返回 `unsupported macro` 错误并判定 PASS |
 | `reload-page-failfast` | 故障注入 | 宿主缺失 `/reload-page` 回调路径 | `test-baseline-assets/character-card/Sgw3.card.json` | 返回 `not available in current context` 错误并判定 PASS |
 | `audio-callback-missing-failfast` | 故障注入 | 宿主缺失 `/audioplay` 音频回调路径 | `test-baseline-assets/preset/夏瑾 Pro - Beta 0.70.json` | 返回 `/audioplay is not available in current context` 并判定 PASS |
+| `chain-failfast-consistency` | 故障注入 | 多命令串联中段失败的状态一致性路径 | `test-baseline-assets/preset/夏瑾 Pro - Beta 0.70.json` | `guard` 写入成功、`tail` 未写入、音频状态保持不变 |
 
 ## 3. 执行步骤（Playwright MCP）
 
@@ -72,6 +73,21 @@
 }
 ```
 
+### 4.4 四轮（串联命令 fail-fast 一致性注入）
+
+- 汇总：`9/9` 场景通过，`0` 失败。
+- 四轮执行时间：`2026-03-03T08:37:15.779Z` ~ `2026-03-03T08:37:15.890Z`。
+
+```json
+{
+  "phase": "P4-Playwright-MCP-E2E",
+  "total": 9,
+  "passed": 9,
+  "failed": 0,
+  "allPassed": true
+}
+```
+
 ## 5. 证据资产
 
 - 首轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
@@ -80,8 +96,13 @@
 - 二轮日志摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round2-console-network.md`
 - 三轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round3-pass.png`
 - 三轮日志摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round3-console-network.md`
+- 四轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-pass.png`
+- 四轮日志摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-console-network.md`
+- 四轮原始日志：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-console.log`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-network.log`
 
 ## 6. 备注
 
-- 三轮已补齐音频回调缺失注入，故障注入最小集扩展为 `4` 条。
+- 四轮已补齐“串联命令中段失败”的一致性注入，故障注入最小集扩展为 `5` 条。
 - 仍未覆盖 `/session` 真实交互链路，建议作为下一轮重点（输入 slash -> UI 反馈 -> 状态验证）。

@@ -1,0 +1,33 @@
+Total messages: 31 (Errors: 0, Warnings: 0)
+
+[INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_compiled_01461c36._.js:16329
+[LOG] 🔧 Tool Registry initialized with 9 tools (including 4 specialized worldbook tools) @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1237
+[LOG] 🔌 Initializing Enhanced Plugin Registry... @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1962
+[LOG] 🔍 Discovering plugins from registry... @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1382
+[LOG] 📋 Loaded 1 plugins from registry @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1557
+[LOG] %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit @ https://va.vercel-scripts.com/v1/script.debug.js:0
+[LOG] %c[Vercel Web Analytics]%c [view] http://127.0.0.1:3303/test-script-runner color: rgb(120, 120, 120) color: inherit {o: http://127.0.0.1:3303/test-script-runner, sv: 0.1.3, sdkn: @vercel/analytics/react, sdkv: 1.6.1, ts: 1772527029643} /_vercel/insights/view @ https://va.vercel-scripts.com/v1/script.debug.js:0
+[LOG] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats) @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1404
+[LOG] 🎯 Plugin discovery complete: 1 found, 0 errors @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1414
+[LOG] 🔍 Discovery complete: 1 plugins found @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1966
+[LOG] 📦 Loading plugin: dialogue-stats @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1986
+[LOG] 📦 Loading plugin: dialogue-stats @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1428
+[LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14744
+[LOG] 📊 Dialogue Stats Plugin loaded @ :120
+[LOG] ✅ Dialogue Statistics plugin loaded successfully @ :132
+[LOG] ✅ Plugin loaded: 对话统计 (Dialogue Statistics) @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1475
+[LOG] 🔌 Enabling plugin: dialogue-stats @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:2014
+[LOG] 📊 Dialogue Statistics plugin enabling... @ :143
+[LOG] ✅ Dialogue Statistics plugin enabled @ :146
+[LOG] ✅ Plugin enabled: dialogue-stats @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:2036
+[LOG] ✅ Enhanced Plugin Registry initialized @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1973
+[LOG] 🔍 Discovering plugins from registry... @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1382
+[LOG] 📋 Loaded 1 plugins from registry @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1557
+[LOG] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats) @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1404
+[LOG] 🎯 Plugin discovery complete: 1 found, 0 errors @ http://127.0.0.1:3303/_next/static/chunks/lib_bd4aa865._.js:1414
+[LOG] [Fast Refresh] done in 169ms @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14584
+[LOG] [registerFunctionTool] Registered: p4_tool_echo iframeId: p4_iframe_1772527035779 @ http://127.0.0.1:3303/_next/static/chunks/_510b4a3b._.js:3451
+[LOG] [/event-emit] Emitted: stage_change {source: p4-audio} @ http://127.0.0.1:3303/_next/static/chunks/_510b4a3b._.js:2001
+[LOG] [registerFunctionTool] Registered: p4_tool_timeout iframeId: p4_timeout_1772527035788 @ http://127.0.0.1:3303/_next/static/chunks/_510b4a3b._.js:3451
+[LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14744
+[LOG] [Fast Refresh] done in 32ms @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:14584

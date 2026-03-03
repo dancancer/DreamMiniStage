@@ -105,6 +105,15 @@ const scenarioDefinitions: P4ScenarioDefinition[] = [
     expectation: "/audioplay 在宿主未注入音频回调时应显式失败",
     category: "failure-injection",
   },
+  {
+    id: "chain-failfast-consistency",
+    title: "故障注入：串联命令 fail-fast 一致性",
+    assetReferences: [
+      "test-baseline-assets/preset/夏瑾 Pro - Beta 0.70.json",
+    ],
+    expectation: "中段命令失败后仅保留前置副作用，后续命令不应继续执行",
+    category: "failure-injection",
+  },
 ];
 
 function capFunctionToolTimeout(maxTimeoutMs: number): () => void {
@@ -491,6 +500,62 @@ async function runAudioCallbackMissingFailfastScenario(): Promise<P4ScenarioResu
   };
 }
 
+async function runChainFailfastConsistencyScenario(): Promise<P4ScenarioResult> {
+  const startedAt = performance.now();
+  let passed = false;
+  let detail: Record<string, unknown> = {};
+
+  try {
+    const { ctx, channels } = createAudioContext();
+    await executeSlashCommandScript(
+      "/audioimport type=bgm play=false https://audio.example/main.mp3",
+      ctx,
+    );
+    await executeSlashCommandScript("/audioplay type=bgm", ctx);
+    const isPlayingBeforeChain = channels.bgm.isPlaying;
+
+    const result = await executeSlashCommandScript(
+      "/setvar guard before-fail|/reload-page|/audiostop type=bgm|/setvar tail should-not-run",
+      ctx,
+    );
+
+    const guardValue = ctx.getVariable("guard");
+    const tailValue = ctx.getVariable("tail");
+    const errorMessage = result.errorMessage ?? "";
+    const isPlayingAfterChain = channels.bgm.isPlaying;
+
+    passed =
+      result.isError
+      && errorMessage.includes("/reload-page is not available")
+      && guardValue === "before-fail"
+      && tailValue === undefined
+      && isPlayingBeforeChain
+      && isPlayingAfterChain;
+
+    detail = {
+      result,
+      errorMessage,
+      guardValue,
+      tailValue,
+      isPlayingBeforeChain,
+      isPlayingAfterChain,
+      playlistSize: channels.bgm.playlist.length,
+    };
+  } catch (error) {
+    detail = {
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  return {
+    id: "chain-failfast-consistency",
+    title: "故障注入：串联命令 fail-fast 一致性",
+    passed,
+    durationMs: Math.round(performance.now() - startedAt),
+    detail,
+  };
+}
+
 const scenarioRunners: Record<string, () => Promise<P4ScenarioResult>> = {
   "script-tool-loop": runScriptToolLoopScenario,
   "slash-control-flow": runSlashControlFlowScenario,
@@ -500,6 +565,7 @@ const scenarioRunners: Record<string, () => Promise<P4ScenarioResult>> = {
   "macro-unknown-failfast": runUnknownMacroFailfastScenario,
   "reload-page-failfast": runReloadPageFailfastScenario,
   "audio-callback-missing-failfast": runAudioCallbackMissingFailfastScenario,
+  "chain-failfast-consistency": runChainFailfastConsistencyScenario,
 };
 
 export function getP4ScenarioDefinitions(): P4ScenarioDefinition[] {
