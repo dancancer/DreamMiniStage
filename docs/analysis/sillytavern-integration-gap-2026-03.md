@@ -8,11 +8,11 @@
 
 ## 1. 本轮复评结论（先给结论）
 
-- 当前 gap **仍不算小**，P4 已从“可跑通”进入“真实 UI 缺口显式化”阶段。
+- 当前 gap **仍不算小**，但 P4 已从“真实 UI 缺口显式化”进入“关键交互链路收敛”阶段。
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**30.23%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
-- 结论：P2/P3 gate 持续达标；P4 六轮已完成（四轮脚本执行面 + 五轮 `/session` 交互面 + 六轮缺口审计），并确认两项真实 UI 缺口：`slash` 直达未命中、失败后输入未持久化。
+- 结论：P2/P3 gate 持续达标；P4 七轮已完成（四轮脚本执行面 + 五轮 `/session` 交互面 + 六轮缺口审计 + 七轮修复复验），`slash` 直达与失败后输入持久化两项 UI 缺口已完成修复闭环。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -244,6 +244,23 @@
   - 原始日志：
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-console.log`
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-network.log`
+
+### 1.17 2026-03-03 P4 增量执行结果（七轮：`/session` 修复复验）
+
+- 七轮执行目标：验证六轮暴露的两项 UI 缺口修复是否生效（slash 直达分流、失败路径消息持久化），并复验会话隔离不回退。
+- 七轮关键结果：
+  - `session-a` 输入 `/send P4 Round7 SlashPathMessage|/trigger` 后，UI 渲染 `P4 Round7 SlashPathMessage`，slash 直达执行链路命中。
+  - 刷新 `session-a` 后仍可见该用户消息，刷新一致性恢复（不再回退为 opening-only）。
+  - 切换 `session-b` 后仅见 `P4 Round7 Opening B`，跨会话隔离语义保持成立。
+  - 本轮 console/network 未再出现 `No response returned from workflow` 业务错误；仅剩背景图 `404` 与统计请求中断噪音。
+- 七轮证据已固化：
+  - 截图（slash 直达通过）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-slash-direct-pass.png`
+  - 截图（刷新持久化通过）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-refresh-persistence-pass.png`
+  - 截图（会话隔离复验）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-session-b-isolation-pass.png`
+  - console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-console-network.md`
+  - 原始日志：
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-console.log`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-network.log`
 
 ## 2. 审计口径与量化结果
 
@@ -569,23 +586,22 @@ pnpm vitest run \
 - 头部缺口已进一步后移到低频命令与深语义能力（如 parser flags/debug/scope chain 细节），短期更适合通过 E2E 曝露真实阻塞点。
 - 建议从“继续堆命令数”转向“以 E2E 场景驱动补缺”，优先修复能复现实际迁移失败的路径。
 
-### 4.6 P4 现阶段风险（六轮后）
+### 4.6 P4 现阶段风险（七轮后）
 
-- 六轮已将“slash 直达 + 失败后刷新一致性”从建议项推进为已执行审计项，并确认真实缺口存在。
-- `/session` 当前输入 slash 文本仍会走普通用户输入 + LLM 路径，未进入 slash 执行器。
-- `401` 失败后刷新会话，用户输入未持久化，状态与提交前不一致。
+- 七轮已完成六轮两项缺口的修复复验：slash 直达执行恢复、刷新后用户输入持久化恢复。
+- 仍待补强的是“普通输入触发 `401` 的失败链路”浏览器级独立证据，目前该路径主要由单测保障。
 - `mcp-chrome` 抢占风险已通过 `scripts/p4-playwright-preflight.sh` 收敛为可执行模板，仍需在 CI/自动化流水线中落地调用。
 
-## 5. P4 六轮结论
+## 5. P4 七轮结论
 
-本轮判定：**P4 已完成“可回归 + 缺口显式化”双目标**。
+本轮判定：**P4 已完成“可回归 + 缺口显式化 + 关键缺口修复复验”三目标**。
 
 1. 脚本执行面保持 `9/9` 全绿（`4` 主链路 + `5` 故障注入）。  
-2. `/session` 真实 UI 基线保持有效（五轮 `1/1` + 六轮隔离复验通过）。  
-3. 六轮将两项真实阻塞显式化并沉淀证据：`slash` 直达未命中、失败后输入未持久化。
+2. `/session` 真实 UI 基线保持有效（五轮 `1/1` + 六轮隔离复验 + 七轮修复复验）。  
+3. 六轮暴露的两项阻塞已在七轮闭环：slash 直达链路恢复、失败后输入持久化恢复。
 
-## 6. 下一阶段建议（P4 七轮）
+## 6. 下一阶段建议（P4 八轮）
 
-1. 在 `SessionPage` 输入提交链路增加 slash 直达分流（以 `trim` 后首字符 `/` 为判定），并补 `/send|/trigger|/run` 页面级回归。  
-2. 修复 `401` 失败后的用户输入持久化：提交后先落库，再异步触发生成；失败只影响 assistant 侧，不回滚 user 节点。  
-3. 把 `scripts/p4-playwright-preflight.sh` 接入固定入口（`pnpm` 脚本或 CI step），并将 round6 审计场景纳入常规回归模板。
+1. 补一条浏览器独立证据：普通输入触发 `401` 后刷新，确认 user 节点仍保留。  
+2. 把 `scripts/p4-playwright-preflight.sh` 接入固定入口（`pnpm` 脚本或 CI step），并将七轮 `/session` 复验场景纳入常规回归模板。  
+3. 对 `background_*.png 404` 与节点工具类告警做降噪分层，减少非阻断日志对回归判读的干扰。

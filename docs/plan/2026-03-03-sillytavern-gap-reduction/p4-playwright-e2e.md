@@ -1,4 +1,4 @@
-# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮 + 三轮 + 四轮 + 五轮 + 六轮）
+# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮 + 三轮 + 四轮 + 五轮 + 六轮 + 七轮）
 
 ## 1. 目标与范围
 
@@ -34,6 +34,14 @@
 | `session-ui-refresh-persistence-audit` | 故障注入审计 | 输入提交触发 `401` -> 页面刷新 -> 重进会话 | 同上 | 明确记录失败后用户输入是否持久化 |
 | `session-ui-switch-isolation-recheck` | 回归复验 | 切换 `session-a -> session-b` | 同上 | `session-b` 不出现 `session-a` 输入（隔离不回退） |
 
+### 2.3 七轮附加场景（修复后复验）
+
+| 场景 ID | 场景类型 | 能力链路 | 关联资产 | 验收标准 |
+|---|---|---|---|---|
+| `session-ui-slash-direct-verify` | 回归复验 | `/session` 输入 slash 指令（`/send ...|/trigger`） -> slash 执行器 | `IndexedDB` 注入双角色/双会话测试数据 | UI 渲染 `P4 Round7 SlashPathMessage`，不渲染原始脚本 |
+| `session-ui-refresh-persistence-verify` | 回归复验 | slash 执行后刷新 `session-a` | 同上 | 刷新后仍可见用户消息（不回退到 opening-only） |
+| `session-ui-switch-isolation-recheck-round7` | 回归复验 | 切换 `session-a -> session-b` | 同上 | `session-b` 仅显示 `P4 Round7 Opening B`，无跨会话污染 |
+
 ## 3. 执行步骤（Playwright MCP）
 
 1. 执行 `scripts/p4-playwright-preflight.sh` 清理 `mcp-chrome/Playwright` 残留进程。
@@ -41,7 +49,8 @@
 3. Playwright MCP 打开 `http://127.0.0.1:3303/test-script-runner` 并执行既有场景。
 4. 五轮额外打开 `/session`，注入测试数据并执行“输入提交 + 会话切换”链路。
 5. 六轮在 `/session` 追加“slash 输入链路 + 刷新后持久化 + 会话隔离复验”审计。
-6. 采集：页面全屏截图、console 消息、network 请求摘要。
+6. 七轮在 `/session` 执行“修复后复验”（slash 直达 + 刷新持久化 + 隔离复验）。
+7. 采集：页面全屏截图、console 消息、network 请求摘要。
 
 ## 4. 本轮结果
 
@@ -142,6 +151,25 @@
 }
 ```
 
+### 4.7 七轮（`/session` 修复后复验：slash 直达 + 刷新持久化 + 隔离）
+
+- 汇总：`3/3` 复验检查通过，`0` 缺口回退。
+- 七轮执行时间：`2026-03-03T11:31:xxZ` ~ `2026-03-03T11:33:xxZ`。
+- 关键结论：
+  - `session-ui-slash-direct-verify`：输入 `/send ...|/trigger` 后，UI 渲染 `P4 Round7 SlashPathMessage`，slash 直达执行链路命中。
+  - `session-ui-refresh-persistence-verify`：刷新 `session-a` 后仍可见 `P4 Round7 SlashPathMessage`，用户输入持久化生效。
+  - `session-ui-switch-isolation-recheck-round7`：切换 `session-b` 后仅见 `P4 Round7 Opening B`，隔离语义保持成立。
+
+```json
+{
+  "phase": "P4-Playwright-MCP-E2E-session-ui-round7-verify",
+  "checks": 3,
+  "passed": 3,
+  "findings": 0,
+  "allPassed": true
+}
+```
+
 ## 5. 证据资产
 
 - 首轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
@@ -168,12 +196,19 @@
 - 六轮原始日志：
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-console.log`
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-network.log`
+- 七轮截图（slash 直达通过）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-slash-direct-pass.png`
+- 七轮截图（刷新持久化通过）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-refresh-persistence-pass.png`
+- 七轮截图（会话隔离复验）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-session-b-isolation-pass.png`
+- 七轮日志摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-console-network.md`
+- 七轮原始日志：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-console.log`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-network.log`
 - 五轮前置清理脚本：`scripts/p4-playwright-preflight.sh`
 
 ## 6. 备注
 
 - 五轮已补齐 `/session` 真实 UI 最小链路（输入提交 + 会话切换隔离），P4 回归资产从“脚本执行页”扩展到“真实交互页”。
 - 六轮已将“slash 直达执行 + 失败后刷新一致性”从建议项推进为已执行审计项，并固化证据。
-- 当前待修复缺口：
-  1. `/session` 输入 slash 仍走普通输入链路，未命中 slash 执行器。
-  2. `401` 失败后用户输入未持久化，刷新后会话状态与提交前不一致。
+- 七轮已完成两项 UI 缺口修复复验：slash 直达执行恢复、刷新后用户输入持久化恢复。
+- 当前待补强项：
+  1. 在真实浏览器链路补一条“普通输入触发 `401` 后刷新仍保留用户输入”的独立证据，避免只依赖单测覆盖失败路径。

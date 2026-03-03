@@ -71,7 +71,12 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
 
     addNodeToDialogueTree.mockResolvedValueOnce("session-1-opening").mockResolvedValue("assistant-1");
     switchBranch.mockResolvedValue(true);
-    updateNodeInDialogueTree.mockResolvedValue(null);
+    updateNodeInDialogueTree.mockResolvedValue({
+      id: "session-1",
+      character_id: "char-1",
+      nodes: [],
+      current_nodeId: "assistant-1",
+    });
 
     executeMock.mockResolvedValue({
       outputData: {
@@ -121,6 +126,78 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
       expect.objectContaining({ regexResult: "opening regex" }),
       "session-1-opening",
     );
+    expect(addNodeToDialogueTree).toHaveBeenCalledWith(
+      "session-1",
+      "session-1-opening",
+      "hi",
+      "",
+      "",
+      "",
+      undefined,
+      "assistant-1",
+    );
+    expect(updateNodeInDialogueTree).toHaveBeenCalledWith(
+      "session-1",
+      "assistant-1",
+      expect.objectContaining({
+        assistantResponse: "reply",
+        fullResponse: "full reply",
+        thinkingContent: "think",
+        parsedContent: expect.objectContaining({
+          regexResult: "reply",
+          nextPrompts: [],
+        }),
+      }),
+    );
     expect(executeMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("workflow 失败时仍先持久化用户输入节点", async () => {
+    getDialogueTreeById.mockReset();
+    createDialogueTree.mockReset();
+    addNodeToDialogueTree.mockReset();
+    updateNodeInDialogueTree.mockReset();
+    executeMock.mockReset();
+
+    getDialogueTreeById.mockResolvedValue({
+      id: "session-fail",
+      character_id: "char-1",
+      nodes: [],
+      current_nodeId: "root",
+    });
+
+    executeMock.mockResolvedValue(undefined);
+    addNodeToDialogueTree.mockResolvedValue("pending-node");
+
+    const response = await handleCharacterChatRequest({
+      username: "user",
+      dialogueId: "session-fail",
+      characterId: "char-1",
+      message: "/send hi|/trigger",
+      modelName: "gpt",
+      baseUrl: "",
+      apiKey: "key",
+      llmType: "openai",
+      language: "zh",
+      number: 100,
+      nodeId: "pending-node",
+      fastModel: false,
+    });
+
+    const body = await response.json();
+    expect(response.status).toBe(500);
+    expect(body).toMatchObject({ success: false, message: "No response returned from workflow" });
+    expect(addNodeToDialogueTree).toHaveBeenCalledWith(
+      "session-fail",
+      "root",
+      "/send hi|/trigger",
+      "",
+      "",
+      "",
+      undefined,
+      "pending-node",
+    );
+    expect(updateNodeInDialogueTree).not.toHaveBeenCalled();
+    expect(createDialogueTree).not.toHaveBeenCalled();
   });
 });

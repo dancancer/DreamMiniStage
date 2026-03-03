@@ -67,6 +67,9 @@
 - [x] 五轮清理固化：新增 `scripts/p4-playwright-preflight.sh`，执行前自动回收 `mcp-chrome/Playwright` 残留进程。
 - [x] 六轮增量：补充 `/session` slash 直达与失败后刷新一致性审计（`/send ...|/trigger` 输入路径 + `401` 后刷新）。
 - [x] 六轮执行：审计链路全部执行完成，确认 `session-b` 隔离仍通过，同时暴露两项缺口（slash 直达未命中、失败后输入未持久化）。
+- [x] 七轮增量：在 `SessionPage` 接入 slash 直达分流，并在 `chat.ts` 收敛“先落库 user 节点，再回填 assistant”失败路径持久化单路径。
+- [x] 七轮执行：`/session` 修复复验 `3/3` 通过（slash 直达、刷新后用户输入保留、`session-b` 隔离保持）。
+- [x] 七轮回归：`pnpm vitest run function/dialogue/__tests__/chat-first-message.test.ts app/session/__tests__/session-switch.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`；`pnpm exec eslint app/session/page.tsx function/dialogue/chat.ts function/dialogue/__tests__/chat-first-message.test.ts`；`pnpm exec tsc --noEmit`。
 - [x] 固化失败截图/日志与复现步骤，纳入回归文档。
   - 场景映射与执行记录：`docs/plan/2026-03-03-sillytavern-gap-reduction/p4-playwright-e2e.md`
   - 运行截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
@@ -90,6 +93,13 @@
   - 六轮原始日志：
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-console.log`
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-network.log`
+  - 七轮截图（slash 直达通过）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-slash-direct-pass.png`
+  - 七轮截图（刷新持久化通过）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-refresh-persistence-pass.png`
+  - 七轮截图（会话隔离复验）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-session-b-isolation-pass.png`
+  - 七轮 console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-console-network.md`
+  - 七轮原始日志：
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-console.log`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round7-network.log`
 
 ## 每轮完成后的固定动作
 

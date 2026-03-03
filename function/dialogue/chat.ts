@@ -102,6 +102,13 @@ export async function handleCharacterChatRequest(payload: {
         openingMessage,
       });
 
+      await appendPendingUserTurn({
+        dialogueId,
+        message,
+        nodeId,
+        parentNodeId,
+      });
+
       // ═══════════════════════════════════════════════════════════════════════════
       // 流式响应模式：返回 SSE 流
       // ═══════════════════════════════════════════════════════════════════════════
@@ -110,6 +117,7 @@ export async function handleCharacterChatRequest(payload: {
           dialogueId,
           characterId,
           message: sanitizedMessage,
+          originalMessage: message,
           username,
           modelName,
           baseUrl,
@@ -119,7 +127,6 @@ export async function handleCharacterChatRequest(payload: {
           number,
           fastModel,
           nodeId,
-          parentNodeId,
         });
       }
 
@@ -173,7 +180,6 @@ export async function handleCharacterChatRequest(payload: {
         event: typeof event === "string" ? event : "",
         nextPrompts: nextPrompts ?? [],
         nodeId,
-        parentNodeId,
       })
         .catch((e) => console.error("Post-processing error:", e));
 
@@ -264,6 +270,31 @@ async function ensureDialogueTreeWithOpening(params: {
   }).catch((error) => console.warn("[MVU] 变量初始化失败:", error));
 }
 
+async function appendPendingUserTurn(params: {
+  dialogueId: string;
+  message: string;
+  nodeId: string;
+  parentNodeId?: string;
+}) {
+  const { dialogueId, message, nodeId, parentNodeId } = params;
+  const dialogueTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueId);
+  if (!dialogueTree) {
+    throw new Error(`Dialogue not found: ${dialogueId}`);
+  }
+
+  const parent = parentNodeId ?? dialogueTree.current_nodeId;
+  await LocalCharacterDialogueOperations.addNodeToDialogueTree(
+    dialogueId,
+    parent,
+    message,
+    "",
+    "",
+    "",
+    undefined,
+    nodeId,
+  );
+}
+
 async function processPostResponseAsync({
   dialogueId,
   message,
@@ -273,7 +304,6 @@ async function processPostResponseAsync({
   event,
   nextPrompts,
   nodeId,
-  parentNodeId,
 }: {
   dialogueId: string;  // 对话树 ID（sessionId）
   message: string;
@@ -283,7 +313,6 @@ async function processPostResponseAsync({
   event: string;
   nextPrompts: string[];
   nodeId: string;
-  parentNodeId?: string;
 }) {
   try {
     const parsed: ParsedResponse = {
@@ -291,19 +320,19 @@ async function processPostResponseAsync({
       nextPrompts,
     };
 
-    const dialogueTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueId);
-    const parent = parentNodeId ?? (dialogueTree ? dialogueTree.current_nodeId : "root");
-
-    await LocalCharacterDialogueOperations.addNodeToDialogueTree(
+    const updated = await LocalCharacterDialogueOperations.updateNodeInDialogueTree(
       dialogueId,
-      parent,
-      message,
-      screenContent,     // 正则处理后的内容（用于历史构建和展示）
-      fullResponse,      // 原始响应（用于调试和重新处理）
-      thinkingContent,
-      parsed,
       nodeId,
+      {
+        assistantResponse: screenContent, // 正则处理后的内容（用于历史构建和展示）
+        fullResponse, // 原始响应（用于调试和重新处理）
+        thinkingContent,
+        parsedContent: parsed,
+      },
     );
+    if (!updated) {
+      throw new Error(`Pending dialogue node not found: ${nodeId}`);
+    }
 
     // 向量记忆异步写入，不阻塞主流程
     const vectorManager = getVectorMemoryManager();
@@ -360,6 +389,7 @@ interface StreamingParams {
   dialogueId: string;
   characterId: string;
   message: string;
+  originalMessage: string;
   username?: string;
   modelName: string;
   baseUrl: string;
@@ -369,7 +399,6 @@ interface StreamingParams {
   number: number;
   fastModel: boolean;
   nodeId: string;
-  parentNodeId?: string;
 }
 
 async function handleStreamingResponse(params: StreamingParams): Promise<Response> {
@@ -377,6 +406,7 @@ async function handleStreamingResponse(params: StreamingParams): Promise<Respons
     dialogueId,
     characterId,
     message,
+    originalMessage,
     username,
     modelName,
     baseUrl,
@@ -386,7 +416,6 @@ async function handleStreamingResponse(params: StreamingParams): Promise<Respons
     number,
     fastModel,
     nodeId,
-    parentNodeId,
   } = params;
 
   const encoder = new TextEncoder();
@@ -482,14 +511,13 @@ async function handleStreamingResponse(params: StreamingParams): Promise<Respons
         // ───────────────────────────────────────────────────────────────────
         processPostResponseAsync({
           dialogueId,
-          message,
+          message: originalMessage,
           thinkingContent: thinkingContent ?? "",
           fullResponse,
           screenContent,
           event: typeof event === "string" ? event : "",
           nextPrompts: nextPrompts ?? [],
           nodeId,
-          parentNodeId,
         }).catch((e) => console.error("Post-processing error:", e));
 
         controller.close();

@@ -1,5 +1,5 @@
 /**
- * @input  react, next/navigation, next/link, app/i18n, components/*, hooks/*, lib/store/*, contexts/*
+ * @input  react, next/navigation, next/link, app/i18n, components/*, hooks/*, lib/store/*, lib/slash-command, contexts/*
  * @output SessionPage (default export)
  * @pos    页面组件 - 会话交互页面，聊天/世界书/正则/预设管理
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
@@ -33,9 +33,11 @@ import { useCharacterLoader } from "@/hooks/useCharacterLoader";
 import { useUIStore } from "@/lib/store/ui-store";
 import { useUserStore } from "@/lib/store/user-store";
 import { useSessionStore } from "@/lib/store/session-store";
+import { useScriptVariables } from "@/lib/store/script-variables";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import { buildSwitchedSessionName } from "@/app/session/session-switch";
-import type { CharacterSwitchResult } from "@/lib/slash-command/types";
+import { executeSlashCommandScript } from "@/lib/slash-command";
+import type { CharacterSwitchResult, ExecutionContext } from "@/lib/slash-command/types";
 import DialogueTreeModal from "@/components/DialogueTreeModal";
 
 // ============================================================================
@@ -109,6 +111,8 @@ function SessionPageContent() {
     onError: toast.error,
     t,
   });
+  const setScriptVariable = useScriptVariables((state) => state.setVariable);
+  const deleteScriptVariable = useScriptVariables((state) => state.deleteVariable);
 
   // ========== 加载 Hook ==========
   const loader = useCharacterLoader({
@@ -246,11 +250,151 @@ function SessionPageContent() {
     };
   }, [createSession, currentCharacterName, resolveCharacterSwitchTarget, router]);
 
+  const executeSessionSlashInput = useCallback(async (script: string) => {
+    const snapshot = useScriptVariables.getState().variables;
+    const globalVariables: Record<string, unknown> = { ...snapshot.global };
+    const characterVariables: Record<string, unknown> = characterId && snapshot.character[characterId]
+      ? { ...snapshot.character[characterId] }
+      : {};
+
+    const hasCharacterVariable = (key: string): boolean =>
+      Object.prototype.hasOwnProperty.call(characterVariables, key);
+
+    const getVariable = (key: string): unknown => {
+      if (hasCharacterVariable(key)) {
+        return characterVariables[key];
+      }
+      return globalVariables[key];
+    };
+
+    const setVariable = (key: string, value: unknown): void => {
+      if (characterId) {
+        characterVariables[key] = value;
+        setScriptVariable(key, value, "character", characterId);
+        return;
+      }
+
+      globalVariables[key] = value;
+      setScriptVariable(key, value, "global");
+    };
+
+    const deleteVariable = (key: string): void => {
+      if (characterId) {
+        delete characterVariables[key];
+        deleteScriptVariable(key, "character", characterId);
+        return;
+      }
+
+      delete globalVariables[key];
+      deleteScriptVariable(key, "global");
+    };
+
+    const executionContext: ExecutionContext = {
+      characterId: characterId || undefined,
+      messages: dialogue.messages,
+      onSend: async (text, options) => dialogue.addUserMessage(text, options),
+      onTrigger: async () => dialogue.triggerGeneration(),
+      onSendAs: async (role, text) => dialogue.addRoleMessage(role, text),
+      onSendSystem: async (text) => dialogue.addRoleMessage("system", text),
+      onImpersonate: async (text) => dialogue.addRoleMessage("assistant", text),
+      onContinue: async () => dialogue.triggerGeneration(),
+      onSwipe: dialogue.handleSwipe,
+      switchCharacter: handleSwitchCharacter,
+      getVariable,
+      setVariable,
+      deleteVariable,
+      listVariables: () => {
+        const keys = new Set<string>(Object.keys(globalVariables));
+        for (const key of Object.keys(characterVariables)) {
+          keys.add(key);
+        }
+        return Array.from(keys);
+      },
+      dumpVariables: () => ({
+        ...globalVariables,
+        ...characterVariables,
+      }),
+      getScopedVariable: (scope, key) => {
+        if (scope === "global") {
+          return globalVariables[key];
+        }
+        return getVariable(key);
+      },
+      setScopedVariable: (scope, key, value) => {
+        if (scope === "global") {
+          globalVariables[key] = value;
+          setScriptVariable(key, value, "global");
+          return;
+        }
+        setVariable(key, value);
+      },
+      deleteScopedVariable: (scope, key) => {
+        if (scope === "global") {
+          delete globalVariables[key];
+          deleteScriptVariable(key, "global");
+          return;
+        }
+        deleteVariable(key);
+      },
+      listScopedVariables: (scope) => {
+        if (scope === "global") {
+          return Object.keys(globalVariables);
+        }
+        const keys = new Set<string>(Object.keys(globalVariables));
+        for (const key of Object.keys(characterVariables)) {
+          keys.add(key);
+        }
+        return Array.from(keys);
+      },
+      dumpScopedVariables: (scope) => {
+        if (scope === "global") {
+          return { ...globalVariables };
+        }
+        return {
+          ...globalVariables,
+          ...characterVariables,
+        };
+      },
+    };
+
+    executionContext.runSlashCommand = async (nestedScript: string) => {
+      const nestedResult = await executeSlashCommandScript(nestedScript, executionContext);
+      if (nestedResult.isError) {
+        throw new Error(nestedResult.errorMessage || "runSlashCommand failed");
+      }
+      return nestedResult.pipe;
+    };
+
+    const result = await executeSlashCommandScript(script, executionContext);
+    if (result.isError) {
+      throw new Error(result.errorMessage || "Slash command execution failed");
+    }
+  }, [
+    dialogue,
+    characterId,
+    handleSwitchCharacter,
+    setScriptVariable,
+    deleteScriptVariable,
+  ]);
+
   // ========== 提交消息 ==========
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!userInput.trim() || dialogue.isSending) return;
+      const inputText = userInput;
+      const trimmedInput = inputText.trim();
+      if (!trimmedInput || dialogue.isSending) return;
+      setUserInput("");
+
+      if (trimmedInput.startsWith("/")) {
+        try {
+          await executeSessionSlashInput(trimmedInput);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          toast.error(errorMessage);
+        }
+        return;
+      }
 
       const hints: string[] = [];
 
@@ -272,7 +416,7 @@ function SessionPageContent() {
       if (hints.length > 0) {
         message = `
       <input_message>
-      ${t("characterChat.playerInput")}：${userInput}
+      ${t("characterChat.playerInput")}：${inputText}
       </input_message>
       <response_instructions>
       ${t("characterChat.responseInstructions")}：${hints.join(" ")}
@@ -281,16 +425,15 @@ function SessionPageContent() {
       } else {
         message = `
       <input_message>
-      ${t("characterChat.playerInput")}：${userInput}
+      ${t("characterChat.playerInput")}：${inputText}
       </input_message>
         `.trim();
       }
 
-      setUserInput("");
       await dialogue.handleSendMessage(message);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userInput, dialogue.isSending, dialogue.handleSendMessage, activeModes, t],
+    [userInput, dialogue.isSending, dialogue.handleSendMessage, activeModes, t, executeSessionSlashInput],
   );
 
   // ========== 渲染：缺少 sessionId ==========
