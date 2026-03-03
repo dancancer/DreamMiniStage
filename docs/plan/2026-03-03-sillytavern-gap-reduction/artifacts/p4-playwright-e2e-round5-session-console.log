@@ -1,0 +1,13 @@
+[INFO] Total console messages: 192
+[INFO] Errors: 6, Warnings: 4
+
+[ERROR] https://api.openai.com/v1/chat/completions => 401
+[ERROR] [llmTool.invokeLLM] 401 You did not provide an API key.
+[ERROR] Processing error: No response returned from workflow
+[ERROR] http://127.0.0.1:3303/background_red.png => 404
+[ERROR] http://127.0.0.1:3303/background_yellow.png => 404
+
+[WARN] Missing node tool class: userInput
+[WARN] Missing node tool class: pluginMessage
+[WARN] Missing node tool class: plugin
+[WARN] Missing node tool class: output

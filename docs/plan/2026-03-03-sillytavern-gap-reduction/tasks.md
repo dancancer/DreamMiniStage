@@ -62,6 +62,9 @@
 - [x] 三轮执行：Playwright MCP 实跑 `8/8` 通过（`4` 主链路 + `4` 故障注入）。
 - [x] 四轮增量：新增 `chain-failfast-consistency` 场景，验证串联脚本在中段 fail-fast 时的状态一致性（前置副作用保留、后续命令截断）。
 - [x] 四轮执行：Playwright MCP 实跑 `9/9` 通过（`4` 主链路 + `5` 故障注入）。
+- [x] 五轮增量：补齐 `/session` 真实 UI 场景（输入提交 + 消息渲染 + 会话切换隔离），并记录 API 未配置下的 fail-fast 行为。
+- [x] 五轮执行：Playwright MCP 实跑通过（`session-a` 输入后渲染消息，切换到 `session-b` 后无跨会话污染）。
+- [x] 五轮清理固化：新增 `scripts/p4-playwright-preflight.sh`，执行前自动回收 `mcp-chrome/Playwright` 残留进程。
 - [x] 固化失败截图/日志与复现步骤，纳入回归文档。
   - 场景映射与执行记录：`docs/plan/2026-03-03-sillytavern-gap-reduction/p4-playwright-e2e.md`
   - 运行截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
@@ -72,6 +75,12 @@
   - 三轮 console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round3-console-network.md`
   - 四轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-pass.png`
   - 四轮 console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-console-network.md`
+  - 五轮截图（输入提交）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-input-pass.png`
+  - 五轮截图（会话切换）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-pass.png`
+  - 五轮 console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-console-network.md`
+  - 五轮原始日志：
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-console.log`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-network.log`
 
 ## 每轮完成后的固定动作
 

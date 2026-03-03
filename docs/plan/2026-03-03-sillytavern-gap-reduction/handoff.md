@@ -1,12 +1,13 @@
-# Handoff（2026-03-03 / P4 四轮）
+# Handoff（2026-03-03 / P4 五轮）
 
-## 本轮完成（P4 - 串联命令 fail-fast 一致性注入）
+## 本轮完成（P4 - `/session` 真实 UI + 会话切换隔离）
 
-- 已在 `app/test-script-runner/scenarios.ts` 新增故障注入场景：`chain-failfast-consistency`。
-  1. 先构造可播放音频状态（`/audioimport + /audioplay`）。
-  2. 再执行串联脚本：`/setvar guard -> /reload-page(fail-fast) -> /audiostop -> /setvar tail`。
-  3. 断言一致性：前置副作用保留（`guard=before-fail`）、后续命令被截断（`tail` 未写入）、音频状态保持不变（`isPlaying=true`）。
-- 已在 `lib/slash-command/__tests__/js-slash-runner-audio.test.ts` 增加对应单测，防止后续重构引入“失败后仍继续执行”的回归。
+- 已完成 `/session` 真实交互链路验证（不再仅限 `test-script-runner` 页面）：
+  1. 在浏览器 `IndexedDB` 注入双角色 + 双会话（`session-a` / `session-b`）。
+  2. 打开 `session-a`，提交输入消息（`P4 Round5 UI Message A2`）。
+  3. 回首页点击会话卡切换到 `session-b`，验证会话隔离。
+- 已固化执行前置清理脚本：`scripts/p4-playwright-preflight.sh`。
+  - 作用：清理 `mcp-chrome/Playwright` 残留进程，降低 profile 抢占导致的假失败。
 - 已更新 P4 执行文档与证据索引：
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/p4-playwright-e2e.md`
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/tasks.md`
@@ -14,57 +15,54 @@
 
 ## 本轮 Playwright MCP 实跑结果
 
-- 页面：`http://127.0.0.1:3303/test-script-runner`
-- 操作：点击 `运行全部 P4 场景`
-- 结果：`9/9` 通过，`0` 失败。
-  - 主链路：`4/4`
-  - 故障注入：`5/5`
-- 报告时间：`2026-03-03T08:37:15.779Z` ~ `2026-03-03T08:37:15.890Z`
-- 四轮新增故障注入命中证据：
-  - `Command /reload-page failed: /reload-page is not available in current context`
-  - `guardValue=before-fail`
-  - `tailValue` 未写入
-  - `isPlayingBeforeChain=true` 且 `isPlayingAfterChain=true`
-- Console / Network：`0 error`、`0 warning`、未观测业务链路 `4xx/5xx`。
+- 运行标识：`p4r5-1772534891379`
+- 页面链路：
+  - `http://127.0.0.1:3303/session?id=p4r5-1772534891379-session-a`
+  - `http://127.0.0.1:3303/`
+  - `http://127.0.0.1:3303/session?id=p4r5-1772534891379-session-b`
+- 结果：`1/1` 场景通过，`0` 失败。
+- 关键断言命中：
+  - `session-a` 渲染 `P4 Round5 Opening A`。
+  - 输入提交后 UI 显示 `P4 Round5 UI Message A2`，输入框已清空。
+  - 切换到 `session-b` 后仅出现 `P4 Round5 Opening B`，未出现 `session-a` 用户消息。
+- Console / Network 观察：
+  - `api.openai.com` 命中 `401`（当前无 API key，符合 fail-fast 预期）。
+  - 背景图 `background_red.png/background_yellow.png` 为 `404`（非核心链路）。
 
 ## 本轮证据资产
 
-- 四轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-pass.png`
-- 四轮 console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-console-network.md`
-- 四轮原始日志：
-  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-console.log`
-  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-network.log`
-- 三轮资产（保留对比）：
-  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round3-pass.png`
-  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round3-console-network.md`
+- 五轮截图（输入提交）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-input-pass.png`
+- 五轮截图（会话切换）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-pass.png`
+- 五轮 console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-console-network.md`
+- 五轮原始日志：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-console.log`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-network.log`
 
 ## 本轮回归（命令级）
 
 ```bash
-pnpm vitest run \
-  lib/slash-command/__tests__/js-slash-runner-audio.test.ts \
-  lib/core/__tests__/st-baseline-slash-command.test.ts \
-  hooks/script-bridge/__tests__/api-surface-contract.test.ts
+scripts/p4-playwright-preflight.sh
 ```
 
-- 结果：`3` files passed，`64` tests passed。
+- 结果：发现并清理残留浏览器进程，脚本正常退出（`0`）。
 
 ## 风险与边界
 
-- `P4` 仍未覆盖 `/session` 真实 UI 链路（输入框交互、消息渲染、会话切换）。
-- 串联 fail-fast 目前覆盖“变量 + 音频状态”一致性，尚未覆盖“消息 side effect + 会话切换”复合路径。
-- Playwright MCP 偶发 `mcp-chrome` profile 残留进程抢占，需在后续脚本中固化前置清理步骤。
+- `/session` UI 已覆盖“输入提交 + 会话切换隔离”，但尚未覆盖“slash 直达执行（不走 LLM）”的真实页面路径。
+- 当前失败注入主要来自“无 API key -> 401”；尚未固化“失败后刷新重进”的持久化一致性断言。
+- 背景图 `404` 为现存非阻断噪音，会影响 console 纯净度统计。
 
-## 下一步建议（P4 五轮）
+## 下一步建议（P4 六轮）
 
-1. 增加 `/session` 真实 UI 场景：至少 1 条“输入 slash -> UI 反馈 -> 状态验证”链路。  
-2. 增补“消息 side effect + 会话切换”注入：验证中段 fail-fast 后会话状态不被后续命令污染。  
-3. 固化 `mcp-chrome` 清理模板：执行前清理、执行后采集，保证每轮证据结构一致。
+1. 在 `/session` 页面补 `slash` 直达 E2E：`/send|/trigger|/run` 至少覆盖一条真实用户链路。  
+2. 增加“失败后刷新重进”场景：提交失败 -> 刷新 -> 重进同会话，校验消息持久化与状态一致性。  
+3. 将 `scripts/p4-playwright-preflight.sh` 接入固定执行入口（本地命令模板或 CI step）。
 
 ---
 
 ## 历史记录（简版）
 
+- 五轮 P4：`/session` 真实 UI 场景 `1/1` 通过。
 - 四轮 P4：`9/9`（`4` 主链路 + `5` 故障注入）通过。  
 - 三轮 P4：`8/8`（`4` 主链路 + `4` 故障注入）通过。  
 - 二轮 P4：`7/7`（`4` 主链路 + `3` 故障注入）通过。  

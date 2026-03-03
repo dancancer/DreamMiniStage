@@ -8,11 +8,11 @@
 
 ## 1. 本轮复评结论（先给结论）
 
-- 当前 gap **仍不算小**，但 P4 已进入“主链路 + 故障注入”双轨稳定回归阶段。
+- 当前 gap **仍不算小**，但 P4 已进入“脚本执行页 + 真实会话页”双轨稳定回归阶段。
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**30.23%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
-- 结论：P2/P3 gate 持续达标，P4 四轮（含串联命令 fail-fast 一致性注入）已全绿；下一阶段应推进 `/session` 真实 UI 场景，验证端到端用户交互。
+- 结论：P2/P3 gate 持续达标，P4 五轮已达成（四轮脚本执行面 + 五轮 `/session` 真实 UI 面）；下一阶段可转向“真实 UI 下 slash 直达执行 + 失败后持久化一致性”。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -211,6 +211,22 @@
   - 原始日志：
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-console.log`
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-network.log`
+
+### 1.15 2026-03-03 P4 增量执行结果（五轮：`/session` 真实 UI）
+
+- 已补齐 `/session` 真实交互路径验证：
+  - 在 `IndexedDB` 注入双角色/双会话测试数据（`session-a` / `session-b`）。
+  - `session-a` 页面执行输入提交，校验用户消息即时渲染。
+  - 返回首页点击会话卡切换到 `session-b`，校验无跨会话消息污染。
+- 已固化执行前清理脚本：
+  - `scripts/p4-playwright-preflight.sh`（自动回收 `mcp-chrome/Playwright` 残留进程）。
+- 五轮证据已固化：
+  - 截图（输入提交）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-input-pass.png`
+  - 截图（会话切换）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-pass.png`
+  - console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-console-network.md`
+  - 原始日志：
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-console.log`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-network.log`
 
 ## 2. 审计口径与量化结果
 
@@ -467,6 +483,22 @@ pnpm vitest run \
     - `tail` 未写入
     - `isPlayingBeforeChain=true` 且 `isPlayingAfterChain=true`
 
+### 3.15 P4 Playwright MCP E2E（五轮 `/session` 真实 UI）
+
+- 执行路径：
+  - 执行 `scripts/p4-playwright-preflight.sh` 清理残留浏览器进程。
+  - 启动 `pnpm dev`（`3303`）。
+  - Playwright MCP 注入 `IndexedDB` 双会话测试数据并打开 `/session?id=session-a`。
+  - 提交输入消息并切换到 `session-b` 验证隔离。
+- 结果：
+  - 场景通过：`1/1`
+  - 失败：`0`
+  - Console：`Errors=6 / Warnings=4`（其中核心业务错误为无 API key 的 `401`，命中预期 fail-fast）
+  - 关键命中：
+    - `P4 Round5 UI Message A2` 在 `session-a` 页面渲染成功
+    - 切换后 `session-b` 页面仅保留 `P4 Round5 Opening B`
+    - 未观测跨会话消息污染
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -506,22 +538,22 @@ pnpm vitest run \
 - 头部缺口已进一步后移到低频命令与深语义能力（如 parser flags/debug/scope chain 细节），短期更适合通过 E2E 曝露真实阻塞点。
 - 建议从“继续堆命令数”转向“以 E2E 场景驱动补缺”，优先修复能复现实际迁移失败的路径。
 
-### 4.6 P4 现阶段风险（四轮后）
+### 4.6 P4 现阶段风险（五轮后）
 
-- 当前 P4 已覆盖主链路 + fail-fast 故障注入，但仍未覆盖 `/session` 真实交互路径（输入框、消息渲染、会话切换）。
-- 故障注入已覆盖 `tool timeout`、`unknown macro`、`reload-page callback missing`、`audio callback missing`、`chain fail-fast consistency`；仍缺“消息副作用 + 会话切换”的真实页面注入。
-- Playwright MCP 运行依赖本地浏览器 profile 状态，若 `mcp-chrome` 残留进程未回收会导致会话抢占，需在执行脚本中前置清理。
+- `/session` 真实 UI 已接入，但“输入 slash 直达执行（不经 LLM）”仍未形成稳定回归面。
+- 五轮在无 API 配置下走到 `401 fail-fast`，验证了错误可见性；但尚未覆盖“失败后消息持久化（刷新/重进）”的长路径一致性。
+- `mcp-chrome` 抢占风险已通过 `scripts/p4-playwright-preflight.sh` 收敛为可执行模板，仍需在 CI/自动化流水线中落地调用。
 
-## 5. P4 四轮结论
+## 5. P4 五轮结论
 
-本轮判定：**P4 四轮已达成“主链路 + 故障注入”双轨全绿**。
+本轮判定：**P4 五轮已达成“脚本执行页 + 真实会话页”双轨可回归**。
 
-1. 场景集由 `8` 扩展到 `9`，新增 1 条串联命令一致性 fail-fast 注入链路。  
-2. 四轮结果 `9/9` 通过，且错误日志、网络失败请求均为 `0`。  
-3. 回归资产已形成“首轮 vs 二轮 vs 三轮 vs 四轮”可对比基线，可继续按真实页面失败单推进。
+1. 脚本执行面保持 `9/9` 全绿（`4` 主链路 + `5` 故障注入）。  
+2. 五轮新增 `/session` 真实 UI 场景 `1/1` 通过，完成输入提交与会话切换隔离验证。  
+3. 执行前清理脚本已固化，Playwright MCP 会话抢占风险从“人工经验”收敛为“脚本模板”。
 
-## 6. 下一阶段建议（P4 五轮）
+## 6. 下一阶段建议（P4 六轮）
 
-1. 增加 `/session` 真实 UI 场景：覆盖“输入 slash -> 消息渲染 -> 状态验证”的端到端路径。  
-2. 增补“消息副作用 + 会话切换”注入：验证中段 fail-fast 后消息列表与会话状态不被后续命令污染。  
-3. 固化执行前置清理脚本：自动回收 `mcp-chrome` 残留进程，避免 Playwright MCP 会话抢占导致假失败。
+1. 增加 `/session` 下 slash 直达链路（`/send|/trigger|/run`）E2E，避免 UI 回归只覆盖普通输入路径。  
+2. 增补“失败后持久化一致性”断言：提交失败 -> 刷新页面 -> 重进会话，验证消息与状态是否符合预期。  
+3. 将 `scripts/p4-playwright-preflight.sh` 接入自动执行入口（本地命令模板或 CI step），避免人工漏执行。

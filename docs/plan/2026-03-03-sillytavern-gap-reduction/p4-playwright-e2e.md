@@ -1,4 +1,4 @@
-# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮 + 三轮 + 四轮）
+# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮 + 三轮 + 四轮 + 五轮）
 
 ## 1. 目标与范围
 
@@ -20,12 +20,19 @@
 | `audio-callback-missing-failfast` | 故障注入 | 宿主缺失 `/audioplay` 音频回调路径 | `test-baseline-assets/preset/夏瑾 Pro - Beta 0.70.json` | 返回 `/audioplay is not available in current context` 并判定 PASS |
 | `chain-failfast-consistency` | 故障注入 | 多命令串联中段失败的状态一致性路径 | `test-baseline-assets/preset/夏瑾 Pro - Beta 0.70.json` | `guard` 写入成功、`tail` 未写入、音频状态保持不变 |
 
+### 2.1 五轮附加场景（真实 `/session` UI）
+
+| 场景 ID | 场景类型 | 能力链路 | 关联资产 | 通过标准 |
+|---|---|---|---|---|
+| `session-ui-input-switch` | 主链路 + 故障注入 | `/session` 输入提交 -> 用户消息渲染 -> 首页卡片切换会话 -> 状态隔离 | `IndexedDB` 注入双角色/双会话测试数据 | `session-a` 可渲染输入消息；切换到 `session-b` 后不出现 `session-a` 的用户消息 |
+
 ## 3. 执行步骤（Playwright MCP）
 
-1. `pnpm dev` 启动开发服务器（端口 `3303`）。
-2. Playwright MCP 打开 `http://127.0.0.1:3303/test-script-runner`。
-3. 点击 `运行全部 P4 场景`。
-4. 采集：页面全屏截图、console 消息、network 请求摘要。
+1. 执行 `scripts/p4-playwright-preflight.sh` 清理 `mcp-chrome/Playwright` 残留进程。
+2. `pnpm dev` 启动开发服务器（端口 `3303`）。
+3. Playwright MCP 打开 `http://127.0.0.1:3303/test-script-runner` 并执行既有场景。
+4. 五轮额外打开 `/session`，注入测试数据并执行“输入提交 + 会话切换”链路。
+5. 采集：页面全屏截图、console 消息、network 请求摘要。
 
 ## 4. 本轮结果
 
@@ -88,6 +95,25 @@
 }
 ```
 
+### 4.5 五轮（`/session` 真实 UI：输入提交 + 会话切换隔离）
+
+- 汇总：`1/1` 附加场景通过（与前四轮 `9/9` 形成互补覆盖）。
+- 五轮执行时间：`2026-03-03T10:47:xxZ` ~ `2026-03-03T10:51:xxZ`。
+- 关键断言：
+  - `session-a` 渲染 `P4 Round5 Opening A`，输入 `P4 Round5 UI Message A2` 后消息立即出现在 UI。
+  - 切换到 `session-b` 渲染 `P4 Round5 Opening B`，且不出现 `session-a` 的用户消息（无跨会话污染）。
+  - API 未配置路径命中 `401`（fail-fast），但不阻断本轮 UI 断言链路。
+
+```json
+{
+  "phase": "P4-Playwright-MCP-E2E-session-ui",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "allPassed": true
+}
+```
+
 ## 5. 证据资产
 
 - 首轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
@@ -101,8 +127,15 @@
 - 四轮原始日志：
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-console.log`
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round4-network.log`
+- 五轮截图（输入提交）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-input-pass.png`
+- 五轮截图（会话切换）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-pass.png`
+- 五轮日志摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-console-network.md`
+- 五轮原始日志：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-console.log`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-network.log`
+- 五轮前置清理脚本：`scripts/p4-playwright-preflight.sh`
 
 ## 6. 备注
 
-- 四轮已补齐“串联命令中段失败”的一致性注入，故障注入最小集扩展为 `5` 条。
-- 仍未覆盖 `/session` 真实交互链路，建议作为下一轮重点（输入 slash -> UI 反馈 -> 状态验证）。
+- 五轮已补齐 `/session` 真实 UI 最小链路（输入提交 + 会话切换隔离），P4 回归资产从“脚本执行页”扩展到“真实交互页”。
+- 当前未覆盖项：`/session` 下 slash 命令直达执行（不走 LLM）与“失败中段后的消息持久化”细粒度断言，可作为六轮补点。
