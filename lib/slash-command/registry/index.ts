@@ -34,6 +34,12 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["cont", CoreHandlers.handleContinue],
   ["swipe", CoreHandlers.handleSwipe],
   ["comment", CoreHandlers.handleSys],
+  ["checkpoint-create", CoreHandlers.handleCheckpointCreate],
+  ["checkpoint-get", CoreHandlers.handleCheckpointGet],
+  ["checkpoint-list", CoreHandlers.handleCheckpointList],
+  ["checkpoint-go", CoreHandlers.handleCheckpointGo],
+  ["checkpoint-exit", CoreHandlers.handleCheckpointExit],
+  ["checkpoint-parent", CoreHandlers.handleCheckpointParent],
 
   // ─── 工具命令 ───
   ["echo", CoreHandlers.handleEcho],
@@ -81,6 +87,7 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["mescount", MessageHandlers.handleMessageCount],
   ["char", CharacterHandlers.handleCharacter],
   ["character", CharacterHandlers.handleCharacter],
+  ["go", CharacterHandlers.handleCharacter],
   ["char-find", CharacterHandlers.handleCharacterFind],
   ["findchar", CharacterHandlers.handleCharacterFind],
 

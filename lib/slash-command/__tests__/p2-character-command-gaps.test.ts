@@ -45,6 +45,16 @@ describe("P2 character/message high-frequency gaps", () => {
     expect(switchCharacter).toHaveBeenCalledWith("Bob");
   });
 
+  it("/go 复用 character 切换语义", async () => {
+    const switchCharacter = vi.fn().mockResolvedValue(undefined);
+    const ctx = createCharacterContext({ switchCharacter });
+
+    const result = await executeSlashCommandScript("/go Charlie", ctx);
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("Charlie");
+    expect(switchCharacter).toHaveBeenCalledWith("Charlie");
+  });
+
   it("/character 在回调返回结构化结果时透传 JSON", async () => {
     const switchCharacter = vi.fn().mockResolvedValue({
       target: "Bob",

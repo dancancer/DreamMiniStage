@@ -1,58 +1,71 @@
-# Handoff（2026-03-03 / P3 二轮）
+# Handoff（2026-03-03 / P2 首轮）
 
-## 本轮完成（P3 - extension 管理最小集）
+## 本轮完成（P2 - checkpoint 命令族）
 
-- 已在 `hooks/script-bridge/compat-handlers.ts` 补齐 extension 管理兼容 API：
-  - `isAdmin`
-  - `getTavernHelperExtensionId`
-  - `getExtensionType`
-  - `getExtensionStatus`
-  - `isInstalledExtension`
-  - `installExtension` / `uninstallExtension` / `reinstallExtension` / `updateExtension`（宿主模式显式 fail-fast）
-- 已完成能力面单源同步：
-  - `public/iframe-libs/slash-runner-shim.js` 新增 extension API 暴露。
-  - `hooks/script-bridge/capability-matrix.ts` 同步新增 extension API 声明。
-  - `hooks/script-bridge/README.md` 同步更新兼容面说明。
-- `api-surface-contract` 持续全绿，shim/handler/matrix 无漂移。
+- 已在 `lib/slash-command/registry/handlers/core.ts` 补齐 checkpoint 高频命令最小集：
+  - `checkpoint-create`
+  - `checkpoint-get`
+  - `checkpoint-list`
+  - `checkpoint-go`
+  - `checkpoint-exit`
+  - `checkpoint-parent`
+- 命令语义对齐：
+  - 支持 `mesId/mes` 双命名参数。
+  - `checkpoint-list links=true` 返回 checkpoint 名称列表，默认返回消息索引。
+  - 参数非法（格式错误或越界）统一 fail-fast。
+- 已在 `lib/slash-command/registry/index.ts` 增加 `go -> character` 别名，补齐常见脚本跳转入口。
+- 完成一轮 Top N 采样（`test-baseline-assets` + 现有脚本样本），当前缺口头部集中在：`api`、`fuzzy`、`reload-page`、`run`、`trimtokens`。
 
 ## 新增/更新测试
 
-- 更新：`hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts`
-  - 新增 extension 读接口行为断言（installed/type/status/id/admin）
-  - 新增 extension 写接口 fail-fast 断言（install/uninstall/reinstall/update）
-- 回归复跑：
-  - `hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts`
-  - `hooks/script-bridge/__tests__/api-surface-contract.test.ts`
-  - `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`
-  - `hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
-  - `lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
+- 新增：`lib/slash-command/__tests__/p2-checkpoint-command-gaps.test.ts`
+  - 覆盖 `create/get/list/go/exit/parent` 正常链路。
+  - 覆盖自动命名、links 模式、空消息上下文、非法参数 fail-fast。
+- 更新：`lib/slash-command/__tests__/p2-character-command-gaps.test.ts`
+  - 新增 `/go` 别名行为断言。
 
 ## 本轮回归结果
 
 ```bash
 pnpm vitest run \
-  hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts \
-  hooks/script-bridge/__tests__/api-surface-contract.test.ts \
-  hooks/script-bridge/__tests__/extension-lifecycle.test.ts \
-  hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts \
-  lib/script-runner/__tests__/slash-runner-shim-contract.test.ts
+  lib/slash-command/__tests__/p2-checkpoint-command-gaps.test.ts \
+  lib/slash-command/__tests__/p2-character-command-gaps.test.ts \
+  lib/core/__tests__/st-baseline-slash-command.test.ts
 ```
 
-- 结果：`5` files passed，`21` tests passed。
+- 结果：`3` files passed，`67` tests passed。
+
+补充回归：
+
+```bash
+pnpm vitest run lib/slash-command/__tests__/kernel-core.test.ts
+```
+
+- 结果：`1` file passed，`11` tests passed。
 
 ## 指标快照（本轮更新）
 
-- Slash 覆盖率：`21.71%`（本轮未改 Slash 命令族）
-- TavernHelper API 覆盖率：`60.77%`
+- Slash 覆盖率：`24.42%`
+  - 上游：`258`
+  - 当前命令总量：`126`
+  - 交集：`63`
+- TavernHelper API 覆盖率：`60.77%`（本轮未改 API 面）
   - 上游：`130`
   - 当前 shim 顶层：`117`
   - 交集：`79`
 
-## 下一步建议（切到 P2）
+## 下一步建议（P2 二轮）
 
-1. **优先推进 P2 高频 Slash 命令族（建议 checkpoint）**  
-   先补 `checkpoint-create/get/list/go/exit/parent`，按“参数签名 + 失败路径 + 回归”一轮收敛，直接拉动 `21.71% -> 30%` gate。
-2. **做一轮命令频次采样并固定 Top N backlog**  
-   用 `test-baseline-assets` + 现有脚本样本产出可追踪频次表，避免命令补齐顺序拍脑袋。
+1. **按 Top N 先补 `api` 命令族最小可运行子集**  
+   先做 `api/api-url` 的只读路径 + 参数校验，保留不支持分支 fail-fast，快速降低高频缺口。
+2. **并行规划 `branch` 命令族**  
+   在 `branch-create` 先落一版最小语义（创建并返回分支名），与 checkpoint 家族形成迁移闭环。
 3. **保持每轮固定动作**  
-   每次命令族补齐后同步更新 `docs/analysis/sillytavern-integration-gap-2026-03.md` 与本 handoff，记录覆盖率和 gate 状态。
+   命令族落地后同步更新 `docs/analysis/sillytavern-integration-gap-2026-03.md`、`tasks.md`、本 handoff，并记录覆盖率变化与 gate 状态。
+
+---
+
+## 历史记录（上一轮摘要）
+
+- P3 extension 管理最小集已完成：`isAdmin`、`getTavernHelperExtensionId`、`getExtensionType`、`getExtensionStatus`、`isInstalledExtension`、`install/uninstall/reinstall/updateExtension`（写接口宿主模式 fail-fast）。
+- 对应回归：`hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts` + `api-surface-contract` + `extension-lifecycle` + `plugin-minimal-regression` + `slash-runner-shim-contract`（`5` files / `21` tests 通过）。

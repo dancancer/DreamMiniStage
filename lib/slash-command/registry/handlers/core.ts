@@ -2,7 +2,7 @@
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                    Core Command Handlers                                  ║
  * ║                                                                           ║
- * ║  核心命令 - send / trigger / echo / pass / return / sendas等              ║
+ * ║  核心命令 - send / trigger / checkpoint / echo / pass / return 等         ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -121,6 +121,162 @@ export const handleSwipe: CommandHandler = async (args, _namedArgs, ctx, pipe) =
     await ctx.onSwipe(args[0]);
   }
   return pipe;
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Checkpoint 命令（P2 高频缺口）
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+interface CheckpointSessionState {
+  autoSeed: number;
+  currentCheckpoint: string | null;
+  parentChatName: string;
+  messageToCheckpoint: Map<string, string>;
+}
+
+const CHECKPOINT_SESSIONS: Map<string, CheckpointSessionState> = new Map();
+
+function getCheckpointSessionKey(ctx: Parameters<CommandHandler>[2]): string {
+  return ctx.characterId || "__global__";
+}
+
+function getCheckpointSession(ctx: Parameters<CommandHandler>[2]): CheckpointSessionState {
+  const key = getCheckpointSessionKey(ctx);
+  const existing = CHECKPOINT_SESSIONS.get(key);
+  if (existing) {
+    return existing;
+  }
+
+  const created: CheckpointSessionState = {
+    autoSeed: 0,
+    currentCheckpoint: null,
+    parentChatName: ctx.characterId || "",
+    messageToCheckpoint: new Map(),
+  };
+  CHECKPOINT_SESSIONS.set(key, created);
+  return created;
+}
+
+function parseMessageIndex(raw: string, length: number, commandName: string): number {
+  const parsed = Number.parseInt(raw, 10);
+  if (Number.isNaN(parsed)) {
+    throw new Error(`${commandName} invalid message index: ${raw}`);
+  }
+
+  const normalized = parsed < 0 ? length + parsed : parsed;
+  if (normalized < 0 || normalized >= length) {
+    throw new Error(`${commandName} message index out of range: ${raw}`);
+  }
+
+  return normalized;
+}
+
+function resolveCheckpointMessage(
+  ctx: Parameters<CommandHandler>[2],
+  rawIndex: string | undefined,
+  commandName: string,
+): { index: number; messageId: string } {
+  const messages = ctx.messages ?? [];
+  if (messages.length === 0) {
+    throw new Error(`${commandName} requires at least one message`);
+  }
+
+  const fallbackIndex = String(messages.length - 1);
+  const indexSource = (rawIndex ?? fallbackIndex).trim();
+  const index = parseMessageIndex(indexSource, messages.length, commandName);
+  const message = messages[index];
+  if (!message?.id) {
+    throw new Error(`${commandName} target message has no id`);
+  }
+
+  return { index, messageId: message.id };
+}
+
+function nextCheckpointName(session: CheckpointSessionState): string {
+  const existed = new Set(session.messageToCheckpoint.values());
+  while (true) {
+    session.autoSeed += 1;
+    const candidate = `checkpoint-${session.autoSeed}`;
+    if (!existed.has(candidate)) {
+      return candidate;
+    }
+  }
+}
+
+/** /checkpoint-create [name] - 在目标消息上创建 checkpoint */
+export const handleCheckpointCreate: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const session = getCheckpointSession(ctx);
+  const rawIndex = namedArgs.mesId ?? namedArgs.mes;
+  const { messageId } = resolveCheckpointMessage(ctx, rawIndex, "/checkpoint-create");
+
+  const requestedName = (args.join(" ") || pipe || "").trim();
+  const checkpointName = requestedName || nextCheckpointName(session);
+
+  session.messageToCheckpoint.set(messageId, checkpointName);
+  return checkpointName;
+};
+
+/** /checkpoint-get [mesId] - 获取目标消息关联的 checkpoint 名称 */
+export const handleCheckpointGet: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const session = getCheckpointSession(ctx);
+  const rawIndex = namedArgs.mesId ?? namedArgs.mes ?? args[0] ?? pipe;
+  const { messageId } = resolveCheckpointMessage(ctx, rawIndex, "/checkpoint-get");
+  return session.messageToCheckpoint.get(messageId) ?? "";
+};
+
+/** /checkpoint-list [links=true|false] - 列出当前会话的 checkpoint */
+export const handleCheckpointList: CommandHandler = async (_args, namedArgs, ctx, _pipe) => {
+  const session = getCheckpointSession(ctx);
+  const links = parseBoolean(namedArgs.links, false) ?? false;
+
+  const result: Array<number | string> = [];
+  const messages = ctx.messages ?? [];
+  messages.forEach((message, index) => {
+    const checkpointName = session.messageToCheckpoint.get(message.id);
+    if (!checkpointName) {
+      return;
+    }
+    result.push(links ? checkpointName : index);
+  });
+
+  return JSON.stringify(result);
+};
+
+/** /checkpoint-go [mesId] - 进入目标消息关联的 checkpoint */
+export const handleCheckpointGo: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const session = getCheckpointSession(ctx);
+  const rawIndex = namedArgs.mesId ?? namedArgs.mes ?? args[0] ?? pipe;
+  const { messageId } = resolveCheckpointMessage(ctx, rawIndex, "/checkpoint-go");
+
+  const checkpointName = session.messageToCheckpoint.get(messageId);
+  if (!checkpointName) {
+    return "";
+  }
+
+  session.currentCheckpoint = checkpointName;
+  session.parentChatName = ctx.characterId || session.parentChatName;
+  return checkpointName;
+};
+
+/** /checkpoint-exit - 退出当前 checkpoint，会返回父会话名 */
+export const handleCheckpointExit: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  const session = getCheckpointSession(ctx);
+  if (!session.currentCheckpoint) {
+    return "";
+  }
+
+  session.currentCheckpoint = null;
+  return session.parentChatName;
+};
+
+/** /checkpoint-parent - 返回当前 checkpoint 的父会话名 */
+export const handleCheckpointParent: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  const session = getCheckpointSession(ctx);
+  if (!session.currentCheckpoint) {
+    return "";
+  }
+
+  return session.parentChatName;
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
