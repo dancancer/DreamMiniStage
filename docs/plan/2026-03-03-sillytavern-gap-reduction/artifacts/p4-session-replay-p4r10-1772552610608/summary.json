@@ -1,0 +1,178 @@
+{
+  "runId": "p4r10-1772552610608",
+  "startedAt": "2026-03-03T15:43:30.608Z",
+  "finishedAt": "2026-03-03T15:43:48.817Z",
+  "baseUrl": "http://127.0.0.1:3303",
+  "allPassed": true,
+  "checkpoints": [
+    {
+      "name": "seed-indexeddb",
+      "passed": true,
+      "detail": {
+        "sessions": 3,
+        "dialogues": 3
+      },
+      "timestamp": "2026-03-03T15:43:37.608Z"
+    },
+    {
+      "name": "round7-open-session-a",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 Opening A"
+      },
+      "timestamp": "2026-03-03T15:43:42.094Z"
+    },
+    {
+      "name": "round7-slash-direct",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 SlashPathMessage"
+      },
+      "timestamp": "2026-03-03T15:43:42.202Z"
+    },
+    {
+      "name": "round7-refresh-persistence",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 SlashPathMessage"
+      },
+      "timestamp": "2026-03-03T15:43:43.748Z"
+    },
+    {
+      "name": "round7-session-b-opened",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 Opening B"
+      },
+      "timestamp": "2026-03-03T15:43:45.568Z"
+    },
+    {
+      "name": "round7-session-isolation",
+      "passed": true,
+      "detail": {
+        "leakedCount": 0
+      },
+      "timestamp": "2026-03-03T15:43:45.569Z"
+    },
+    {
+      "name": "round8-open-session-plain",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 Opening Plain"
+      },
+      "timestamp": "2026-03-03T15:43:47.134Z"
+    },
+    {
+      "name": "round8-plain-input-401",
+      "passed": true,
+      "detail": {
+        "status": 401
+      },
+      "timestamp": "2026-03-03T15:43:47.195Z"
+    },
+    {
+      "name": "round8-pre-refresh-message-visible",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 Plain401 Message A3"
+      },
+      "timestamp": "2026-03-03T15:43:47.219Z"
+    },
+    {
+      "name": "round8-refresh-persistence",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 Plain401 Message A3"
+      },
+      "timestamp": "2026-03-03T15:43:48.747Z"
+    },
+    {
+      "name": "noise-baseline-diff",
+      "passed": true,
+      "detail": {
+        "unknownSignatureCount": 0,
+        "report": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r10-1772552610608/round10-noise-baseline-report.md"
+      },
+      "timestamp": "2026-03-03T15:43:48.811Z"
+    }
+  ],
+  "runDir": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r10-1772552610608",
+  "startedDevServer": true,
+  "noiseBaseline": {
+    "baselineVersion": 1,
+    "console": {
+      "total": 20,
+      "known": [
+        {
+          "id": "console-llm-method-failed",
+          "classification": "expected-failfast",
+          "count": 2,
+          "sample": "error|Method execution failed: invokeLLM Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/ at APIErro"
+        },
+        {
+          "id": "console-llm-openai-error",
+          "classification": "expected-failfast",
+          "count": 2,
+          "sample": "error|Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/ at APIError.generate (http://127.0.0.1:3303/_"
+        },
+        {
+          "id": "console-missing-node-tools",
+          "classification": "known-noise",
+          "count": 8,
+          "sample": "warning|找不到节点类型的工具类: userInput"
+        },
+        {
+          "id": "console-resource-401",
+          "classification": "expected-failfast",
+          "count": 2,
+          "sample": "error|Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+        },
+        {
+          "id": "console-resource-404",
+          "classification": "known-noise",
+          "count": 4,
+          "sample": "error|Failed to load resource: the server responded with a status of 404 (Not Found)"
+        },
+        {
+          "id": "console-stream-no-response",
+          "classification": "expected-failfast",
+          "count": 2,
+          "sample": "error|Streaming error: Error: No response returned from workflow at Object.start (http://127.0.0.1:3303/_next/static/chunks/_c6730766._.js:672:27)"
+        }
+      ],
+      "unknown": []
+    },
+    "network": {
+      "total": 24,
+      "known": [
+        {
+          "id": "network-background-404",
+          "classification": "known-noise",
+          "count": 4,
+          "sample": "response|404|GET|http://127.0.0.1:3303/background_yellow.png"
+        },
+        {
+          "id": "network-ga-request-aborted",
+          "classification": "known-noise",
+          "count": 16,
+          "sample": "requestfailed|none|POST|https://www.google-analytics.com/g/collect"
+        },
+        {
+          "id": "network-openai-mock-401",
+          "classification": "expected-failfast",
+          "count": 2,
+          "sample": "mock|401|POST|https://api.openai.com/v1/chat/completions"
+        },
+        {
+          "id": "network-openai-response-401",
+          "classification": "expected-failfast",
+          "count": 2,
+          "sample": "response|401|POST|https://api.openai.com/v1/chat/completions"
+        }
+      ],
+      "unknown": []
+    },
+    "hasNewNoise": false,
+    "unknownSignatureCount": 0
+  }
+}

@@ -75,6 +75,9 @@
 - [x] 九轮增量：新增 `scripts/p4-session-replay-e2e.mjs` + `scripts/p4-session-replay-lib.mjs`，将 round7/round8 `/session` 复验收敛为单命令自动回放（自动注入 IndexedDB、自动断言、自动产物落盘）。
 - [x] 九轮执行：`pnpm p4:session-replay` 实跑通过（`10` checkpoints 全绿：slash 直达、刷新持久化、会话隔离、普通输入 `401`）。
 - [x] 九轮 CI 接入：新增 `.github/workflows/p4-session-replay.yml`，在 workflow 中接入 `pnpm p4:preflight` + `pnpm p4:session-replay` + 产物上传。
+- [x] 十轮增量：在 `p4-session-replay` 增加“噪音基线差分”门禁（console/network 白名单 + 新增签名 fail-fast）。
+- [x] 十轮执行：`pnpm p4:session-replay` 实跑通过（`11` checkpoints：原 `10` 项 + `noise-baseline-diff`，新增噪音签名 `0`）。
+- [x] 十轮固化：新增基线文件 `docs/plan/2026-03-03-sillytavern-gap-reduction/p4-session-replay-noise-baseline.json`，回放产物新增 `round10-noise-baseline-report.{md,json}`。
 - [x] 固化失败截图/日志与复现步骤，纳入回归文档。
   - 场景映射与执行记录：`docs/plan/2026-03-03-sillytavern-gap-reduction/p4-playwright-e2e.md`
   - 运行截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`

@@ -1,4 +1,4 @@
-# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮 + 三轮 + 四轮 + 五轮 + 六轮 + 七轮 + 八轮 + 九轮）
+# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮 + 三轮 + 四轮 + 五轮 + 六轮 + 七轮 + 八轮 + 九轮 + 十轮）
 
 ## 1. 目标与范围
 
@@ -54,6 +54,12 @@
 |---|---|---|---|---|
 | `session-replay-round7-round8` | 主链路 + 故障注入 | `seedIndexedDB -> slash 输入 -> 刷新 -> 会话切换 -> 普通输入 -> 401 -> 刷新` | `scripts/p4-session-replay-e2e.mjs` + `scripts/p4-session-replay-lib.mjs` | 单命令 `pnpm p4:session-replay` 产出 runId 目录，`10` checkpoints 全绿 |
 
+### 2.6 十轮附加场景（噪音基线差分门禁）
+
+| 场景 ID | 场景类型 | 能力链路 | 关联资产 | 验收标准 |
+|---|---|---|---|---|
+| `session-replay-noise-baseline-diff` | 主链路门禁 | `console/network 候选采集 -> baseline 匹配 -> 新增签名 fail-fast` | `docs/plan/2026-03-03-sillytavern-gap-reduction/p4-session-replay-noise-baseline.json` + `round10-noise-baseline-report.{md,json}` | `noise-baseline-diff` checkpoint 通过，`unknownSignatureCount=0`；若出现新增签名则脚本直接失败 |
+
 ## 3. 执行步骤（Playwright MCP）
 
 1. 执行 `scripts/p4-playwright-preflight.sh` 清理 `mcp-chrome/Playwright` 残留进程。
@@ -64,7 +70,8 @@
 6. 七轮在 `/session` 执行“修复后复验”（slash 直达 + 刷新持久化 + 隔离复验）。
 7. 八轮在 `/session` 执行“普通输入 `401` 独立证据”复验（`pre-refresh` 故障日志 + `post-refresh` 持久化截图）。
 8. 九轮执行 `pnpm p4:session-replay`，自动完成 round7+8 断言并写入 runId 证据目录。
-9. 采集：页面全屏截图、console 消息、network 请求摘要。
+9. 十轮在自动回放尾部执行噪音差分门禁（新增签名即失败，已知签名保留为可追踪噪音）。
+10. 采集：页面全屏截图、console 消息、network 请求摘要、noise baseline 报告。
 
 ## 4. 本轮结果
 
@@ -222,6 +229,25 @@
 }
 ```
 
+### 4.10 十轮（主链路门禁：噪音基线差分）
+
+- 汇总：`11/11` checkpoints 通过（在原 `10` 项后新增 `noise-baseline-diff`）。
+- 十轮执行时间：`2026-03-03T15:43:30.608Z` ~ `2026-03-03T15:43:48.817Z`。
+- 关键结论：
+  - `p4-session-replay` 已内建噪音基线比对：console `error|warning` 与 network `>=400/requestfailed/mock` 全量入候选。
+  - 已知噪音（`background_*.png 404`、节点工具类告警、mock `401` 失败链路）稳定命中 baseline。
+  - 本轮 `unknownSignatureCount=0`，无新增噪音签名。
+
+```json
+{
+  "phase": "P4-Playwright-MCP-E2E-session-ui-round10-noise-baseline",
+  "checks": 11,
+  "passed": 11,
+  "newNoiseSignatures": 0,
+  "allPassed": true
+}
+```
+
 ## 5. 证据资产
 
 - 首轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
@@ -274,6 +300,10 @@
 - 九轮自动回放脚本：
   - `scripts/p4-session-replay-e2e.mjs`
   - `scripts/p4-session-replay-lib.mjs`
+- 十轮噪音基线：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/p4-session-replay-noise-baseline.json`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r10-1772552610608/round10-noise-baseline-report.md`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r10-1772552610608/round10-noise-baseline-report.json`
 - 九轮 CI 工作流：`.github/workflows/p4-session-replay.yml`
 - 五轮前置清理脚本：`scripts/p4-playwright-preflight.sh`
 - 固定入口脚本：`pnpm p4:preflight`、`pnpm p4:session-dev`
@@ -285,5 +315,6 @@
 - 七轮已完成两项 UI 缺口修复复验：slash 直达执行恢复、刷新后用户输入持久化恢复。
 - 八轮已补齐“普通输入触发 `401` 后刷新仍保留用户输入”独立证据，并固化 pre/post 日志。
 - 九轮已将 round7+8 收敛为单命令自动回放，并接入 CI 可执行入口。
+- 十轮已落地“噪音基线差分”门禁，主链路从“可回放”升级为“可回放 + 可判读”。
 - 当前待补强项：
-  1. 对 `background_*.png 404` 与节点工具类告警做分层降噪，降低回归判读成本。
+  1. 将 runId 级 `summary.json` 聚合为单文件索引，支持跨轮趋势对比（耗时、噪音计数、checkpoint 通过率）。

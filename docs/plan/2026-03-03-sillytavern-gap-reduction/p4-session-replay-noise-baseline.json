@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "consoleRules": [
+    {
+      "id": "console-resource-404",
+      "level": "error",
+      "messageIncludes": "Failed to load resource: the server responded with a status of 404",
+      "classification": "known-noise"
+    },
+    {
+      "id": "console-resource-401",
+      "level": "error",
+      "messageIncludes": "Failed to load resource: the server responded with a status of 401",
+      "classification": "expected-failfast"
+    },
+    {
+      "id": "console-llm-method-failed",
+      "level": "error",
+      "messageIncludes": "Method execution failed: invokeLLM Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized",
+      "classification": "expected-failfast"
+    },
+    {
+      "id": "console-llm-openai-error",
+      "level": "error",
+      "messageIncludes": "Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized",
+      "classification": "expected-failfast"
+    },
+    {
+      "id": "console-stream-no-response",
+      "level": "error",
+      "messageIncludes": "Streaming error: Error: No response returned from workflow",
+      "classification": "expected-failfast"
+    },
+    {
+      "id": "console-missing-node-tools",
+      "level": "warning",
+      "messageIncludes": "找不到节点类型的工具类:",
+      "classification": "known-noise"
+    }
+  ],
+  "networkRules": [
+    {
+      "id": "network-openai-mock-401",
+      "eventType": "mock",
+      "method": "POST",
+      "status": 401,
+      "urlIncludes": "https://api.openai.com/v1/chat/completions",
+      "classification": "expected-failfast"
+    },
+    {
+      "id": "network-openai-response-401",
+      "eventType": "response",
+      "method": "POST",
+      "status": 401,
+      "urlIncludes": "https://api.openai.com/v1/chat/completions",
+      "classification": "expected-failfast"
+    },
+    {
+      "id": "network-background-404",
+      "eventType": "response",
+      "method": "GET",
+      "status": 404,
+      "urlRegex": "^http://127\\.0\\.0\\.1:3303/background_.+\\.png$",
+      "classification": "known-noise"
+    },
+    {
+      "id": "network-ga-request-aborted",
+      "eventType": "requestfailed",
+      "method": "POST",
+      "urlIncludes": "https://www.google-analytics.com/g/collect",
+      "errorIncludes": "net::ERR_ABORTED",
+      "classification": "known-noise"
+    },
+    {
+      "id": "network-session-rsc-aborted",
+      "eventType": "requestfailed",
+      "method": "GET",
+      "urlIncludes": "http://127.0.0.1:3303/session",
+      "errorIncludes": "net::ERR_ABORTED",
+      "classification": "known-noise"
+    }
+  ]
+}

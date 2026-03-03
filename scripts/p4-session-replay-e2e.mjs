@@ -1,14 +1,16 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
 import {
+  analyzeNoiseBaseline,
   artifactPaths,
   buildPayload,
+  renderNoiseReportMarkdown,
   renderSummaryMarkdown,
   seedIndexedDb,
 } from "./p4-session-replay-lib.mjs";
@@ -24,16 +26,22 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 
 const BASE_URL = process.env.P4_BASE_URL || "http://127.0.0.1:3303";
 const HEADLESS = process.env.P4_HEADLESS !== "false";
-const RUN_ID = process.env.P4_RUN_ID || `p4r9-${Date.now()}`;
+const RUN_ID = process.env.P4_RUN_ID || `p4r10-${Date.now()}`;
 const ARTIFACT_ROOT = path.resolve(
   REPO_ROOT,
   process.env.P4_ARTIFACT_ROOT || "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts",
 );
 const RUN_DIR = path.join(ARTIFACT_ROOT, `p4-session-replay-${RUN_ID}`);
+const NOISE_BASELINE_PATH = path.resolve(
+  REPO_ROOT,
+  process.env.P4_NOISE_BASELINE_PATH || "docs/plan/2026-03-03-sillytavern-gap-reduction/p4-session-replay-noise-baseline.json",
+);
 const CHECK_TIMEOUT_MS = 25_000;
 
 const consoleLogs = [];
 const networkLogs = [];
+const consoleEvents = [];
+const networkEvents = [];
 const checkpoints = [];
 
 function nowIso() {
@@ -149,27 +157,52 @@ async function writeList(filePath, lines) {
   await writeText(filePath, `${lines.join("\n")}\n`);
 }
 
+async function loadNoiseBaseline(filePath) {
+  try {
+    const raw = await readFile(filePath, "utf8");
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed.consoleRules) || !Array.isArray(parsed.networkRules)) {
+      throw new Error("missing consoleRules/networkRules");
+    }
+    return parsed;
+  } catch (error) {
+    throw new Error(`[noise-baseline] failed to load ${filePath}: ${summarizeError(error)}`);
+  }
+}
+
+async function buildNoiseReport(files) {
+  const baseline = await loadNoiseBaseline(NOISE_BASELINE_PATH);
+  const report = analyzeNoiseBaseline({
+    baseline,
+    consoleEvents,
+    networkEvents,
+  });
+  await writeText(files.noiseReportJson, `${JSON.stringify(report, null, 2)}\n`);
+  await writeText(files.noiseReportMd, renderNoiseReportMarkdown(report, NOISE_BASELINE_PATH, REPO_ROOT));
+  return report;
+}
+
 async function runRound7(page, payload, files) {
   await page.goto(`${BASE_URL}/session?id=${encodeURIComponent(payload.ids.sessionAId)}`, { waitUntil: "domcontentloaded" });
-  await expectText(page, "P4 Round9 Opening A", "round7-open-session-a");
+  await expectText(page, "P4 Round10 Opening A", "round7-open-session-a");
 
-  await submitInput(page, "/send P4 Round9 SlashPathMessage|/trigger");
-  await expectText(page, "P4 Round9 SlashPathMessage", "round7-slash-direct");
+  await submitInput(page, "/send P4 Round10 SlashPathMessage|/trigger");
+  await expectText(page, "P4 Round10 SlashPathMessage", "round7-slash-direct");
   await page.screenshot({ path: files.round7Slash, fullPage: true });
 
   await page.reload({ waitUntil: "domcontentloaded" });
-  await expectText(page, "P4 Round9 SlashPathMessage", "round7-refresh-persistence");
+  await expectText(page, "P4 Round10 SlashPathMessage", "round7-refresh-persistence");
   await page.screenshot({ path: files.round7Refresh, fullPage: true });
 
   await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
-  const sessionBCard = page.locator("div[role='button']").filter({ hasText: "P4 Round9 Session B" }).first();
+  const sessionBCard = page.locator("div[role='button']").filter({ hasText: "P4 Round10 Session B" }).first();
   await sessionBCard.waitFor({ state: "visible", timeout: CHECK_TIMEOUT_MS });
   await sessionBCard.click();
 
   await page.waitForURL((url) => url.searchParams.get("id") === payload.ids.sessionBId, { timeout: CHECK_TIMEOUT_MS });
-  await expectText(page, "P4 Round9 Opening B", "round7-session-b-opened");
+  await expectText(page, "P4 Round10 Opening B", "round7-session-b-opened");
 
-  const leaked = await page.locator("text=P4 Round9 SlashPathMessage").count();
+  const leaked = await page.locator("text=P4 Round10 SlashPathMessage").count();
   if (leaked > 0) throw new Error("Cross-session leakage: session-b contains session-a message");
   addCheckpoint("round7-session-isolation", true, { leakedCount: leaked });
 
@@ -178,7 +211,7 @@ async function runRound7(page, payload, files) {
 
 async function runRound8(page, payload, files) {
   await page.goto(`${BASE_URL}/session?id=${encodeURIComponent(payload.ids.sessionPlainId)}`, { waitUntil: "domcontentloaded" });
-  await expectText(page, "P4 Round9 Opening Plain", "round8-open-session-plain");
+  await expectText(page, "P4 Round10 Opening Plain", "round8-open-session-plain");
 
   const consoleStart = consoleLogs.length;
   const networkStart = networkLogs.length;
@@ -186,19 +219,19 @@ async function runRound8(page, payload, files) {
     timeout: CHECK_TIMEOUT_MS,
   });
 
-  await submitInput(page, "P4 Round9 Plain401 Message A3");
+  await submitInput(page, "P4 Round10 Plain401 Message A3");
   const completionResponse = await response401;
   if (completionResponse.status() !== 401) {
     throw new Error(`Expected 401 from completion API, got ${completionResponse.status()}`);
   }
   addCheckpoint("round8-plain-input-401", true, { status: completionResponse.status() });
 
-  await expectText(page, "P4 Round9 Plain401 Message A3", "round8-pre-refresh-message-visible");
+  await expectText(page, "P4 Round10 Plain401 Message A3", "round8-pre-refresh-message-visible");
   await writeList(files.round8PreConsole, consoleLogs.slice(consoleStart));
   await writeList(files.round8PreNetwork, networkLogs.slice(networkStart));
 
   await page.reload({ waitUntil: "domcontentloaded" });
-  await expectText(page, "P4 Round9 Plain401 Message A3", "round8-refresh-persistence");
+  await expectText(page, "P4 Round10 Plain401 Message A3", "round8-refresh-persistence");
   await page.screenshot({ path: files.round8Refresh, fullPage: true });
 }
 
@@ -210,6 +243,7 @@ async function main() {
   let browser = null;
   let devServer = null;
   let startedDevServer = false;
+  let noiseReport = null;
 
   await mkdir(RUN_DIR, { recursive: true });
 
@@ -228,23 +262,53 @@ async function main() {
     const page = await context.newPage();
 
     page.on("console", (msg) => {
-      consoleLogs.push(`[${nowIso()}] [${msg.type()}] ${normalizeText(msg.text())}`);
+      const level = msg.type();
+      const message = normalizeText(msg.text());
+      consoleEvents.push({ level, message });
+      consoleLogs.push(`[${nowIso()}] [${level}] ${message}`);
     });
 
     page.on("requestfailed", (req) => {
-      networkLogs.push(`[${nowIso()}] [FAILED] ${req.method()} ${req.url()} ${req.failure()?.errorText || "unknown"}`);
+      const method = req.method();
+      const url = req.url();
+      const error = req.failure()?.errorText || "unknown";
+      networkEvents.push({
+        eventType: "requestfailed",
+        method,
+        url,
+        status: null,
+        error,
+      });
+      networkLogs.push(`[${nowIso()}] [FAILED] ${method} ${url} ${error}`);
     });
 
     page.on("response", (response) => {
       const url = response.url();
       const status = response.status();
       if (status >= 400 || url.includes("/v1/chat/completions")) {
-        networkLogs.push(`[${nowIso()}] [${status}] ${response.request().method()} ${url}`);
+        const method = response.request().method();
+        networkEvents.push({
+          eventType: "response",
+          method,
+          url,
+          status,
+          error: "",
+        });
+        networkLogs.push(`[${nowIso()}] [${status}] ${method} ${url}`);
       }
     });
 
     await page.route("**/v1/chat/completions", async (route) => {
-      networkLogs.push(`[${nowIso()}] [MOCK-401] ${route.request().method()} ${route.request().url()}`);
+      const method = route.request().method();
+      const url = route.request().url();
+      networkEvents.push({
+        eventType: "mock",
+        method,
+        url,
+        status: 401,
+        error: "",
+      });
+      networkLogs.push(`[${nowIso()}] [MOCK-401] ${method} ${url}`);
       await route.fulfill({
         status: 401,
         contentType: "application/json",
@@ -257,6 +321,16 @@ async function main() {
 
     await runRound7(page, payload, files);
     await runRound8(page, payload, files);
+
+    noiseReport = await buildNoiseReport(files);
+    addCheckpoint("noise-baseline-diff", !noiseReport.hasNewNoise, {
+      unknownSignatureCount: noiseReport.unknownSignatureCount,
+      report: path.relative(REPO_ROOT, files.noiseReportMd),
+    });
+    if (noiseReport.hasNewNoise) {
+      throw new Error(`Noise baseline drift: ${noiseReport.unknownSignatureCount} new signatures`);
+    }
+
     await context.close();
 
     const summary = {
@@ -268,6 +342,7 @@ async function main() {
       checkpoints,
       runDir: path.relative(REPO_ROOT, RUN_DIR),
       startedDevServer,
+      noiseBaseline: noiseReport,
     };
 
     await writeList(files.console, consoleLogs);
@@ -287,11 +362,20 @@ async function main() {
       checkpoints,
       runDir: path.relative(REPO_ROOT, RUN_DIR),
       startedDevServer,
+      noiseBaseline: noiseReport,
       error: summarizeError(error),
     };
 
     await writeList(files.console, consoleLogs);
     await writeList(files.network, networkLogs);
+    if (!noiseReport) {
+      try {
+        noiseReport = await buildNoiseReport(files);
+      } catch (noiseError) {
+        console.error(`[p4-session-replay] Failed to build noise report: ${summarizeError(noiseError)}`);
+      }
+      summary.noiseBaseline = noiseReport;
+    }
     await writeText(files.summaryJson, `${JSON.stringify(summary, null, 2)}\n`);
     await writeText(files.summaryMd, renderSummaryMarkdown(summary, files, REPO_ROOT));
 

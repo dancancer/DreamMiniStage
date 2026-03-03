@@ -1,0 +1,62 @@
+[2026-03-03T15:43:47.174Z] [warning] 找不到节点类型的工具类: userInput
+[2026-03-03T15:43:47.174Z] [warning] 找不到节点类型的工具类: pluginMessage
+[2026-03-03T15:43:47.174Z] [warning] 找不到节点类型的工具类: plugin
+[2026-03-03T15:43:47.174Z] [warning] 找不到节点类型的工具类: output
+[2026-03-03T15:43:47.174Z] [log] Node user-input-1: Processing workflow beforeExecute
+[2026-03-03T15:43:47.182Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-03T15:43:47.182Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-03T15:43:47.182Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-03T15:43:47.182Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-03T15:43:47.183Z] [log] Node user-input-1: Processing workflow afterExecute
+[2026-03-03T15:43:47.183Z] [log] Node plugin-message-1: Processing workflow beforeExecute
+[2026-03-03T15:43:47.183Z] [log] 🔌 PluginMessageNode: Processing user input {userInputLength: 43, characterId: p4-round10-character, userInputPreview: Player Input：P4 Round10 Plain401 Message A3...}
+[2026-03-03T15:43:47.183Z] [log] 🔌 PluginMessageNode: Initializing plugin system...
+[2026-03-03T15:43:47.183Z] [log] ✅ PluginMessageNode: Plugin system initialized
+[2026-03-03T15:43:47.183Z] [log] 🔌 PluginMessageNode: Processing onMessage hooks...
+[2026-03-03T15:43:47.183Z] [log] 📝 Dialogue Stats: Message received: Player Input：P4 Round10 Plain401 Message A3...
+[2026-03-03T15:43:47.183Z] [log] ✅ PluginMessageNode: onMessage hooks processed {originalLength: 43, processedLength: 43, changed: false}
+[2026-03-03T15:43:47.183Z] [log] ✅ PluginMessageNode: Processing complete {originalLength: 43, processedLength: 43, changed: false}
+[2026-03-03T15:43:47.183Z] [log] Node plugin-message-1: Processing workflow afterExecute
+[2026-03-03T15:43:47.183Z] [log] Node history-pre-1: Processing workflow beforeExecute
+[2026-03-03T15:43:47.183Z] [log] [historyPreTool] Executing getChatHistoryMessages [p4r10-1772552610608-session-plain, 10]
+[2026-03-03T15:43:47.190Z] [log] [HistoryPreNodeTools] Got 2 chat history messages for p4r10-1772552610608-session-plain
+[2026-03-03T15:43:47.190Z] [log] [historyPreTool] Executing getConversationContext [p4r10-1772552610608-session-plain, 3]
+[2026-03-03T15:43:47.190Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-03T15:43:47.190Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-03T15:43:47.190Z] [log] [ContentParser][START] 输入长度=0
+[2026-03-03T15:43:47.190Z] [log] [ContentParser][EMPTY] 输入为空，返回空内容
+[2026-03-03T15:43:47.190Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-03T15:43:47.190Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-03T15:43:47.190Z] [log] [ContentParser][START] 输入长度=0
+[2026-03-03T15:43:47.190Z] [log] [ContentParser][EMPTY] 输入为空，返回空内容
+[2026-03-03T15:43:47.190Z] [log] [HistoryPreNode] Prepared history for p4r10-1772552610608-session-plain: 2 messages
+[2026-03-03T15:43:47.190Z] [log] Node history-pre-1: Processing workflow afterExecute
+[2026-03-03T15:43:47.190Z] [log] Node preset-1: Processing workflow beforeExecute
+[2026-03-03T15:43:47.191Z] [log] [presetTool] Executing buildPromptFramework [p4-round10-character, zh, , undefined, 200, false, none, p4r10-1772552610608-session-plain, Player Input：P4 Round10 Plain401 Message A3, Array(2)]
+[2026-03-03T15:43:47.191Z] [log] [PresetNodeTools] Found 0 presets in IndexedDB
+[2026-03-03T15:43:47.191Z] [log] [PresetNodeTools] No enabled preset found in IndexedDB
+[2026-03-03T15:43:47.191Z] [log] [PresetNodeTools] Falling back to minimal default preset
+[2026-03-03T15:43:47.191Z] [debug] [WI] Loaded 0 entries from 0 global world books
+[2026-03-03T15:43:47.191Z] [debug] [WI] No character world book found for: p4-round10-character
+[2026-03-03T15:43:47.191Z] [debug] [WI] No dialogue world book found for: p4r10-1772552610608-session-plain
+[2026-03-03T15:43:47.191Z] [debug] [WI] Cached 0 entries for p4-round10-character:p4r10-1772552610608-session-plain
+[2026-03-03T15:43:47.192Z] [log] [PresetNodeTools] Built: preset=default, msgs=7, historyMsgs=2
+[2026-03-03T15:43:47.192Z] [log] Node preset-1: Processing workflow afterExecute
+[2026-03-03T15:43:47.192Z] [log] Node context-1: Processing workflow beforeExecute
+[2026-03-03T15:43:47.192Z] [log] [ContextNode] Pass-through messages=7
+[2026-03-03T15:43:47.192Z] [log] Node context-1: Processing workflow afterExecute
+[2026-03-03T15:43:47.192Z] [log] Node world-book-1: Processing workflow beforeExecute
+[2026-03-03T15:43:47.192Z] [log] [worldBookTool] Executing modifyMessages [p4-round10-character, Array(7), Player Input：P4 Round10 Plain401 Message A3, p4r10-1772552610608-session-plain]
+[2026-03-03T15:43:47.192Z] [debug] [WI] Cache hit for p4-round10-character:p4r10-1772552610608-session-plain
+[2026-03-03T15:43:47.192Z] [log] Node world-book-1: Processing workflow afterExecute
+[2026-03-03T15:43:47.192Z] [log] Node llm-1: Processing workflow beforeExecute
+[2026-03-03T15:43:47.192Z] [log] [llmTool] Executing invokeLLM [Object]
+[2026-03-03T15:43:47.192Z] [log] invokeLLM
+[2026-03-03T15:43:47.192Z] [log] [LLMNodeTools:invokeLLM] 广播 llm-prompt-captured 事件: {dialogueKey: p4r10-1772552610608-session-plain, characterId: p4-round10-character, messagesCount: 7}
+[2026-03-03T15:43:47.195Z] [error] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[2026-03-03T15:43:47.195Z] [error] Method execution failed: invokeLLM Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/ at APIError.generate (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:149:20) at OpenAI.makeStatusError (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8658:260) at OpenAI.makeRequest (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8829:30) at async http://127.0.0.1:3303/_next/static/chunks/fd141_@langchain_openai_c9e0528c._.js:2101:29 at async RetryOperation._fn (http://127.0.0.1:3303/_next/static/chunks/node_modules__pnpm_aeaebd4e._.js:5393:25)
+[2026-03-03T15:43:47.195Z] [error] Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/ at APIError.generate (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:149:20) at OpenAI.makeStatusError (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8658:260) at OpenAI.makeRequest (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8829:30) at async http://127.0.0.1:3303/_next/static/chunks/fd141_@langchain_openai_c9e0528c._.js:2101:29 at async RetryOperation._fn (http://127.0.0.1:3303/_next/static/chunks/node_modules__pnpm_aeaebd4e._.js:5393:25)
+[2026-03-03T15:43:47.195Z] [error] Streaming error: Error: No response returned from workflow at Object.start (http://127.0.0.1:3303/_next/static/chunks/_c6730766._.js:672:27)
+[2026-03-03T15:43:47.207Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-03T15:43:47.208Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-03T15:43:47.214Z] [log] [Fast Refresh] rebuilding
