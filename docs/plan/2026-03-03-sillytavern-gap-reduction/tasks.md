@@ -13,13 +13,15 @@
 
 ## P1 - MVU strict 语义 + Slash 宏条件流
 
-- [ ] 在 `lib/mvu/core/executor.ts` 落地 `strictSet` 执行语义。
-- [ ] 落地 `strictTemplate` 与 `concatTemplateArray` 执行行为，并补冲突测试。
-- [ ] 为 Slash 条件流增加宏预处理（`{{getvar::}}` 相关）。
-- [ ] 解除 `st-baseline-slash-command` 中与宏条件流相关的 skip。
-- [ ] 回归：
+- [x] 在 `lib/mvu/core/executor.ts` 落地 `strictSet` 执行语义。
+- [x] 落地 `strictTemplate` 与 `concatTemplateArray` 执行行为，并补冲突测试。
+- [x] 为 Slash 条件流增加宏预处理（`{{getvar::}}` 相关）。
+- [x] 解除 `st-baseline-slash-command` 中与宏条件流相关的 skip。
+- [x] 回归：
+  - `pnpm vitest run lib/mvu/__tests__/executor-option-semantics.test.ts`
   - `pnpm vitest run lib/core/__tests__/st-baseline-mvu.test.ts`
   - `pnpm vitest run lib/core/__tests__/st-baseline-slash-command.test.ts`
+  - `pnpm vitest run lib/slash-command/__tests__/kernel-core.test.ts`
 
 ## P2 - 高频 Slash 命令族扩展
 

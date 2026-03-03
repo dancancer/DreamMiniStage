@@ -149,7 +149,11 @@ async function executeCommand(node: CommandNode, ctx: ExecContext): Promise<Exec
 }
 
 async function executeIf(node: IfNode, ctx: ExecContext): Promise<ExecResult> {
-  const condition = resolveTruth(node.condition, ctx);
+  const conditionResult = evaluateCondition(node.condition, ctx);
+  if (!conditionResult.ok) {
+    return { pipe: ctx.pipe, signal: { kind: "abort", value: `Invalid /if condition: ${conditionResult.error}` } };
+  }
+  const condition = conditionResult.value;
   const block = condition ? node.thenBlock : node.elseBlock;
   if (!block) return { pipe: ctx.pipe };
   return runBlock(block, ctx);
@@ -157,7 +161,13 @@ async function executeIf(node: IfNode, ctx: ExecContext): Promise<ExecResult> {
 
 async function executeWhile(node: WhileNode, ctx: ExecContext): Promise<ExecResult> {
   let pipe = ctx.pipe;
-  while (resolveTruth(node.condition, { ...ctx, pipe })) {
+  while (true) {
+    const conditionResult = evaluateCondition(node.condition, { ...ctx, pipe });
+    if (!conditionResult.ok) {
+      return { pipe, signal: { kind: "abort", value: `Invalid /while condition: ${conditionResult.error}` } };
+    }
+    if (!conditionResult.value) break;
+
     const blockResult = await runBlock(node.body, { ...ctx, pipe });
     pipe = blockResult.pipe;
     if (blockResult.signal?.kind === "return" || blockResult.signal?.kind === "abort") {
@@ -210,19 +220,181 @@ async function runBlock(body: AstNode[], ctx: ExecContext): Promise<ExecResult> 
 //                              工具函数
 // =============================================================================
 
-function resolveTruth(expr: string, ctx: ExecContext): boolean {
-  const value = resolveValue(expr, ctx);
-  if (value === undefined || value === null) return false;
-  const str = String(value).toLowerCase().trim();
-  if (str === "" || str === "0" || str === "false" || str === "null") return false;
-  return true;
+interface ConditionResult {
+  ok: boolean;
+  value: boolean;
+  error?: string;
 }
 
-function resolveValue(expr: string, ctx: ExecContext): unknown {
-  if (expr === "$pipe") return ctx.pipe;
-  const scoped = ctx.scope.get(expr);
-  if (scoped !== undefined) return scoped;
+type Comparator = "===" | "!==" | "==" | "!=" | ">=" | "<=" | ">" | "<";
+
+const COMPARATORS: Comparator[] = ["===", "!==", ">=", "<=", "==", "!=", ">", "<"];
+const CONDITION_MACRO_PATTERN = /\{\{([^{}]+)\}\}/g;
+
+function evaluateCondition(expr: string, ctx: ExecContext): ConditionResult {
+  try {
+    const normalizedExpr = preprocessConditionMacros(expr, ctx).trim();
+    if (!normalizedExpr) {
+      return { ok: true, value: false };
+    }
+
+    const comparator = findComparator(normalizedExpr);
+    if (!comparator) {
+      return { ok: true, value: toTruthy(resolveConditionValue(normalizedExpr, ctx)) };
+    }
+
+    const leftExpr = normalizedExpr.slice(0, comparator.index).trim();
+    const rightExpr = normalizedExpr.slice(comparator.index + comparator.operator.length).trim();
+    const leftValue = resolveConditionValue(leftExpr, ctx);
+    const rightValue = resolveConditionValue(rightExpr, ctx);
+    return { ok: true, value: compareConditionValues(leftValue, rightValue, comparator.operator) };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { ok: false, value: false, error: message };
+  }
+}
+
+function preprocessConditionMacros(expr: string, ctx: ExecContext): string {
+  return expr.replace(CONDITION_MACRO_PATTERN, (_match, rawMacro: string) => {
+    const [macroNameRaw, ...argParts] = rawMacro.split("::");
+    const macroName = macroNameRaw.trim().toLowerCase();
+    const macroArg = argParts.join("::").trim();
+    if (!macroArg) {
+      throw new Error(`macro '${rawMacro}' missing argument`);
+    }
+
+    if (macroName === "getvar") {
+      return stringifyMacroValue(ctx.options.context.getVariable(macroArg));
+    }
+    if (macroName === "getglobalvar") {
+      const scoped = ctx.options.context.getScopedVariable?.("global", macroArg);
+      const fallback = scoped !== undefined ? scoped : ctx.options.context.getVariable(macroArg);
+      return stringifyMacroValue(fallback);
+    }
+
+    throw new Error(`unsupported macro '{{${rawMacro}}}'`);
+  });
+}
+
+function stringifyMacroValue(value: unknown): string {
+  if (value === undefined || value === null) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return JSON.stringify(value);
+}
+
+function findComparator(expr: string): { operator: Comparator; index: number } | null {
+  for (const operator of COMPARATORS) {
+    const index = expr.indexOf(operator);
+    if (index > -1) {
+      return { operator, index };
+    }
+  }
+  return null;
+}
+
+function resolveConditionValue(expr: string, ctx: ExecContext): unknown {
+  const symbolValue = resolveSymbolValue(expr, ctx);
+  if (symbolValue.found) return symbolValue.value;
+
+  if (expr.length >= 2) {
+    const head = expr[0];
+    const tail = expr[expr.length - 1];
+    if ((head === "\"" && tail === "\"") || (head === "'" && tail === "'")) {
+      return expr.slice(1, -1);
+    }
+  }
+
+  const lowered = expr.toLowerCase();
+  if (lowered === "true") return true;
+  if (lowered === "false") return false;
+  if (lowered === "null") return null;
+  if (lowered === "undefined") return undefined;
+
+  const numeric = Number(expr);
+  if (!Number.isNaN(numeric)) {
+    return numeric;
+  }
+
   return expr;
+}
+
+function resolveSymbolValue(expr: string, ctx: ExecContext): { found: boolean; value: unknown } {
+  if (expr === "$pipe") return { found: true, value: ctx.pipe };
+
+  const scoped = ctx.scope.get(expr);
+  if (scoped !== undefined) return { found: true, value: scoped };
+
+  const contextValue = ctx.options.context.getVariable(expr);
+  if (contextValue !== undefined) return { found: true, value: contextValue };
+
+  return { found: false, value: expr };
+}
+
+function compareConditionValues(left: unknown, right: unknown, operator: Comparator): boolean {
+  if (operator === "===") return left === right;
+  if (operator === "!==") return left !== right;
+
+  if (operator === "==" || operator === "!=") {
+    const equal = compareLoose(left, right);
+    return operator === "==" ? equal : !equal;
+  }
+
+  const leftNumber = asNumber(left);
+  const rightNumber = asNumber(right);
+
+  if (leftNumber !== null && rightNumber !== null) {
+    if (operator === ">") return leftNumber > rightNumber;
+    if (operator === "<") return leftNumber < rightNumber;
+    if (operator === ">=") return leftNumber >= rightNumber;
+    return leftNumber <= rightNumber;
+  }
+
+  const leftText = String(left ?? "");
+  const rightText = String(right ?? "");
+  if (operator === ">") return leftText > rightText;
+  if (operator === "<") return leftText < rightText;
+  if (operator === ">=") return leftText >= rightText;
+  return leftText <= rightText;
+}
+
+function compareLoose(left: unknown, right: unknown): boolean {
+  const leftNumber = asNumber(left);
+  const rightNumber = asNumber(right);
+  if (leftNumber !== null && rightNumber !== null) {
+    return leftNumber === rightNumber;
+  }
+  return String(left ?? "") === String(right ?? "");
+}
+
+function asNumber(value: unknown): number | null {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function toTruthy(value: unknown): boolean {
+  if (value === undefined || value === null) return false;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0 && !Number.isNaN(value);
+  const normalized = String(value).toLowerCase().trim();
+  if (
+    normalized === "" ||
+    normalized === "0" ||
+    normalized === "false" ||
+    normalized === "null" ||
+    normalized === "undefined"
+  ) {
+    return false;
+  }
+  return true;
 }
 
 function parseCount(count: string): number {

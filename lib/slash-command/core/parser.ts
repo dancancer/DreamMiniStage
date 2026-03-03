@@ -155,7 +155,8 @@ function wrapControlNode(cmd: CommandNode): ParseResult<AstNode> {
 }
 
 function buildIf(cmd: CommandNode): ParseResult<IfNode> {
-  if (!cmd.args[0]) return { ok: false, error: "Missing condition for /if" };
+  const condition = cmd.args.join(" ").trim();
+  if (!condition) return { ok: false, error: "Missing condition for /if" };
   if (!cmd.blocks[0]) return { ok: false, error: "Missing then block for /if" };
 
   const elseBlock = cmd.blocks[1]?.body;
@@ -163,7 +164,7 @@ function buildIf(cmd: CommandNode): ParseResult<IfNode> {
     ok: true,
     value: {
       type: "if",
-      condition: cmd.args[0],
+      condition,
       thenBlock: cmd.blocks[0].body,
       elseBlock,
       raw: cmd.raw,
@@ -172,14 +173,15 @@ function buildIf(cmd: CommandNode): ParseResult<IfNode> {
 }
 
 function buildWhile(cmd: CommandNode): ParseResult<WhileNode> {
-  if (!cmd.args[0]) return { ok: false, error: "Missing condition for /while" };
+  const condition = cmd.args.join(" ").trim();
+  if (!condition) return { ok: false, error: "Missing condition for /while" };
   if (!cmd.blocks[0]) return { ok: false, error: "Missing body block for /while" };
 
   return {
     ok: true,
     value: {
       type: "while",
-      condition: cmd.args[0],
+      condition,
       body: cmd.blocks[0].body,
       raw: cmd.raw,
     },

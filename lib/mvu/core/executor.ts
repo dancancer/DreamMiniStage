@@ -97,6 +97,7 @@ function executeSet(
   data: StatData,
   path: string,
   args: string[],
+  strictSet: boolean,
 ): CommandResult {
   if (path !== "" && !hasPath(data, path)) {
     return { success: false, path, error: `路径 '${path}' 不存在` };
@@ -106,7 +107,7 @@ function executeSet(
   let newValue = parseCommandValue(args[args.length - 1]);
 
   // 处理 ValueWithDescription（兼容数组和对象格式）
-  if (isValueWithDescription(oldValue)) {
+  if (!strictSet && isValueWithDescription(oldValue)) {
     const oldActual = getVWDValue(oldValue);
     if (typeof oldActual === "number" && newValue !== null) {
       newValue = Number(newValue);
@@ -251,15 +252,10 @@ function executeInsert(
   path: string,
   args: string[],
   schema: MvuData["schema"],
+  templateOptions: ApplyTemplateOptions,
 ): CommandResult {
   const target = path === "" ? data : getByPath(data, path);
   const targetSchema = getSchemaForPath(schema, path);
-
-  // 从根 Schema 读取模板配置
-  const templateOptions: ApplyTemplateOptions = {
-    strictArrayCast: (schema as SchemaWithTemplateConfig)?.strictTemplate ?? false,
-    concatArray: (schema as SchemaWithTemplateConfig)?.concatTemplateArray ?? true,
-  };
 
   // 两参数：合并对象或追加数组
   if (args.length === 2) {
@@ -327,6 +323,22 @@ type SchemaWithTemplateConfig = {
   strictSet?: boolean;
 };
 
+interface RuntimeOptions {
+  strictSet: boolean;
+  templateOptions: ApplyTemplateOptions;
+}
+
+function resolveRuntimeOptions(schema: MvuData["schema"]): RuntimeOptions {
+  const schemaOptions = schema as SchemaWithTemplateConfig | undefined;
+  return {
+    strictSet: schemaOptions?.strictSet ?? false,
+    templateOptions: {
+      strictArrayCast: schemaOptions?.strictTemplate ?? false,
+      concatArray: schemaOptions?.concatTemplateArray ?? true,
+    },
+  };
+}
+
 // ============================================================================
 //                              命令分发
 // ============================================================================
@@ -337,16 +349,17 @@ function executeCommand(
   schema: MvuData["schema"],
 ): CommandResult {
   const path = fixPath(trimQuotes(command.args[0]));
+  const runtimeOptions = resolveRuntimeOptions(schema);
 
   switch (command.type) {
   case "set":
-    return executeSet(data, path, command.args);
+    return executeSet(data, path, command.args, runtimeOptions.strictSet);
   case "add":
     return executeAdd(data, path, command.args);
   case "delete":
     return executeDelete(data, path, command.args, schema);
   case "insert":
-    return executeInsert(data, path, command.args, schema);
+    return executeInsert(data, path, command.args, schema, runtimeOptions.templateOptions);
   default:
     return { success: false, path, error: `未知命令: ${command.type}` };
   }

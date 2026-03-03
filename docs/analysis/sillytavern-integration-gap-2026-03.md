@@ -24,6 +24,16 @@
   - `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`（同步/异步 callback + 错误 + 超时）
   - `lib/nodeflow/__tests__/llm-node-script-tools.test.ts`（LLM tool_calls 闭环）
 
+### 1.2 2026-03-03 P1 增量执行结果
+
+- MVU 执行器已落地 `strictSet` 语义：`strictSet=false` 时对 `ValueWithDescription` 仅更新值位，`strictSet=true` 时按普通 set 替换整个值。
+- `strictTemplate` / `concatTemplateArray` 已接入执行期配置读取（从根 schema 统一透传到 `insert` 模板应用）。
+- Slash 条件流已接入宏预处理与表达式求值：`/if`、`/while` 支持 `{{getvar::}}` + 比较运算；未知宏显式 fail-fast。
+- `st-baseline-slash-command` 宏条件流相关 `5` 个 skip 已全部解除。
+- 新增回归覆盖：
+  - `lib/mvu/__tests__/executor-option-semantics.test.ts`
+  - `lib/slash-command/__tests__/kernel-core.test.ts`
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
@@ -99,21 +109,28 @@ pnpm vitest run \
 - `8` files passed
 - `55` tests passed
 
-### 3.3 仍存在的 skip（影响“等价迁移”）
+### 3.3 宏条件流回归收敛
 
-主要集中在 Slash 宏条件流（`{{getvar::}}`）能力缺口：
+- 执行命令：
 
-- `lib/core/__tests__/st-baseline-slash-command.test.ts:338`
-- `lib/core/__tests__/st-baseline-slash-command.test.ts:366`
-- `lib/core/__tests__/st-baseline-slash-command.test.ts:374`
-- `lib/core/__tests__/st-baseline-slash-command.test.ts:396`
-- `lib/core/__tests__/st-baseline-slash-command.test.ts:405`
+```bash
+pnpm vitest run \
+  lib/mvu/__tests__/executor-option-semantics.test.ts \
+  lib/core/__tests__/st-baseline-mvu.test.ts \
+  lib/core/__tests__/st-baseline-slash-command.test.ts \
+  lib/slash-command/__tests__/kernel-core.test.ts
+```
+
+- 结果：
+  - `4` files passed
+  - `131` tests passed
+  - `0` skipped（`st-baseline-slash-command` 宏条件流 skip 清零）
 
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
 
-- 当前 parser/executor 已支持基础控制流，但缺少上游 parser 的 flags/debug/scope 等完整语义。
+- 当前 parser/executor 已支持基础控制流 + 宏条件表达式，但仍缺少上游 parser 的 flags/debug/scope 等完整语义。
 - 关键位置：
   - 当前：`lib/slash-command/core/parser.ts`
   - 上游：`SillyTavern/public/scripts/slash-commands/SlashCommandParser.js`
@@ -125,9 +142,10 @@ pnpm vitest run \
   - 当前：`public/iframe-libs/slash-runner-shim.js`
   - 上游：`JS-Slash-Runner/src/function/index.ts`
 
-### 4.3 MVU 语义缺口：`strictSet` 等未执行落地
+### 4.3 MVU strict 语义收敛（P1 已完成首轮）
 
-- 当前类型/结构位已存在，但执行层未真正贯通。
+- `strictSet` / `strictTemplate` / `concatTemplateArray` 已从类型位推进到执行位，并补齐专项测试。
+- 剩余风险主要在更细粒度的模板边缘场景（深层嵌套对象模板覆盖策略）与上游大样本脚本验证。
 - 关键位置：
   - 当前：`lib/mvu/core/executor.ts`
   - 上游：`MagVarUpdate/src/function.ts`
@@ -146,8 +164,8 @@ pnpm vitest run \
 本轮判定：**暂缓 E2E，先补核心缺口**。原因：
 
 1. 当前两条主指标仍偏低（`21.71%` / `43.08%`），E2E 的失败将主要反映“已知缺口”，不是新信息。  
-2. slash 宏条件流存在明确 skip，E2E 结果会被该类已知缺陷主导。  
-3. 先完成下一阶段 P0/P1 收敛后，再用 `test-baseline-assets` 做 Playwright 场景回归，信噪比更高。
+2. slash 宏条件流虽已收敛，但命令/API 覆盖率尚未达到门槛，E2E 仍会被覆盖缺口主导。  
+3. 先完成下一阶段 P2/P3 的覆盖率收敛后，再用 `test-baseline-assets` 做 Playwright 场景回归，信噪比更高。
 
 ## 6. 下一阶段门槛（建议）
 

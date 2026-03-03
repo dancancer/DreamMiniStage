@@ -331,11 +331,7 @@ describe("Slash 命令系统基线测试", () => {
       expect(result.aborted).toBe(true);
     });
 
-    // ⚠️ 已知实现差异：Slash 命令系统不支持 {{getvar::}} 宏替换语法
-    // SillyTavern 行为：在 /while 和 /if 条件中支持 {{getvar::}} 宏动态获取变量值
-    // 当前实现：宏替换未集成到 Slash 命令解析器中，导致条件无法正确求值（可能无限循环）
-    // 需要修复：在 Slash 命令执行前预处理宏替换
-    it.skip("/break 应跳出循环（需要宏替换支持）", async () => {
+    it("/break 应跳出循环（支持宏条件）", async () => {
       const ctx = createMinimalContext();
       await execSlash("/setvar count 0", ctx);
       await execSlash(
@@ -362,20 +358,23 @@ describe("Slash 命令系统基线测试", () => {
       expect(result.pipe).toBe("no");
     });
 
-    // ⚠️ 已知实现差异：Slash 命令系统不支持 {{getvar::}} 宏替换语法
-    it.skip("/if 应支持变量比较（需要宏替换支持）", async () => {
+    it("/if 应支持变量比较（宏条件）", async () => {
       const ctx = createMinimalContext();
       await execSlash("/setvar age 25", ctx);
       const result = await execSlash("/if {{getvar::age}} > 18 {: /echo adult :}", ctx);
       expect(result.pipe).toBe("adult");
     });
 
-    // ⚠️ 已知实现差异：Slash 命令系统不支持 {{getvar::}} 宏替换语法
-    it.skip("/if 应支持字符串相等判断（需要宏替换支持）", async () => {
+    it("/if 应支持字符串相等判断（宏条件）", async () => {
       const ctx = createMinimalContext();
       await execSlash("/setvar role admin", ctx);
       const result = await execSlash("/if {{getvar::role}} == admin {: /echo authorized :}", ctx);
       expect(result.pipe).toBe("authorized");
+    });
+
+    it("遇到未知宏时应 fail-fast", async () => {
+      const result = await execSlash("/if {{unknown::x}} == 1 {: /echo yes :}");
+      expect(result.isError).toBe(true);
     });
   });
 
@@ -392,8 +391,7 @@ describe("Slash 命令系统基线测试", () => {
       expect(result.pipe).toBe("5");
     });
 
-    // ⚠️ 已知实现差异：Slash 命令系统不支持 {{getvar::}} 宏替换语法
-    it.skip("/while 应在条件为真时循环（需要宏替换支持）", async () => {
+    it("/while 应在条件为真时循环（宏条件）", async () => {
       const ctx = createMinimalContext();
       await execSlash("/setvar i 0", ctx);
       await execSlash("/while {{getvar::i}} < 3 {: /incvar i :}", ctx);
@@ -401,8 +399,7 @@ describe("Slash 命令系统基线测试", () => {
       expect(result.pipe).toBe("3");
     });
 
-    // ⚠️ 已知实现差异：Slash 命令系统不支持 {{getvar::}} 宏替换语法
-    it.skip("/while 应在条件为假时停止（需要宏替换支持）", async () => {
+    it("/while 应在条件为假时停止（宏条件）", async () => {
       const ctx = createMinimalContext();
       await execSlash("/setvar x 10", ctx);
       await execSlash("/while {{getvar::x}} < 5 {: /incvar x :}", ctx);

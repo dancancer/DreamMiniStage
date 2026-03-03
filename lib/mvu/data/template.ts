@@ -70,7 +70,7 @@ export function applyTemplate(
     if (strictArrayCast) return value;
     return concatArray
       ? [value, ...template]
-      : [value];
+      : mergeArrays(template, [value]);
   }
 
   // 其他情况：不应用模板
