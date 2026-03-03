@@ -31,6 +31,9 @@
 - [x] 二轮增量：补齐 `api / api-url / server` 最小只读子集，并为写路径显式 fail-fast。
 - [x] 二轮回归：`pnpm vitest run lib/slash-command/__tests__/p2-api-command-gaps.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`。
 - [x] 二轮指标：Slash 覆盖率更新为 `65 / 258 = 25.19%`。
+- [x] 三轮增量：补齐 `fuzzy` 命令最小子集（`list + threshold + mode(first|best)`），参数错误显式 fail-fast。
+- [x] 三轮回归：`pnpm vitest run lib/slash-command/__tests__/p2-fuzzy-command-gaps.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`。
+- [x] 三轮指标：Slash 覆盖率更新为 `66 / 258 = 25.58%`。
 - [ ] 目标：Slash 覆盖率提升到 `>= 30%`。
 
 ## P3 - TavernHelper API 缺口收敛

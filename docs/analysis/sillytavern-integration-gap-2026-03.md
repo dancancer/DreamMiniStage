@@ -10,7 +10,7 @@
 
 - 当前 gap **仍不算小**，不满足“进入 Playwright E2E”条件。
 - 相比上一轮，基础能力和回归稳定性已明显改善，但核心迁移指标仍偏低：
-  - SillyTavern Slash 命令覆盖：**25.19%**
+  - SillyTavern Slash 命令覆盖：**25.58%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
 - 结论：继续做“高价值缺口收敛”比直接做 E2E 更划算，E2E 先作为下一阶段 gate。
 
@@ -95,19 +95,32 @@
 - 新增回归覆盖：
   - `lib/slash-command/__tests__/p2-api-command-gaps.test.ts`
 
+### 1.7 2026-03-03 P2 增量执行结果（三轮：fuzzy 命令最小子集）
+
+- Slash Registry 已补齐 `fuzzy` 命令最小可运行语义：
+  - 支持 `list`（JSON 数组）
+  - 支持 `threshold`（`0~1` 浮点）
+  - 支持 `mode=first|best`（默认 `first`）
+- 命令语义对齐：
+  - `mode=first` 按列表顺序返回首个命中项。
+  - `mode=best` 返回阈值内分数最低项；未命中返回空字符串。
+  - 参数错误（缺少 `list`、非法 JSON、`threshold` 越界、未知 `mode`、缺少搜索文本）统一显式 fail-fast。
+- 新增回归覆盖：
+  - `lib/slash-command/__tests__/p2-fuzzy-command-gaps.test.ts`
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
 
 - 上游命令总量：`258`
   - 统计口径：`SillyTavern/public/scripts` 下 `SlashCommand.fromProps({ name: ... })` 唯一命令名。
-- 当前命令总量：`129`
+- 当前命令总量：`130`
   - 统计口径：
     - `lib/slash-command/registry/index.ts` 中 `COMMAND_REGISTRY`；
     - `lib/slash-command/core/parser.ts` 控制命令（`if/while/times/return/break/abort`）；
     - `lib/slash-command/core/executor.ts` 特殊命令（`let/var`）。
-- 交集：`65`
-- 覆盖率：`65 / 258 = 25.19%`
+- 交集：`66`
+- 覆盖率：`66 / 258 = 25.58%`
 
 ### 2.2 JS-Slash-Runner TavernHelper API 覆盖
 
@@ -233,6 +246,20 @@ pnpm vitest run \
   - `2` files passed
   - `60` tests passed
 
+### 3.7 P2 fuzzy 命令回归（本轮新增）
+
+- 执行命令：
+
+```bash
+pnpm vitest run \
+  lib/slash-command/__tests__/p2-fuzzy-command-gaps.test.ts \
+  lib/core/__tests__/st-baseline-slash-command.test.ts
+```
+
+- 结果：
+  - `2` files passed
+  - `58` tests passed
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -266,20 +293,19 @@ pnpm vitest run \
   - `hooks/script-bridge/tool-handlers.ts`
   - `lib/nodeflow/LLMNode/LLMNodeTools.ts`
 
-### 4.5 P2 高频缺口头部（二轮后）
+### 4.5 P2 高频缺口头部（三轮后）
 
-- `api` 命令族已从高频缺口头部移除，剩余头部集中在：
-  - `fuzzy`
-  - `reload-page`
+- `api` 与 `fuzzy` 命令已从高频缺口头部移除，剩余头部集中在：
+  - `chat-manager / chat-reload`
   - `run`
   - `trimtokens`
-- 建议下一轮优先继续补单族命令（先 `fuzzy` 或 `reload-page` 只读/无副作用路径），持续保持“每轮一族 + 回归 + 覆盖率快照”节奏。
+- 建议下一轮优先继续补单族命令（先 `chat-manager` 或 `chat-reload` 最小只读路径），持续保持“每轮一族 + 回归 + 覆盖率快照”节奏。
 
 ## 5. 为什么本轮不做 Playwright E2E
 
 本轮判定：**暂缓 E2E，先补核心缺口**。原因：
 
-1. 关键瓶颈已收敛到 Slash 侧：命令覆盖率虽提升到 `24.42%`，但仍低于 `30%` gate，E2E 失败仍将以“已知缺命令”为主。  
+1. 关键瓶颈已收敛到 Slash 侧：命令覆盖率虽提升到 `25.58%`，但仍低于 `30%` gate，E2E 失败仍将以“已知缺命令”为主。  
 2. 虽然 TavernHelper API 覆盖已达 `60.77%`，但 Slash 命令族与 parser 语义仍未达可观测新信息的阶段。  
 3. 先完成下一阶段 P2 的命令族补齐后，再用 `test-baseline-assets` 做 Playwright 场景回归，信噪比更高。
 

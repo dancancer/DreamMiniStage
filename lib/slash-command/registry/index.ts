@@ -17,6 +17,7 @@ import * as GenerationHandlers from "./handlers/generation";
 import * as OperatorHandlers from "./handlers/operators";
 import * as JSSlashRunnerHandlers from "./handlers/js-slash-runner";
 import * as ApiHandlers from "./handlers/api";
+import * as FuzzyHandlers from "./handlers/fuzzy";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -44,6 +45,7 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["api", ApiHandlers.handleApi],
   ["api-url", ApiHandlers.handleApiUrl],
   ["server", ApiHandlers.handleApiUrl],
+  ["fuzzy", FuzzyHandlers.handleFuzzy],
 
   // ─── 工具命令 ───
   ["echo", CoreHandlers.handleEcho],
