@@ -102,6 +102,33 @@ function resolveAudioType(
   return { type: undefined, restArgs: args };
 }
 
+function ensureAudioCapability(commandName: string, available: boolean): void {
+  if (!available) {
+    throw new Error(`/${commandName} is not available in current context`);
+  }
+}
+
+function hasPlayCapability(ctx: ExecutionContext, type: AudioChannelType): boolean {
+  if (ctx.playAudioByType) {
+    return true;
+  }
+  return type === "bgm" && (typeof ctx.playAudio === "function" || typeof ctx.resumeAudio === "function");
+}
+
+function hasPauseCapability(ctx: ExecutionContext, type: AudioChannelType): boolean {
+  if (ctx.pauseAudioByType) {
+    return true;
+  }
+  return type === "bgm" && typeof ctx.pauseAudio === "function";
+}
+
+function hasStopCapability(ctx: ExecutionContext, type: AudioChannelType): boolean {
+  if (ctx.stopAudioByType) {
+    return true;
+  }
+  return type === "bgm" && typeof ctx.stopAudio === "function";
+}
+
 function getAudioList(ctx: ExecutionContext, type: AudioChannelType): AudioTrack[] {
   if (ctx.getAudioListByType) {
     return ctx.getAudioListByType(type).map((track) => ({ url: track.url, title: track.title }));
@@ -223,13 +250,9 @@ export const handleAudioEnable: CommandHandler = async (args, namedArgs, ctx, pi
     return pipe;
   }
 
+  ensureAudioCapability("audioenable", typeof ctx.setAudioEnabledByType === "function");
   const enabled = parseBoolean(namedArgs.state ?? restArgs[0], true);
-
-  if (ctx.setAudioEnabledByType) {
-    await ctx.setAudioEnabledByType(type, enabled);
-  } else if (type === "bgm" && !enabled) {
-    await ctx.stopAudio?.();
-  }
+  await ctx.setAudioEnabledByType!(type, enabled);
 
   audioState[type].enabled = enabled;
   if (!enabled) {
@@ -257,6 +280,7 @@ export const handleAudioPlay: CommandHandler = async (args, namedArgs, ctx, pipe
   const shouldPlay = parseBoolean(namedArgs.play ?? restArgs[0], true);
 
   if (!shouldPlay) {
+    ensureAudioCapability("audioplay", hasPauseCapability(ctx, type));
     if (ctx.pauseAudioByType) {
       await ctx.pauseAudioByType(type);
     } else if (type === "bgm") {
@@ -266,6 +290,7 @@ export const handleAudioPlay: CommandHandler = async (args, namedArgs, ctx, pipe
     return pipe;
   }
 
+  ensureAudioCapability("audioplay", hasPlayCapability(ctx, type));
   if (ctx.playAudioByType) {
     await ctx.playAudioByType(type);
   } else if (type === "bgm") {
@@ -315,6 +340,7 @@ export const handleAudioImport: CommandHandler = async (args, namedArgs, ctx, pi
     return pipe;
   }
 
+  ensureAudioCapability("audioimport", typeof ctx.appendAudioListByType === "function");
   await appendAudioList(ctx, type, newTracks);
 
   const shouldPlay = parseBoolean(namedArgs.play, true);
@@ -322,6 +348,7 @@ export const handleAudioImport: CommandHandler = async (args, namedArgs, ctx, pi
     return pipe;
   }
 
+  ensureAudioCapability("audioimport", hasPlayCapability(ctx, type));
   if (ctx.playAudioByType) {
     await ctx.playAudioByType(type, newTracks[0]);
   } else if (type === "bgm" && ctx.playAudio) {
@@ -351,9 +378,11 @@ export const handleAudioSelect: CommandHandler = async (args, namedArgs, ctx, pi
 
   const existing = getAudioList(ctx, type);
   if (!existing.some((track) => track.url === url)) {
+    ensureAudioCapability("audioselect", typeof ctx.appendAudioListByType === "function");
     await appendAudioList(ctx, type, [{ url, title: url }]);
   }
 
+  ensureAudioCapability("audioselect", hasPlayCapability(ctx, type));
   if (ctx.playAudioByType) {
     await ctx.playAudioByType(type, { url, title: url });
   } else if (type === "bgm" && ctx.playAudio) {
@@ -380,9 +409,8 @@ export const handleAudioMode: CommandHandler = async (args, namedArgs, ctx, pipe
     return pipe;
   }
 
-  if (ctx.setAudioModeByType) {
-    await ctx.setAudioModeByType(type, mode);
-  }
+  ensureAudioCapability("audiomode", typeof ctx.setAudioModeByType === "function");
+  await ctx.setAudioModeByType!(type, mode);
   audioState[type].mode = mode;
 
   return pipe;
@@ -399,6 +427,7 @@ export const handleAudioPause: CommandHandler = async (args, namedArgs, ctx, pip
   const { type } = resolveAudioType(args, namedArgs);
   const channel = type ?? "bgm";
 
+  ensureAudioCapability("audiopause", hasPauseCapability(ctx, channel));
   if (ctx.pauseAudioByType) {
     await ctx.pauseAudioByType(channel);
   } else if (channel === "bgm") {
@@ -416,6 +445,7 @@ export const handleAudioResume: CommandHandler = async (args, namedArgs, ctx, pi
   const { type } = resolveAudioType(args, namedArgs);
   const channel = type ?? "bgm";
 
+  ensureAudioCapability("audioresume", hasPlayCapability(ctx, channel));
   if (ctx.playAudioByType) {
     await ctx.playAudioByType(channel);
   } else if (channel === "bgm") {
@@ -433,6 +463,7 @@ export const handleAudioStop: CommandHandler = async (args, namedArgs, ctx, pipe
   const { type } = resolveAudioType(args, namedArgs);
   const channel = type ?? "bgm";
 
+  ensureAudioCapability("audiostop", hasStopCapability(ctx, channel));
   if (ctx.stopAudioByType) {
     await ctx.stopAudioByType(channel);
   } else if (channel === "bgm") {
@@ -462,7 +493,8 @@ export const handleAudioVolume: CommandHandler = async (args, namedArgs, ctx, pi
     channel.volume = volume;
   }
 
-  await ctx.setAudioVolume?.(volume);
+  ensureAudioCapability("audiovolume", typeof ctx.setAudioVolume === "function");
+  await ctx.setAudioVolume!(volume);
   return pipe;
 };
 
@@ -478,6 +510,7 @@ export const handleAudioQueue: CommandHandler = async (args, namedArgs, ctx, pip
     return JSON.stringify(audioState[channel].playlist.map((track) => track.url));
   }
 
+  ensureAudioCapability("audioqueue", typeof ctx.appendAudioListByType === "function");
   await appendAudioList(ctx, channel, [{ url, title: url }]);
   return pipe;
 };
@@ -489,6 +522,8 @@ export const handleAudioClear: CommandHandler = async (args, namedArgs, ctx, pip
   const { type } = resolveAudioType(args, namedArgs);
   const channel = type ?? "bgm";
 
+  ensureAudioCapability("audioclear", typeof ctx.replaceAudioListByType === "function");
+  ensureAudioCapability("audioclear", hasStopCapability(ctx, channel));
   await replaceAudioList(ctx, channel, []);
   audioState[channel].currentUrl = null;
   audioState[channel].isPlaying = false;

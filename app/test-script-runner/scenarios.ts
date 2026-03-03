@@ -96,6 +96,15 @@ const scenarioDefinitions: P4ScenarioDefinition[] = [
     expectation: "/reload-page 在宿主缺失回调时应显式失败",
     category: "failure-injection",
   },
+  {
+    id: "audio-callback-missing-failfast",
+    title: "故障注入：缺失音频宿主回调",
+    assetReferences: [
+      "test-baseline-assets/preset/夏瑾 Pro - Beta 0.70.json",
+    ],
+    expectation: "/audioplay 在宿主未注入音频回调时应显式失败",
+    category: "failure-injection",
+  },
 ];
 
 function capFunctionToolTimeout(maxTimeoutMs: number): () => void {
@@ -452,6 +461,36 @@ async function runReloadPageFailfastScenario(): Promise<P4ScenarioResult> {
   };
 }
 
+async function runAudioCallbackMissingFailfastScenario(): Promise<P4ScenarioResult> {
+  const startedAt = performance.now();
+  let passed = false;
+  let detail: Record<string, unknown> = {};
+
+  try {
+    const ctx = createMinimalContext();
+    const result = await executeSlashCommandScript("/audioplay type=bgm", ctx);
+    const errorMessage = result.errorMessage ?? "";
+
+    passed = result.isError && errorMessage.includes("/audioplay is not available");
+    detail = {
+      result,
+      errorMessage,
+    };
+  } catch (error) {
+    detail = {
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  return {
+    id: "audio-callback-missing-failfast",
+    title: "故障注入：缺失音频宿主回调",
+    passed,
+    durationMs: Math.round(performance.now() - startedAt),
+    detail,
+  };
+}
+
 const scenarioRunners: Record<string, () => Promise<P4ScenarioResult>> = {
   "script-tool-loop": runScriptToolLoopScenario,
   "slash-control-flow": runSlashControlFlowScenario,
@@ -460,6 +499,7 @@ const scenarioRunners: Record<string, () => Promise<P4ScenarioResult>> = {
   "tool-timeout-failfast": runToolTimeoutFailfastScenario,
   "macro-unknown-failfast": runUnknownMacroFailfastScenario,
   "reload-page-failfast": runReloadPageFailfastScenario,
+  "audio-callback-missing-failfast": runAudioCallbackMissingFailfastScenario,
 };
 
 export function getP4ScenarioDefinitions(): P4ScenarioDefinition[] {

@@ -1,4 +1,4 @@
-# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮）
+# P4 Playwright MCP E2E（2026-03-03 首轮 + 二轮 + 三轮）
 
 ## 1. 目标与范围
 
@@ -17,6 +17,7 @@
 | `tool-timeout-failfast` | 故障注入 | 未回调 tool call 的超时路径 | `test-baseline-assets/character-card/Sgw3.card.json` | 返回 `Function tool timeout` 错误并判定 PASS |
 | `macro-unknown-failfast` | 故障注入 | 条件表达式未知宏路径 | `test-baseline-assets/preset/明月秋青v3.94.json` | 返回 `unsupported macro` 错误并判定 PASS |
 | `reload-page-failfast` | 故障注入 | 宿主缺失 `/reload-page` 回调路径 | `test-baseline-assets/character-card/Sgw3.card.json` | 返回 `not available in current context` 错误并判定 PASS |
+| `audio-callback-missing-failfast` | 故障注入 | 宿主缺失 `/audioplay` 音频回调路径 | `test-baseline-assets/preset/夏瑾 Pro - Beta 0.70.json` | 返回 `/audioplay is not available in current context` 并判定 PASS |
 
 ## 3. 执行步骤（Playwright MCP）
 
@@ -56,14 +57,31 @@
 }
 ```
 
+### 4.3 三轮（补齐音频回调缺失注入）
+
+- 汇总：`8/8` 场景通过，`0` 失败。
+- 三轮执行时间：`2026-03-03T08:21:28.328Z` ~ `2026-03-03T08:21:28.437Z`。
+
+```json
+{
+  "phase": "P4-Playwright-MCP-E2E",
+  "total": 8,
+  "passed": 8,
+  "failed": 0,
+  "allPassed": true
+}
+```
+
 ## 5. 证据资产
 
 - 首轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
 - 首轮日志摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-console-network.md`
 - 二轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round2-pass.png`
 - 二轮日志摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round2-console-network.md`
+- 三轮截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round3-pass.png`
+- 三轮日志摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round3-console-network.md`
 
 ## 6. 备注
 
-- 二轮已补齐故障注入最小集，避免只停留在 happy path。
+- 三轮已补齐音频回调缺失注入，故障注入最小集扩展为 `4` 条。
 - 仍未覆盖 `/session` 真实交互链路，建议作为下一轮重点（输入 slash -> UI 反馈 -> 状态验证）。

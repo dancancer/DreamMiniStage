@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { executeSlashCommandScript } from "../executor";
+import { createMinimalContext, executeSlashCommandScript } from "../executor";
 import type { AudioChannelSnapshot, AudioChannelType, ExecutionContext } from "../types";
 
 type RuntimeChannelState = AudioChannelSnapshot & { volume: number };
@@ -167,5 +167,20 @@ describe("JS-Slash-Runner audio semantics", () => {
 
     await executeSlashCommandScript("/audioplaypause type=bgm", ctx);
     expect(channels.bgm.isPlaying).toBe(true);
+  });
+
+  it("fails fast when host audio callbacks are missing", async () => {
+    const ctx = createMinimalContext();
+
+    const playResult = await executeSlashCommandScript("/audioplay type=bgm", ctx);
+    const importResult = await executeSlashCommandScript(
+      "/audioimport type=bgm https://a.example/missing-callback.mp3",
+      ctx,
+    );
+
+    expect(playResult.isError).toBe(true);
+    expect(playResult.errorMessage).toContain("/audioplay is not available in current context");
+    expect(importResult.isError).toBe(true);
+    expect(importResult.errorMessage).toContain("/audioimport is not available in current context");
   });
 });
