@@ -1,13 +1,12 @@
-# Handoff（2026-03-03 / P4 五轮）
+# Handoff（2026-03-03 / P4 六轮）
 
-## 本轮完成（P4 - `/session` 真实 UI + 会话切换隔离）
+## 本轮完成（P4 - `/session` slash 审计 + 刷新一致性 + 隔离复验）
 
-- 已完成 `/session` 真实交互链路验证（不再仅限 `test-script-runner` 页面）：
-  1. 在浏览器 `IndexedDB` 注入双角色 + 双会话（`session-a` / `session-b`）。
-  2. 打开 `session-a`，提交输入消息（`P4 Round5 UI Message A2`）。
-  3. 回首页点击会话卡切换到 `session-b`，验证会话隔离。
-- 已固化执行前置清理脚本：`scripts/p4-playwright-preflight.sh`。
-  - 作用：清理 `mcp-chrome/Playwright` 残留进程，降低 profile 抢占导致的假失败。
+- 已完成六轮 `/session` 真实页面审计链路：
+  1. 注入 `IndexedDB` 双会话数据（`session-a` / `session-b`）。
+  2. 在 `session-a` 输入 `/send P4 Round6 SlashPathMessage|/trigger`。
+  3. 在 `401` 失败后刷新 `session-a`，验证提交后状态一致性。
+  4. 切换到 `session-b` 复验跨会话隔离。
 - 已更新 P4 执行文档与证据索引：
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/p4-playwright-e2e.md`
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/tasks.md`
@@ -15,28 +14,27 @@
 
 ## 本轮 Playwright MCP 实跑结果
 
-- 运行标识：`p4r5-1772534891379`
+- 运行标识：`p4r6-1772535993689`
 - 页面链路：
-  - `http://127.0.0.1:3303/session?id=p4r5-1772534891379-session-a`
+  - `http://127.0.0.1:3303/session?id=p4r6-1772535993689-session-a`
   - `http://127.0.0.1:3303/`
-  - `http://127.0.0.1:3303/session?id=p4r5-1772534891379-session-b`
-- 结果：`1/1` 场景通过，`0` 失败。
+  - `http://127.0.0.1:3303/session?id=p4r6-1772535993689-session-b`
+- 审计执行：`3/3` 完成（`1` 通过 + `2` 缺口确认）。
 - 关键断言命中：
-  - `session-a` 渲染 `P4 Round5 Opening A`。
-  - 输入提交后 UI 显示 `P4 Round5 UI Message A2`，输入框已清空。
-  - 切换到 `session-b` 后仅出现 `P4 Round5 Opening B`，未出现 `session-a` 用户消息。
-- Console / Network 观察：
-  - `api.openai.com` 命中 `401`（当前无 API key，符合 fail-fast 预期）。
-  - 背景图 `background_red.png/background_yellow.png` 为 `404`（非核心链路）。
+  - slash 输入现状：`/send ...|/trigger` 被当作普通消息渲染，未命中 slash 直达执行链路。
+  - fail-fast 可见：`api.openai.com` 命中 `401`，并抛出 `No response returned from workflow`。
+  - 刷新一致性：刷新 `session-a` 后仅保留 opening，刚提交的用户输入未持久化。
+  - 会话隔离：`session-b` 页面仅显示 `P4 Round6 Opening B`，未出现 `session-a` 输入。
 
 ## 本轮证据资产
 
-- 五轮截图（输入提交）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-input-pass.png`
-- 五轮截图（会话切换）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-pass.png`
-- 五轮 console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-console-network.md`
-- 五轮原始日志：
-  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-console.log`
-  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-network.log`
+- 六轮截图（slash 输入现状）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-slash-input-raw-path.png`
+- 六轮截图（刷新后状态）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-refresh-state.png`
+- 六轮截图（会话隔离复验）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-session-b-isolation-pass.png`
+- 六轮 console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-console-network.md`
+- 六轮原始日志：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-console.log`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-network.log`
 
 ## 本轮回归（命令级）
 
@@ -44,24 +42,25 @@
 scripts/p4-playwright-preflight.sh
 ```
 
-- 结果：发现并清理残留浏览器进程，脚本正常退出（`0`）。
+- 结果：本轮执行前未发现残留浏览器进程，脚本正常退出（`0`）。
 
-## 风险与边界
+## 风险与边界（六轮后）
 
-- `/session` UI 已覆盖“输入提交 + 会话切换隔离”，但尚未覆盖“slash 直达执行（不走 LLM）”的真实页面路径。
-- 当前失败注入主要来自“无 API key -> 401”；尚未固化“失败后刷新重进”的持久化一致性断言。
-- 背景图 `404` 为现存非阻断噪音，会影响 console 纯净度统计。
+- `/session` 仍未打通 slash 直达执行分流（当前输入 `/...` 仍走普通输入 + LLM）。
+- `401` 失败后用户输入未持久化，刷新重进后状态回退到 opening。
+- 背景图 `404` 与节点工具类告警仍是已知噪音，会干扰 console 纯净度统计，但不阻断主断言。
 
-## 下一步建议（P4 六轮）
+## 下一步建议（P4 七轮）
 
-1. 在 `/session` 页面补 `slash` 直达 E2E：`/send|/trigger|/run` 至少覆盖一条真实用户链路。  
-2. 增加“失败后刷新重进”场景：提交失败 -> 刷新 -> 重进同会话，校验消息持久化与状态一致性。  
-3. 将 `scripts/p4-playwright-preflight.sh` 接入固定执行入口（本地命令模板或 CI step）。
+1. 在 `SessionPage` 提交链路加入 slash 直达分流（`trim` 后首字符为 `/`），并补 `/send|/trigger|/run` 页面级 E2E。  
+2. 修复失败后持久化：提交后先落库 user 节点，再触发生成；`401` 仅影响 assistant 侧，不回滚 user 输入。  
+3. 将 `scripts/p4-playwright-preflight.sh` 接入固定入口（`pnpm` 脚本或 CI step），避免回归执行前遗漏清理。
 
 ---
 
 ## 历史记录（简版）
 
+- 六轮 P4：审计链路 `3/3` 已执行，确认两项缺口（slash 直达未命中、失败后输入未持久化）。
 - 五轮 P4：`/session` 真实 UI 场景 `1/1` 通过。
 - 四轮 P4：`9/9`（`4` 主链路 + `5` 故障注入）通过。  
 - 三轮 P4：`8/8`（`4` 主链路 + `4` 故障注入）通过。  

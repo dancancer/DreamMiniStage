@@ -1,0 +1,30 @@
+[   13159ms] [WARNING] 找不到节点类型的工具类: userInput @ http://127.0.0.1:3303/_next/static/chunks/lib_bf9429e2._.js:1133
+[   13159ms] [WARNING] 找不到节点类型的工具类: pluginMessage @ http://127.0.0.1:3303/_next/static/chunks/lib_bf9429e2._.js:1133
+[   13159ms] [WARNING] 找不到节点类型的工具类: plugin @ http://127.0.0.1:3303/_next/static/chunks/lib_bf9429e2._.js:1133
+[   13159ms] [WARNING] 找不到节点类型的工具类: output @ http://127.0.0.1:3303/_next/static/chunks/lib_bf9429e2._.js:1133
+[   13353ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://api.openai.com/v1/chat/completions:0
+[   13354ms] [ERROR] Method execution failed: invokeLLM Error: [llmTool.invokeLLM] 401 You didn't provide an API key. You need to provide your API key in an Authorization header using Bearer auth (i.e. Authorization: Bearer YOUR_KEY), or as the password field (with blank username) if you're accessing the API from your browser and are prompted for a username and password. You can obtain an API key from https://platform.openai.com/account/api-keys.
+
+Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/
+
+    at APIError.generate (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:149:20)
+    at OpenAI.makeStatusError (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8658:260)
+    at OpenAI.makeRequest (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8829:30)
+    at async http://127.0.0.1:3303/_next/static/chunks/fd141_@langchain_openai_c9e0528c._.js:2101:29
+    at async RetryOperation._fn (http://127.0.0.1:3303/_next/static/chunks/node_modules__pnpm_9b4ad42b._.js:5393:25) @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:1193
+[   13355ms] [ERROR] Error: [llmTool.invokeLLM] 401 You didn't provide an API key. You need to provide your API key in an Authorization header using Bearer auth (i.e. Authorization: Bearer YOUR_KEY), or as the password field (with blank username) if you're accessing the API from your browser and are prompted for a username and password. You can obtain an API key from https://platform.openai.com/account/api-keys.
+
+Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/
+
+    at APIError.generate (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:149:20)
+    at OpenAI.makeStatusError (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8658:260)
+    at OpenAI.makeRequest (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8829:30)
+    at async http://127.0.0.1:3303/_next/static/chunks/fd141_@langchain_openai_c9e0528c._.js:2101:29
+    at async RetryOperation._fn (http://127.0.0.1:3303/_next/static/chunks/node_modules__pnpm_9b4ad42b._.js:5393:25) @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:1193
+[   13356ms] [ERROR] Processing error: Error: No response returned from workflow
+    at handleCharacterChatRequest (http://127.0.0.1:3303/_next/static/chunks/_c6730766._.js:489:23)
+    at async generateResponse (http://127.0.0.1:3303/_next/static/chunks/lib_bf9429e2._.js:22417:26)
+    at async sendMessage (http://127.0.0.1:3303/_next/static/chunks/lib_bf9429e2._.js:22736:5)
+    at async sendMessage (http://127.0.0.1:3303/_next/static/chunks/lib_bf9429e2._.js:23158:13)
+    at async useCharacterDialogue.useCallback[handleSendMessage] [as handleSendMessage] (http://127.0.0.1:3303/_next/static/chunks/hooks_70bda5e7._.js:4236:13)
+    at async SessionPageContent.useCallback[handleSubmit] (http://127.0.0.1:3303/_next/static/chunks/_c6730766._.js:1682:13) @ http://127.0.0.1:3303/_next/static/chunks/da4ac_next_dist_client_2f6b2c5e._.js:1193

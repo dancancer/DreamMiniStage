@@ -8,11 +8,11 @@
 
 ## 1. 本轮复评结论（先给结论）
 
-- 当前 gap **仍不算小**，但 P4 已进入“脚本执行页 + 真实会话页”双轨稳定回归阶段。
+- 当前 gap **仍不算小**，P4 已从“可跑通”进入“真实 UI 缺口显式化”阶段。
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**30.23%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
-- 结论：P2/P3 gate 持续达标，P4 五轮已达成（四轮脚本执行面 + 五轮 `/session` 真实 UI 面）；下一阶段可转向“真实 UI 下 slash 直达执行 + 失败后持久化一致性”。
+- 结论：P2/P3 gate 持续达标；P4 六轮已完成（四轮脚本执行面 + 五轮 `/session` 交互面 + 六轮缺口审计），并确认两项真实 UI 缺口：`slash` 直达未命中、失败后输入未持久化。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -227,6 +227,23 @@
   - 原始日志：
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-console.log`
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-network.log`
+
+### 1.16 2026-03-03 P4 增量执行结果（六轮：`/session` slash + 刷新一致性审计）
+
+- 六轮执行目标：把“建议项”落地成可复现审计链路，覆盖 `/session` 下 slash 输入路径、`401` 后刷新一致性、跨会话隔离复验。
+- 六轮关键结果：
+  - `session-a` 输入 `/send P4 Round6 SlashPathMessage|/trigger` 后，UI 渲染原始文本并进入 LLM 链路，说明 slash 直达执行未命中。
+  - 同链路命中 `https://api.openai.com/v1/chat/completions -> 401`（fail-fast 可见）。
+  - 刷新 `session-a` 后仅保留 opening，上一条用户输入消失，确认“失败后输入未持久化”缺口。
+  - 切换 `session-b` 后仅见 `P4 Round6 Opening B`，会话隔离语义保持成立。
+- 六轮证据已固化：
+  - 截图（slash 输入现状）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-slash-input-raw-path.png`
+  - 截图（刷新后状态）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-refresh-state.png`
+  - 截图（会话隔离复验）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-session-b-isolation-pass.png`
+  - console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-console-network.md`
+  - 原始日志：
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-console.log`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-network.log`
 
 ## 2. 审计口径与量化结果
 
@@ -499,6 +516,20 @@ pnpm vitest run \
     - 切换后 `session-b` 页面仅保留 `P4 Round5 Opening B`
     - 未观测跨会话消息污染
 
+### 3.16 P4 Playwright MCP E2E（六轮 `/session` slash + 刷新审计）
+
+- 执行路径：
+  - 执行 `scripts/p4-playwright-preflight.sh` 清理残留浏览器进程。
+  - 启动 `pnpm dev`（`3303`）。
+  - Playwright MCP 注入 `IndexedDB` 双会话测试数据并打开 `/session?id=p4r6-1772535993689-session-a`。
+  - 在输入框提交 `/send P4 Round6 SlashPathMessage|/trigger`，随后刷新同会话。
+  - 返回首页切换到 `session-b` 复验隔离。
+- 结果：
+  - 审计检查执行：`3/3`
+  - 通过：`1`（会话隔离）
+  - 发现缺口：`2`（slash 直达未命中、失败后输入未持久化）
+  - Console：关键错误集中在 `401` 与 `No response returned from workflow`。
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -538,22 +569,23 @@ pnpm vitest run \
 - 头部缺口已进一步后移到低频命令与深语义能力（如 parser flags/debug/scope chain 细节），短期更适合通过 E2E 曝露真实阻塞点。
 - 建议从“继续堆命令数”转向“以 E2E 场景驱动补缺”，优先修复能复现实际迁移失败的路径。
 
-### 4.6 P4 现阶段风险（五轮后）
+### 4.6 P4 现阶段风险（六轮后）
 
-- `/session` 真实 UI 已接入，但“输入 slash 直达执行（不经 LLM）”仍未形成稳定回归面。
-- 五轮在无 API 配置下走到 `401 fail-fast`，验证了错误可见性；但尚未覆盖“失败后消息持久化（刷新/重进）”的长路径一致性。
+- 六轮已将“slash 直达 + 失败后刷新一致性”从建议项推进为已执行审计项，并确认真实缺口存在。
+- `/session` 当前输入 slash 文本仍会走普通用户输入 + LLM 路径，未进入 slash 执行器。
+- `401` 失败后刷新会话，用户输入未持久化，状态与提交前不一致。
 - `mcp-chrome` 抢占风险已通过 `scripts/p4-playwright-preflight.sh` 收敛为可执行模板，仍需在 CI/自动化流水线中落地调用。
 
-## 5. P4 五轮结论
+## 5. P4 六轮结论
 
-本轮判定：**P4 五轮已达成“脚本执行页 + 真实会话页”双轨可回归**。
+本轮判定：**P4 已完成“可回归 + 缺口显式化”双目标**。
 
 1. 脚本执行面保持 `9/9` 全绿（`4` 主链路 + `5` 故障注入）。  
-2. 五轮新增 `/session` 真实 UI 场景 `1/1` 通过，完成输入提交与会话切换隔离验证。  
-3. 执行前清理脚本已固化，Playwright MCP 会话抢占风险从“人工经验”收敛为“脚本模板”。
+2. `/session` 真实 UI 基线保持有效（五轮 `1/1` + 六轮隔离复验通过）。  
+3. 六轮将两项真实阻塞显式化并沉淀证据：`slash` 直达未命中、失败后输入未持久化。
 
-## 6. 下一阶段建议（P4 六轮）
+## 6. 下一阶段建议（P4 七轮）
 
-1. 增加 `/session` 下 slash 直达链路（`/send|/trigger|/run`）E2E，避免 UI 回归只覆盖普通输入路径。  
-2. 增补“失败后持久化一致性”断言：提交失败 -> 刷新页面 -> 重进会话，验证消息与状态是否符合预期。  
-3. 将 `scripts/p4-playwright-preflight.sh` 接入自动执行入口（本地命令模板或 CI step），避免人工漏执行。
+1. 在 `SessionPage` 输入提交链路增加 slash 直达分流（以 `trim` 后首字符 `/` 为判定），并补 `/send|/trigger|/run` 页面级回归。  
+2. 修复 `401` 失败后的用户输入持久化：提交后先落库，再异步触发生成；失败只影响 assistant 侧，不回滚 user 节点。  
+3. 把 `scripts/p4-playwright-preflight.sh` 接入固定入口（`pnpm` 脚本或 CI step），并将 round6 审计场景纳入常规回归模板。

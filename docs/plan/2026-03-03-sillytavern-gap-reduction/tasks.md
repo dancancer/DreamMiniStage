@@ -65,6 +65,8 @@
 - [x] 五轮增量：补齐 `/session` 真实 UI 场景（输入提交 + 消息渲染 + 会话切换隔离），并记录 API 未配置下的 fail-fast 行为。
 - [x] 五轮执行：Playwright MCP 实跑通过（`session-a` 输入后渲染消息，切换到 `session-b` 后无跨会话污染）。
 - [x] 五轮清理固化：新增 `scripts/p4-playwright-preflight.sh`，执行前自动回收 `mcp-chrome/Playwright` 残留进程。
+- [x] 六轮增量：补充 `/session` slash 直达与失败后刷新一致性审计（`/send ...|/trigger` 输入路径 + `401` 后刷新）。
+- [x] 六轮执行：审计链路全部执行完成，确认 `session-b` 隔离仍通过，同时暴露两项缺口（slash 直达未命中、失败后输入未持久化）。
 - [x] 固化失败截图/日志与复现步骤，纳入回归文档。
   - 场景映射与执行记录：`docs/plan/2026-03-03-sillytavern-gap-reduction/p4-playwright-e2e.md`
   - 运行截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
@@ -81,6 +83,13 @@
   - 五轮原始日志：
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-console.log`
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round5-session-network.log`
+  - 六轮截图（slash 输入现状）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-slash-input-raw-path.png`
+  - 六轮截图（刷新后状态）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-refresh-state.png`
+  - 六轮截图（会话隔离复验）：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-session-b-isolation-pass.png`
+  - 六轮 console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-console-network.md`
+  - 六轮原始日志：
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-console.log`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-round6-network.log`
 
 ## 每轮完成后的固定动作
 
