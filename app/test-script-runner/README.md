@@ -2,10 +2,12 @@
 
 # test-script-runner/
 
-脚本运行器测试页面。用于调试和测试脚本执行环境。
+SillyTavern P4 Playwright E2E 调试页面。用于在浏览器环境串联执行脚本工具、Slash 控制流、MVU 与音频事件主场景。
 
 ## 文件清单
 
 | 文件 | 地位 | 功能 |
 |------|------|------|
-| `page.tsx` | 页面入口 | 脚本测试界面与运行环境 |
+| `page.tsx` | 页面入口 | P4 场景执行控制台与 JSON 报告输出 |
+| `scenarios.ts` | 场景编排 | 四条 P4 E2E 场景定义与执行逻辑 |
+| `scenario-helpers.ts` | 辅助模块 | API 上下文与音频执行上下文工厂 |

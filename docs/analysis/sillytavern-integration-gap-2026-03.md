@@ -161,6 +161,18 @@
 - 新增回归覆盖：
   - `lib/slash-command/__tests__/p2-branch-ui-command-gaps.test.ts`
 
+### 1.11 2026-03-03 P4 增量执行结果（首轮：Playwright MCP E2E 落地）
+
+- 已在 `app/test-script-runner` 落地 P4 浏览器执行面：
+  - `page.tsx`：P4 场景控制台（批量执行、单场景执行、JSON 报告输出）。
+  - `scenarios.ts`：四条主场景编排（脚本工具、Slash 控制流、MVU 变量链路、音频事件链路）。
+- 已完成 `test-baseline-assets` 场景映射固化：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/p4-playwright-e2e.md`
+- 已固化首轮运行证据：
+  - 截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
+  - console/network 摘要：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-console-network.md`
+- 首轮结果：`4/4` 场景通过，`0` 失败。
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
@@ -358,6 +370,20 @@ pnpm vitest run \
   - `4` files passed
   - `69` tests passed
 
+### 3.11 P4 Playwright MCP E2E（本轮新增）
+
+- 执行路径：
+  - 启动 `pnpm dev`（`3303`）
+  - Playwright MCP 打开 `/test-script-runner`
+  - 点击 `运行全部 P4 场景`
+- 结果：
+  - 场景通过：`4/4`
+  - 失败：`0`
+  - Console：`0 error / 0 warning`
+  - 关键链路日志已观测：
+    - `[registerFunctionTool] Registered: p4_tool_echo`
+    - `[/event-emit] Emitted: stage_change {source: p4-audio}`
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -397,18 +423,22 @@ pnpm vitest run \
 - 头部缺口已进一步后移到低频命令与深语义能力（如 parser flags/debug/scope chain 细节），短期更适合通过 E2E 曝露真实阻塞点。
 - 建议从“继续堆命令数”转向“以 E2E 场景驱动补缺”，优先修复能复现实际迁移失败的路径。
 
-## 5. 为什么下一步应进入 Playwright E2E
+### 4.6 P4 现阶段风险（首轮后）
 
-本轮判定：**进入 E2E 时机已到**。原因：
+- 当前 P4 场景覆盖的是“能力闭环最小真链路”，仍未覆盖真实 session 页面的人机交互路径（输入框、消息渲染、会话切换）。
+- 本轮无失败样本，说明基础链路健康；但也意味着尚未触发“深语义回归”与“真实 UI 联动回归”。
+- 下一轮应引入“故障注入 + 真实页面路径”双轨执行，避免只停留在 happy path。
 
-1. Slash 覆盖率已达 `30.23%`（`78 / 258`），跨过既定 `30%` gate。  
-2. TavernHelper API 覆盖率保持 `60.77%`，持续高于 `55%` gate。  
-3. 宏条件流 skip 已清零，P0/P1 核心回归持续全绿，继续只做单命令补齐的边际收益开始下降。
+## 5. P4 首轮结论
 
-## 6. 下一阶段建议（P4）
+本轮判定：**P4 已正式启动且首轮全绿**。
 
-建议按以下顺序推进：
+1. 四条主场景已落地浏览器执行面，并完成 Playwright MCP 实跑。  
+2. 首轮结果 `4/4` 通过，关键链路日志和截图已固化。  
+3. 覆盖策略已从“命令计数驱动”切到“E2E 场景驱动”，可继续按失败单推进补缺。
 
-1. 基于 `test-baseline-assets` 固化 4 条 E2E 主场景：脚本注册调用、Slash 控制流、MVU 变量链路、音频事件链路。  
-2. 每条场景记录失败截图 + 网络/控制台日志 + 最小复现脚本，形成可追踪缺口清单。  
-3. 仅对 E2E 实际触发的缺口做回填，继续执行“单路径 + fail-fast + 回归快照”策略。
+## 6. 下一阶段建议（P4 二轮）
+
+1. 引入故障注入场景：对 `tool callback timeout`、`unknown macro`、`缺失音频回调` 做显式失败快照采集。  
+2. 增加真实页面链路：将至少一条场景迁移到 `/session` 用户交互路径（输入 slash -> UI 反馈 -> 状态验证）。  
+3. 建立每轮 E2E 差异对比：固定截图区域与日志字段，形成“上一轮 vs 本轮”快速 diff。

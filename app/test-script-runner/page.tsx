@@ -1,102 +1,152 @@
-/**
- * @input  react, lib/script-runner/executor
- * @output ScriptRunnerTest (default export)
- * @pos    测试页面 - 脚本执行器功能验证
- * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
- *
- * Script Runner Test Page
- *
- * Basic test to verify the script executor functionality
- */
-
 "use client";
 
-import { useState } from "react";
-import { ScriptExecutor } from "@/lib/script-runner/executor";
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  getP4ScenarioDefinitions,
+  runAllP4Scenarios,
+  runP4ScenarioById,
+  type P4ScenarioResult,
+} from "./scenarios";
 
-export default function ScriptRunnerTest() {
-  const [result, setResult] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  
-  const runTest = async () => {
-    setLoading(true);
-    setResult("Running test...\n");
-    let executor: ScriptExecutor | null = null;
-    
-    try {
-      executor = new ScriptExecutor({
-        timeout: 5000,
-        allowConsole: true,
-      });
-      
-      // Test 1: Basic execution
-      setResult(prev => prev + "\n[Test 1] Basic execution...\n");
-      const result1 = await executor.execute(`
-        DreamMiniStage.utils.log('Hello from sandbox!');
-        return 1 + 1;
-      `);
-      setResult(prev => prev + `Result: ${JSON.stringify(result1, null, 2)}\n`);
-      
-      // Test 2: Variable access
-      setResult(prev => prev + "\n[Test 2] Variable access...\n");
-      const result2 = await executor.execute(`
-        DreamMiniStage.variables.set('testVar', 'Hello World');
-        return DreamMiniStage.variables.get('testVar');
-      `, {
-        variables: {},
-      });
-      setResult(prev => prev + `Result: ${JSON.stringify(result2, null, 2)}\n`);
-      
-      // Test 3: Async operation
-      setResult(prev => prev + "\n[Test 3] Async operation...\n");
-      const result3 = await executor.execute(`
-        await DreamMiniStage.utils.waitFor(1000);
-        return 'Waited 1 second';
-      `);
-      setResult(prev => prev + `Result: ${JSON.stringify(result3, null, 2)}\n`);
-      
-      // Test 4: Error handling
-      setResult(prev => prev + "\n[Test 4] Error handling...\n");
-      const result4 = await executor.execute(`
-        throw new Error('Test error');
-      `);
-      setResult(prev => prev + `Result: ${JSON.stringify(result4, null, 2)}\n`);
-      
-      setResult(prev => prev + "\n✅ All tests completed!\n");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      setResult(prev => prev + `\n❌ Error: ${message}\n`);
-    } finally {
-      if (executor) executor.destroy();
-      setLoading(false);
-    }
+type RunState = "idle" | "running";
+
+export default function ScriptRunnerTestPage() {
+  const scenarios = useMemo(() => getP4ScenarioDefinitions(), []);
+  const [runState, setRunState] = useState<RunState>("idle");
+  const [startedAt, setStartedAt] = useState<string | null>(null);
+  const [finishedAt, setFinishedAt] = useState<string | null>(null);
+  const [results, setResults] = useState<P4ScenarioResult[]>([]);
+
+  const total = scenarios.length;
+  const passedCount = results.filter((scenario) => scenario.passed).length;
+  const allPassed = results.length === total && passedCount === total;
+
+  const report = useMemo(() => {
+    return {
+      phase: "P4-Playwright-MCP-E2E",
+      startedAt,
+      finishedAt,
+      total,
+      passed: passedCount,
+      failed: Math.max(results.length - passedCount, 0),
+      allPassed,
+      results,
+    };
+  }, [allPassed, finishedAt, passedCount, results, startedAt, total]);
+
+  const runAll = async (): Promise<void> => {
+    setRunState("running");
+    setStartedAt(new Date().toISOString());
+    setFinishedAt(null);
+    setResults([]);
+
+    const nextResults = await runAllP4Scenarios();
+
+    setResults(nextResults);
+    setFinishedAt(new Date().toISOString());
+    setRunState("idle");
   };
-  
+
+  const runSingle = async (scenarioId: string): Promise<void> => {
+    setRunState("running");
+    if (!startedAt) {
+      setStartedAt(new Date().toISOString());
+    }
+
+    const result = await runP4ScenarioById(scenarioId);
+
+    setResults((previous) => {
+      const filtered = previous.filter((item) => item.id !== scenarioId);
+      return [...filtered, result];
+    });
+    setFinishedAt(new Date().toISOString());
+    setRunState("idle");
+  };
+
   return (
-    <div style={{ padding: "20px", fontFamily: "monospace" }}>
-      <h1>Script Runner Test</h1>
-      <button 
-        onClick={runTest}
-        disabled={loading}
-        style={{
-          padding: "10px 20px",
-          fontSize: "16px",
-          cursor: loading ? "not-allowed" : "pointer",
-        }}
-      >
-        {loading ? "Running..." : "Run Tests"}
-      </button>
-      
-      <pre style={{
-        background: "#f5f5f5",
-        padding: "15px",
-        marginTop: "20px",
-        borderRadius: "4px",
-        maxHeight: "600px",
-        overflow: "auto",
-      }}>
-        {result || "Click \"Run Tests\" to start"}
-      </pre>
+    <div className="mx-auto w-full max-w-6xl space-y-6 px-6 py-8">
+      <header className="space-y-2">
+        <h1 className="text-2xl font-semibold">SillyTavern P4 Playwright E2E 控制台</h1>
+        <p className="text-sm text-muted-foreground">
+          基于 test-baseline-assets 的四条主场景：脚本工具、Slash 控制流、MVU 变量链路、音频事件链路。
+        </p>
+      </header>
+
+      <section className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-4">
+        <Button
+          data-testid="run-p4-e2e"
+          disabled={runState === "running"}
+          onClick={runAll}
+          type="button"
+        >
+          {runState === "running" ? "运行中..." : "运行全部 P4 场景"}
+        </Button>
+        <span
+          className="rounded-md border border-border bg-muted px-3 py-1 text-sm"
+          data-testid="p4-e2e-summary"
+        >
+          {results.length === 0
+            ? "尚未执行"
+            : `${passedCount}/${total} 通过${allPassed ? "（全绿）" : "（存在失败）"}`}
+        </span>
+        <span className="text-xs text-muted-foreground">Started: {startedAt ?? "-"}</span>
+        <span className="text-xs text-muted-foreground">Finished: {finishedAt ?? "-"}</span>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        {scenarios.map((scenario) => {
+          const result = results.find((item) => item.id === scenario.id);
+          const statusLabel = result ? (result.passed ? "PASS" : "FAIL") : "PENDING";
+          const statusClass = result
+            ? (result.passed ? "text-green-600" : "text-red-600")
+            : "text-muted-foreground";
+
+          return (
+            <article className="rounded-lg border border-border bg-card p-4" key={scenario.id}>
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <h2 className="text-base font-medium">{scenario.title}</h2>
+                <span
+                  className={`text-xs font-semibold ${statusClass}`}
+                  data-testid={`scenario-${scenario.id}-status`}
+                >
+                  {statusLabel}
+                </span>
+              </div>
+
+              <p className="mb-2 text-xs text-muted-foreground">{scenario.expectation}</p>
+              <p className="mb-3 text-xs text-muted-foreground">
+                资产：{scenario.assetReferences.join(" | ")}
+              </p>
+
+              <div className="flex items-center justify-between">
+                <Button
+                  data-testid={`run-${scenario.id}`}
+                  disabled={runState === "running"}
+                  onClick={() => runSingle(scenario.id)}
+                  type="button"
+                  variant="outline"
+                >
+                  单独执行
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  用时：{result ? `${result.durationMs}ms` : "-"}
+                </span>
+              </div>
+            </article>
+          );
+        })}
+      </section>
+
+      <section className="rounded-lg border border-border bg-card p-4">
+        <h2 className="mb-3 text-base font-medium">Run Report (JSON)</h2>
+        <pre
+          className="max-h-[520px] overflow-auto rounded-md bg-muted p-3 text-xs"
+          data-testid="p4-e2e-report"
+        >
+          {JSON.stringify(report, null, 2)}
+        </pre>
+      </section>
     </div>
   );
 }
