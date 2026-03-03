@@ -55,6 +55,13 @@ export interface ApiCallContext {
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
   onReloadPage?: () => void | Promise<void>;
+  onTogglePanels?: () => void | Promise<void>;
+  onResetPanels?: () => void | Promise<void>;
+  onToggleVisualNovelMode?: () => void | Promise<void>;
+  onSetBackground?: (background?: string) => string | Promise<string>;
+  onSetTheme?: (theme?: string) => string | Promise<string>;
+  onSetMovingUiPreset?: (presetName: string) => string | Promise<string>;
+  onSetCssVariable?: (args: { varName: string; value: string; target?: string }) => void | Promise<void>;
   onSwitchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;

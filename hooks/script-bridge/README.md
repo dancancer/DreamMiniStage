@@ -43,3 +43,4 @@
 - 已新增 `compat-handlers.ts`，补齐 `importRaw* / extension 管理最小集 / getAllEnabledScriptButtons / getTavernHelperVersion` 等高频迁移 API；其中宿主不支持的写能力（`installExtension/uninstallExtension/reinstallExtension/updateExtension/updateTavernHelper/updateFrontendVersion`）保持显式 fail-fast。
 - 群聊相关 `getGroupMembers` / `isGroupChat` 目前为显式未支持（fail-fast），不再返回静默默认值。
 - 新增 `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`，覆盖 `registerFunctionTool/registerSlashCommand` 的注册→调用→清理→再注册回归链路。
+- `ApiCallContext` 已增加 UI 注入位（`onTogglePanels/onResetPanels/onToggleVisualNovelMode/onSetBackground/onSetTheme/onSetMovingUiPreset/onSetCssVariable`），`slash-handlers.ts` 会透传到 Slash 执行上下文，未注入时对应命令显式 fail-fast。

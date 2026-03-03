@@ -8,11 +8,11 @@
 
 ## 1. 本轮复评结论（先给结论）
 
-- 当前 gap **仍不算小**，不满足“进入 Playwright E2E”条件。
-- 相比上一轮，基础能力和回归稳定性已明显改善，但核心迁移指标仍偏低：
-  - SillyTavern Slash 命令覆盖：**27.52%**
+- 当前 gap **仍不算小**，但已跨过“进入 Playwright E2E”门槛。
+- 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
+  - SillyTavern Slash 命令覆盖：**30.23%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
-- 结论：继续做“高价值缺口收敛”比直接做 E2E 更划算，E2E 先作为下一阶段 gate。
+- 结论：P2/P3 gate 已达标，下一阶段应转入 P4（Playwright MCP E2E），用端到端场景验证真实迁移脚本行为。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -139,19 +139,41 @@
   - `lib/slash-command/__tests__/p2-utility-command-gaps.test.ts`
   - `hooks/script-bridge/__tests__/api-surface-contract.test.ts`
 
+### 1.10 2026-03-03 P2 增量执行结果（六轮：branch / ui 最小子集）
+
+- Slash Registry 已补齐 `branch / ui` 高频缺口最小子集：
+  - `branch-create`
+  - `panels`（含 `togglepanels` 别名）
+  - `bg`（含 `background` 别名）
+  - `theme`
+  - `movingui`
+  - `css-var`
+  - `vn`
+  - `resetpanels`（含 `resetui` 别名）
+  - `?`（含 `help` 别名）
+- 命令语义对齐：
+  - `/branch-create` 默认使用最后一条消息，创建分支名并自动进入分支会话，且复用 `checkpoint` 状态链路。
+  - UI 命令统一走宿主回调注入（`togglePanels/resetPanels/toggleVisualNovelMode/setBackground/setTheme/setMovingUiPreset/setCssVariable`）。
+  - 宿主缺失对应回调时统一显式 fail-fast，避免静默 no-op。
+- Script Bridge 上下文补齐：
+  - `ApiCallContext` 新增 UI 注入位（含 `onSetCssVariable`）。
+  - `slash-handlers` 将 UI 回调透传到 `ExecutionContext`，保持 `iframe -> handler -> slash` 单路径映射。
+- 新增回归覆盖：
+  - `lib/slash-command/__tests__/p2-branch-ui-command-gaps.test.ts`
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
 
 - 上游命令总量：`258`
   - 统计口径：`SillyTavern/public/scripts` 下 `SlashCommand.fromProps({ name: ... })` 唯一命令名。
-- 当前命令总量：`139`
+- 当前命令总量：`150`
   - 统计口径：
     - `lib/slash-command/registry/index.ts` 中 `COMMAND_REGISTRY`；
     - `lib/slash-command/core/parser.ts` 控制命令（`if/while/times/return/break/abort`）；
     - `lib/slash-command/core/executor.ts` 特殊命令（`let/var`）。
-- 交集：`71`
-- 覆盖率：`71 / 258 = 27.52%`
+- 交集：`78`
+- 覆盖率：`78 / 258 = 30.23%`
 
 ### 2.2 JS-Slash-Runner TavernHelper API 覆盖
 
@@ -320,6 +342,22 @@ pnpm vitest run \
   - `3` files passed
   - `65` tests passed
 
+### 3.10 P2 branch / ui 命令回归（本轮新增）
+
+- 执行命令：
+
+```bash
+pnpm vitest run \
+  lib/slash-command/__tests__/p2-branch-ui-command-gaps.test.ts \
+  lib/slash-command/__tests__/p2-checkpoint-command-gaps.test.ts \
+  lib/core/__tests__/st-baseline-slash-command.test.ts \
+  hooks/script-bridge/__tests__/api-surface-contract.test.ts
+```
+
+- 结果：
+  - `4` files passed
+  - `69` tests passed
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -353,25 +391,24 @@ pnpm vitest run \
   - `hooks/script-bridge/tool-handlers.ts`
   - `lib/nodeflow/LLMNode/LLMNodeTools.ts`
 
-### 4.5 P2 高频缺口头部（五轮后）
+### 4.5 P2 高频缺口头部（六轮后）
 
-- `run`、`trimtokens`、`reload-page` 已从高频缺口头部移除。
-- 剩余头部已转移到下一批命令族（优先评估 `branch / ui` 等迁移脚本常用能力）。
-- 建议继续保持“每轮一族 + 回归 + 覆盖率快照”节奏，优先挑“命中频次高 + 语义闭环短”的命令补齐。
+- `branch-create` 与 `ui` 高频命令最小子集已接入，P2 目标覆盖率已达成。
+- 头部缺口已进一步后移到低频命令与深语义能力（如 parser flags/debug/scope chain 细节），短期更适合通过 E2E 曝露真实阻塞点。
+- 建议从“继续堆命令数”转向“以 E2E 场景驱动补缺”，优先修复能复现实际迁移失败的路径。
 
-## 5. 为什么本轮不做 Playwright E2E
+## 5. 为什么下一步应进入 Playwright E2E
 
-本轮判定：**暂缓 E2E，先补核心缺口**。原因：
+本轮判定：**进入 E2E 时机已到**。原因：
 
-1. 关键瓶颈已收敛到 Slash 侧：命令覆盖率虽提升到 `27.52%`，但仍低于 `30%` gate，E2E 失败仍将以“已知缺命令”为主。  
-2. 虽然 TavernHelper API 覆盖已达 `60.77%`，但 Slash 命令族与 parser 语义仍未达可观测新信息的阶段。  
-3. 先完成下一阶段 P2 的命令族补齐后，再用 `test-baseline-assets` 做 Playwright 场景回归，信噪比更高。
+1. Slash 覆盖率已达 `30.23%`（`78 / 258`），跨过既定 `30%` gate。  
+2. TavernHelper API 覆盖率保持 `60.77%`，持续高于 `55%` gate。  
+3. 宏条件流 skip 已清零，P0/P1 核心回归持续全绿，继续只做单命令补齐的边际收益开始下降。
 
-## 6. 下一阶段门槛（建议）
+## 6. 下一阶段建议（P4）
 
-进入 Playwright MCP E2E 前，建议至少达到：
+建议按以下顺序推进：
 
-- Slash 覆盖率 ≥ `30%`
-- TavernHelper API 覆盖率 ≥ `55%`
-- `st-baseline-slash-command` 中宏条件流 skip 清零或降到可接受白名单
-- Function tool 从注册到 LLM 调用结果回传形成可重复闭环
+1. 基于 `test-baseline-assets` 固化 4 条 E2E 主场景：脚本注册调用、Slash 控制流、MVU 变量链路、音频事件链路。  
+2. 每条场景记录失败截图 + 网络/控制台日志 + 最小复现脚本，形成可追踪缺口清单。  
+3. 仅对 E2E 实际触发的缺口做回填，继续执行“单路径 + fail-fast + 回归快照”策略。

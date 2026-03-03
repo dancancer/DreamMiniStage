@@ -2,7 +2,7 @@
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                    Core Command Handlers                                  ║
  * ║                                                                           ║
- * ║  核心命令 - send / trigger / checkpoint / echo / pass / return 等         ║
+ * ║  核心命令 - send / trigger / checkpoint / branch / echo / pass / return 等 ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -192,11 +192,20 @@ function resolveCheckpointMessage(
   return { index, messageId: message.id };
 }
 
-function nextCheckpointName(session: CheckpointSessionState): string {
+function pickMessageIndexSource(...sources: Array<string | undefined>): string | undefined {
+  for (const source of sources) {
+    if (typeof source === "string" && source.trim().length > 0) {
+      return source;
+    }
+  }
+  return undefined;
+}
+
+function nextLinkName(session: CheckpointSessionState, prefix: "checkpoint" | "branch"): string {
   const existed = new Set(session.messageToCheckpoint.values());
   while (true) {
     session.autoSeed += 1;
-    const candidate = `checkpoint-${session.autoSeed}`;
+    const candidate = `${prefix}-${session.autoSeed}`;
     if (!existed.has(candidate)) {
       return candidate;
     }
@@ -210,16 +219,29 @@ export const handleCheckpointCreate: CommandHandler = async (args, namedArgs, ct
   const { messageId } = resolveCheckpointMessage(ctx, rawIndex, "/checkpoint-create");
 
   const requestedName = (args.join(" ") || pipe || "").trim();
-  const checkpointName = requestedName || nextCheckpointName(session);
+  const checkpointName = requestedName || nextLinkName(session, "checkpoint");
 
   session.messageToCheckpoint.set(messageId, checkpointName);
   return checkpointName;
 };
 
+/** /branch-create [mesId] - 在目标消息创建分支并进入分支会话 */
+export const handleBranchCreate: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const session = getCheckpointSession(ctx);
+  const rawIndex = pickMessageIndexSource(namedArgs.mesId, namedArgs.mes, args[0], pipe);
+  const { messageId } = resolveCheckpointMessage(ctx, rawIndex, "/branch-create");
+
+  const branchName = nextLinkName(session, "branch");
+  session.messageToCheckpoint.set(messageId, branchName);
+  session.currentCheckpoint = branchName;
+  session.parentChatName = ctx.characterId || session.parentChatName;
+  return branchName;
+};
+
 /** /checkpoint-get [mesId] - 获取目标消息关联的 checkpoint 名称 */
 export const handleCheckpointGet: CommandHandler = async (args, namedArgs, ctx, pipe) => {
   const session = getCheckpointSession(ctx);
-  const rawIndex = namedArgs.mesId ?? namedArgs.mes ?? args[0] ?? pipe;
+  const rawIndex = pickMessageIndexSource(namedArgs.mesId, namedArgs.mes, args[0], pipe);
   const { messageId } = resolveCheckpointMessage(ctx, rawIndex, "/checkpoint-get");
   return session.messageToCheckpoint.get(messageId) ?? "";
 };
@@ -245,7 +267,7 @@ export const handleCheckpointList: CommandHandler = async (_args, namedArgs, ctx
 /** /checkpoint-go [mesId] - 进入目标消息关联的 checkpoint */
 export const handleCheckpointGo: CommandHandler = async (args, namedArgs, ctx, pipe) => {
   const session = getCheckpointSession(ctx);
-  const rawIndex = namedArgs.mesId ?? namedArgs.mes ?? args[0] ?? pipe;
+  const rawIndex = pickMessageIndexSource(namedArgs.mesId, namedArgs.mes, args[0], pipe);
   const { messageId } = resolveCheckpointMessage(ctx, rawIndex, "/checkpoint-go");
 
   const checkpointName = session.messageToCheckpoint.get(messageId);
@@ -286,6 +308,11 @@ export const handleCheckpointParent: CommandHandler = async (_args, _namedArgs, 
 /** /echo <text> - 回显文本（用于调试） */
 export const handleEcho: CommandHandler = async (args, _namedArgs, _ctx, pipe) => {
   return args.length > 0 ? args.join(" ") : pipe;
+};
+
+/** /? - 返回最小可用帮助文本 */
+export const handleHelp: CommandHandler = async (_args, _namedArgs, _ctx, _pipe) => {
+  return "Use /send, /trigger, /setvar, /run, /checkpoint-create, /branch-create for host-mode scripts.";
 };
 
 /** /pass - 透传 pipe 值 */

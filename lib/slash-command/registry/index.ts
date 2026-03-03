@@ -20,6 +20,7 @@ import * as ApiHandlers from "./handlers/api";
 import * as FuzzyHandlers from "./handlers/fuzzy";
 import * as ChatHandlers from "./handlers/chat";
 import * as UtilityHandlers from "./handlers/utility";
+import * as UiHandlers from "./handlers/ui";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -39,11 +40,22 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["swipe", CoreHandlers.handleSwipe],
   ["comment", CoreHandlers.handleSys],
   ["checkpoint-create", CoreHandlers.handleCheckpointCreate],
+  ["branch-create", CoreHandlers.handleBranchCreate],
   ["checkpoint-get", CoreHandlers.handleCheckpointGet],
   ["checkpoint-list", CoreHandlers.handleCheckpointList],
   ["checkpoint-go", CoreHandlers.handleCheckpointGo],
   ["checkpoint-exit", CoreHandlers.handleCheckpointExit],
   ["checkpoint-parent", CoreHandlers.handleCheckpointParent],
+  ["panels", UiHandlers.handlePanels],
+  ["togglepanels", UiHandlers.handlePanels],
+  ["bg", UiHandlers.handleBg],
+  ["background", UiHandlers.handleBg],
+  ["theme", UiHandlers.handleTheme],
+  ["movingui", UiHandlers.handleMovingUi],
+  ["css-var", UiHandlers.handleCssVar],
+  ["vn", UiHandlers.handleVn],
+  ["resetpanels", UiHandlers.handleResetPanels],
+  ["resetui", UiHandlers.handleResetPanels],
   ["run", UtilityHandlers.handleRun],
   ["call", UtilityHandlers.handleRun],
   ["exec", UtilityHandlers.handleRun],
@@ -59,6 +71,8 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["chat-reload", ChatHandlers.handleChatReload],
 
   // ─── 工具命令 ───
+  ["?", CoreHandlers.handleHelp],
+  ["help", CoreHandlers.handleHelp],
   ["echo", CoreHandlers.handleEcho],
   ["pass", CoreHandlers.handlePass],
   ["return", CoreHandlers.handleReturn],

@@ -156,6 +156,15 @@ export interface ExecutionContext {
     direction: "start" | "end",
   ) => string | Promise<string>;
   reloadPage?: () => void | Promise<void>;
+
+  // 扩展操作 - P2 高频缺口（branch / ui）
+  togglePanels?: () => void | Promise<void>;
+  resetPanels?: () => void | Promise<void>;
+  toggleVisualNovelMode?: () => void | Promise<void>;
+  setBackground?: (background?: string) => string | Promise<string>;
+  setTheme?: (theme?: string) => string | Promise<string>;
+  setMovingUiPreset?: (presetName: string) => string | Promise<string>;
+  setCssVariable?: (args: { varName: string; value: string; target?: string }) => void | Promise<void>;
 }
 
 /** Preset 信息 */

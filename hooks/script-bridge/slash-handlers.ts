@@ -107,6 +107,13 @@ function adaptContext(ctx: ApiCallContext): ExecutionContext {
   const onContinue = ctx.onContinue;
   const onSwipe = ctx.onSwipe;
   const onReloadPage = ctx.onReloadPage;
+  const onTogglePanels = ctx.onTogglePanels;
+  const onResetPanels = ctx.onResetPanels;
+  const onToggleVisualNovelMode = ctx.onToggleVisualNovelMode;
+  const onSetBackground = ctx.onSetBackground;
+  const onSetTheme = ctx.onSetTheme;
+  const onSetMovingUiPreset = ctx.onSetMovingUiPreset;
+  const onSetCssVariable = ctx.onSetCssVariable;
   const onSwitchCharacter = ctx.onSwitchCharacter;
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -291,6 +298,13 @@ function adaptContext(ctx: ApiCallContext): ExecutionContext {
     onContinue,
     onSwipe,
     reloadPage: onReloadPage,
+    togglePanels: onTogglePanels,
+    resetPanels: onResetPanels,
+    toggleVisualNovelMode: onToggleVisualNovelMode,
+    setBackground: onSetBackground,
+    setTheme: onSetTheme,
+    setMovingUiPreset: onSetMovingUiPreset,
+    setCssVariable: onSetCssVariable,
     switchCharacter: onSwitchCharacter,
     getVariable: getLocalVariable,
     setVariable: setLocalVariable,
