@@ -350,6 +350,15 @@
     importPreset: api("preset.importPreset"),
 
     // ──────────────────────────────────────────────────────────────────────
+    //  import_raw API（P3 高频迁移路径）
+    // ──────────────────────────────────────────────────────────────────────
+    importRawCharacter: api("importRawCharacter"),
+    importRawPreset: api("importRawPreset"),
+    importRawChat: api("importRawChat"),
+    importRawWorldbook: api("importRawWorldbook"),
+    importRawTavernRegex: api("importRawTavernRegex"),
+
+    // ──────────────────────────────────────────────────────────────────────
     //  Slash Command API（Requirements 1.1-1.5, 8.1-8.4）
     // ──────────────────────────────────────────────────────────────────────
     triggerSlash: api("triggerSlash"),
@@ -376,6 +385,16 @@
     getCharacter: api("getCharacter"),
     getCurrentCharacter: api("getCurrentCharacter"),
     getCharacterById: api("getCharacterById"),
+    getAllEnabledScriptButtons: api("getAllEnabledScriptButtons"),
+
+    // ──────────────────────────────────────────────────────────────────────
+    //  版本 API（JS-Slash-Runner 兼容）
+    // ──────────────────────────────────────────────────────────────────────
+    getTavernHelperVersion: api("getTavernHelperVersion"),
+    getFrontendVersion: api("getFrontendVersion"),
+    updateTavernHelper: api("updateTavernHelper"),
+    updateFrontendVersion: api("updateFrontendVersion"),
+    getTavernVersion: api("getTavernVersion"),
 
     // ──────────────────────────────────────────────────────────────────────
     //  群聊 API（显式未支持）

@@ -11,7 +11,7 @@
 - 当前 gap **仍不算小**，不满足“进入 Playwright E2E”条件。
 - 相比上一轮，基础能力和回归稳定性已明显改善，但核心迁移指标仍偏低：
   - SillyTavern Slash 命令覆盖：**21.71%**
-  - JS-Slash-Runner TavernHelper API 覆盖：**43.08%**
+  - JS-Slash-Runner TavernHelper API 覆盖：**53.85%**
 - 结论：继续做“高价值缺口收敛”比直接做 E2E 更划算，E2E 先作为下一阶段 gate。
 
 ### 1.1 2026-03-03 P0 增量执行结果
@@ -34,6 +34,22 @@
   - `lib/mvu/__tests__/executor-option-semantics.test.ts`
   - `lib/slash-command/__tests__/kernel-core.test.ts`
 
+### 1.3 2026-03-03 P3 增量执行结果（首轮）
+
+- Script Bridge 已补齐 `import_raw` 高频接口：
+  - `importRawPreset`
+  - `importRawWorldbook`
+  - `importRawTavernRegex`
+  - `importRawChat`
+  - `importRawCharacter`（当前宿主不支持二进制上传路径，显式 fail-fast）
+- 已补齐 script buttons / version 相关接口：
+  - `getAllEnabledScriptButtons`
+  - `getTavernHelperVersion` / `getFrontendVersion` / `getTavernVersion`
+  - `updateTavernHelper` / `updateFrontendVersion`（宿主模式显式 fail-fast）
+- `shim + handler + capability matrix` 已同步收敛到单一声明面，`api-surface-contract` 可持续校验。
+- 新增回归覆盖：
+  - `hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts`
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
@@ -52,10 +68,10 @@
 
 - 上游聚合 API：`130`
   - 统计口径：`JS-Slash-Runner/src/function/index.ts` 中 `getTavernHelper()` 返回对象顶层 key。
-- 当前 shim 顶层 API：`94`
+- 当前 shim 顶层 API：`108`
   - 统计口径：`public/iframe-libs/slash-runner-shim.js` 中 `window.TavernHelper` 顶层 key。
-- 交集：`56`
-- 覆盖率：`56 / 130 = 43.08%`
+- 交集：`70`
+- 覆盖率：`70 / 130 = 53.85%`
 
 ### 2.3 JS-Slash-Runner slash_command 子集
 
@@ -126,6 +142,23 @@ pnpm vitest run \
   - `131` tests passed
   - `0` skipped（`st-baseline-slash-command` 宏条件流 skip 清零）
 
+### 3.4 P3 API 缺口回归（本轮新增）
+
+- 执行命令：
+
+```bash
+pnpm vitest run \
+  hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts \
+  hooks/script-bridge/__tests__/api-surface-contract.test.ts \
+  hooks/script-bridge/__tests__/extension-lifecycle.test.ts \
+  hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts \
+  lib/script-runner/__tests__/slash-runner-shim-contract.test.ts
+```
+
+- 结果：
+  - `5` files passed
+  - `20` tests passed
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -163,7 +196,7 @@ pnpm vitest run \
 
 本轮判定：**暂缓 E2E，先补核心缺口**。原因：
 
-1. 当前两条主指标仍偏低（`21.71%` / `43.08%`），E2E 的失败将主要反映“已知缺口”，不是新信息。  
+1. 当前两条主指标仍偏低（`21.71%` / `53.85%`），E2E 的失败将主要反映“已知缺口”，不是新信息。  
 2. slash 宏条件流虽已收敛，但命令/API 覆盖率尚未达到门槛，E2E 仍会被覆盖缺口主导。  
 3. 先完成下一阶段 P2/P3 的覆盖率收敛后，再用 `test-baseline-assets` 做 Playwright 场景回归，信噪比更高。
 

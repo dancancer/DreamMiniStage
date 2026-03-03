@@ -27,6 +27,7 @@ import { quickReplyHandlers } from "./quickreply-handlers";
 import { characterHandlers } from "./character-handlers";
 import { audioHandlers } from "./audio-handlers";
 import { toolHandlers } from "./tool-handlers";
+import { compatHandlers } from "./compat-handlers";
 
 // ============================================================================
 //                              Handler 注册表
@@ -47,6 +48,7 @@ const API_HANDLERS: ApiHandlerMap = {
   ...characterHandlers,
   ...audioHandlers,
   ...toolHandlers,
+  ...compatHandlers,
 };
 
 // ============================================================================
