@@ -45,6 +45,16 @@ export interface ToolCallResponse {
   error?: string;
 }
 
+function normalizeToolParameters(
+  parameters: ReturnType<typeof getRegisteredFunctionTools>[number]["parameters"],
+): ToolFunction["parameters"] {
+  return {
+    type: "object",
+    properties: parameters?.properties ?? {},
+    required: parameters?.required,
+  };
+}
+
 // ============================================================================
 //                              工具注册表视图
 // ============================================================================
@@ -54,7 +64,7 @@ export function getRegisteredScriptTools(): ScriptTool[] {
   return getRegisteredFunctionTools().map((tool) => ({
     name: tool.name,
     description: tool.description,
-    parameters: tool.parameters || { type: "object", properties: {}, required: [] },
+    parameters: normalizeToolParameters(tool.parameters),
   }));
 }
 
