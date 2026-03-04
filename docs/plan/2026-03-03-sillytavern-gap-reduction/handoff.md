@@ -1,53 +1,54 @@
-# Handoff（2026-03-04 / 二十一轮 displayed-message 子簇收口）
+# Handoff（2026-03-04 / 二十二轮 lorebook/global 长尾别名收口）
 
 ## 本轮完成（代码 + 回归）
 
-- 落地 TavernHelper displayed-message 长尾 API 最小闭环：
-  - 新增 `hooks/script-bridge/compat-displayed-message-handlers.ts`，提供 `formatAsDisplayedMessage/retrieveDisplayedMessage`；
-  - `formatAsDisplayedMessage` 支持 `message_id` 定位（`last/last_user/last_char/number`）并统一参数错误 fail-fast；
-  - `retrieveDisplayedMessage` 返回结构化消息快照（`message_id/role/name/content/formatted_content`），越界与类型错误显式 fail-fast。
-- shim 与能力矩阵同步：
-  - `public/iframe-libs/slash-runner-shim.js` 新增 `formatAsDisplayedMessage/retrieveDisplayedMessage` API_CALL 入口；
-  - `hooks/script-bridge/capability-matrix.ts` 新增 2 个 displayed-message API 声明。
-- 兼容门面收敛：
-  - `hooks/script-bridge/compat-handlers.ts` 通过 `...compatDisplayedMessageHandlers` 聚合 displayed-message 子模块，继续保持“单门面 + 子模块扩展”结构。
-- 测试与文档同步：
-  - `hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts` 新增 displayed-message 语义与 fail-fast 断言；
-  - `hooks/script-bridge/README.md` 同步新增子模块说明与约束；
-  - `docs/plan/2026-03-03-sillytavern-gap-reduction/tasks.md`、`docs/analysis/sillytavern-integration-gap-2026-03.md` 同步更新本轮记录与指标。
+- 落地 TavernHelper `lorebook/global/worldbook` 长尾别名最小闭环（shim 层）：
+  - 在 `public/iframe-libs/slash-runner-shim.js` 新增 `initializeGlobal/waitGlobalInitialized`，用于跨脚本共享对象与等待初始化；
+  - 新增 `getLorebooks/createLorebook/deleteLorebook/getCharLorebooks/setCurrentCharLorebooks/getCurrentCharPrimaryLorebook/getChatLorebook/setChatLorebook/getOrCreateChatLorebook`，统一复用现有 worldbook API_CALL 单路径；
+  - 新增 `setLorebookSettings`（当前仅支持 `selected_global_lorebooks`），其余字段显式 fail-fast；
+  - 新增 `getWorldbook`，将导出的 worldbook 记录归一为稳定数组返回。
+- 兼容契约回归同步：
+  - `lib/script-runner/__tests__/slash-runner-shim-contract.test.ts` 新增别名暴露断言，防止后续回归丢失；
+  - `hooks/script-bridge/__tests__/api-surface-contract.test.ts` 保持全绿，确认新增别名未引入 shim/handler API_CALL 漂移。
+- 计划文档同步：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/tasks.md`、`docs/analysis/sillytavern-integration-gap-2026-03.md` 已更新本轮记录与指标。
 
 ## 本轮验证（命令级）
 
 ```bash
 pnpm vitest run \
-  hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts \
+  lib/script-runner/__tests__/slash-runner-shim-contract.test.ts \
   hooks/script-bridge/__tests__/api-surface-contract.test.ts \
+
+pnpm exec eslint \
+  public/iframe-libs/slash-runner-shim.js \
   lib/script-runner/__tests__/slash-runner-shim-contract.test.ts
 
 pnpm exec tsc --noEmit
 ```
 
-- 结果：全部通过（`19` tests passed，`tsc` 全绿）。
+- 结果：全部通过（`6` tests passed，`eslint + tsc` 全绿）。
 
 ## 计划状态同步
 
 - `docs/plan/2026-03-03-sillytavern-gap-reduction/tasks.md`
-  - `P2` 继续按“真实触发失败”推进，本轮完成 displayed-message 子簇收口；
-  - TavernHelper API 覆盖率更新为 `88 / 130 = 67.69%`（shim 顶层 API `126`）；
+  - `P2` 继续按“真实触发失败”推进，本轮完成 lorebook/global 长尾别名 API 收口；
+  - TavernHelper API 覆盖率更新为 `101 / 130 = 77.69%`（shim 顶层 API `139`）；
   - 当前未完成项主要在：
     - parser 深语义第二切片；
-    - `P2` 剩余低频 API/低频 slash 的机会性补齐。
+    - `P2` 剩余低频 API（`injectPrompts/uninjectPrompts`、`macro_like`、`replaceTavernRegexes/updateTavernRegexesWith` 等）与低频 slash 的机会性补齐。
 
 ## 下一步建议（主线）
 
 1. 继续推进 parser 深语义第二切片（严格转义与 parser 指令交互），先补可复现断言再扩行为面。
-2. 按“真实触发失败”推进 TavernHelper 长尾 API 下一批：优先补 `inject/global/lorebook` 低频簇中的真实阻塞点，不新增兼容分支，保持 fail-fast。
+2. 按“真实触发失败”推进 TavernHelper 长尾 API 下一批：优先补 `injectPrompts/uninjectPrompts` 与 `replaceTavernRegexes/updateTavernRegexesWith`，保持 fail-fast 与单路径。
 3. 主线改动后按需复跑 `pnpm p4:session-replay` 作为守卫基线，继续冻结 CI 能力面扩展。
 
 ---
 
 ## 历史记录（简版）
 
+- 二十二轮：补齐 `lorebook/global/worldbook` 长尾别名 API（含 `initializeGlobal/waitGlobalInitialized/getWorldbook`）；新增 shim 契约断言，TavernHelper API 覆盖提升到 `77.69%`。
 - 二十一轮：补齐 displayed-message 长尾 API（`formatAsDisplayedMessage/retrieveDisplayedMessage`），新增 `compat-displayed-message-handlers`；能力矩阵与回归同步，TavernHelper API 覆盖提升到 `67.69%`。
 - 二十轮：补齐 regex 长尾 API（`formatAsTavernRegexedString/isCharacterTavernRegexesEnabled/getTavernRegexes`），新增 `compat-regex-handlers`；能力矩阵与回归同步，TavernHelper API 覆盖提升到 `66.15%`。
 - 十九轮：补齐 util 长尾 API（`substitudeMacros/getLastMessageId/getMessageId`）+ shim `errorCatched`；能力矩阵与回归同步，TavernHelper API 覆盖提升到 `63.85%`。
@@ -65,4 +66,4 @@ pnpm exec tsc --noEmit
 - 七轮 P4：`/session` 修复复验 `3/3` 通过（slash 直达、刷新持久化、会话隔离）。
 - 六轮 P4：审计链路 `3/3` 已执行，确认两项缺口（slash 直达未命中、失败后输入未持久化）。
 - 五轮 P4：`/session` 真实 UI 场景 `1/1` 通过。
-- P2/P3 指标门槛维持达标：Slash `31.01%`（`80/258`），TavernHelper API `67.69%`（`88/130`）。
+- P2/P3 指标门槛维持达标：Slash `31.01%`（`80/258`），TavernHelper API `77.69%`（`101/130`）。

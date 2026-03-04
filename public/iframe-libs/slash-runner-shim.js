@@ -147,6 +147,69 @@
     };
   }
 
+  function ensureNonEmptyString(value, apiName, argName) {
+    if (typeof value !== "string" || value.trim().length === 0) {
+      throw new Error("[" + apiName + "] " + argName + " must be a non-empty string");
+    }
+    return value.trim();
+  }
+
+  function normalizeLorebookBinding(value) {
+    if (!value || typeof value !== "object") {
+      return {
+        primary: null,
+        additional: [],
+      };
+    }
+
+    var primary = typeof value.primary === "string" && value.primary.length > 0
+      ? value.primary
+      : null;
+    var additional = Array.isArray(value.additional)
+      ? value.additional.filter(function(item) {
+        return typeof item === "string" && item.length > 0;
+      })
+      : [];
+
+    return {
+      primary: primary,
+      additional: additional,
+    };
+  }
+
+  function normalizeWorldbookEntries(worldbookName, rawWorldbook) {
+    if (!rawWorldbook || typeof rawWorldbook !== "object") {
+      throw new Error("[getWorldbook] worldbook not found: " + worldbookName);
+    }
+
+    var entryIds = Object.keys(rawWorldbook).sort(function(left, right) {
+      var leftOrder = Number.parseInt(String(left).replace(/^entry_/, ""), 10);
+      var rightOrder = Number.parseInt(String(right).replace(/^entry_/, ""), 10);
+      if (Number.isFinite(leftOrder) && Number.isFinite(rightOrder)) {
+        return leftOrder - rightOrder;
+      }
+      return String(left).localeCompare(String(right));
+    });
+
+    return entryIds.map(function(entryId) {
+      var value = rawWorldbook[entryId];
+      if (!value || typeof value !== "object") {
+        return {
+          entry_id: entryId,
+          content: "",
+          keys: [],
+        };
+      }
+
+      return Object.assign(
+        {
+          entry_id: entryId,
+        },
+        value,
+      );
+    });
+  }
+
   // ════════════════════════════════════════════════════════════════════════
   //  事件系统：本地 handler 注册表
   //  设计：本地维护 handler 映射，通过 handlerId 与主应用通信
@@ -467,6 +530,34 @@
     },
 
     // ──────────────────────────────────────────────────────────────────────
+    //  全局共享 API（JS-Slash-Runner 兼容）
+    // ──────────────────────────────────────────────────────────────────────
+    initializeGlobal: function(globalName, value) {
+      var normalizedName = ensureNonEmptyString(globalName, "initializeGlobal", "globalName");
+      window[normalizedName] = value;
+      window.dispatchEvent(
+        new CustomEvent("DreamMiniStage:global_initialized:" + normalizedName, {
+          detail: value,
+        }),
+      );
+    },
+    waitGlobalInitialized: function(globalName) {
+      var normalizedName = ensureNonEmptyString(globalName, "waitGlobalInitialized", "globalName");
+      if (Object.prototype.hasOwnProperty.call(window, normalizedName)) {
+        return Promise.resolve(window[normalizedName]);
+      }
+
+      return new Promise(function(resolve) {
+        var eventName = "DreamMiniStage:global_initialized:" + normalizedName;
+        var listener = function() {
+          window.removeEventListener(eventName, listener);
+          resolve(window[normalizedName]);
+        };
+        window.addEventListener(eventName, listener);
+      });
+    },
+
+    // ──────────────────────────────────────────────────────────────────────
     //  消息 API（Requirements 4.1-4.5）
     // ──────────────────────────────────────────────────────────────────────
     getChatMessages: api("getChatMessages"),
@@ -523,6 +614,120 @@
     replaceLorebookEntries: api("lorebook.replaceEntries"),
     setLorebookEntries: api("lorebook.setEntries"),
     getLorebookSettings: api("lorebook.getSettings"),
+    setLorebookSettings: function(settings) {
+      if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
+        throw new Error("[setLorebookSettings] settings must be a plain object");
+      }
+
+      if (!Object.prototype.hasOwnProperty.call(settings, "selected_global_lorebooks")) {
+        throw new Error(
+          "[setLorebookSettings] only selected_global_lorebooks is supported in host mode",
+        );
+      }
+
+      var selectedGlobalLorebooks = settings.selected_global_lorebooks;
+      if (!Array.isArray(selectedGlobalLorebooks)) {
+        throw new Error("[setLorebookSettings] selected_global_lorebooks must be an array");
+      }
+
+      var normalizedNames = selectedGlobalLorebooks.map(function(item) {
+        return ensureNonEmptyString(item, "setLorebookSettings", "selected_global_lorebooks[]");
+      });
+      return callApi("worldbook.rebindGlobalWorldbooks", [normalizedNames]).then(function() {
+        return void 0;
+      });
+    },
+    getLorebooks: api("getWorldbookNames"),
+    createLorebook: function(lorebookName) {
+      var normalizedName = ensureNonEmptyString(lorebookName, "createLorebook", "lorebookName");
+      return callApi("worldbook.createWorldbook", [normalizedName, []]).then(function(result) {
+        return typeof result === "string" && result.length > 0;
+      });
+    },
+    deleteLorebook: function(lorebookName) {
+      var normalizedName = ensureNonEmptyString(lorebookName, "deleteLorebook", "lorebookName");
+      return callApi("worldbook.deleteWorldbook", [normalizedName]).then(function(result) {
+        return !!result;
+      });
+    },
+    getCharLorebooks: function(options) {
+      var optionObject = options && typeof options === "object" && !Array.isArray(options)
+        ? options
+        : {};
+      var target = optionObject.name === undefined ? "current" : optionObject.name;
+      if (target !== "current") {
+        target = ensureNonEmptyString(target, "getCharLorebooks", "options.name");
+      }
+
+      return callApi("worldbook.getCharWorldbookNames", [target]).then(function(binding) {
+        return normalizeLorebookBinding(binding);
+      });
+    },
+    setCurrentCharLorebooks: function(lorebooks) {
+      if (!lorebooks || typeof lorebooks !== "object" || Array.isArray(lorebooks)) {
+        throw new Error("[setCurrentCharLorebooks] lorebooks must be a plain object");
+      }
+
+      var payload = {};
+      if (Object.prototype.hasOwnProperty.call(lorebooks, "primary")) {
+        if (lorebooks.primary === null) {
+          payload.primary = null;
+        } else {
+          payload.primary = ensureNonEmptyString(
+            lorebooks.primary,
+            "setCurrentCharLorebooks",
+            "lorebooks.primary",
+          );
+        }
+      }
+      if (Object.prototype.hasOwnProperty.call(lorebooks, "additional")) {
+        if (!Array.isArray(lorebooks.additional)) {
+          throw new Error("[setCurrentCharLorebooks] lorebooks.additional must be an array");
+        }
+        payload.additional = lorebooks.additional.map(function(item) {
+          return ensureNonEmptyString(item, "setCurrentCharLorebooks", "lorebooks.additional[]");
+        });
+      }
+
+      return callApi("worldbook.rebindCharWorldbooks", ["current", payload]).then(function() {
+        return void 0;
+      });
+    },
+    getCurrentCharPrimaryLorebook: function() {
+      return callApi("worldbook.getCharWorldbookNames", ["current"]).then(function(binding) {
+        var normalized = normalizeLorebookBinding(binding);
+        return normalized.primary;
+      });
+    },
+    getChatLorebook: function() {
+      return callApi("worldbook.getChatWorldbookName", ["current"]).then(function(lorebookName) {
+        return typeof lorebookName === "string" && lorebookName.length > 0 ? lorebookName : null;
+      });
+    },
+    setChatLorebook: function(lorebookName) {
+      if (lorebookName !== null) {
+        lorebookName = ensureNonEmptyString(lorebookName, "setChatLorebook", "lorebookName");
+      }
+      return callApi("worldbook.rebindChatWorldbook", ["current", lorebookName]).then(function() {
+        return void 0;
+      });
+    },
+    getOrCreateChatLorebook: function(lorebookName) {
+      if (lorebookName !== undefined) {
+        lorebookName = ensureNonEmptyString(
+          lorebookName,
+          "getOrCreateChatLorebook",
+          "lorebookName",
+        );
+      }
+      return callApi("worldbook.getOrCreateChatWorldbook", ["current", lorebookName]);
+    },
+    getWorldbook: function(worldbookName) {
+      var normalizedName = ensureNonEmptyString(worldbookName, "getWorldbook", "worldbookName");
+      return callApi("worldbook.export", [normalizedName]).then(function(rawWorldbook) {
+        return normalizeWorldbookEntries(normalizedName, rawWorldbook);
+      });
+    },
 
     // ──────────────────────────────────────────────────────────────────────
     //  Preset API（Requirements 7.1-7.5）

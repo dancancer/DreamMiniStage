@@ -35,4 +35,25 @@ describe("slash-runner shim contract", () => {
     expect(source).not.toMatch(/createAsyncStub\(/);
     expect(source).not.toMatch(/warnUnimplemented\(/);
   });
+
+  it("exposes lorebook/global long-tail compatibility aliases", () => {
+    const source = readShimSource();
+
+    expect(source).toMatch(/initializeGlobal:\s*function\(globalName,\s*value\)/);
+    expect(source).toMatch(/waitGlobalInitialized:\s*function\(globalName\)/);
+    expect(source).toMatch(/setLorebookSettings:\s*function\(settings\)/);
+    expect(source).toMatch(/getLorebooks:\s*api\(\"getWorldbookNames\"\)/);
+    expect(source).toMatch(/createLorebook:\s*function\(lorebookName\)/);
+    expect(source).toMatch(/deleteLorebook:\s*function\(lorebookName\)/);
+    expect(source).toMatch(/getCharLorebooks:\s*function\(options\)/);
+    expect(source).toMatch(/setCurrentCharLorebooks:\s*function\(lorebooks\)/);
+    expect(source).toMatch(/getCurrentCharPrimaryLorebook:\s*function\(\)/);
+    expect(source).toMatch(/getChatLorebook:\s*function\(\)/);
+    expect(source).toMatch(/setChatLorebook:\s*function\(lorebookName\)/);
+    expect(source).toMatch(/getOrCreateChatLorebook:\s*function\(lorebookName\)/);
+    expect(source).toMatch(/getWorldbook:\s*function\(worldbookName\)/);
+    expect(source).toMatch(
+      /only selected_global_lorebooks is supported in host mode/,
+    );
+  });
 });

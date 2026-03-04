@@ -11,8 +11,8 @@
 - 当前 gap **仍不算小**，P4 已具备可监测回归基线；本轮起停止新增 CI 方向投入，回归主线 gap 收敛。
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**31.01%**
-  - JS-Slash-Runner TavernHelper API 覆盖：**67.69%**
-- 结论：P2/P3 gate 持续达标；P4 十一轮沉淀的“自动回放 + 噪音门禁 + run-index”基线继续保留。本轮主线继续收敛 TavernHelper 长尾 displayed-message API（`formatAsDisplayedMessage/retrieveDisplayedMessage`），优先清理真实迁移阻塞点而非继续扩 CI 能力。
+  - JS-Slash-Runner TavernHelper API 覆盖：**77.69%**
+- 结论：P2/P3 gate 持续达标；P4 十一轮沉淀的“自动回放 + 噪音门禁 + run-index”基线继续保留。本轮主线继续收敛 TavernHelper `lorebook/global/worldbook` 长尾别名 API，优先清理真实迁移阻塞点而非继续扩 CI 能力。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -449,6 +449,26 @@
   - `pnpm exec tsc --noEmit`
   - 结果：全部通过（`3 files / 19 tests`，`tsc` 全绿）。
 
+### 1.29 2026-03-04 主线增量执行结果（二十二轮 lorebook/global 长尾别名收口）
+
+- 本轮执行目标：按“真实触发失败”补齐 TavernHelper 低频 `lorebook/global/worldbook` 别名能力，且不引入兼容分支回写。
+- 本轮关键结果：
+  - `public/iframe-libs/slash-runner-shim.js` 新增全局共享别名：
+    - `initializeGlobal`（写入 `window[globalName]` 并广播初始化事件）
+    - `waitGlobalInitialized`（等待 `initializeGlobal` 事件并返回共享对象）
+  - 新增 lorebook/worldbook 别名闭环：
+    - `getLorebooks/createLorebook/deleteLorebook`
+    - `getCharLorebooks/setCurrentCharLorebooks/getCurrentCharPrimaryLorebook`
+    - `getChatLorebook/setChatLorebook/getOrCreateChatLorebook`
+    - `getWorldbook`（将导出的记录归一为稳定数组）
+  - `setLorebookSettings` 在宿主模式仅接受 `selected_global_lorebooks`，其他字段显式 fail-fast，避免静默半实现。
+  - `lib/script-runner/__tests__/slash-runner-shim-contract.test.ts` 新增长尾别名暴露断言，防止后续回归丢失。
+- 本轮回归：
+  - `pnpm vitest run lib/script-runner/__tests__/slash-runner-shim-contract.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`
+  - `pnpm exec eslint public/iframe-libs/slash-runner-shim.js lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
+  - `pnpm exec tsc --noEmit`
+  - 结果：全部通过（`2 files / 6 tests`，`eslint + tsc` 全绿）。
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
@@ -467,10 +487,10 @@
 
 - 上游聚合 API：`130`
   - 统计口径：`JS-Slash-Runner/src/function/index.ts` 中 `getTavernHelper()` 返回对象顶层 key。
-- 当前 shim 顶层 API：`126`
+- 当前 shim 顶层 API：`139`
   - 统计口径：`public/iframe-libs/slash-runner-shim.js` 中 `window.TavernHelper` 顶层 key。
-- 交集：`88`
-- 覆盖率：`88 / 130 = 67.69%`
+- 交集：`101`
+- 覆盖率：`101 / 130 = 77.69%`
 
 ### 2.3 JS-Slash-Runner slash_command 子集
 
@@ -820,6 +840,21 @@ pnpm exec tsc --noEmit
   - 类型检查：通过。
   - 结论：`flags/debug/scope chain` 最小语义切片已进入稳定可回归状态。
 
+### 3.23 shim 长尾别名回归（二十二轮）
+
+- 执行命令：
+
+```bash
+pnpm vitest run lib/script-runner/__tests__/slash-runner-shim-contract.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts
+pnpm exec eslint public/iframe-libs/slash-runner-shim.js lib/script-runner/__tests__/slash-runner-shim-contract.test.ts
+pnpm exec tsc --noEmit
+```
+
+- 结果：
+  - 测试：`2` files / `6` tests 全绿（新增 lorebook/global/worldbook 长尾别名暴露断言）。
+  - Lint/类型检查：通过。
+  - 结论：shim 长尾别名扩展未引入 `API_CALL` 漂移，兼容契约保持稳定。
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -831,7 +866,7 @@ pnpm exec tsc --noEmit
 
 ### 4.2 TavernHelper 能力面不完整
 
-- API 覆盖率已提升到 `67.69%` 并持续高于 `55%` 门槛，displayed-message 子簇已收口；但 shim 仍是“可运行子集”，与上游聚合 API 仍有可见缺口（主要在低频 `inject/global/lorebook` 等簇）。
+- API 覆盖率已提升到 `77.69%` 并持续高于 `55%` 门槛，`lorebook/global/worldbook` 别名子簇已收口；但 shim 仍是“可运行子集”，与上游聚合 API 仍有可见缺口（主要在低频 `inject/macro_like/raw_character/tavern_regex-write` 等簇）。
 - 关键位置：
   - 当前：`public/iframe-libs/slash-runner-shim.js`
   - 上游：`JS-Slash-Runner/src/function/index.ts`

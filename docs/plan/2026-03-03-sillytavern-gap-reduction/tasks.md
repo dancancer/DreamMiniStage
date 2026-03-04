@@ -179,6 +179,9 @@
 - [x] 二十一轮增量：补齐 TavernHelper displayed-message 子簇最小闭环（`formatAsDisplayedMessage/retrieveDisplayedMessage`），新增独立 `compat-displayed-message-handlers` 并在 shim 侧暴露对应入口。
 - [x] 二十一轮回归：`pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec tsc --noEmit` 全绿。
 - [x] 二十一轮指标：TavernHelper API 交集提升到 `88 / 130 = 67.69%`（shim 顶层 API `126`）。
+- [x] 二十二轮增量：在 `slash-runner-shim` 补齐 `lorebook/global/worldbook` 长尾别名 API（`initializeGlobal/waitGlobalInitialized/getLorebooks/createLorebook/deleteLorebook/getCharLorebooks/setCurrentCharLorebooks/getCurrentCharPrimaryLorebook/getChatLorebook/setChatLorebook/getOrCreateChatLorebook/setLorebookSettings/getWorldbook`），保持参数错误显式 fail-fast。
+- [x] 二十二轮回归：`pnpm vitest run lib/script-runner/__tests__/slash-runner-shim-contract.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`、`pnpm exec eslint public/iframe-libs/slash-runner-shim.js lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec tsc --noEmit` 全绿。
+- [x] 二十二轮指标：TavernHelper API 交集提升到 `101 / 130 = 77.69%`（shim 顶层 API `139`）。
 
 ### 优先级依据（本轮素材统计）
 
