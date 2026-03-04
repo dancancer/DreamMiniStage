@@ -882,3 +882,40 @@ pnpm exec tsc --noEmit
   - 继续保持 fail-fast，不做静默兼容分支。
 - 低频 slash 命令补齐降级到 P2：
   - 不再按“命令总数”驱动优先级，改为“素材可复现阻塞”驱动。
+
+## 8. 能力需求清单（真实素材 vs 非素材）
+
+### 8.1 当前真实素材能力需求（从 `test-baseline-assets` 提取）
+
+- Slash 主链路：`/send`、`/trigger`、`/if`、`/let`（含管道与块组合）。
+- 宏与变量高频：`random`、`trim`、`getvar`、`setvar`、`addvar`、`roll`。
+- regex 脚本组合：`findRegex`、`replaceString`、`runOnEdit`、`substituteRegex`、`minDepth`、`maxDepth`、`placement`、`trimStrings`。
+- worldbook 组合字段：`probability`、`useProbability`、`depth`、`group`、`groupWeight`、`scanDepth`。
+
+### 8.2 当前项目已支持（对应真实素材需求）
+
+- Slash 执行内核已稳定支持：管道、块、`/if`、`/while`、`/times`、`/return`、`/break`、`/abort`。
+- 高频命令已覆盖：`/send`、`/trigger`、`/if`、`/let` 及变量链路（`set/get/add/inc/dec`）。
+- parser 深语义第一切片已落地：
+  - `/parser-flag`（`STRICT_ESCAPING`、`REPLACE_GETVAR`）；
+  - debug gate 下 `/breakpoint`；
+  - `scopeDepth/parserFlags` 执行期透传。
+- regex/worldbook 基线能力可运行（`st-baseline-regex`、`st-baseline-worldbook` 已在基线回归通过）。
+
+### 8.3 当前真实素材仍待补充
+
+- regex 组合场景专项回归仍缺：
+  - `V2.0Beta.png` 与 `Sgw3.*` 的 `runOnEdit/substituteRegex/minDepth/maxDepth` 组合断言尚未固化。
+- worldbook 组合语义回归仍缺：
+  - `probability/useProbability/depth/group/groupWeight` 的执行链一致性尚未形成专项测试。
+- parser 深语义第二切片仍缺：
+  - 严格转义与 parser 指令交互细节（在当前第一切片基础上继续对齐上游）。
+
+### 8.4 非真实素材需求之外仍建议补充的能力
+
+- TavernHelper 长尾 API（低频但兼容面相关）：
+  - 继续收敛 `util/regex/displayed-message` 等簇，保持 fail-fast。
+- 低频 slash 命令族的机会性补齐：
+  - 不作为主线优先级，但需在真实脚本触发失败时补齐最小闭环。
+- 解析/调试可观测性增强：
+  - 在现有 `debug:breakpoint` 基础上继续补齐更细粒度 parser 执行轨迹（仅在 debug gate 下生效）。

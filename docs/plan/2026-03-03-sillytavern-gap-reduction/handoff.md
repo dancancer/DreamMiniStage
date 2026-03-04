@@ -1,47 +1,40 @@
-# Handoff（2026-03-04 / 十六轮 parser 深语义第一切片）
+# Handoff（2026-03-04 / 十七轮能力需求清单补齐）
 
-## 本轮完成（主线优先）
+## 本轮完成（文档收敛）
 
-- 已完成 `flags/debug/scope chain` 最小可复现语义落地：
-  - `lib/slash-command/core/parser.ts` 接入 `/parser-flag` 指令（`STRICT_ESCAPING`、`REPLACE_GETVAR`）。
-  - `STRICT_ESCAPING=on` 时未闭合引号改为显式 fail-fast；`REPLACE_GETVAR=on` 时统一归一 `{{getvar::}}/{{getglobalvar::}}`。
-  - debug 开启时 `/breakpoint` 转换为可执行 `breakpoint` 节点；关闭时安全忽略。
-- 已完成 parser -> executor 执行期元数据透传增强：
-  - `CommandNode` 新增 `parserFlags/scopeDepth`；
-  - `CommandInvocationMeta` 新增 `parserFlags/scopeDepth` 并透传到 handler。
-- 已完成 debug 监控增强：
-  - `lib/slash-command/core/debug.ts` 新增 `debug:breakpoint` 事件；
-  - `lib/slash-command/core/executor.ts` 命中断点时发射事件，且不中断主流程。
-- 已完成基线断言固化：
-  - `lib/slash-command/__tests__/kernel-core.test.ts` 新增 parser flag、生效顺序、scopeDepth 与 breakpoint 事件断言。
-  - `lib/core/__tests__/st-baseline-slash-command.test.ts` 新增 `STRICT_ESCAPING`、`/breakpoint`、`/let` scope chain 行为断言。
+- `docs/analysis/sillytavern-integration-gap-2026-03.md` 新增独立章节：`8. 能力需求清单（真实素材 vs 非素材）`。
+- 新章节按列表明确了四类信息：
+  - 当前真实素材能力需求；
+  - 当前项目已支持能力；
+  - 真实素材仍待补充能力；
+  - 非真实素材需求之外仍建议补充能力。
+- 本轮不涉及代码逻辑变更，仅进行文档结构化收敛，便于后续按清单执行。
 
 ## 本轮验证（命令级）
 
 ```bash
-pnpm exec eslint lib/slash-command/core/parser.ts lib/slash-command/core/executor.ts lib/slash-command/core/debug.ts lib/slash-command/core/types.ts lib/slash-command/executor.ts lib/slash-command/parser.ts lib/slash-command/types.ts lib/slash-command/index.ts lib/slash-command/__tests__/kernel-core.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts
-pnpm vitest run lib/slash-command/__tests__/kernel-core.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts
-pnpm exec tsc --noEmit
+# 文档改动，本轮未触发代码测试
 ```
 
-- 结果：全部通过（`vitest: 2 files / 74 tests`，`eslint` 无告警，`tsc` 通过）。
+- 结果：文档变更已完成并与当前任务清单对齐。
 
 ## 计划状态同步
 
 - `docs/plan/2026-03-03-sillytavern-gap-reduction/tasks.md`
-  - `P1` 首项（`flags/debug/scope chain`）已勾选完成。
-  - `P1` 仍待推进 2 项：regex 素材驱动回归、worldbook 组合语义回归。
+  - 状态不变：`P1` 剩余 2 项（regex 素材驱动回归、worldbook 组合语义回归）。
+  - 新增能力清单章节可直接作为这两项的执行输入。
 
 ## 下一步建议（主线）
 
-1. 执行 P1 第二切片：新增 `V2.0Beta.png + Sgw3.*` 的 `regex_scripts` 组合回归（`runOnEdit/substituteRegex/minDepth/maxDepth`）。
-2. 执行 P1 第三切片：补 `worldbook` 组合语义断言（`probability/useProbability/depth/group/groupWeight`）。
+1. 先按新清单落地 regex 素材回归：`V2.0Beta.png + Sgw3.*` 的 `runOnEdit/substituteRegex/minDepth/maxDepth` 组合断言。
+2. 再按新清单落地 worldbook 组合回归：`probability/useProbability/depth/group/groupWeight` 一致性检查。
 3. 每个切片完成后按需复跑 `pnpm p4:session-replay`，仅作为守卫基线，不扩展 CI 能力面。
 
 ---
 
 ## 历史记录（简版）
 
+- 十七轮：补齐“真实素材 vs 非素材”能力需求清单，形成可执行列表（已支持/待补充/额外补充）。
 - 十六轮：完成 `flags/debug/scope chain` 第一切片（`parser-flag + breakpoint + scopeDepth/parserFlags`）并固化基线断言。
 - 十五轮：完成 parser/executor/bridge 参数元数据闭环与 `acceptsMultiple/defaultValue/rawQuotes` 语义复核，定向回归全绿。
 - 十四轮：`registerSlashCommand` 执行期参数约束 + 结构化参数上下文透传落地，指定回归全绿。
