@@ -37,7 +37,7 @@
 - 噪音门禁：`noise-baseline-diff`；新增噪音 fail-fast。
 - run-index：连续回放趋势可追踪。
 
-## 3. 历史轮次摘要（12-27 轮）
+## 3. 历史轮次摘要（12-29 轮）
 
 - 第12轮：`registerSlashCommand` callback 闭环修复。
 - 第13轮：`extension-handlers` 与 `slash-runner-shim` 结构拆分。
@@ -56,6 +56,7 @@
 - 第26轮：`_bind/_th_impl` 最小子集 + `audioEnable/audioImport/audioMode/audioPlay/audioSelect` helper 别名。
 - 第27轮：`isPresetNormalPrompt/isPresetSystemPrompt/isPresetPlaceholderPrompt/default_preset` 兼容常量族补齐并固化契约断言。
 - 第28轮：parser 第二切片首批落地（escaped quote/pipe + `STRICT_ESCAPING/REPLACE_GETVAR` 交互边界）。
+- 第29轮：parser 第二切片继续收敛（block 内 `{:/:}` 字面量 + 混合引号在 `STRICT_ESCAPING` 下稳定解析）。
 
 ## 4. 历史回归与证据索引
 

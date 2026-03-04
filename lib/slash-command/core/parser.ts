@@ -274,7 +274,7 @@ function tokenize(segment: string, strictEscaping: boolean): ParseResult<Token[]
   while (i < segment.length) {
     if (!inQuote && segment.startsWith("{:", i)) {
       flushWord();
-      const block = readBlock(segment, i + 2);
+      const block = readBlock(segment, i + 2, strictEscaping);
       if (!block.ok) return block;
       tokens.push({ kind: "block", value: block.value.content.trim(), raw: `{:${block.value.content}:}` });
       i = block.value.nextIndex;
@@ -317,26 +317,45 @@ function isEscapedCharacter(input: string, index: number): boolean {
   }
   return slashCount % 2 === 1;
 }
-function readBlock(segment: string, start: number): ParseResult<{ content: string; nextIndex: number }> {
+function readBlock(
+  segment: string,
+  start: number,
+  strictEscaping: boolean,
+): ParseResult<{ content: string; nextIndex: number }> {
   let depth = 1;
   let i = start;
   let content = "";
+  let inQuote = false;
+  let quoteChar = "";
   while (i < segment.length) {
-    if (segment.startsWith("{:", i)) {
+    if (!inQuote && segment.startsWith("{:", i)) {
       depth++;
       content += "{:";
       i += 2;
       continue;
     }
-    if (segment.startsWith(":}", i)) {
+    if (!inQuote && segment.startsWith(":}", i)) {
       depth--;
       if (depth === 0) return { ok: true, value: { content, nextIndex: i + 2 } };
       content += ":}";
       i += 2;
       continue;
     }
-    content += segment[i];
+    const ch = segment[i];
+    if ((ch === "\"" || ch === "'") && !isEscapedCharacter(segment, i)) {
+      if (!inQuote) {
+        inQuote = true;
+        quoteChar = ch;
+      } else if (quoteChar === ch) {
+        inQuote = false;
+        quoteChar = "";
+      }
+    }
+    content += ch;
     i++;
+  }
+  if (strictEscaping && inQuote) {
+    return { ok: false, error: "Unclosed quote under STRICT_ESCAPING" };
   }
   return { ok: false, error: "Unclosed block" };
 }

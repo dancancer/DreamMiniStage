@@ -186,6 +186,56 @@ describe("parser — nested blocks and pipes", () => {
       expect.objectContaining({ name: "value", value: "{{var::foo}}\\\"tail", wasQuoted: true }),
     ]);
   });
+
+  it("keeps block delimiters inside quoted text while parsing nested blocks", () => {
+    const parsed = parseKernelScript(
+      "/if cond {: /echo \"literal :} marker\"|/echo 'literal {: marker' :}|/echo tail",
+    );
+    expect(parsed.isError).toBe(false);
+    expect(parsed.script).toHaveLength(2);
+
+    const ifNode = parsed.script[0];
+    if (ifNode.type !== "if") throw new Error("expected if node");
+    expect(ifNode.condition).toBe("cond");
+    expect(ifNode.thenBlock).toHaveLength(2);
+
+    const firstInner = ifNode.thenBlock[0];
+    if (firstInner.type !== "command") throw new Error("expected command node");
+    expect(firstInner.unnamedArgumentList).toEqual([
+      expect.objectContaining({ value: "literal :} marker", wasQuoted: true }),
+    ]);
+
+    const secondInner = ifNode.thenBlock[1];
+    if (secondInner.type !== "command") throw new Error("expected command node");
+    expect(secondInner.unnamedArgumentList).toEqual([
+      expect.objectContaining({ value: "literal {: marker", wasQuoted: true }),
+    ]);
+  });
+
+  it("keeps mixed-quote block literals stable under STRICT_ESCAPING", () => {
+    const parsed = parseKernelScript(
+      "/parser-flag STRICT_ESCAPING on|/if cond {: /echo value=\"outer 'inner' :} marker\"|/echo text='outer \"inner\" {: marker' :}|/echo done",
+    );
+    expect(parsed.isError).toBe(false);
+    expect(parsed.script).toHaveLength(2);
+
+    const ifNode = parsed.script[0];
+    if (ifNode.type !== "if") throw new Error("expected if node");
+    expect(ifNode.thenBlock).toHaveLength(2);
+
+    const firstInner = ifNode.thenBlock[0];
+    if (firstInner.type !== "command") throw new Error("expected command node");
+    expect(firstInner.parserFlags.STRICT_ESCAPING).toBe(true);
+    expect(firstInner.namedArgumentList).toEqual([
+      expect.objectContaining({ name: "value", value: "outer 'inner' :} marker", wasQuoted: true }),
+    ]);
+
+    const secondInner = ifNode.thenBlock[1];
+    if (secondInner.type !== "command") throw new Error("expected command node");
+    expect(secondInner.namedArgumentList).toEqual([
+      expect.objectContaining({ name: "text", value: "outer \"inner\" {: marker", wasQuoted: true }),
+    ]);
+  });
 });
 
 describe("scope chain — shadowing and cleanup", () => {

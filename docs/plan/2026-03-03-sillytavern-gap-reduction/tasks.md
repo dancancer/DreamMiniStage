@@ -14,7 +14,8 @@
 ### P1 - parser 深语义第二切片（主优先）
 
 - [x] 完成首批边界：`STRICT_ESCAPING` 下 escaped quote/pipe 解析 + parser-flag（`STRICT_ESCAPING/REPLACE_GETVAR`）交互断言与实现。
-- [ ] 继续补齐严格转义与 parser 指令交互剩余边界（block 嵌套、混合引号等）。
+- [x] 补齐 block 嵌套 + 混合引号边界：引号内 `{:/:}` 不再误判为 block 分隔符（含 `STRICT_ESCAPING` 组合路径）。
+- [ ] 继续补齐严格转义与 parser 指令交互剩余边界（重点关注多层 block + 反斜杠逃逸组合）。
 - [ ] 持续扩充语义断言，先测试再扩行为面。
 - [x] 维持 fail-fast：不做静默兼容分支。
 
