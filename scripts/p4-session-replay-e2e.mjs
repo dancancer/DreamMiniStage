@@ -9,7 +9,9 @@ import { chromium } from "@playwright/test";
 import {
   analyzeNoiseBaseline,
   artifactPaths,
+  buildReplayRunIndex,
   buildPayload,
+  renderReplayRunIndexMarkdown,
   renderNoiseReportMarkdown,
   renderSummaryMarkdown,
   seedIndexedDb,
@@ -26,7 +28,7 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 
 const BASE_URL = process.env.P4_BASE_URL || "http://127.0.0.1:3303";
 const HEADLESS = process.env.P4_HEADLESS !== "false";
-const RUN_ID = process.env.P4_RUN_ID || `p4r10-${Date.now()}`;
+const RUN_ID = process.env.P4_RUN_ID || `p4r11-${Date.now()}`;
 const ARTIFACT_ROOT = path.resolve(
   REPO_ROOT,
   process.env.P4_ARTIFACT_ROOT || "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts",
@@ -36,6 +38,16 @@ const NOISE_BASELINE_PATH = path.resolve(
   REPO_ROOT,
   process.env.P4_NOISE_BASELINE_PATH || "docs/plan/2026-03-03-sillytavern-gap-reduction/p4-session-replay-noise-baseline.json",
 );
+const RUN_INDEX_JSON_PATH = path.resolve(
+  REPO_ROOT,
+  process.env.P4_RUN_INDEX_JSON_PATH || "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.json",
+);
+const RUN_INDEX_MD_PATH = path.resolve(
+  REPO_ROOT,
+  process.env.P4_RUN_INDEX_MD_PATH || "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.md",
+);
+const STALE_RULE_MISS_THRESHOLD = Number.parseInt(process.env.P4_STALE_RULE_MISS_THRESHOLD || "3", 10);
+const RUN_INDEX_MAX_RUNS = Number.parseInt(process.env.P4_RUN_INDEX_MAX_RUNS || "60", 10);
 const CHECK_TIMEOUT_MS = 25_000;
 
 const consoleLogs = [];
@@ -170,6 +182,17 @@ async function loadNoiseBaseline(filePath) {
   }
 }
 
+async function readJsonFileOrDefault(filePath, defaultValue) {
+  try {
+    const raw = await readFile(filePath, "utf8");
+    return JSON.parse(raw);
+  } catch (error) {
+    const code = error && typeof error === "object" ? error.code : null;
+    if (code === "ENOENT") return defaultValue;
+    throw new Error(`[run-index] failed to read ${filePath}: ${summarizeError(error)}`);
+  }
+}
+
 async function buildNoiseReport(files) {
   const baseline = await loadNoiseBaseline(NOISE_BASELINE_PATH);
   const report = analyzeNoiseBaseline({
@@ -180,6 +203,32 @@ async function buildNoiseReport(files) {
   await writeText(files.noiseReportJson, `${JSON.stringify(report, null, 2)}\n`);
   await writeText(files.noiseReportMd, renderNoiseReportMarkdown(report, NOISE_BASELINE_PATH, REPO_ROOT));
   return report;
+}
+
+async function updateRunIndex(summary) {
+  const previousIndex = await readJsonFileOrDefault(RUN_INDEX_JSON_PATH, {
+    version: 1,
+    runs: [],
+    ruleHealth: { console: {}, network: {} },
+    staleRules: { console: [], network: [] },
+  });
+  const nextIndex = buildReplayRunIndex({
+    previousIndex,
+    summary,
+    staleMissThreshold: STALE_RULE_MISS_THRESHOLD,
+    maxRuns: RUN_INDEX_MAX_RUNS,
+    nowIso,
+  });
+
+  await mkdir(path.dirname(RUN_INDEX_JSON_PATH), { recursive: true });
+  await writeText(RUN_INDEX_JSON_PATH, `${JSON.stringify(nextIndex, null, 2)}\n`);
+  await writeText(RUN_INDEX_MD_PATH, renderReplayRunIndexMarkdown(nextIndex, REPO_ROOT));
+
+  return {
+    jsonPath: path.relative(REPO_ROOT, RUN_INDEX_JSON_PATH),
+    markdownPath: path.relative(REPO_ROOT, RUN_INDEX_MD_PATH),
+    staleRuleCount: nextIndex.staleRules.console.length + nextIndex.staleRules.network.length,
+  };
 }
 
 async function runRound7(page, payload, files) {
@@ -343,7 +392,10 @@ async function main() {
       runDir: path.relative(REPO_ROOT, RUN_DIR),
       startedDevServer,
       noiseBaseline: noiseReport,
+      summaryPath: path.relative(REPO_ROOT, files.summaryMd),
+      noiseReportPath: path.relative(REPO_ROOT, files.noiseReportMd),
     };
+    summary.runIndex = await updateRunIndex(summary);
 
     await writeList(files.console, consoleLogs);
     await writeList(files.network, networkLogs);
@@ -363,6 +415,8 @@ async function main() {
       runDir: path.relative(REPO_ROOT, RUN_DIR),
       startedDevServer,
       noiseBaseline: noiseReport,
+      summaryPath: path.relative(REPO_ROOT, files.summaryMd),
+      noiseReportPath: path.relative(REPO_ROOT, files.noiseReportMd),
       error: summarizeError(error),
     };
 
@@ -375,6 +429,11 @@ async function main() {
         console.error(`[p4-session-replay] Failed to build noise report: ${summarizeError(noiseError)}`);
       }
       summary.noiseBaseline = noiseReport;
+    }
+    try {
+      summary.runIndex = await updateRunIndex(summary);
+    } catch (runIndexError) {
+      console.error(`[p4-session-replay] Failed to update run index: ${summarizeError(runIndexError)}`);
     }
     await writeText(files.summaryJson, `${JSON.stringify(summary, null, 2)}\n`);
     await writeText(files.summaryMd, renderSummaryMarkdown(summary, files, REPO_ROOT));

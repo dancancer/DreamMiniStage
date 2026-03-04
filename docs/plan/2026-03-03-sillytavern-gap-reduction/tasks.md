@@ -78,6 +78,9 @@
 - [x] 十轮增量：在 `p4-session-replay` 增加“噪音基线差分”门禁（console/network 白名单 + 新增签名 fail-fast）。
 - [x] 十轮执行：`pnpm p4:session-replay` 实跑通过（`11` checkpoints：原 `10` 项 + `noise-baseline-diff`，新增噪音签名 `0`）。
 - [x] 十轮固化：新增基线文件 `docs/plan/2026-03-03-sillytavern-gap-reduction/p4-session-replay-noise-baseline.json`，回放产物新增 `round10-noise-baseline-report.{md,json}`。
+- [x] 十一轮增量：为 `p4-session-replay` 新增 run 聚合索引与规则健康审计（每次回放自动更新 `run-index`，并按连续 miss 阈值提示可清理规则）。
+- [x] 十一轮执行：`pnpm vitest run scripts/__tests__/p4-session-replay-lib.test.ts`、`pnpm p4:session-replay` 实跑通过（`11/11` checkpoints，`unknownSignatureCount=0`）。
+- [x] 十一轮固化：新增 `scripts/__tests__/p4-session-replay-lib.test.ts`、`artifacts/p4-session-replay-run-index.{json,md}`，并在 replay `summary` 中注入 run-index 引用与 `staleRuleCount`。
 - [x] 固化失败截图/日志与复现步骤，纳入回归文档。
   - 场景映射与执行记录：`docs/plan/2026-03-03-sillytavern-gap-reduction/p4-playwright-e2e.md`
   - 运行截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`
@@ -124,6 +127,11 @@
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round8-plain-refresh-pass.png`
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round8-pre-refresh-console.log`
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r9-1772544554577/round8-pre-refresh-network.log`
+  - 十一轮自动回放产物目录（正式 run）：
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r11-1772588355116/summary.md`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r11-1772588355116/round10-noise-baseline-report.md`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.json`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.md`
 
 ## 每轮完成后的固定动作
 

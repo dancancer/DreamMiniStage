@@ -1,6 +1,6 @@
 # DreamMiniStage 对齐审计（SillyTavern + JS-Slash-Runner + MagVarUpdate）
 
-> 审计日期：2026-03-03  
+> 审计日期：2026-03-04  
 > 对比目标：
 > - `sillytavern-plugins/SillyTavern`
 > - `sillytavern-plugins/JS-Slash-Runner`
@@ -12,7 +12,7 @@
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**30.23%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
-- 结论：P2/P3 gate 持续达标；P4 十轮已完成（四轮脚本执行面 + 五轮 `/session` 交互面 + 六轮缺口审计 + 七轮修复复验 + 八轮普通输入失败链路独立证据 + 九轮自动回放与 CI 固化 + 十轮噪音基线门禁），关键 UI 缺口已形成“修复 + 浏览器证据 + 自动回归 + 判读门禁”闭环。
+- 结论：P2/P3 gate 持续达标；P4 十一轮已完成（四轮脚本执行面 + 五轮 `/session` 交互面 + 六轮缺口审计 + 七轮修复复验 + 八轮普通输入失败链路独立证据 + 九轮自动回放与 CI 固化 + 十轮噪音基线门禁 + 十一轮 run 索引与规则健康审计），关键 UI 缺口已形成“修复 + 浏览器证据 + 自动回归 + 判读门禁 + 趋势聚合”闭环。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -310,6 +310,22 @@
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r10-1772552610608/summary.md`
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r10-1772552610608/round10-noise-baseline-report.md`
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r10-1772552610608/round10-noise-baseline-report.json`
+
+### 1.21 2026-03-04 P4 增量执行结果（十一轮：run 索引 + 规则健康审计）
+
+- 十一轮执行目标：优先收敛“跨轮可对比性”，把主链路回放从“单次可判读”升级到“连续可趋势化”。
+- 十一轮关键结果：
+  - 自动回放新增 run 聚合索引：
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.json`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.md`
+  - `noise-baseline` 新增规则命中审计（`allRuleIds/matchedRuleIds/unusedRuleIds`），并在报告中输出 Rule Audit。
+  - `run-index` 规则健康跟踪新增 `consecutiveMisses` 与 `staleRules`（默认阈值：连续 `3` 次 miss 提示可清理）。
+  - replay `summary` 新增 run-index 引用与 `staleRuleCount`，便于 handoff 与 CI 直接跳转。
+  - 实跑通过：`pnpm p4:session-replay` -> `11/11` checkpoints，`unknownSignatureCount=0`，`staleRuleCount=0`。
+- 十一轮证据已固化（正式 run）：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r11-1772588355116/summary.md`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r11-1772588355116/round10-noise-baseline-report.md`
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.md`
 
 ## 2. 审计口径与量化结果
 
@@ -623,6 +639,23 @@ pnpm p4:session-replay
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r10-1772552610608/round10-noise-baseline-report.md`
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r10-1772552610608/round10-noise-baseline-report.json`
 
+### 3.19 P4 自动回放（十一轮 `run-index + stale-rules`）
+
+- 执行命令：
+
+```bash
+pnpm vitest run scripts/__tests__/p4-session-replay-lib.test.ts
+pnpm p4:session-replay
+```
+
+- 结果：
+  - 单测：`1` file / `2` tests 全绿（规则审计 + 连续 miss 累积）。
+  - 自动回放：`11/11` checkpoints 通过，`unknownSignatureCount=0`。
+  - 正式 run：`p4r11-1772588355116`（`duration=16.7s`）。
+  - 产物新增：
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.json`
+    - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.md`
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -662,15 +695,16 @@ pnpm p4:session-replay
 - 头部缺口已进一步后移到低频命令与深语义能力（如 parser flags/debug/scope chain 细节），短期更适合通过 E2E 曝露真实阻塞点。
 - 建议从“继续堆命令数”转向“以 E2E 场景驱动补缺”，优先修复能复现实际迁移失败的路径。
 
-### 4.6 P4 现阶段风险（十轮后）
+### 4.6 P4 现阶段风险（十一轮后）
 
 - 八轮已补齐“普通输入触发 `401` 后刷新仍保留 user 节点”浏览器独立证据，失败路径不再只依赖单测。
 - `mcp-chrome` 抢占风险已通过 `scripts/p4-playwright-preflight.sh` + `pnpm p4:preflight` 收敛，并在 CI 工作流中落地调用。
-- 十轮已落地噪音基线差分门禁：已知噪音可追踪，新增噪音会直接 fail-fast；当前剩余风险转为“基线长期维护成本”。
+- 十轮已落地噪音基线差分门禁：已知噪音可追踪，新增噪音会直接 fail-fast。
+- 十一轮已补齐 run-index 与规则健康审计：跨轮趋势可见、过期规则可提示；当前剩余风险主要在“CI 展示面尚未直接回传到 PR 注释”。
 
-## 5. P4 十轮结论
+## 5. P4 十一轮结论
 
-本轮判定：**P4 已完成“可回归 + 缺口显式化 + 修复复验 + 普通输入失败链路独立证据 + 自动回放固化 + CI 落地 + 噪音门禁”七目标**。
+本轮判定：**P4 已完成“可回归 + 缺口显式化 + 修复复验 + 普通输入失败链路独立证据 + 自动回放固化 + CI 落地 + 噪音门禁 + 跨轮趋势索引 + 规则健康审计”九目标**。
 
 1. 脚本执行面保持 `9/9` 全绿（`4` 主链路 + `5` 故障注入）。  
 2. `/session` 真实 UI 链路已覆盖输入、slash、刷新、隔离四类关键路径。  
@@ -679,9 +713,11 @@ pnpm p4:session-replay
 5. round7+round8 已收敛为单命令回放（`pnpm p4:session-replay`），并形成 runId 产物目录。
 6. CI 已接入 `p4:preflight + p4:session-replay`，回归资产可自动上传归档。
 7. 噪音基线差分已接入主链路，十轮实跑 `unknownSignatureCount=0`。
+8. run-index 已落地，历史 run 的耗时/通过率/噪音趋势可单文件查看。
+9. 规则健康审计已落地，可按连续 miss 阈值提示 stale 规则清理。
 
-## 6. 下一阶段建议（P4 十一轮）
+## 6. 下一阶段建议（P4 十二轮）
 
-1. 将 `p4-session-replay` 的 runId 摘要聚合为单文件索引，便于跨轮对比趋势。  
-2. 为噪音基线新增“过期规则审计”（长期未命中的规则自动提示清理），防止白名单膨胀。  
-3. 将噪音差分结果接入 CI 注释（PR 上直接展示新增签名），缩短定位路径。
+1. 将 `run-index` 的关键字段（latest run / unknown signatures / stale rules）直接注入 CI Job Summary，减少翻产物成本。  
+2. 在 PR 工作流新增自动评论（仅在 `unknownSignatureCount>0` 或 `staleRuleCount>0` 时触发），把风险信息前置到评审入口。  
+3. 以 `run-index` 为输入增加“近 N 轮耗时漂移告警”（如 P95 耗时突增），优先守住主链路稳定性。

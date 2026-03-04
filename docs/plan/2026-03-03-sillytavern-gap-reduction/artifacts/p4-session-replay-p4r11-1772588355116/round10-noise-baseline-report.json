@@ -1,0 +1,125 @@
+{
+  "baselineVersion": 1,
+  "console": {
+    "total": 20,
+    "known": [
+      {
+        "id": "console-llm-method-failed",
+        "classification": "expected-failfast",
+        "count": 2,
+        "sample": "error|Method execution failed: invokeLLM Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/ at APIErro"
+      },
+      {
+        "id": "console-llm-openai-error",
+        "classification": "expected-failfast",
+        "count": 2,
+        "sample": "error|Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/ at APIError.generate (http://127.0.0.1:3303/_"
+      },
+      {
+        "id": "console-missing-node-tools",
+        "classification": "known-noise",
+        "count": 8,
+        "sample": "warning|找不到节点类型的工具类: userInput"
+      },
+      {
+        "id": "console-resource-401",
+        "classification": "expected-failfast",
+        "count": 2,
+        "sample": "error|Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      },
+      {
+        "id": "console-resource-404",
+        "classification": "known-noise",
+        "count": 4,
+        "sample": "error|Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "id": "console-stream-no-response",
+        "classification": "expected-failfast",
+        "count": 2,
+        "sample": "error|Streaming error: Error: No response returned from workflow at Object.start (http://127.0.0.1:3303/_next/static/chunks/_c6730766._.js:672:27)"
+      }
+    ],
+    "unknown": []
+  },
+  "network": {
+    "total": 25,
+    "known": [
+      {
+        "id": "network-background-404",
+        "classification": "known-noise",
+        "count": 4,
+        "sample": "response|404|GET|http://127.0.0.1:3303/background_yellow.png"
+      },
+      {
+        "id": "network-ga-request-aborted",
+        "classification": "known-noise",
+        "count": 16,
+        "sample": "requestfailed|none|POST|https://www.google-analytics.com/g/collect"
+      },
+      {
+        "id": "network-openai-mock-401",
+        "classification": "expected-failfast",
+        "count": 2,
+        "sample": "mock|401|POST|https://api.openai.com/v1/chat/completions"
+      },
+      {
+        "id": "network-openai-response-401",
+        "classification": "expected-failfast",
+        "count": 2,
+        "sample": "response|401|POST|https://api.openai.com/v1/chat/completions"
+      },
+      {
+        "id": "network-session-rsc-aborted",
+        "classification": "known-noise",
+        "count": 1,
+        "sample": "requestfailed|none|GET|http://127.0.0.1:3303/session"
+      }
+    ],
+    "unknown": []
+  },
+  "ruleAudit": {
+    "console": {
+      "totalRules": 6,
+      "matchedRuleCount": 6,
+      "allRuleIds": [
+        "console-resource-404",
+        "console-resource-401",
+        "console-llm-method-failed",
+        "console-llm-openai-error",
+        "console-stream-no-response",
+        "console-missing-node-tools"
+      ],
+      "matchedRuleIds": [
+        "console-llm-method-failed",
+        "console-llm-openai-error",
+        "console-missing-node-tools",
+        "console-resource-401",
+        "console-resource-404",
+        "console-stream-no-response"
+      ],
+      "unusedRuleIds": []
+    },
+    "network": {
+      "totalRules": 5,
+      "matchedRuleCount": 5,
+      "allRuleIds": [
+        "network-openai-mock-401",
+        "network-openai-response-401",
+        "network-background-404",
+        "network-ga-request-aborted",
+        "network-session-rsc-aborted"
+      ],
+      "matchedRuleIds": [
+        "network-background-404",
+        "network-ga-request-aborted",
+        "network-openai-mock-401",
+        "network-openai-response-401",
+        "network-session-rsc-aborted"
+      ],
+      "unusedRuleIds": []
+    }
+  },
+  "hasNewNoise": false,
+  "unknownSignatureCount": 0
+}

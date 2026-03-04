@@ -189,6 +189,21 @@ function aggregateUnknown(signatureMap) {
     .sort((a, b) => b.count - a.count || a.signature.localeCompare(b.signature));
 }
 
+function buildRuleAudit(rules, knownEntries) {
+  const allRuleIds = rules.map((rule) => rule.id).filter(Boolean);
+  const matchedRuleIds = knownEntries.map((entry) => entry.id);
+  const matchedSet = new Set(matchedRuleIds);
+  const unusedRuleIds = allRuleIds.filter((id) => !matchedSet.has(id));
+
+  return {
+    totalRules: allRuleIds.length,
+    matchedRuleCount: matchedRuleIds.length,
+    allRuleIds,
+    matchedRuleIds,
+    unusedRuleIds,
+  };
+}
+
 function classifyConsoleEvents(events, rules) {
   const known = new Map();
   const unknown = new Map();
@@ -258,12 +273,18 @@ export function analyzeNoiseBaseline(input) {
 
   const consoleResult = classifyConsoleEvents(consoleCandidates, consoleRules);
   const networkResult = classifyNetworkEvents(networkCandidates, networkRules);
+  const consoleRuleAudit = buildRuleAudit(consoleRules, consoleResult.known);
+  const networkRuleAudit = buildRuleAudit(networkRules, networkResult.known);
   const unknownCount = consoleResult.unknown.length + networkResult.unknown.length;
 
   return {
     baselineVersion: input.baseline?.version || 1,
     console: consoleResult,
     network: networkResult,
+    ruleAudit: {
+      console: consoleRuleAudit,
+      network: networkRuleAudit,
+    },
     hasNewNoise: unknownCount > 0,
     unknownSignatureCount: unknownCount,
   };
@@ -295,6 +316,17 @@ function pushUnknownList(lines, title, entries) {
   lines.push("");
 }
 
+function pushRuleAudit(lines, title, audit) {
+  lines.push(`### ${title}`, "");
+  lines.push(`- totalRules: ${audit.totalRules}`);
+  lines.push(`- matchedRuleCount: ${audit.matchedRuleCount}`);
+  lines.push(`- unusedRuleCount: ${audit.unusedRuleIds.length}`);
+  if (audit.unusedRuleIds.length > 0) {
+    lines.push(...audit.unusedRuleIds.map((id) => `- unused: ${id}`));
+  }
+  lines.push("");
+}
+
 export function renderNoiseReportMarkdown(report, baselinePath, repoRoot) {
   const lines = [
     "# P4 Session Replay Noise Baseline Report",
@@ -315,6 +347,12 @@ export function renderNoiseReportMarkdown(report, baselinePath, repoRoot) {
   lines.push("## Network Candidates", `- total: ${report.network.total}`, "");
   pushKnownList(lines, "Network Known Signatures", report.network.known);
   pushUnknownList(lines, "Network New Signatures", report.network.unknown);
+
+  if (report.ruleAudit) {
+    lines.push("## Rule Audit", "");
+    pushRuleAudit(lines, "Console Rules", report.ruleAudit.console);
+    pushRuleAudit(lines, "Network Rules", report.ruleAudit.network);
+  }
 
   return `${lines.join("\n")}`;
 }
@@ -354,9 +392,202 @@ export function renderSummaryMarkdown(summary, files, repoRoot) {
     );
   }
 
+  if (summary.runIndex) {
+    lines.push(
+      "## Run Index",
+      `- json: ${summary.runIndex.jsonPath}`,
+      `- markdown: ${summary.runIndex.markdownPath}`,
+      `- staleRuleCount: ${summary.runIndex.staleRuleCount}`,
+      "",
+    );
+  }
+
   if (summary.error) {
     lines.push("## Error", `- ${summary.error}`, "");
   }
+
+  return `${lines.join("\n")}`;
+}
+
+function toDurationMs(startedAt, finishedAt) {
+  const started = Date.parse(startedAt);
+  const finished = Date.parse(finishedAt);
+  if (!Number.isFinite(started) || !Number.isFinite(finished) || finished < started) return null;
+  return finished - started;
+}
+
+function toRuleHealthMap(previousHealth, allRuleIds, matchedRuleIds, summary) {
+  const matchedSet = new Set(matchedRuleIds);
+  const next = {};
+
+  for (const id of allRuleIds) {
+    const previous = previousHealth[id] || {
+      totalHits: 0,
+      consecutiveMisses: 0,
+      lastHitRunId: null,
+      lastHitAt: null,
+    };
+    if (matchedSet.has(id)) {
+      next[id] = {
+        totalHits: previous.totalHits + 1,
+        consecutiveMisses: 0,
+        lastHitRunId: summary.runId,
+        lastHitAt: summary.finishedAt,
+      };
+      continue;
+    }
+
+    next[id] = {
+      totalHits: previous.totalHits,
+      consecutiveMisses: previous.consecutiveMisses + 1,
+      lastHitRunId: previous.lastHitRunId,
+      lastHitAt: previous.lastHitAt,
+    };
+  }
+
+  return next;
+}
+
+function toStaleRules(ruleHealthMap, staleMissThreshold) {
+  return Object.entries(ruleHealthMap)
+    .filter(([, state]) => state.consecutiveMisses >= staleMissThreshold)
+    .map(([id, state]) => ({
+      id,
+      consecutiveMisses: state.consecutiveMisses,
+      totalHits: state.totalHits,
+      lastHitRunId: state.lastHitRunId,
+      lastHitAt: state.lastHitAt,
+    }))
+    .sort((a, b) => b.consecutiveMisses - a.consecutiveMisses || a.id.localeCompare(b.id));
+}
+
+function toRunEntry(summary) {
+  const checkpoints = Array.isArray(summary.checkpoints) ? summary.checkpoints : [];
+  const passedCheckpoints = checkpoints.filter((item) => item.passed).length;
+  return {
+    runId: summary.runId,
+    startedAt: summary.startedAt,
+    finishedAt: summary.finishedAt,
+    durationMs: toDurationMs(summary.startedAt, summary.finishedAt),
+    allPassed: Boolean(summary.allPassed),
+    checkpointTotal: checkpoints.length,
+    checkpointPassed: passedCheckpoints,
+    unknownSignatureCount: summary.noiseBaseline?.unknownSignatureCount ?? null,
+    hasNewNoise: summary.noiseBaseline?.hasNewNoise ?? null,
+    runDir: summary.runDir || null,
+    summaryPath: summary.summaryPath || null,
+    noiseReportPath: summary.noiseReportPath || null,
+  };
+}
+
+function upsertRuns(previousRuns, entry, maxRuns) {
+  const next = previousRuns.filter((item) => item.runId !== entry.runId);
+  next.push(entry);
+  next.sort((a, b) => Date.parse(b.finishedAt) - Date.parse(a.finishedAt));
+  return next.slice(0, maxRuns);
+}
+
+export function buildReplayRunIndex(input) {
+  const nowIso = input.nowIso || (() => new Date().toISOString());
+  const staleMissThreshold = Number.isInteger(input.staleMissThreshold) && input.staleMissThreshold > 0
+    ? input.staleMissThreshold
+    : 3;
+  const maxRuns = Number.isInteger(input.maxRuns) && input.maxRuns > 0 ? input.maxRuns : 50;
+  const previousIndex = input.previousIndex && typeof input.previousIndex === "object" ? input.previousIndex : {};
+  const summary = input.summary;
+  const noiseBaseline = summary.noiseBaseline || {};
+  const consoleRuleAudit = noiseBaseline.ruleAudit?.console || {
+    allRuleIds: [],
+    matchedRuleIds: [],
+  };
+  const networkRuleAudit = noiseBaseline.ruleAudit?.network || {
+    allRuleIds: [],
+    matchedRuleIds: [],
+  };
+
+  const previousRuleHealth = previousIndex.ruleHealth || {};
+  const consoleRuleHealth = toRuleHealthMap(
+    previousRuleHealth.console || {},
+    consoleRuleAudit.allRuleIds,
+    consoleRuleAudit.matchedRuleIds,
+    summary,
+  );
+  const networkRuleHealth = toRuleHealthMap(
+    previousRuleHealth.network || {},
+    networkRuleAudit.allRuleIds,
+    networkRuleAudit.matchedRuleIds,
+    summary,
+  );
+
+  const staleRules = {
+    console: toStaleRules(consoleRuleHealth, staleMissThreshold),
+    network: toStaleRules(networkRuleHealth, staleMissThreshold),
+  };
+
+  const previousRuns = Array.isArray(previousIndex.runs) ? previousIndex.runs : [];
+  const runs = upsertRuns(previousRuns, toRunEntry(summary), maxRuns);
+
+  return {
+    version: 1,
+    generatedAt: nowIso(),
+    staleMissThreshold,
+    maxRuns,
+    latestRunId: summary.runId,
+    runs,
+    ruleHealth: {
+      console: consoleRuleHealth,
+      network: networkRuleHealth,
+    },
+    staleRules,
+  };
+}
+
+function formatDuration(durationMs) {
+  if (!Number.isFinite(durationMs) || durationMs === null) return "n/a";
+  return `${(durationMs / 1000).toFixed(1)}s`;
+}
+
+function pushStaleRules(lines, title, rules) {
+  lines.push(`## ${title}`, "");
+  if (rules.length === 0) {
+    lines.push("- (none)", "");
+    return;
+  }
+
+  for (const rule of rules) {
+    const lastHit = rule.lastHitRunId ? `${rule.lastHitRunId} @ ${rule.lastHitAt}` : "never";
+    lines.push(`- ${rule.id}: misses=${rule.consecutiveMisses}, totalHits=${rule.totalHits}, lastHit=${lastHit}`);
+  }
+  lines.push("");
+}
+
+export function renderReplayRunIndexMarkdown(index, repoRoot) {
+  const lines = [
+    "# P4 Session Replay Run Index",
+    "",
+    `- generatedAt: ${index.generatedAt}`,
+    `- latestRunId: ${index.latestRunId}`,
+    `- staleMissThreshold: ${index.staleMissThreshold}`,
+    `- trackedRuns: ${index.runs.length}`,
+    "",
+    "## Recent Runs",
+    "",
+  ];
+
+  if (index.runs.length === 0) {
+    lines.push("- (none)", "");
+  } else {
+    for (const run of index.runs) {
+      const summaryPath = run.summaryPath ? path.relative(repoRoot, path.resolve(repoRoot, run.summaryPath)) : "n/a";
+      lines.push(
+        `- ${run.runId}: pass=${run.allPassed}, checkpoints=${run.checkpointPassed}/${run.checkpointTotal}, unknownNoise=${run.unknownSignatureCount}, duration=${formatDuration(run.durationMs)}, summary=${summaryPath}`,
+      );
+    }
+    lines.push("");
+  }
+
+  pushStaleRules(lines, "Stale Console Rules", index.staleRules.console);
+  pushStaleRules(lines, "Stale Network Rules", index.staleRules.network);
 
   return `${lines.join("\n")}`;
 }
