@@ -81,6 +81,10 @@
 - [x] 十一轮增量：为 `p4-session-replay` 新增 run 聚合索引与规则健康审计（每次回放自动更新 `run-index`，并按连续 miss 阈值提示可清理规则）。
 - [x] 十一轮执行：`pnpm vitest run scripts/__tests__/p4-session-replay-lib.test.ts`、`pnpm p4:session-replay` 实跑通过（`11/11` checkpoints，`unknownSignatureCount=0`）。
 - [x] 十一轮固化：新增 `scripts/__tests__/p4-session-replay-lib.test.ts`、`artifacts/p4-session-replay-run-index.{json,md}`，并在 replay `summary` 中注入 run-index 引用与 `staleRuleCount`。
+- [x] 十二轮增量：新增 `scripts/p4-session-replay-ci-report.mjs`，从 `run-index` 提取 `latestRunId / unknownSignatureCount / staleRuleCount` 并注入 CI Job Summary。
+- [x] 十二轮 CI 接入：`.github/workflows/p4-session-replay.yml` 增加 `p4_ci_report` 步骤与 PR 风险自动评论（仅 `unknownSignatureCount>0` 或 `staleRuleCount>0` 时触发）。
+- [x] 十二轮回归：`pnpm vitest run scripts/__tests__/p4-session-replay-lib.test.ts scripts/__tests__/p4-session-replay-ci-report.test.ts`。
+- [ ] 十二轮后续：基于 `run-index` 增加“近 N 轮耗时漂移告警（P95）”并接入同一 CI 报告入口。
 - [x] 固化失败截图/日志与复现步骤，纳入回归文档。
   - 场景映射与执行记录：`docs/plan/2026-03-03-sillytavern-gap-reduction/p4-playwright-e2e.md`
   - 运行截图：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-playwright-e2e-pass.png`

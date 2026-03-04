@@ -28,7 +28,7 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 
 const BASE_URL = process.env.P4_BASE_URL || "http://127.0.0.1:3303";
 const HEADLESS = process.env.P4_HEADLESS !== "false";
-const RUN_ID = process.env.P4_RUN_ID || `p4r11-${Date.now()}`;
+const RUN_ID = process.env.P4_RUN_ID || `p4r12-${Date.now()}`;
 const ARTIFACT_ROOT = path.resolve(
   REPO_ROOT,
   process.env.P4_ARTIFACT_ROOT || "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts",

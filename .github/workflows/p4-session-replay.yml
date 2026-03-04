@@ -13,6 +13,11 @@ on:
       - "package.json"
       - "pnpm-lock.yaml"
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   replay:
     name: Replay /session Mainline
@@ -45,6 +50,75 @@ jobs:
 
       - name: Run P4 session replay
         run: pnpm p4:session-replay
+
+      - name: Build P4 CI report
+        if: always()
+        id: p4_ci_report
+        run: node scripts/p4-session-replay-ci-report.mjs
+
+      - name: Comment PR when replay risk detected
+        if: always() && github.event_name == 'pull_request' && steps.p4_ci_report.outputs.risk_detected == 'true'
+        uses: actions/github-script@v7
+        env:
+          P4_RUN_ID: ${{ steps.p4_ci_report.outputs.latest_run_id }}
+          P4_ALL_PASSED: ${{ steps.p4_ci_report.outputs.all_passed }}
+          P4_CHECKPOINT_PASSED: ${{ steps.p4_ci_report.outputs.checkpoint_passed }}
+          P4_CHECKPOINT_TOTAL: ${{ steps.p4_ci_report.outputs.checkpoint_total }}
+          P4_UNKNOWN_COUNT: ${{ steps.p4_ci_report.outputs.unknown_signature_count }}
+          P4_STALE_CONSOLE: ${{ steps.p4_ci_report.outputs.stale_console_count }}
+          P4_STALE_NETWORK: ${{ steps.p4_ci_report.outputs.stale_network_count }}
+          P4_STALE_TOTAL: ${{ steps.p4_ci_report.outputs.stale_rule_count }}
+          P4_DURATION: ${{ steps.p4_ci_report.outputs.duration_text }}
+          P4_SUMMARY_PATH: ${{ steps.p4_ci_report.outputs.summary_path }}
+          P4_NOISE_REPORT_PATH: ${{ steps.p4_ci_report.outputs.noise_report_path }}
+          P4_RUN_DIR: ${{ steps.p4_ci_report.outputs.run_dir }}
+          P4_PARSE_ERROR: ${{ steps.p4_ci_report.outputs.parse_error }}
+        with:
+          script: |
+            const marker = "<!-- p4-session-replay-risk -->";
+            const lines = [
+              marker,
+              "## P4 Session Replay Risk Alert",
+              "",
+              `- latestRunId: ${process.env.P4_RUN_ID}`,
+              `- allPassed: ${process.env.P4_ALL_PASSED}`,
+              `- checkpoints: ${process.env.P4_CHECKPOINT_PASSED}/${process.env.P4_CHECKPOINT_TOTAL}`,
+              `- unknownSignatureCount: ${process.env.P4_UNKNOWN_COUNT}`,
+              `- staleRuleCount: ${process.env.P4_STALE_TOTAL} (console=${process.env.P4_STALE_CONSOLE}, network=${process.env.P4_STALE_NETWORK})`,
+              `- duration: ${process.env.P4_DURATION}`,
+              `- summary: ${process.env.P4_SUMMARY_PATH}`,
+              `- noiseReport: ${process.env.P4_NOISE_REPORT_PATH}`,
+              `- runDir: ${process.env.P4_RUN_DIR}`,
+            ];
+            if (process.env.P4_PARSE_ERROR) {
+              lines.push(`- parseError: ${process.env.P4_PARSE_ERROR}`);
+            }
+            lines.push("", "Action: inspect replay artifacts and refresh noise baseline/rule health if needed.");
+            const body = lines.join("\n");
+            const issueNumber = context.payload.pull_request.number;
+            const { owner, repo } = context.repo;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number: issueNumber,
+              per_page: 100,
+            });
+            const existing = comments.find((item) => item.user?.type === "Bot" && item.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+              return;
+            }
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: issueNumber,
+              body,
+            });
 
       - name: Upload replay artifacts
         if: always()
