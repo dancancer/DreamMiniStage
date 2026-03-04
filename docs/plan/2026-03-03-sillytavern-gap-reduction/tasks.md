@@ -16,7 +16,8 @@
 - [x] 完成首批边界：`STRICT_ESCAPING` 下 escaped quote/pipe 解析 + parser-flag（`STRICT_ESCAPING/REPLACE_GETVAR`）交互断言与实现。
 - [x] 补齐 block 嵌套 + 混合引号边界：引号内 `{:/:}` 不再误判为 block 分隔符（含 `STRICT_ESCAPING` 组合路径）。
 - [x] 补齐多层 block + 反斜杠逃逸断言：覆盖 odd/even backslash quote 边界与 strict fail-fast。
-- [ ] 继续补齐严格转义与 parser 指令交互剩余边界（重点关注 nested block 中 `REPLACE_GETVAR` + 转义链路组合）。
+- [x] 补齐 nested block 中 `REPLACE_GETVAR` + 转义链路断言：覆盖 named/unnamed 参数混合 + strict fail-fast。
+- [ ] 继续补齐严格转义与 parser 指令交互剩余边界（重点关注 parser-flag 在更深层 block 的开关切换组合）。
 - [ ] 持续扩充语义断言，先测试再扩行为面。
 - [x] 维持 fail-fast：不做静默兼容分支。
 
@@ -33,9 +34,9 @@
 
 ## 3. 本轮固定回归（每轮增量后执行）
 
-- [x] `pnpm vitest run lib/slash-command/__tests__/kernel-core.test.ts`
+- [x] `pnpm vitest run lib/slash-command/__tests__/kernel-core.test.ts lib/slash-command/__tests__/kernel-parser-flags-nested.test.ts`
 - [x] `pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
-- [x] `pnpm exec eslint lib/slash-command/core/parser.ts lib/slash-command/__tests__/kernel-core.test.ts public/iframe-libs/slash-runner-shim.js lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
+- [x] `pnpm exec eslint lib/slash-command/core/parser.ts lib/slash-command/__tests__/kernel-core.test.ts lib/slash-command/__tests__/kernel-parser-flags-nested.test.ts public/iframe-libs/slash-runner-shim.js lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
 - [x] `pnpm exec tsc --noEmit`
 
 ## 4. 守卫基线（按需）
