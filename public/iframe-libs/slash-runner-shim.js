@@ -549,6 +549,13 @@
     importRawTavernRegex: api("importRawTavernRegex"),
 
     // ──────────────────────────────────────────────────────────────────────
+    //  tavern_regex API（长尾兼容最小子集）
+    // ──────────────────────────────────────────────────────────────────────
+    formatAsTavernRegexedString: api("formatAsTavernRegexedString"),
+    isCharacterTavernRegexesEnabled: api("isCharacterTavernRegexesEnabled"),
+    getTavernRegexes: api("getTavernRegexes"),
+
+    // ──────────────────────────────────────────────────────────────────────
     //  Slash Command API（Requirements 1.1-1.5, 8.1-8.4）
     // ──────────────────────────────────────────────────────────────────────
     triggerSlash: api("triggerSlash"),

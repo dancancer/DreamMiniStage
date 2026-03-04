@@ -8,6 +8,10 @@ const mocks = vi.hoisted(() => ({
   canImportRegexScripts: vi.fn(),
   importRegexScripts: vi.fn(),
   updateRegexScripts: vi.fn(),
+  getRegexScriptsBySource: vi.fn(),
+  getAllRegexScriptsForProcessing: vi.fn(),
+  getRegexScriptSettings: vi.fn(),
+  processRegexFullContext: vi.fn(),
   getScriptButtons: vi.fn(),
 }));
 
@@ -31,6 +35,22 @@ vi.mock("@/lib/adapters/import", () => ({
 vi.mock("@/lib/data/roleplay/regex-script-operation", () => ({
   RegexScriptOperations: {
     updateRegexScripts: mocks.updateRegexScripts,
+    getScriptsBySource: mocks.getRegexScriptsBySource,
+    getAllScriptsForProcessing: mocks.getAllRegexScriptsForProcessing,
+    getRegexScriptSettings: mocks.getRegexScriptSettings,
+  },
+}));
+
+vi.mock("@/lib/core/regex-processor", () => ({
+  RegexPlacement: {
+    USER_INPUT: 1,
+    AI_OUTPUT: 2,
+    SLASH_COMMAND: 3,
+    WORLD_INFO: 5,
+    REASONING: 6,
+  },
+  RegexProcessor: {
+    processFullContext: mocks.processRegexFullContext,
   },
 }));
 
@@ -254,5 +274,99 @@ describe("P3 compat API gaps", () => {
 
     expect(() => compatHandlers.getMessageId(["iframe_123"], macroContext))
       .toThrow("无法从 iframe 名称解析消息 id");
+  });
+
+  it("formats regexed string through processor and validates source/destination", async () => {
+    mocks.processRegexFullContext.mockResolvedValueOnce({
+      originalText: "hello",
+      replacedText: "HELLO",
+      appliedScripts: ["r1"],
+      success: true,
+    });
+
+    await expect(compatHandlers.formatAsTavernRegexedString(
+      ["hello", "user_input", "display", { depth: 2, character_name: "Alice" }],
+      createMockContext({ characterId: "char-regex" }),
+    )).resolves.toBe("HELLO");
+
+    expect(mocks.processRegexFullContext).toHaveBeenCalledWith("hello", expect.objectContaining({
+      ownerId: "char-regex",
+      placement: 1,
+      isMarkdown: true,
+      isPrompt: false,
+      depth: 2,
+      macroParams: expect.objectContaining({
+        char: "Alice",
+      }),
+    }));
+
+    await expect(compatHandlers.formatAsTavernRegexedString(
+      ["hello", "bad-source", "display"],
+      createMockContext(),
+    )).rejects.toThrow("source is invalid");
+  });
+
+  it("exposes tavern regex list with scope and enable_state filter", async () => {
+    mocks.getAllRegexScriptsForProcessing.mockResolvedValueOnce([
+      {
+        id: "g1",
+        scriptKey: "global_one",
+        scriptName: "Global One",
+        findRegex: "foo",
+        replaceString: "bar",
+        placement: [1, 2],
+        source: "global",
+        disabled: false,
+        runOnEdit: false,
+      },
+      {
+        id: "c1",
+        scriptKey: "char_one",
+        scriptName: "Char One",
+        findRegex: "baz",
+        replaceString: "qux",
+        placement: [3],
+        source: "character",
+        disabled: true,
+        runOnEdit: true,
+      },
+    ]);
+
+    const regexes = await compatHandlers.getTavernRegexes(
+      [{ scope: "all", enable_state: "disabled" }],
+      createMockContext({ characterId: "char-regex" }),
+    ) as Array<Record<string, unknown>>;
+
+    expect(regexes).toEqual([
+      expect.objectContaining({
+        id: "c1",
+        script_name: "Char One",
+        enabled: false,
+        scope: "character",
+        run_on_edit: true,
+      }),
+    ]);
+    expect(mocks.getAllRegexScriptsForProcessing).toHaveBeenCalledWith("char-regex", {
+      includeGlobal: true,
+    });
+
+    await expect(compatHandlers.getTavernRegexes(
+      [{ scope: "character" }],
+      createMockContext({ characterId: undefined }),
+    )).rejects.toThrow("scope=character requires characterId");
+  });
+
+  it("reads character regex enable state from settings", async () => {
+    mocks.getRegexScriptSettings.mockResolvedValueOnce({ enabled: true });
+    await expect(compatHandlers.isCharacterTavernRegexesEnabled(
+      [],
+      createMockContext({ characterId: "char-enabled" }),
+    )).resolves.toBe(true);
+    expect(mocks.getRegexScriptSettings).toHaveBeenCalledWith("char-enabled");
+
+    await expect(compatHandlers.isCharacterTavernRegexesEnabled(
+      [],
+      createMockContext({ characterId: undefined }),
+    )).resolves.toBe(false);
   });
 });
