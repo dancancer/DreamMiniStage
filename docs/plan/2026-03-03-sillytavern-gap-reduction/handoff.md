@@ -1,47 +1,48 @@
-# Handoff（2026-03-04 / 十五轮参数语义闭环）
+# Handoff（2026-03-04 / 十六轮 parser 深语义第一切片）
 
 ## 本轮完成（主线优先）
 
-- 已完成 parser -> executor -> slash bridge 的参数元数据透传闭环：
-  - `lib/slash-command/core/parser.ts` 与 `lib/slash-command/parser.ts` 统一产出
-    `namedArgumentList/unnamedArgumentList`（保序、保留重复命名参数、保留 `rawValue/wasQuoted`）。
-  - `lib/slash-command/core/executor.ts` 与 `lib/slash-command/executor.ts` 已将 `CommandInvocationMeta` 透传到命令 handler。
-  - `hooks/script-bridge/slash-command-bridge.ts` 基于上述元数据完成执行期收敛：
-    - `acceptsMultiple` 命名参数聚合（callback 收到数组）
-    - `defaultValue` 注入（命名/位置参数）
-    - `rawQuotes` + `raw=false` 覆盖行为
-    - 重复命名参数“列表保序 + 运行态 last-write”双轨语义
-- 已补齐专项回归：
-  - `hooks/script-bridge/__tests__/extension-lifecycle.test.ts` 新增 `acceptsMultiple/defaultValue/rawQuotes/重复命名参数` 断言。
-  - `lib/slash-command/__tests__/kernel-core.test.ts` 新增 parser 保序/quote 元数据断言（内核 parser + 兼容 parser）。
-- 文档状态与代码状态保持一致：
-  - `docs/analysis/sillytavern-integration-gap-2026-03.md` 与 `docs/plan/.../tasks.md` 已同步为 `Slash 31.01%`、P0 语义等价条目完成。
+- 已完成 `flags/debug/scope chain` 最小可复现语义落地：
+  - `lib/slash-command/core/parser.ts` 接入 `/parser-flag` 指令（`STRICT_ESCAPING`、`REPLACE_GETVAR`）。
+  - `STRICT_ESCAPING=on` 时未闭合引号改为显式 fail-fast；`REPLACE_GETVAR=on` 时统一归一 `{{getvar::}}/{{getglobalvar::}}`。
+  - debug 开启时 `/breakpoint` 转换为可执行 `breakpoint` 节点；关闭时安全忽略。
+- 已完成 parser -> executor 执行期元数据透传增强：
+  - `CommandNode` 新增 `parserFlags/scopeDepth`；
+  - `CommandInvocationMeta` 新增 `parserFlags/scopeDepth` 并透传到 handler。
+- 已完成 debug 监控增强：
+  - `lib/slash-command/core/debug.ts` 新增 `debug:breakpoint` 事件；
+  - `lib/slash-command/core/executor.ts` 命中断点时发射事件，且不中断主流程。
+- 已完成基线断言固化：
+  - `lib/slash-command/__tests__/kernel-core.test.ts` 新增 parser flag、生效顺序、scopeDepth 与 breakpoint 事件断言。
+  - `lib/core/__tests__/st-baseline-slash-command.test.ts` 新增 `STRICT_ESCAPING`、`/breakpoint`、`/let` scope chain 行为断言。
 
 ## 本轮验证（命令级）
 
 ```bash
-pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts lib/slash-command/__tests__/kernel-core.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts
-pnpm exec eslint hooks/script-bridge/slash-command-bridge.ts hooks/script-bridge/__tests__/extension-lifecycle.test.ts lib/slash-command/core/parser.ts lib/slash-command/core/executor.ts lib/slash-command/core/types.ts lib/slash-command/parser.ts lib/slash-command/executor.ts lib/slash-command/types.ts lib/slash-command/__tests__/kernel-core.test.ts
+pnpm exec eslint lib/slash-command/core/parser.ts lib/slash-command/core/executor.ts lib/slash-command/core/debug.ts lib/slash-command/core/types.ts lib/slash-command/executor.ts lib/slash-command/parser.ts lib/slash-command/types.ts lib/slash-command/index.ts lib/slash-command/__tests__/kernel-core.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts
+pnpm vitest run lib/slash-command/__tests__/kernel-core.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts
 pnpm exec tsc --noEmit
 ```
 
-- 结果：全部通过（`vitest: 3 files / 82 tests`，`eslint` 无告警，`tsc` 通过）。
+- 结果：全部通过（`vitest: 2 files / 74 tests`，`eslint` 无告警，`tsc` 通过）。
 
 ## 计划状态同步
 
 - `docs/plan/2026-03-03-sillytavern-gap-reduction/tasks.md`
-  - 当前状态保持一致：P0 语义等价 3 项均已完成，P1（`flags/debug/scope chain` + regex/worldbook 组合验证）仍待推进。
+  - `P1` 首项（`flags/debug/scope chain`）已勾选完成。
+  - `P1` 仍待推进 2 项：regex 素材驱动回归、worldbook 组合语义回归。
 
 ## 下一步建议（主线）
 
-1. 进入 P1 第一个切片：先补 `flags/debug/scope chain` 最小可复现行为，并在 `st-baseline-slash-command` 增量加断言，不并行扩能力面。
-2. 基于素材优先级执行第二个切片：围绕 `V2.0Beta.png` 与 `Sgw3.*` 的 `regex_scripts` 组合（`runOnEdit/substituteRegex/minDepth/maxDepth`）补专项回归。
-3. 保持 P4 策略不变：仅作为守卫基线，在 P1 每个切片收敛后按需复跑 `pnpm p4:session-replay`，不新增 CI 扩展项。
+1. 执行 P1 第二切片：新增 `V2.0Beta.png + Sgw3.*` 的 `regex_scripts` 组合回归（`runOnEdit/substituteRegex/minDepth/maxDepth`）。
+2. 执行 P1 第三切片：补 `worldbook` 组合语义断言（`probability/useProbability/depth/group/groupWeight`）。
+3. 每个切片完成后按需复跑 `pnpm p4:session-replay`，仅作为守卫基线，不扩展 CI 能力面。
 
 ---
 
 ## 历史记录（简版）
 
+- 十六轮：完成 `flags/debug/scope chain` 第一切片（`parser-flag + breakpoint + scopeDepth/parserFlags`）并固化基线断言。
 - 十五轮：完成 parser/executor/bridge 参数元数据闭环与 `acceptsMultiple/defaultValue/rawQuotes` 语义复核，定向回归全绿。
 - 十四轮：`registerSlashCommand` 执行期参数约束 + 结构化参数上下文透传落地，指定回归全绿。
 - 十三轮：`extension-handlers + slash-runner-shim` 结构拆分完成，指定回归全绿。

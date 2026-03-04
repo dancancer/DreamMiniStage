@@ -39,6 +39,8 @@ export interface SlashCommand {
   namedArgs: Record<string, string>;      // 命名参数 key=value
   namedArgumentList?: ParsedNamedArgument[]; // 命名参数赋值列表（保序，包含重复）
   unnamedArgumentList?: ParsedUnnamedArgument[]; // 位置参数赋值列表（保序）
+  parserFlags?: ParserFlags;              // 解析期 parser flag 快照
+  scopeDepth?: number;                    // 解析期作用域深度（root=0）
   raw: string;                            // 原始命令字符串，用于错误报告
 }
 
@@ -62,7 +64,17 @@ export interface CommandInvocationMeta {
   raw: string;
   namedArgumentList: ParsedNamedArgument[];
   unnamedArgumentList: ParsedUnnamedArgument[];
+  parserFlags?: ParserFlags;
+  scopeDepth?: number;
 }
+
+/** parser flags（对齐 ST Parser 的最小子集） */
+export interface ParserFlags {
+  STRICT_ESCAPING: boolean;
+  REPLACE_GETVAR: boolean;
+}
+
+export type ParserFlagName = keyof ParserFlags;
 
 /** 解析器返回结果 */
 export interface ParseResult {

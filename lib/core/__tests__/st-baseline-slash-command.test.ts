@@ -17,6 +17,7 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { executeSlashCommandScript } from "../../slash-command/executor";
+import { getDebugMonitor } from "../../slash-command/core/debug";
 import type { ExecutionContext, ExecutionResult } from "../../slash-command/types";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -305,6 +306,49 @@ describe("Slash 命令系统基线测试", () => {
 
       const result = await execSlash("{: {: /getvar a :} :}", ctx);
       expect(result.pipe).toBe("1");
+    });
+
+    it("/let 在块内写入不应污染外层 scope chain", async () => {
+      const result = await execSlash("/let outer 1|{: /let outer 2 :}|/if outer == 1 {: /echo scoped :} {: /echo leaked :}");
+      expect(result.pipe).toBe("scoped");
+    });
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  //   测试组 5.5：parser flag / debug 语义
+  // ──────────────────────────────────────────────────────────────────────────
+
+  describe("parser flag / debug 语义", () => {
+    it("STRICT_ESCAPING=on 时未闭合引号应 fail-fast", async () => {
+      const result = await execSlash("/parser-flag STRICT_ESCAPING on | /echo \"unterminated");
+      expect(result.isError).toBe(true);
+    });
+
+    it("debug 未启用时 /breakpoint 应被安全忽略", async () => {
+      const result = await execSlash("/echo start | /breakpoint | /echo end");
+      expect(result.isError).toBe(false);
+      expect(result.pipe).toBe("end");
+    });
+
+    it("debug 启用时 /breakpoint 应产生命中事件并保持执行连续", async () => {
+      const monitor = getDebugMonitor();
+      monitor.enable();
+      monitor.clearEvents();
+
+      try {
+        const result = await execSlash("/echo start | /breakpoint | {: /breakpoint :} | /echo end");
+        expect(result.isError).toBe(false);
+        expect(result.pipe).toBe("end");
+
+        const breakpointEvents = monitor
+          .getRecentEvents(40)
+          .flatMap((event) => event.type === "debug:breakpoint" ? [event] : []);
+        expect(breakpointEvents).toHaveLength(2);
+        expect(breakpointEvents.map((event) => event.scopeDepth)).toEqual([0, 1]);
+      } finally {
+        monitor.disable();
+        monitor.clearEvents();
+      }
     });
   });
 

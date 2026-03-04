@@ -70,12 +70,23 @@ export interface ScriptLifecycleEvent {
   aborted?: boolean;
 }
 
+/**
+ * 断点命中事件
+ */
+export interface BreakpointEvent {
+  type: "debug:breakpoint";
+  timestamp: number;
+  scopeDepth: number;
+  raw: string;
+}
+
 export type SlashDebugEvent =
   | CommandStartEvent
   | CommandEndEvent
   | ControlSignalEvent
   | ScopeChangeEvent
-  | ScriptLifecycleEvent;
+  | ScriptLifecycleEvent
+  | BreakpointEvent;
 
 // ============================================================================
 //                              调试监视器
@@ -305,6 +316,21 @@ export function createScriptLifecycleEvent(
   };
 }
 
+/**
+ * 创建断点命中事件
+ */
+export function createBreakpointEvent(
+  raw: string,
+  scopeDepth: number,
+): BreakpointEvent {
+  return {
+    type: "debug:breakpoint",
+    timestamp: Date.now(),
+    scopeDepth,
+    raw,
+  };
+}
+
 // ============================================================================
 //                              控制台输出格式化
 // ============================================================================
@@ -330,6 +356,8 @@ export function formatDebugEvent(event: SlashDebugEvent): string {
     return `[${time}] ▶▶ Script start (${event.nodeCount || 0} nodes)`;
   case "script:end":
     return `[${time}] ◼◼ Script end (${event.totalDuration || 0}ms)${event.aborted ? " [ABORTED]" : ""}`;
+  case "debug:breakpoint":
+    return `[${time}] ⏸ Breakpoint hit (depth: ${event.scopeDepth})`;
   default:
     return `[${time}] Unknown event`;
   }

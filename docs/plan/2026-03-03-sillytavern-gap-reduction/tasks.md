@@ -158,7 +158,9 @@
 
 ### P1 - parser 深语义 + regex/worldbook 组合验证
 
-- [ ] 推进 parser 深语义：`flags/debug/scope chain`，并以 `st-baseline-slash-command` 样本落地可复现断言。
+- [x] 推进 parser 深语义：`flags/debug/scope chain`，并以 `st-baseline-slash-command` 样本落地可复现断言。
+- [x] 十六轮增量：补齐 `parser-flag`（`STRICT_ESCAPING/REPLACE_GETVAR`）+ `breakpoint` debug gate + `scopeDepth/parserFlags` 执行期透传。
+- [x] 十六轮回归：`pnpm vitest run lib/slash-command/__tests__/kernel-core.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`、`pnpm exec eslint ...`、`pnpm exec tsc --noEmit` 全绿。
 - [ ] 新增素材驱动回归：覆盖 `test-baseline-assets/character-card/V2.0Beta.png` 与 `Sgw3.*` 的 `regex_scripts` 关键组合（`runOnEdit/substituteRegex/minDepth/maxDepth`）。
 - [ ] 强化 worldbook 组合场景：`probability/useProbability/depth/group/groupWeight` 的执行链一致性检查。
 

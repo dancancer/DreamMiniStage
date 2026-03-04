@@ -12,6 +12,7 @@ import { parseSlashCommands } from "../parser";
 import { ScopeChain } from "../core/scope";
 import { executeScript } from "../core/executor";
 import { executeSlashCommands } from "../executor";
+import { getDebugMonitor } from "../core/debug";
 import type { CommandDescriptor, CommandResolver } from "../core/types";
 import type { ExecutionContext } from "../types";
 
@@ -109,6 +110,43 @@ describe("parser — nested blocks and pipes", () => {
       expect.objectContaining({ name: "mode", value: "second value", wasQuoted: true }),
       expect.objectContaining({ name: "mode", value: "third", wasQuoted: true }),
     ]);
+  });
+
+  it("applies parser-flag to later segments and snapshots parserFlags/scopeDepth", () => {
+    const parsed = parseKernelScript(
+      "/parser-flag REPLACE_GETVAR on|/echo value={{getvar::foo}}|{: /echo value={{getglobalvar::bar}} :}",
+    );
+    expect(parsed.isError).toBe(false);
+    expect(parsed.script).toHaveLength(2);
+
+    const root = parsed.script[0];
+    if (root.type !== "command") throw new Error("expected root command");
+    expect(root.scopeDepth).toBe(0);
+    expect(root.parserFlags.REPLACE_GETVAR).toBe(true);
+    expect(root.namedArgumentList).toEqual([
+      expect.objectContaining({ name: "value", value: "{{var::foo}}" }),
+    ]);
+
+    const block = parsed.script[1];
+    if (block.type !== "block") throw new Error("expected block node");
+    expect(block.body).toHaveLength(1);
+
+    const nested = block.body[0];
+    if (nested.type !== "command") throw new Error("expected nested command");
+    expect(nested.scopeDepth).toBe(1);
+    expect(nested.parserFlags.REPLACE_GETVAR).toBe(true);
+    expect(nested.namedArgumentList).toEqual([
+      expect.objectContaining({ name: "value", value: "{{globalvar::bar}}" }),
+    ]);
+  });
+
+  it("enforces quote closure when STRICT_ESCAPING is enabled", () => {
+    const strictResult = parseKernelScript("/parser-flag STRICT_ESCAPING on|/echo \"unterminated");
+    expect(strictResult.isError).toBe(true);
+
+    const looseResult = parseKernelScript("/parser-flag STRICT_ESCAPING off|/echo \"unterminated");
+    expect(looseResult.isError).toBe(false);
+    expect(looseResult.script).toHaveLength(1);
   });
 });
 
@@ -244,5 +282,34 @@ describe("executor — control flow and signals", () => {
     });
 
     expect(result.pipe).toBe("tail");
+  });
+
+  it("emits breakpoint debug events when debug mode is enabled", async () => {
+    const monitor = getDebugMonitor();
+    monitor.enable();
+    monitor.clearEvents();
+
+    try {
+      const parsed = parseKernelScript(
+        "/echo start|/breakpoint|{: /breakpoint :}|/echo end",
+        { debugEnabled: true },
+      );
+      expect(parsed.isError).toBe(false);
+
+      const result = await executeScript(parsed.script, {
+        resolveCommand,
+        context: minimalCtx,
+      });
+
+      expect(result.pipe).toBe("end");
+      const events = monitor.getRecentEvents(20).flatMap((event) => (
+        event.type === "debug:breakpoint" ? [event] : []
+      ));
+      expect(events).toHaveLength(2);
+      expect(events.map((event) => event.scopeDepth)).toEqual([0, 1]);
+    } finally {
+      monitor.disable();
+      monitor.clearEvents();
+    }
   });
 });

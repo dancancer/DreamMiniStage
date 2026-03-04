@@ -9,8 +9,10 @@
 import { executeScript } from "./core/executor";
 import { parseKernelScript } from "./core/parser";
 import { ScopeChain } from "./core/scope";
+import { getDebugMonitor } from "./core/debug";
 import type { AstNode, CommandDescriptor } from "./core/types";
 import type {
+  ParserFlags,
   SlashCommand,
   ExecutionResult,
   ExecutionContext,
@@ -19,6 +21,11 @@ import type {
   ParsedUnnamedArgument,
 } from "./types";
 import { getCommandHandler } from "./registry";
+
+const DEFAULT_PARSER_FLAGS: ParserFlags = {
+  STRICT_ESCAPING: false,
+  REPLACE_GETVAR: false,
+};
 
 // ============================================================================
 //                              兼容层（旧命令 -> 内核）
@@ -70,6 +77,8 @@ function mapCommandToAst(cmd: SlashCommand): AstNode {
     namedArgs: cmd.namedArgs,
     namedArgumentList: cmd.namedArgumentList ?? fallbackNamedArgumentList(cmd.namedArgs),
     unnamedArgumentList: cmd.unnamedArgumentList ?? fallbackUnnamedArgumentList(cmd.args),
+    parserFlags: cmd.parserFlags ?? { ...DEFAULT_PARSER_FLAGS },
+    scopeDepth: cmd.scopeDepth ?? 0,
     blocks: [],
     raw: cmd.raw,
   };
@@ -113,7 +122,9 @@ export async function executeSlashCommandScript(
   input: string,
   ctx: ExecutionContext,
 ): Promise<ExecutionResult> {
-  const parsed = parseKernelScript(input);
+  const parsed = parseKernelScript(input, {
+    debugEnabled: getDebugMonitor().isEnabled(),
+  });
   if (parsed.isError) {
     return { pipe: "", isError: true, errorMessage: parsed.errorMessage };
   }

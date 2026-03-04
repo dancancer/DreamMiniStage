@@ -23,6 +23,7 @@ export type {
   ControlSignalEvent,
   ScopeChangeEvent,
   ScriptLifecycleEvent,
+  BreakpointEvent,
   CommandStats,
 } from "./core/debug";
 

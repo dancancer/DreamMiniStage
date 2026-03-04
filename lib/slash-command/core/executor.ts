@@ -20,6 +20,7 @@ import type {
 import { ScopeChain } from "./scope";
 import {
   getDebugMonitor,
+  createBreakpointEvent,
   createCommandStartEvent,
   createCommandEndEvent,
   createControlSignalEvent,
@@ -95,6 +96,10 @@ interface ExecResult {
 
 async function executeNode(node: AstNode, ctx: ExecContext): Promise<ExecResult> {
   if (node.type === "block") return runBlock(node.body, ctx);
+  if (node.type === "breakpoint") {
+    getDebugMonitor().emit(createBreakpointEvent(node.raw, node.scopeDepth));
+    return { pipe: ctx.pipe };
+  }
   if (node.type === "command") return executeCommand(node, ctx);
   if (node.type === "if") return executeIf(node, ctx);
   if (node.type === "while") return executeWhile(node, ctx);
@@ -134,6 +139,8 @@ async function executeCommand(node: CommandNode, ctx: ExecContext): Promise<Exec
       raw: node.raw,
       namedArgumentList: node.namedArgumentList,
       unnamedArgumentList: node.unnamedArgumentList,
+      parserFlags: node.parserFlags,
+      scopeDepth: node.scopeDepth,
     };
 
     const result = await descriptor.handler(

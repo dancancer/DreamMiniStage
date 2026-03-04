@@ -9,6 +9,11 @@
 
 import type { SlashCommand, ParseResult } from "./types";
 
+const DEFAULT_PARSER_FLAGS = {
+  STRICT_ESCAPING: false,
+  REPLACE_GETVAR: false,
+};
+
 // ============================================================================
 //                              解析器实现
 // ============================================================================
@@ -43,6 +48,8 @@ function parseSingleCommand(raw: string): SlashCommand | null {
     namedArgs,
     namedArgumentList,
     unnamedArgumentList,
+    parserFlags: { ...DEFAULT_PARSER_FLAGS },
+    scopeDepth: 0,
     raw: trimmed,
   };
 }

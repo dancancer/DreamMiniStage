@@ -9,6 +9,7 @@
 import type {
   CommandInvocationMeta,
   ExecutionContext,
+  ParserFlags,
   ParsedNamedArgument,
   ParsedUnnamedArgument,
 } from "../types";
@@ -22,6 +23,7 @@ export type Script = AstNode[];
 
 export type AstNode =
   | CommandNode
+  | BreakpointNode
   | BlockNode
   | IfNode
   | WhileNode
@@ -37,7 +39,15 @@ export interface CommandNode {
   namedArgs: Record<string, string>;
   namedArgumentList: ParsedNamedArgument[];
   unnamedArgumentList: ParsedUnnamedArgument[];
+  parserFlags: ParserFlags;
+  scopeDepth: number;
   blocks: BlockArgument[];
+  raw: string;
+}
+
+export interface BreakpointNode {
+  type: "breakpoint";
+  scopeDepth: number;
   raw: string;
 }
 

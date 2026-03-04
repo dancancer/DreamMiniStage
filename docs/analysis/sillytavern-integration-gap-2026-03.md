@@ -378,6 +378,29 @@
   - `pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`
   - 结果：全部通过（`3 files / 67 tests`）。
 
+### 1.25 2026-03-04 主线增量执行结果（十六轮 parser 深语义第一切片）
+
+- 本轮执行目标：落地 `flags/debug/scope chain` 最小可复现语义，且在 `st-baseline-slash-command` 固化断言。
+- 本轮关键结果：
+  - `lib/slash-command/core/parser.ts` 已接入 parser flag 状态机：
+    - 新增 `/parser-flag` 解析期指令；
+    - 支持 `STRICT_ESCAPING`（未闭合引号 fail-fast）；
+    - 支持 `REPLACE_GETVAR`（`{{getvar::}}/{{getglobalvar::}}` 归一到 scoped macro 形态）。
+  - parser/executor 已补齐 `scopeDepth + parserFlags` 元数据透传：
+    - `CommandNode` 增加 `scopeDepth/parserFlags`；
+    - `CommandInvocationMeta` 同步透传到执行期 handler。
+  - debug 语义补齐：
+    - 新增 `breakpoint` AST 节点；
+    - debug 开启时命中 `/breakpoint` 会产出 `debug:breakpoint` 事件；
+    - debug 关闭时 `/breakpoint` 按指令语义安全忽略。
+  - 基线断言已落地：
+    - `st-baseline-slash-command` 新增 `STRICT_ESCAPING`、`breakpoint` 与 `scope chain` 行为断言。
+- 本轮回归：
+  - `pnpm exec eslint lib/slash-command/core/parser.ts lib/slash-command/core/executor.ts lib/slash-command/core/debug.ts lib/slash-command/core/types.ts lib/slash-command/executor.ts lib/slash-command/parser.ts lib/slash-command/types.ts lib/slash-command/index.ts lib/slash-command/__tests__/kernel-core.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`
+  - `pnpm vitest run lib/slash-command/__tests__/kernel-core.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`
+  - `pnpm exec tsc --noEmit`
+  - 结果：全部通过（`2 files / 74 tests`，lint/tsc 均全绿）。
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
@@ -735,11 +758,25 @@ pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts lib/sc
   - 测试：`3` files / `67` tests 全绿（含新增参数约束失败路径与结构化上下文断言）。
   - 结论：`registerSlashCommand` 参数约束从“声明位”推进到“执行位”，错误语义已进入可回归状态。
 
+### 3.22 parser 深语义回归（十六轮）
+
+- 执行命令：
+
+```bash
+pnpm vitest run lib/slash-command/__tests__/kernel-core.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts
+pnpm exec tsc --noEmit
+```
+
+- 结果：
+  - 测试：`2` files / `74` tests 全绿（新增 `STRICT_ESCAPING`、`breakpoint`、`scopeDepth/parserFlags` 断言）。
+  - 类型检查：通过。
+  - 结论：`flags/debug/scope chain` 最小语义切片已进入稳定可回归状态。
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
 
-- 当前 parser/executor 已支持基础控制流 + 宏条件表达式，但仍缺少上游 parser 的 flags/debug/scope 等完整语义。
+- 当前 parser/executor 已补齐 `flags/debug/scope chain` 第一切片（`parser-flag`、`breakpoint` 事件、`scopeDepth/parserFlags` 透传），但与上游仍有深语义差距（严格转义细节、更多 parser 指令交互）。
 - 关键位置：
   - 当前：`lib/slash-command/core/parser.ts`
   - 上游：`SillyTavern/public/scripts/slash-commands/SlashCommandParser.js`
@@ -773,7 +810,7 @@ pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts lib/sc
 ### 4.5 P2 高频缺口头部（六轮后）
 
 - `branch-create` 与 `ui` 高频命令最小子集已接入，P2 目标覆盖率已达成。
-- 头部缺口已进一步后移到低频命令与深语义能力（如 parser flags/debug/scope chain 细节），短期更适合通过 E2E 曝露真实阻塞点。
+- 头部缺口已进一步后移到低频命令与素材驱动深语义能力（regex/worldbook 组合链路），短期更适合通过素材回归曝露真实阻塞点。
 - 建议从“继续堆命令数”转向“以 E2E 场景驱动补缺”，优先修复能复现实际迁移失败的路径。
 
 ### 4.6 P4 现阶段风险（主线回归后）
@@ -782,7 +819,7 @@ pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts lib/sc
 - `mcp-chrome` 抢占风险已通过 `scripts/p4-playwright-preflight.sh` + `pnpm p4:preflight` 收敛，并在 CI 工作流中落地调用。
 - 十轮已落地噪音基线差分门禁：已知噪音可追踪，新增噪音会直接 fail-fast。
 - 十一轮已补齐 run-index 与规则健康审计：跨轮趋势可见、过期规则可提示。
-- 本轮已明确停止新增 CI 方向投入；当前剩余风险主要在 parser 深语义与参数细粒度语义（`acceptsMultiple/defaultValue/rawQuotes`），仍可能影响复杂脚本迁移。
+- 本轮已明确停止新增 CI 方向投入；当前剩余风险主要在 regex/worldbook 组合语义与长尾 parser 细节，仍可能影响复杂脚本迁移。
 
 ## 5. 本轮结论（主线优先）
 
@@ -796,12 +833,12 @@ pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts lib/sc
 6. `p4:preflight + p4:session-replay` 仍可作为回归基线入口，基建层面维持现状。
 7. 噪音基线差分已接入主链路，十轮实跑 `unknownSignatureCount=0`。
 8. run-index 已落地，历史 run 的耗时/通过率/噪音趋势可单文件查看。
-9. 本轮完成十四轮参数语义收敛：`registerSlashCommand` 的参数约束与错误语义已进入执行期可回归状态，主线迁移阻塞进一步后移到 parser 深语义。
+9. 本轮完成十六轮 parser 深语义第一切片：`flags/debug/scope chain` 已进入可回归状态，主线迁移阻塞后移到 regex/worldbook 组合链路。
 
 ## 6. 下一阶段建议（主线执行）
 
-1. 优先推进 parser 深语义缺口（`flags/debug/scope chain`），以 `st-baseline-slash-command` 可复现样本驱动。  
-2. 继续收敛 `registerSlashCommand` 细粒度语义（`acceptsMultiple/defaultValue/rawQuotes` 与重复命名参数行为）。  
+1. 优先推进素材驱动回归：覆盖 `V2.0Beta.png` 与 `Sgw3.*` 的 `regex_scripts` 关键组合（`runOnEdit/substituteRegex/minDepth/maxDepth`）。  
+2. 推进 worldbook 组合语义验证：`probability/useProbability/depth/group/groupWeight` 执行链一致性。  
 3. 仅把 `p4-session-replay` 作为回归基线使用，在每次主线修复后按需复跑，确保质量不倒退。
 
 ## 7. 基于测试素材的优先级重排（核心功能提级）
@@ -828,18 +865,16 @@ pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts lib/sc
 
 #### P0（最高，迁移阻塞优先）
 
-- `registerSlashCommand` 细粒度语义补齐：
-  - `acceptsMultiple`、`defaultValue`、`rawQuotes`、重复命名参数保序/聚合语义。
-- parser 参数解析一致性补齐：
-  - 当前 `lib/slash-command/core/parser.ts` 对重复命名参数仍“后写覆盖”，与上游复杂脚本预期存在偏差。
-- 目标：先保证素材中的高频宏/命令链在执行语义上稳定复现，再考虑继续扩命令数。
+- regex 脚本执行链素材回归：
+  - 覆盖 `V2.0Beta.png` 与 `Sgw3.*` 的 `runOnEdit/substituteRegex/minDepth/maxDepth` 组合断言。
+- 目标：先收敛“真实素材可复现失败”，再考虑扩展低频能力面。
 
 #### P1（高，内容生产链稳定性）
 
-- parser 深语义补齐：
-  - `flags/debug/scope chain`（与上游 `SlashCommandParser` 的行为等价性）。
-- regex/worldbook 执行链回归加固：
-  - 围绕 `runOnEdit + substituteRegex + depth/probability` 组合做专项回归，优先覆盖新增 `V2.0Beta.png` 与 `Sgw3` 角色卡样本。
+- worldbook 执行链回归加固：
+  - `probability/useProbability/depth/group/groupWeight` 组合语义一致性。
+- parser 深语义第二切片：
+  - 严格转义与 parser 指令交互细节（在已有 `flags/debug/scope chain` 第一切片上补齐）。
 
 #### P2（中，能力面收口）
 
