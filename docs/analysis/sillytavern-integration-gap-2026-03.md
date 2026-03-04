@@ -341,6 +341,24 @@
   - `pnpm vitest run lib/core/__tests__/st-baseline-slash-command.test.ts`
   - 结果：全部通过。
 
+### 1.23 2026-03-04 主线增量执行结果（十三轮结构拆分）
+
+- 本轮执行目标：在不新增能力前提下拆分桥接实现，降低 `extension-handlers` 与 shim 的耦合密度，控制后续语义收敛风险。
+- 本轮关键结果：
+  - `hooks/script-bridge/extension-handlers.ts` 收敛为门面层，行为导出保持不变。
+  - 新增子模块：
+    - `hooks/script-bridge/function-tool-bridge.ts`
+    - `hooks/script-bridge/slash-command-bridge.ts`
+    - `hooks/script-bridge/iframe-dispatcher-registry.ts`
+  - `public/iframe-libs/slash-runner-shim.js` 拆出独立分块：
+    - `createSlashCommandBridge`（slash 回调注册/执行）
+    - `createMessageDispatcher`（消息路由分发）
+  - `hooks/script-bridge/README.md` 已同步门面/子模块职责和文件清单。
+- 本轮回归：
+  - `pnpm exec eslint hooks/script-bridge/extension-handlers.ts hooks/script-bridge/function-tool-bridge.ts hooks/script-bridge/slash-command-bridge.ts hooks/script-bridge/iframe-dispatcher-registry.ts public/iframe-libs/slash-runner-shim.js`
+  - `pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`
+  - 结果：全部通过（`4 files / 66 tests`）。
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
@@ -670,6 +688,20 @@ pnpm p4:session-replay
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.json`
     - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.md`
 
+### 3.20 主线结构拆分回归（十三轮）
+
+- 执行命令：
+
+```bash
+pnpm exec eslint hooks/script-bridge/extension-handlers.ts hooks/script-bridge/function-tool-bridge.ts hooks/script-bridge/slash-command-bridge.ts hooks/script-bridge/iframe-dispatcher-registry.ts public/iframe-libs/slash-runner-shim.js
+pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts
+```
+
+- 结果：
+  - Lint：通过（新增拆分文件 + shim 改造文件）。
+  - 测试：`4` files / `66` tests 全绿。
+  - 结论：本轮为纯结构重排，未引入行为回退。
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -729,10 +761,10 @@ pnpm p4:session-replay
 6. `p4:preflight + p4:session-replay` 仍可作为回归基线入口，基建层面维持现状。
 7. 噪音基线差分已接入主链路，十轮实跑 `unknownSignatureCount=0`。
 8. run-index 已落地，历史 run 的耗时/通过率/噪音趋势可单文件查看。
-9. 本轮新增 `registerSlashCommand` iframe callback 闭环，消除“注册成功但执行断路”的主线阻塞。
+9. 本轮完成十三轮结构拆分：`extension-handlers` 与 shim 的回调/分发逻辑已分块，主线后续演进的改动面已收窄。
 
 ## 6. 下一阶段建议（主线执行）
 
-1. 下一轮先做结构拆分：`hooks/script-bridge/extension-handlers.ts` 与 `public/iframe-libs/slash-runner-shim.js` 先按职责解耦，降低后续语义扩展风险。  
-2. 在拆分基础上推进 parser 深语义缺口（`flags/debug/scope chain`）与 `registerSlashCommand` 参数语义等价性（`namedArgumentList/unnamedArgumentList`）。  
+1. 基于已完成拆分，优先推进 `registerSlashCommand` 参数语义等价性（`namedArgumentList/unnamedArgumentList`）与错误语义对齐。  
+2. 随后推进 parser 深语义缺口（`flags/debug/scope chain`），以 `st-baseline-slash-command` 可复现样本驱动。  
 3. 仅把 `p4-session-replay` 作为回归基线使用，在每次主线修复后按需复跑，确保质量不倒退。

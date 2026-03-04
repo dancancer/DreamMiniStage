@@ -8,9 +8,9 @@
 - [x] 为函数工具新增端到端单测（同步/异步 callback + 超时/异常返回）。
 - [x] 十二轮主线修复：补齐 `registerSlashCommand` 的 iframe 回调闭环（`SLASH_COMMAND_CALL -> SLASH_COMMAND_RESULT`），修复 `hasCallback + iframeId` 路径不可执行的迁移阻塞。
 - [x] 十二轮主线回归：`pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`。
-- [ ] 十三轮结构拆分（主线优先）：将 `hooks/script-bridge/extension-handlers.ts` 按职责拆分为函数工具桥接与 slash 回调桥接子模块，保持行为不变、消除单文件膨胀。
-- [ ] 十三轮结构拆分（主线优先）：将 `public/iframe-libs/slash-runner-shim.js` 的 slash 回调与消息分发逻辑拆出独立分块，减少跨能力耦合（不引入新能力）。
-- [ ] 十三轮拆分验收：拆分后执行 `pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts` 全绿。
+- [x] 十三轮结构拆分（主线优先）：将 `hooks/script-bridge/extension-handlers.ts` 按职责拆分为函数工具桥接与 slash 回调桥接子模块，保持行为不变、消除单文件膨胀。
+- [x] 十三轮结构拆分（主线优先）：将 `public/iframe-libs/slash-runner-shim.js` 的 slash 回调与消息分发逻辑拆出独立分块，减少跨能力耦合（不引入新能力）。
+- [x] 十三轮拆分验收：拆分后执行 `pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts` 全绿。
 - [x] 回归：
   - `pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts`
   - `pnpm vitest run hooks/script-bridge/__tests__/api-surface-contract.test.ts`

@@ -25,7 +25,7 @@
   var sessionContext = {
     characterId: null,
     sessionId: null,
-    chatId: null
+    chatId: null,
   };
 
   function createId() {
@@ -38,7 +38,7 @@
       payload: payload,
       id: payload && payload.id,
       timestamp: Date.now(),
-      origin: window.location.origin
+      origin: window.location.origin,
     };
     console.log("[SlashRunner:sendMessage] 发送消息到父窗口:", type, "id:", msg.id, "payload:", payload);
     window.parent.postMessage(msg, "*");
@@ -161,9 +161,175 @@
   // ════════════════════════════════════════════════════════════════════════
 
   var functionToolCallbacks = {};
+  var slashCommandBridge = createSlashCommandBridge({
+    callApi: callApi,
+    iframeId: iframeId,
+    sendMessage: sendMessage,
+  });
 
   function generateHandlerId() {
     return "h_" + (++handlerIdCounter) + "_" + Date.now();
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  //  Slash 回调桥接：注册与执行解耦
+  // ════════════════════════════════════════════════════════════════════════
+
+  function getSlashCommandCallbacks() {
+    if (!window._slashCommandCallbacks) {
+      window._slashCommandCallbacks = {};
+    }
+    return window._slashCommandCallbacks;
+  }
+
+  function createSlashCommandBridge(options) {
+    function register(definition) {
+      if (definition && typeof definition.callback === "function") {
+        var cmdName = definition.name;
+        var callback = definition.callback;
+        var callbacks = getSlashCommandCallbacks();
+        callbacks[cmdName] = callback;
+
+        if (Array.isArray(definition.aliases)) {
+          definition.aliases.forEach(function(alias) {
+            if (typeof alias === "string" && alias.length > 0) {
+              callbacks[alias] = callback;
+            }
+          });
+        }
+
+        var defCopy = Object.assign({}, definition);
+        delete defCopy.callback;
+        defCopy.hasCallback = true;
+        defCopy.iframeId = options.iframeId;
+        return options.callApi("registerSlashCommand", [defCopy]);
+      }
+
+      if (definition && !definition.iframeId) {
+        var plainDef = Object.assign({}, definition);
+        plainDef.iframeId = options.iframeId;
+        return options.callApi("registerSlashCommand", [plainDef]);
+      }
+
+      return options.callApi("registerSlashCommand", [definition]);
+    }
+
+    function handleCall(payload) {
+      var scPayload = payload || {};
+      var commandName = scPayload.name;
+      var slashCallbackId = scPayload.callbackId;
+      var slashArgs = scPayload.args || "";
+      var slashNamedArgs = scPayload.namedArgs || {};
+      var slashContext = scPayload.context || {};
+
+      var slashCallbacks = getSlashCommandCallbacks();
+      var slashCallback = slashCallbacks[commandName];
+      if (!slashCallback) {
+        options.sendMessage("SLASH_COMMAND_RESULT", {
+          callbackId: slashCallbackId,
+          error: "Slash command callback not found: " + commandName,
+        });
+        return;
+      }
+
+      try {
+        var slashResult = slashCallback(slashArgs, slashNamedArgs, slashContext);
+        Promise.resolve(slashResult).then(function(res) {
+          options.sendMessage("SLASH_COMMAND_RESULT", { callbackId: slashCallbackId, result: res });
+        }).catch(function(err) {
+          options.sendMessage("SLASH_COMMAND_RESULT", { callbackId: slashCallbackId, error: err.message || String(err) });
+        });
+      } catch (err) {
+        options.sendMessage("SLASH_COMMAND_RESULT", { callbackId: slashCallbackId, error: err.message || String(err) });
+      }
+    }
+
+    return {
+      register: register,
+      handleCall: handleCall,
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  //  消息分发：按类型路由，避免单个巨型 switch 继续膨胀
+  // ════════════════════════════════════════════════════════════════════════
+
+  function handleFunctionToolCallMessage(payload, callbacks, sendMessageFn) {
+    var ftPayload = payload || {};
+    var toolName = ftPayload.name;
+    var toolArgs = ftPayload.args || {};
+    var callbackId = ftPayload.callbackId;
+
+    console.log("[SlashRunner] FUNCTION_TOOL_CALL:", toolName, "callbackId:", callbackId);
+
+    var callback = callbacks[toolName];
+    if (!callback) {
+      sendMessageFn("FUNCTION_TOOL_RESULT", { callbackId: callbackId, error: "Function tool not found: " + toolName });
+      return;
+    }
+
+    try {
+      var result = callback(toolArgs);
+      Promise.resolve(result).then(function(res) {
+        sendMessageFn("FUNCTION_TOOL_RESULT", { callbackId: callbackId, result: res });
+      }).catch(function(err) {
+        sendMessageFn("FUNCTION_TOOL_RESULT", { callbackId: callbackId, error: err.message || String(err) });
+      });
+    } catch (err) {
+      sendMessageFn("FUNCTION_TOOL_RESULT", { callbackId: callbackId, error: err.message || String(err) });
+    }
+  }
+
+  function createMessageDispatcher(options) {
+    var handlers = {
+      EVENT_EMIT: function(data) {
+        var eventPayload = data.payload;
+        window.dispatchEvent(new CustomEvent("DreamMiniStage:" + eventPayload.eventName, { detail: eventPayload.data }));
+      },
+      UPDATE_VARIABLES: function(data) {
+        Object.assign(options.variableCache, data.payload);
+      },
+      UPDATE_CONTEXT: function(data) {
+        if (!data.payload) {
+          return;
+        }
+        if (data.payload.characterId !== undefined) options.sessionContext.characterId = data.payload.characterId;
+        if (data.payload.sessionId !== undefined) options.sessionContext.sessionId = data.payload.sessionId;
+        if (data.payload.chatId !== undefined) options.sessionContext.chatId = data.payload.chatId;
+      },
+      FUNCTION_TOOL_CALL: function(data) {
+        handleFunctionToolCallMessage(data.payload, options.functionToolCallbacks, options.sendMessage);
+      },
+      SLASH_COMMAND_CALL: function(data) {
+        options.slashCommandBridge.handleCall(data.payload);
+      },
+      API_RESPONSE: function(data) {
+        console.log("[SlashRunner:onMessage] 收到 API_RESPONSE:", "id:", data.id, "payload:", data.payload);
+        if (data.id && options.pending.has(data.id)) {
+          var handler = options.pending.get(data.id);
+          options.pending.delete(data.id);
+          if (data.payload && data.payload.error) {
+            console.error("[SlashRunner:onMessage] API 调用失败:", data.payload.error);
+            handler.reject(new Error(data.payload.error));
+          } else {
+            console.log("[SlashRunner:onMessage] API 调用成功:", data.payload && data.payload.result);
+            handler.resolve(data.payload && data.payload.result);
+          }
+        } else {
+          console.warn("[SlashRunner:onMessage] 收到未知 id 的响应:", data.id, "pending keys:", Array.from(options.pending.keys()));
+        }
+      },
+    };
+
+    return function onMessage(e) {
+      if (!e.data || !e.data.type) {
+        return;
+      }
+      var handler = handlers[e.data.type];
+      if (handler) {
+        handler(e.data);
+      }
+    };
   }
 
   // ════════════════════════════════════════════════════════════════════════
@@ -182,7 +348,7 @@
         delete variableCache[key];
         sendMessage("API_CALL", { method: "deleteVariable", args: [key] });
       },
-      list: function() { return Object.keys(variableCache); }
+      list: function() { return Object.keys(variableCache); },
     },
     events: {
       on: function(event, handler) {
@@ -213,12 +379,12 @@
       emit: function(event, data) {
         window.dispatchEvent(new CustomEvent("DreamMiniStage:" + event, { detail: data }));
         return callApi("eventEmit", [event, data]);
-      }
+      },
     },
     utils: {
       log: log,
-      waitFor: function(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
-    }
+      waitFor: function(ms) { return new Promise(function(r) { setTimeout(r, ms); }); },
+    },
   };
 
   // ════════════════════════════════════════════════════════════════════════
@@ -234,7 +400,7 @@
       get: function(key) { return window.DreamMiniStage.variables.get(key); },
       set: function(key, value) { window.DreamMiniStage.variables.set(key, value); },
       delete: function(key) { window.DreamMiniStage.variables.delete(key); },
-      list: function() { return window.DreamMiniStage.variables.list(); }
+      list: function() { return window.DreamMiniStage.variables.list(); },
     },
     getVariables: api("getVariables"),
     replaceVariables: api("replaceVariables"),
@@ -266,7 +432,7 @@
       on: function(e, h) { return window.DreamMiniStage.events.on(e, h); },
       once: function(e, h) { return window.DreamMiniStage.events.once(e, h); },
       off: function(e, h) { window.DreamMiniStage.events.off(e, h); },
-      emit: function(e, d) { return window.DreamMiniStage.events.emit(e, d); }
+      emit: function(e, d) { return window.DreamMiniStage.events.emit(e, d); },
     },
     eventOn: function(event, handler) { return window.DreamMiniStage.events.on(event, handler); },
     eventOnce: function(event, handler) { return window.DreamMiniStage.events.once(event, handler); },
@@ -446,9 +612,9 @@
         characterId: sessionContext.characterId,
         sessionId: sessionContext.sessionId,
         chatId: sessionContext.chatId,
-        iframeId: iframeId
+        iframeId: iframeId,
       };
-    }
+    },
   };
 
   // 开发版约束：不再注入 window.getVariables/window.triggerSlash 等顶层别名。
@@ -478,7 +644,7 @@
         // iframe 标识
         iframeId: iframeId,
         // API 版本
-        apiVersion: "1.0.0"
+        apiVersion: "1.0.0",
       };
     },
 
@@ -513,42 +679,7 @@
      * @returns {Promise<boolean>} 注册成功返回 true
      */
     registerSlashCommand: function(definition) {
-      // 注意：callback 函数无法序列化，需要特殊处理
-      // 将回调存储在本地，通过 postMessage 回调执行
-      if (definition && typeof definition.callback === "function") {
-        var cmdName = definition.name;
-        var callback = definition.callback;
-
-        // 存储回调到本地注册表
-        if (!window._slashCommandCallbacks) {
-          window._slashCommandCallbacks = {};
-        }
-        window._slashCommandCallbacks[cmdName] = callback;
-        if (Array.isArray(definition.aliases)) {
-          definition.aliases.forEach(function(alias) {
-            if (typeof alias === "string" && alias.length > 0) {
-              window._slashCommandCallbacks[alias] = callback;
-            }
-          });
-        }
-
-        // 发送注册请求（不含回调函数）
-        var defCopy = Object.assign({}, definition);
-        delete defCopy.callback;
-        defCopy.hasCallback = true;
-        defCopy.iframeId = iframeId;
-
-        return callApi("registerSlashCommand", [defCopy]);
-      }
-
-      // 无 callback 的定义也补充 iframeId，便于主应用做归属清理
-      if (definition && !definition.iframeId) {
-        var plainDef = Object.assign({}, definition);
-        plainDef.iframeId = iframeId;
-        return callApi("registerSlashCommand", [plainDef]);
-      }
-
-      return callApi("registerSlashCommand", [definition]);
+      return slashCommandBridge.register(definition);
     },
 
     /**
@@ -565,109 +696,22 @@
      */
     getRequestHeaders: function() {
       return callApi("getRequestHeaders", []);
-    }
+    },
   };
 
   // ════════════════════════════════════════════════════════════════════════
   //  消息监听
   // ════════════════════════════════════════════════════════════════════════
 
-  window.addEventListener("message", function(e) {
-    if (!e.data) return;
-
-    switch (e.data.type) {
-      case "EVENT_EMIT":
-        var eventPayload = e.data.payload;
-        window.dispatchEvent(new CustomEvent("DreamMiniStage:" + eventPayload.eventName, { detail: eventPayload.data }));
-        break;
-
-      case "UPDATE_VARIABLES":
-        Object.assign(variableCache, e.data.payload);
-        break;
-
-      case "UPDATE_CONTEXT":
-        // 更新会话上下文
-        if (e.data.payload) {
-          if (e.data.payload.characterId !== undefined) sessionContext.characterId = e.data.payload.characterId;
-          if (e.data.payload.sessionId !== undefined) sessionContext.sessionId = e.data.payload.sessionId;
-          if (e.data.payload.chatId !== undefined) sessionContext.chatId = e.data.payload.chatId;
-        }
-        break;
-
-      case "FUNCTION_TOOL_CALL":
-        // 处理来自主应用的函数工具调用
-        var ftPayload = e.data.payload || {};
-        var toolName = ftPayload.name;
-        var toolArgs = ftPayload.args || {};
-        var callbackId = ftPayload.callbackId;
-
-        console.log("[SlashRunner] FUNCTION_TOOL_CALL:", toolName, "callbackId:", callbackId);
-
-        var callback = functionToolCallbacks[toolName];
-        if (callback) {
-          try {
-            var result = callback(toolArgs);
-            // 处理同步和异步结果
-            Promise.resolve(result).then(function(res) {
-              sendMessage("FUNCTION_TOOL_RESULT", { callbackId: callbackId, result: res });
-            }).catch(function(err) {
-              sendMessage("FUNCTION_TOOL_RESULT", { callbackId: callbackId, error: err.message || String(err) });
-            });
-          } catch (err) {
-            sendMessage("FUNCTION_TOOL_RESULT", { callbackId: callbackId, error: err.message || String(err) });
-          }
-        } else {
-          sendMessage("FUNCTION_TOOL_RESULT", { callbackId: callbackId, error: "Function tool not found: " + toolName });
-        }
-        break;
-
-      case "SLASH_COMMAND_CALL":
-        var scPayload = e.data.payload || {};
-        var commandName = scPayload.name;
-        var slashCallbackId = scPayload.callbackId;
-        var slashArgs = scPayload.args || "";
-        var slashNamedArgs = scPayload.namedArgs || {};
-        var slashContext = scPayload.context || {};
-
-        var slashCallbacks = window._slashCommandCallbacks || {};
-        var slashCallback = slashCallbacks[commandName];
-        if (slashCallback) {
-          try {
-            var slashResult = slashCallback(slashArgs, slashNamedArgs, slashContext);
-            Promise.resolve(slashResult).then(function(res) {
-              sendMessage("SLASH_COMMAND_RESULT", { callbackId: slashCallbackId, result: res });
-            }).catch(function(err) {
-              sendMessage("SLASH_COMMAND_RESULT", { callbackId: slashCallbackId, error: err.message || String(err) });
-            });
-          } catch (err) {
-            sendMessage("SLASH_COMMAND_RESULT", { callbackId: slashCallbackId, error: err.message || String(err) });
-          }
-        } else {
-          sendMessage("SLASH_COMMAND_RESULT", {
-            callbackId: slashCallbackId,
-            error: "Slash command callback not found: " + commandName,
-          });
-        }
-        break;
-
-      case "API_RESPONSE":
-        console.log("[SlashRunner:onMessage] 收到 API_RESPONSE:", "id:", e.data.id, "payload:", e.data.payload);
-        if (e.data.id && pending.has(e.data.id)) {
-          var handler = pending.get(e.data.id);
-          pending.delete(e.data.id);
-          if (e.data.payload && e.data.payload.error) {
-            console.error("[SlashRunner:onMessage] API 调用失败:", e.data.payload.error);
-            handler.reject(new Error(e.data.payload.error));
-          } else {
-            console.log("[SlashRunner:onMessage] API 调用成功:", e.data.payload && e.data.payload.result);
-            handler.resolve(e.data.payload && e.data.payload.result);
-          }
-        } else {
-          console.warn("[SlashRunner:onMessage] 收到未知 id 的响应:", e.data.id, "pending keys:", Array.from(pending.keys()));
-        }
-        break;
-    }
+  var onIframeMessage = createMessageDispatcher({
+    pending: pending,
+    variableCache: variableCache,
+    sessionContext: sessionContext,
+    functionToolCallbacks: functionToolCallbacks,
+    slashCommandBridge: slashCommandBridge,
+    sendMessage: sendMessage,
   });
+  window.addEventListener("message", onIframeMessage);
 
   // ════════════════════════════════════════════════════════════════════════
   //  初始化
