@@ -76,4 +76,25 @@ describe("slash-runner shim contract", () => {
     expect(source).toMatch(/updateTavernRegexesWith:\s*function\(updater,\s*option\)/);
     expect(source).toMatch(/updateTavernRegexesWith 的 updater 必须返回数组/);
   });
+
+  it("exposes _bind/_th_impl and deprecated audio helper aliases", () => {
+    const source = readShimSource();
+
+    expect(source).toMatch(/_th_impl:\s*\{/);
+    expect(source).toMatch(/writeExtensionField:\s*unsupportedAsync\("writeExtensionField"\)/);
+    expect(source).toMatch(/_bind:\s*\{/);
+    expect(source).toMatch(/_initializeGlobal:\s*function\(globalName,\s*value\)/);
+    expect(source).toMatch(/_waitGlobalInitialized:\s*function\(globalName\)/);
+    expect(source).toMatch(/_registerMacroLike:\s*function\(regex,\s*replaceFn\)/);
+    expect(source).toMatch(/_reloadIframe:\s*function\(\)/);
+    expect(source).toMatch(/_getIframeName:\s*function\(\)/);
+    expect(source).toMatch(/_getScriptId:\s*function\(\)/);
+    expect(source).toMatch(/_getCurrentMessageId:\s*function\(\)/);
+
+    expect(source).toMatch(/audioEnable:\s*function\(args\)/);
+    expect(source).toMatch(/audioImport:\s*function\(args,\s*url\)/);
+    expect(source).toMatch(/audioMode:\s*function\(args\)/);
+    expect(source).toMatch(/audioPlay:\s*function\(args\)/);
+    expect(source).toMatch(/audioSelect:\s*function\(args,\s*url\)/);
+  });
 });

@@ -342,6 +342,117 @@
     return typeof worldName === "string" ? worldName : "";
   };
 
+  function getTavernHelperMethod(methodName) {
+    var helper = window.TavernHelper;
+    if (!helper || typeof helper[methodName] !== "function") {
+      throw new Error("[TavernHelper] Missing method: " + methodName);
+    }
+    return helper[methodName];
+  }
+
+  function callTavernHelperMethod(methodName, args) {
+    return getTavernHelperMethod(methodName).apply(window.TavernHelper, args);
+  }
+
+  function resolveIframeNameFromContext() {
+    if (window.frameElement && typeof window.frameElement.id === "string" && window.frameElement.id.length > 0) {
+      return window.frameElement.id;
+    }
+    if (typeof window.name === "string" && window.name.length > 0) {
+      return window.name;
+    }
+    return iframeId;
+  }
+
+  function resolveScriptIdFromIframeName(iframeName) {
+    var matched = String(iframeName).match(/^TH-script--.+--(.+)$/);
+    if (!matched) {
+      throw new Error("getScriptId can only be used in script iframe");
+    }
+    return matched[1];
+  }
+
+  function parseAudioAliasOptions(value, apiName) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      throw new Error("[" + apiName + "] options must be object");
+    }
+    return value;
+  }
+
+  function normalizeAudioAliasType(rawType, apiName) {
+    if (typeof rawType !== "string") {
+      throw new Error("[" + apiName + "] type must be bgm|ambient");
+    }
+    var type = rawType.trim().toLowerCase();
+    if (type !== "bgm" && type !== "ambient") {
+      throw new Error("[" + apiName + "] type must be bgm|ambient");
+    }
+    return type;
+  }
+
+  function parseAudioAliasBoolean(rawValue, defaultValue, apiName, argName) {
+    if (rawValue === undefined || rawValue === null || rawValue === "") {
+      return defaultValue;
+    }
+    if (typeof rawValue === "boolean") {
+      return rawValue;
+    }
+    if (typeof rawValue === "string") {
+      var normalized = rawValue.trim().toLowerCase();
+      if (normalized === "true") {
+        return true;
+      }
+      if (normalized === "false") {
+        return false;
+      }
+    }
+    throw new Error("[" + apiName + "] " + argName + " must be boolean");
+  }
+
+  function normalizeAudioAliasMode(rawMode, apiName) {
+    if (typeof rawMode !== "string") {
+      throw new Error("[" + apiName + "] mode must be repeat|random|single|stop");
+    }
+    var mode = rawMode.trim().toLowerCase();
+    if (mode !== "repeat" && mode !== "random" && mode !== "single" && mode !== "stop") {
+      throw new Error("[" + apiName + "] mode must be repeat|random|single|stop");
+    }
+    return mode;
+  }
+
+  function normalizeAudioImportUrls(rawUrl, apiName) {
+    if (typeof rawUrl !== "string") {
+      throw new Error("[" + apiName + "] url must be string");
+    }
+    var normalizedUrls = rawUrl.split(",").map(function(item) {
+      return item.trim();
+    }).filter(function(item) {
+      return item.length > 0;
+    }).filter(function(item, index, source) {
+      return source.indexOf(item) === index;
+    });
+    if (normalizedUrls.length === 0) {
+      throw new Error("[" + apiName + "] requires at least one url");
+    }
+    return normalizedUrls;
+  }
+
+  function createAudioTrack(url) {
+    var title = url;
+    try {
+      var parsed = new URL(url);
+      var segments = parsed.pathname.split("/");
+      var lastSegment = segments[segments.length - 1];
+      if (lastSegment) {
+        title = decodeURIComponent(lastSegment);
+      }
+    } catch (_error) {}
+    return {
+      url: url,
+      title: title,
+    };
+  }
+
   // ════════════════════════════════════════════════════════════════════════
   //  事件系统：本地 handler 注册表
   //  设计：本地维护 handler 映射，通过 handlerId 与主应用通信
@@ -612,6 +723,68 @@
   // ════════════════════════════════════════════════════════════════════════
 
   window.TavernHelper = {
+    _th_impl: {
+      _init: function() {},
+      _log: function(iframeName, level) {
+        var logArgs = Array.prototype.slice.call(arguments, 2);
+        var logger = typeof console[level] === "function" ? console[level] : console.log;
+        var prefix = "[TavernHelper][" + (iframeName || "iframe") + "]";
+        logger.apply(console, [prefix].concat(logArgs));
+      },
+      _clearLog: function() {},
+      writeExtensionField: unsupportedAsync("writeExtensionField"),
+    },
+
+    _bind: {
+      _initializeGlobal: function(globalName, value) {
+        return callTavernHelperMethod("initializeGlobal", [globalName, value]);
+      },
+      _waitGlobalInitialized: function(globalName) {
+        return callTavernHelperMethod("waitGlobalInitialized", [globalName]);
+      },
+      _registerMacroLike: function(regex, replaceFn) {
+        return callTavernHelperMethod("registerMacroLike", [regex, replaceFn]);
+      },
+      _getVariables: function(option) {
+        return callTavernHelperMethod("getVariables", [option]);
+      },
+      _replaceVariables: function(variables, option) {
+        return callTavernHelperMethod("replaceVariables", [variables, option]);
+      },
+      _updateVariablesWith: function(updater, option) {
+        return callTavernHelperMethod("updateVariablesWith", [updater, option]);
+      },
+      _insertOrAssignVariables: function(variables, option) {
+        return callTavernHelperMethod("insertOrAssignVariables", [variables, option]);
+      },
+      _insertVariables: function(variables, option) {
+        return callTavernHelperMethod("insertVariables", [variables, option]);
+      },
+      _deleteVariable: function(key, option) {
+        return callTavernHelperMethod("deleteVariable", [key, option]);
+      },
+      _reloadIframe: function() {
+        window.location.reload();
+      },
+      _errorCatched: function(fn) {
+        return callTavernHelperMethod("errorCatched", [fn]);
+      },
+      _getIframeName: function() {
+        return resolveIframeNameFromContext();
+      },
+      _getScriptId: function() {
+        return resolveScriptIdFromIframeName(resolveIframeNameFromContext());
+      },
+      _getCurrentMessageId: function() {
+        var iframeName = resolveIframeNameFromContext();
+        var matched = iframeName.match(/^TH-message--(\d+)--\d+(?:_\d+)?$/);
+        if (matched) {
+          return Number(matched[1]);
+        }
+        return callTavernHelperMethod("getCurrentMessageId", []);
+      },
+    },
+
     // ──────────────────────────────────────────────────────────────────────
     //  变量 API（Requirements 2.1-2.5）
     // ──────────────────────────────────────────────────────────────────────
@@ -1103,6 +1276,69 @@
     // ──────────────────────────────────────────────────────────────────────
     //  音频 API
     // ──────────────────────────────────────────────────────────────────────
+    audioEnable: function(args) {
+      var options = parseAudioAliasOptions(args, "audioEnable");
+      var type = normalizeAudioAliasType(options.type, "audioEnable");
+      var state = parseAudioAliasBoolean(options.state, true, "audioEnable", "state");
+      return callApi("setAudioEnabled", [type, state]).then(function() {
+        return "";
+      });
+    },
+    audioImport: function(args, url) {
+      var options = parseAudioAliasOptions(args, "audioImport");
+      var type = normalizeAudioAliasType(options.type, "audioImport");
+      var play = parseAudioAliasBoolean(options.play, true, "audioImport", "play");
+      var urls = normalizeAudioImportUrls(url, "audioImport");
+      var tracks = urls.map(createAudioTrack);
+
+      return callApi("appendAudioList", [type, tracks]).then(function() {
+        if (!play) {
+          return "";
+        }
+        return callApi("playAudio", [type, tracks[0]]).then(function() {
+          return "";
+        });
+      });
+    },
+    audioMode: function(args) {
+      var options = parseAudioAliasOptions(args, "audioMode");
+      var type = normalizeAudioAliasType(options.type, "audioMode");
+      var mode = normalizeAudioAliasMode(options.mode, "audioMode");
+      return callApi("setAudioMode", [type, mode]).then(function() {
+        return "";
+      });
+    },
+    audioPlay: function(args) {
+      var options = parseAudioAliasOptions(args, "audioPlay");
+      var type = normalizeAudioAliasType(options.type, "audioPlay");
+      var play = parseAudioAliasBoolean(options.play, true, "audioPlay", "play");
+      var method = play ? "playAudio" : "pauseAudio";
+      return callApi(method, [type]).then(function() {
+        return "";
+      });
+    },
+    audioSelect: function(args, url) {
+      var options = parseAudioAliasOptions(args, "audioSelect");
+      var type = normalizeAudioAliasType(options.type, "audioSelect");
+      var urls = normalizeAudioImportUrls(url, "audioSelect");
+      var selectedTrack = createAudioTrack(urls[0]);
+
+      return callApi("getAudioList", [type]).then(function(existingList) {
+        var list = Array.isArray(existingList) ? existingList : [];
+        var hasTrack = list.some(function(item) {
+          return item && typeof item === "object" && item.url === selectedTrack.url;
+        });
+        var appendTask = hasTrack
+          ? Promise.resolve()
+          : callApi("appendAudioList", [type, [selectedTrack]]);
+
+        return appendTask.then(function() {
+          return callApi("playAudio", [type, selectedTrack]).then(function() {
+            return "";
+          });
+        });
+      });
+    },
     playAudio: api("playAudio"),
     pauseAudio: api("pauseAudio"),
     stopAudio: api("stopAudio"),

@@ -6,7 +6,7 @@
 ## 1) 当前状态
 
 - Slash 覆盖：`80/258 = 31.01%`（已达原 P2 门槛）
-- TavernHelper API 覆盖：`113/130 = 86.92%`（已达原 P3 门槛）
+- TavernHelper API 覆盖：`120/130 = 92.31%`（已达原 P3 门槛）
 - P4：`p4-session-replay` 可作为稳定守卫基线（维持，不扩面）
 
 ## 2) 当前目标（主线）
@@ -30,9 +30,8 @@
 
 ### P2（高）TavernHelper helper 长尾
 
-- `_bind/_th_impl` 最小可运行子集。
-- `audioEnable/audioImport/audioMode/audioPlay/audioSelect` helper 别名。
-- preset helper 常量族按真实触发失败推进。
+- preset helper 常量族（`default_preset/isPreset*`）按真实触发失败推进。
+- script tree helper（`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`）按真实触发失败推进。
 
 ### P2（中）低频 slash 命令
 

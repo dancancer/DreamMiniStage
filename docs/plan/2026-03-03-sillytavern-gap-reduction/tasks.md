@@ -6,7 +6,7 @@
 ## 1. 当前状态快照（2026-03-04）
 
 - Slash 覆盖率：`80 / 258 = 31.01%`（已达 P2 门槛）
-- TavernHelper API 覆盖率：`113 / 130 = 86.92%`（已达 P3 门槛）
+- TavernHelper API 覆盖率：`120 / 130 = 92.31%`（已达 P3 门槛）
 - P4：`p4-session-replay`、噪音门禁、run-index 均可用（维持基线，不扩能力面）
 
 ## 2. 当前执行主线（进行中）
@@ -19,8 +19,8 @@
 
 ### P2 - TavernHelper 长尾 API（真实阻塞驱动）
 
-- [ ] 补齐 `_bind/_th_impl` 最小可运行子集（仅实现真实触发能力，未实现项显式 fail-fast）。
-- [ ] 补齐音频 helper 别名：`audioEnable/audioImport/audioMode/audioPlay/audioSelect`。
+- [x] 补齐 `_bind/_th_impl` 最小可运行子集（仅实现真实触发能力，未实现项显式 fail-fast）。
+- [x] 补齐音频 helper 别名：`audioEnable/audioImport/audioMode/audioPlay/audioSelect`。
 - [ ] 评估并按需补齐 preset helper 常量族（`default_preset/isPreset*`），以真实脚本触发失败为准。
 
 ### P2 - 低频 slash（机会性）

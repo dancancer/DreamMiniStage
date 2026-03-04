@@ -6,7 +6,7 @@
 ## 1. 指标演进（历史）
 
 - Slash 覆盖率：`21.71%` -> `31.01%`（`80/258`）
-- TavernHelper API 覆盖率：`43.08%` -> `86.92%`（`113/130`）
+- TavernHelper API 覆盖率：`43.08%` -> `92.31%`（`120/130`）
 - P4 回放基线：`p4-session-replay` 已稳定，噪音门禁与 run-index 已落地。
 
 ## 2. 已完成里程碑（归档）
@@ -27,7 +27,7 @@
 ### M3（P2/P3 达门槛）
 
 - 高频 slash 子族已覆盖：`api/fuzzy/chat-manager/run/trimtokens/reload-page/branch/ui/checkpoint`。
-- TavernHelper 高频与关键长尾已补齐：`import_raw`、`extension` 读 API、`displayed_message`、`regex`、`lorebook/global/worldbook`、`inject`、`macro_like`、`raw_character` 最小闭环。
+- TavernHelper 高频与关键长尾已补齐：`import_raw`、`extension` 读 API、`displayed_message`、`regex`、`lorebook/global/worldbook`、`inject`、`macro_like`、`raw_character`、`_bind/_th_impl`、音频 helper 别名最小闭环。
 
 ### M4（P4 可复用回归基线）
 
@@ -53,6 +53,7 @@
 - 第23轮：`inject` + `replaceTavernRegexes/updateTavernRegexesWith` 写链路。
 - 第24轮：`macro_like/raw_character` 最小读链路。
 - 第25轮：`RawCharacter/Character` + `getCharAvatarPath` 深层对象最小闭环。
+- 第26轮：`_bind/_th_impl` 最小子集 + `audioEnable/audioImport/audioMode/audioPlay/audioSelect` helper 别名。
 
 ## 4. 历史回归与证据索引
 

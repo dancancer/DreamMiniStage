@@ -4,21 +4,22 @@
 
 ## 1) 当前执行结果
 
-- 本轮已完成 `raw_character` 深层对象最小闭环：`RawCharacter/Character` + `getCharAvatarPath`。
-- TavernHelper API 覆盖率提升到 `113 / 130 = 86.92%`。
-- 指定回归保持全绿：`3 files / 22 tests`，并通过 `eslint + tsc`。
+- 本轮已完成 TavernHelper helper 长尾最小闭环：`_bind/_th_impl` + `audioEnable/audioImport/audioMode/audioPlay/audioSelect`。
+- TavernHelper API 覆盖率提升到 `120 / 130 = 92.31%`（较上一轮 +7）。
+- 指定回归保持全绿：`3 files / 23 tests`，并通过 `eslint + tsc`。
 
 ## 2) 当前主线焦点
 
 1. parser 深语义第二切片（严格转义 + parser 指令交互）。
-2. TavernHelper 长尾 helper 能力（`_bind/_th_impl`、音频 helper 别名）。
+2. TavernHelper 长尾 helper 能力（`default_preset/isPreset*`、`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`）。
 3. 低频 slash 按真实触发失败机会性补齐。
 
 ## 3) 下一步建议
 
 1. 先补 parser 断言，再补行为实现（避免语义回退）。
-2. 以 fail-fast 方式补 `_bind/_th_impl` 与 `audioEnable/audioImport/audioMode/audioPlay/audioSelect`。
-3. 每轮主线增量后按需执行 `pnpm p4:session-replay` 作为守卫。
+2. 以 fail-fast 方式补 preset helper 常量族（`default_preset/isPreset*`）并补契约断言。
+3. 评估 script tree helper 是否存在真实触发失败，再决定是否补齐。
+4. 每轮主线增量后按需执行 `pnpm p4:session-replay` 作为守卫。
 
 ## 4) 固定验证命令
 
