@@ -37,7 +37,7 @@
 - 噪音门禁：`noise-baseline-diff`；新增噪音 fail-fast。
 - run-index：连续回放趋势可追踪。
 
-## 3. 历史轮次摘要（12-31 轮）
+## 3. 历史轮次摘要（12-32 轮）
 
 - 第12轮：`registerSlashCommand` callback 闭环修复。
 - 第13轮：`extension-handlers` 与 `slash-runner-shim` 结构拆分。
@@ -59,6 +59,7 @@
 - 第29轮：parser 第二切片继续收敛（block 内 `{:/:}` 字面量 + 混合引号在 `STRICT_ESCAPING` 下稳定解析）。
 - 第30轮：parser 第二切片补多层 block + 反斜杠逃逸断言（odd/even backslash quote 边界 + strict fail-fast）。
 - 第31轮：parser 第二切片补 nested `REPLACE_GETVAR` 断言（named/unnamed 参数替换 + strict 转义 fail-fast）。
+- 第32轮：路线切换评估完成，主优先级从“语义边界覆盖增强”切回“能力面阻塞清零（真实触发驱动）”。
 
 ## 4. 历史回归与证据索引
 

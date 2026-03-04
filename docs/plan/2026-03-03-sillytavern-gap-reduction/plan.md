@@ -23,17 +23,18 @@
 
 ## 4) 当前优先级路线
 
-### P1（最高）parser 深语义第二切片
-
-- 严格转义与 parser 指令交互边界。
-- 先补断言，再扩实现。
-
-### P2（高）TavernHelper helper 长尾
+### P1（最高）能力面阻塞清零（真实触发驱动）
 
 - 低频常量/API（`builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order`）按真实触发失败推进。
 - script tree helper（`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`）按真实触发失败推进。
+- 触发失败后只补最小单路径可执行实现 + 对应回归，不做无触发扩面。
 
-### P2（中）低频 slash 命令
+### P2（中）parser 深语义守卫
+
+- 现有语义边界断言进入守卫模式，除非真实缺陷触发，不主动扩展边界测试面。
+- 若出现 parser 回归，仍按“先断言后实现”修复。
+
+### P3（中）低频 slash 命令
 
 - 改为机会性补齐（仅处理真实素材触发失败）。
 
