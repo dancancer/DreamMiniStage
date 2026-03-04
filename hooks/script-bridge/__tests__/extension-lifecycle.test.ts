@@ -419,7 +419,209 @@ describe("extension handlers lifecycle", () => {
       expect.objectContaining({ name: "style", value: "compact", isRequired: true }),
     ]);
     expect(invocation[2].unnamedArgumentList).toEqual([
-      { value: "hello", description: "content", isRequired: true },
+      expect.objectContaining({ value: "hello", description: "content", isRequired: true }),
+    ]);
+
+    clearIframeSlashCommands(iframeId);
+  });
+
+  it("aggregates acceptsMultiple named args and keeps assignment order", async () => {
+    const iframeId = "iframe_slash_accepts_multiple";
+    const commandName = "acceptsmultiplecmd";
+    const callback = vi.fn().mockResolvedValue("ok");
+
+    const registered = extensionHandlers.registerSlashCommand([
+      {
+        name: commandName,
+        callback,
+        namedArgumentList: [
+          {
+            name: "tag",
+            acceptsMultiple: true,
+            isRequired: true,
+          },
+        ],
+      },
+    ], createApiContext(iframeId));
+    expect(registered).toBe(true);
+
+    const parsed = parseSlashCommands(`/${commandName} tag=alpha tag=\"beta value\" tag='gamma'`);
+    const result = await executeSlashCommands(parsed.commands, createMinimalContext());
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("ok");
+
+    const invocation = callback.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+      {
+        namedArgumentList?: Array<{ name: string; value: string; wasQuoted: boolean }>;
+      },
+    ];
+    expect(invocation[1]).toEqual({
+      tag: ["alpha", "beta value", "gamma"],
+    });
+    expect(invocation[2].namedArgumentList).toEqual([
+      expect.objectContaining({ name: "tag", value: "alpha", wasQuoted: false }),
+      expect.objectContaining({ name: "tag", value: "beta value", wasQuoted: true }),
+      expect.objectContaining({ name: "tag", value: "gamma", wasQuoted: true }),
+    ]);
+
+    clearIframeSlashCommands(iframeId);
+  });
+
+  it("injects default values for missing named and unnamed arguments", async () => {
+    const iframeId = "iframe_slash_defaults";
+    const commandName = "defaultinjectcmd";
+    const callback = vi.fn().mockResolvedValue("ok");
+
+    const registered = extensionHandlers.registerSlashCommand([
+      {
+        name: commandName,
+        callback,
+        namedArgumentList: [
+          {
+            name: "mode",
+            defaultValue: "strict",
+          },
+        ],
+        unnamedArgumentList: [
+          {
+            isRequired: true,
+            defaultValue: "hello",
+          },
+          {
+            defaultValue: "world",
+          },
+        ],
+      },
+    ], createApiContext(iframeId));
+    expect(registered).toBe(true);
+
+    const parsed = parseSlashCommands(`/${commandName}`);
+    const result = await executeSlashCommands(parsed.commands, createMinimalContext());
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("ok");
+
+    const invocation = callback.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+      {
+        namedArgumentList?: Array<{ name: string; value: string; isDefaultValue: boolean }>;
+        unnamedArgumentList?: Array<{ value: string; isDefaultValue: boolean }>;
+      },
+    ];
+    expect(invocation[0]).toBe("hello world");
+    expect(invocation[1]).toEqual({
+      mode: "strict",
+    });
+    expect(invocation[2].namedArgumentList).toEqual([
+      expect.objectContaining({ name: "mode", value: "strict", isDefaultValue: true }),
+    ]);
+    expect(invocation[2].unnamedArgumentList).toEqual([
+      expect.objectContaining({ value: "hello", isDefaultValue: true }),
+      expect.objectContaining({ value: "world", isDefaultValue: true }),
+    ]);
+
+    clearIframeSlashCommands(iframeId);
+  });
+
+  it("keeps raw quoted unnamed args when rawQuotes is enabled and supports raw=false override", async () => {
+    const iframeId = "iframe_slash_raw_quotes";
+    const commandName = "rawquotescmd";
+    const callback = vi.fn(async (args: string) => args);
+
+    const registered = extensionHandlers.registerSlashCommand([
+      {
+        name: commandName,
+        callback,
+        rawQuotes: true,
+        unnamedArgumentList: [
+          {
+            isRequired: true,
+          },
+        ],
+      },
+    ], createApiContext(iframeId));
+    expect(registered).toBe(true);
+
+    const rawParsed = parseSlashCommands(`/${commandName} "hello world"`);
+    const rawResult = await executeSlashCommands(rawParsed.commands, createMinimalContext());
+    expect(rawResult.isError).toBe(false);
+    expect(rawResult.pipe).toBe("\"hello world\"");
+
+    const normalizedParsed = parseSlashCommands(`/${commandName} raw=false "hello world"`);
+    const normalizedResult = await executeSlashCommands(normalizedParsed.commands, createMinimalContext());
+    expect(normalizedResult.isError).toBe(false);
+    expect(normalizedResult.pipe).toBe("hello world");
+
+    const firstInvocation = callback.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+      {
+        unnamedArgumentList?: Array<{ value: string; rawValue: string; wasQuoted: boolean }>;
+      },
+    ];
+    expect(firstInvocation[2].unnamedArgumentList).toEqual([
+      expect.objectContaining({
+        value: "\"hello world\"",
+        rawValue: "\"hello world\"",
+        wasQuoted: true,
+      }),
+    ]);
+
+    const secondInvocation = callback.mock.calls[1] as [
+      string,
+      Record<string, unknown>,
+      {
+        unnamedArgumentList?: Array<{ value: string; rawValue: string; wasQuoted: boolean }>;
+      },
+    ];
+    expect(secondInvocation[2].unnamedArgumentList).toEqual([
+      expect.objectContaining({
+        value: "hello world",
+        rawValue: "\"hello world\"",
+        wasQuoted: true,
+      }),
+    ]);
+
+    clearIframeSlashCommands(iframeId);
+  });
+
+  it("keeps last named arg value when acceptsMultiple is disabled while preserving full list", async () => {
+    const iframeId = "iframe_slash_repeated_named";
+    const commandName = "repeatednamedcmd";
+    const callback = vi.fn().mockResolvedValue("ok");
+
+    const registered = extensionHandlers.registerSlashCommand([
+      {
+        name: commandName,
+        callback,
+        namedArgumentList: [
+          {
+            name: "mode",
+            acceptsMultiple: false,
+          },
+        ],
+      },
+    ], createApiContext(iframeId));
+    expect(registered).toBe(true);
+
+    const parsed = parseSlashCommands(`/${commandName} mode=first mode=second`);
+    const result = await executeSlashCommands(parsed.commands, createMinimalContext());
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("ok");
+
+    const invocation = callback.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+      {
+        namedArgumentList?: Array<{ name: string; value: string }>;
+      },
+    ];
+    expect(invocation[1]).toEqual({ mode: "second" });
+    expect(invocation[2].namedArgumentList).toEqual([
+      expect.objectContaining({ name: "mode", value: "first" }),
+      expect.objectContaining({ name: "mode", value: "second" }),
     ]);
 
     clearIframeSlashCommands(iframeId);

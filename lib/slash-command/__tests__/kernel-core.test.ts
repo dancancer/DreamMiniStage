@@ -95,6 +95,21 @@ describe("parser — nested blocks and pipes", () => {
     expect(node.thenBlock).toHaveLength(1);
     expect(node.elseBlock).toHaveLength(1);
   });
+
+  it("preserves repeated named assignment order and quote metadata", () => {
+    const parsed = parseKernelScript("/echo mode=first mode=\"second value\" mode='third'");
+    expect(parsed.isError).toBe(false);
+
+    const node = parsed.script[0];
+    if (node.type !== "command") throw new Error("expected command node");
+
+    expect(node.namedArgs).toEqual({ mode: "third" });
+    expect(node.namedArgumentList).toEqual([
+      expect.objectContaining({ name: "mode", value: "first", wasQuoted: false }),
+      expect.objectContaining({ name: "mode", value: "second value", wasQuoted: true }),
+      expect.objectContaining({ name: "mode", value: "third", wasQuoted: true }),
+    ]);
+  });
 });
 
 describe("scope chain — shadowing and cleanup", () => {
@@ -111,6 +126,20 @@ describe("scope chain — shadowing and cleanup", () => {
     expect(scope.get("x")).toBe("1");
     scope.delete("x");
     expect(scope.get("x")).toBeUndefined();
+  });
+});
+
+describe("compat parser metadata", () => {
+  it("keeps repeated named args in list while namedArgs remains last-write", () => {
+    const parsed = parseSlashCommands("/echo mode=first mode=\"second value\"");
+    expect(parsed.isError).toBe(false);
+
+    const command = parsed.commands[0];
+    expect(command.namedArgs).toEqual({ mode: "second value" });
+    expect(command.namedArgumentList).toEqual([
+      expect.objectContaining({ name: "mode", value: "first", wasQuoted: false }),
+      expect.objectContaining({ name: "mode", value: "second value", wasQuoted: true }),
+    ]);
   });
 });
 

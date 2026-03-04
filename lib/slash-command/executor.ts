@@ -10,7 +10,14 @@ import { executeScript } from "./core/executor";
 import { parseKernelScript } from "./core/parser";
 import { ScopeChain } from "./core/scope";
 import type { AstNode, CommandDescriptor } from "./core/types";
-import type { SlashCommand, ExecutionResult, ExecutionContext, SendOptions } from "./types";
+import type {
+  SlashCommand,
+  ExecutionResult,
+  ExecutionContext,
+  SendOptions,
+  ParsedNamedArgument,
+  ParsedUnnamedArgument,
+} from "./types";
 import { getCommandHandler } from "./registry";
 
 // ============================================================================
@@ -27,8 +34,8 @@ function makeResolver(): (name: string) => CommandDescriptor | undefined {
     if (!handler) return undefined;
     return {
       name,
-      handler: (args, namedArgs, context, pipe, _scope) =>
-        handler(args, namedArgs, context, pipe),
+      handler: (args, namedArgs, context, pipe, _scope, invocationMeta) =>
+        handler(args, namedArgs, context, pipe, invocationMeta),
     };
   };
 }
@@ -61,9 +68,28 @@ function mapCommandToAst(cmd: SlashCommand): AstNode {
     name: cmd.name,
     args: cmd.args,
     namedArgs: cmd.namedArgs,
+    namedArgumentList: cmd.namedArgumentList ?? fallbackNamedArgumentList(cmd.namedArgs),
+    unnamedArgumentList: cmd.unnamedArgumentList ?? fallbackUnnamedArgumentList(cmd.args),
     blocks: [],
     raw: cmd.raw,
   };
+}
+
+function fallbackNamedArgumentList(namedArgs: Record<string, string>): ParsedNamedArgument[] {
+  return Object.entries(namedArgs).map(([name, value]) => ({
+    name,
+    value,
+    rawValue: value,
+    wasQuoted: false,
+  }));
+}
+
+function fallbackUnnamedArgumentList(args: string[]): ParsedUnnamedArgument[] {
+  return args.map((value) => ({
+    value,
+    rawValue: value,
+    wasQuoted: false,
+  }));
 }
 
 // ============================================================================

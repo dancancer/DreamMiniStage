@@ -13,7 +13,13 @@
 
 import { dispatchToIframe } from "./iframe-dispatcher-registry";
 import { registerCommand } from "@/lib/slash-command/registry/index";
-import type { CommandHandler, ExecutionContext } from "@/lib/slash-command/types";
+import type {
+  CommandHandler,
+  CommandInvocationMeta,
+  ExecutionContext,
+  ParsedNamedArgument,
+  ParsedUnnamedArgument,
+} from "@/lib/slash-command/types";
 
 export interface SlashCommandDefinition {
   name: string;
@@ -24,6 +30,7 @@ export interface SlashCommandDefinition {
   namedArgumentList?: SlashNamedArgumentDefinition[];
   unnamedArgumentList?: SlashUnnamedArgumentDefinition[];
   helpString?: string;
+  rawQuotes?: boolean;
 }
 
 interface SlashNamedArgumentDefinition {
@@ -31,25 +38,45 @@ interface SlashNamedArgumentDefinition {
   description?: string;
   isRequired?: boolean;
   acceptsMultiple?: boolean;
+  defaultValue?: string;
 }
 
 interface SlashUnnamedArgumentDefinition {
   description?: string;
   isRequired?: boolean;
   acceptsMultiple?: boolean;
+  defaultValue?: string;
 }
 
 interface SlashNamedArgumentAssignment {
   name: string;
   value: string;
+  rawValue: string;
+  wasQuoted: boolean;
   description?: string;
   isRequired: boolean;
+  acceptsMultiple: boolean;
+  isDefaultValue: boolean;
 }
 
 interface SlashUnnamedArgumentAssignment {
   value: string;
+  rawValue: string;
+  wasQuoted: boolean;
   description?: string;
   isRequired: boolean;
+  acceptsMultiple: boolean;
+  isDefaultValue: boolean;
+}
+
+type RuntimeNamedArgs = Record<string, string | string[]>;
+
+interface NormalizedSlashArguments {
+  slashArgs: string;
+  namedArgs: RuntimeNamedArgs;
+  unnamedArgs: string[];
+  namedArgumentList: SlashNamedArgumentAssignment[];
+  unnamedArgumentList: SlashUnnamedArgumentAssignment[];
 }
 
 interface PendingSlashCommandCall {
@@ -72,7 +99,7 @@ async function invokeIframeSlashCommandCallback(
   name: string,
   args: string,
   unnamedArgs: string[],
-  namedArgs: Record<string, string>,
+  namedArgs: RuntimeNamedArgs,
   namedArgumentList: SlashNamedArgumentAssignment[],
   unnamedArgumentList: SlashUnnamedArgumentAssignment[],
   pipe: string,
@@ -105,93 +132,284 @@ async function invokeIframeSlashCommandCallback(
   });
 }
 
-function assertSlashCommandArguments(
+function normalizeSlashCommandArguments(
   definition: SlashCommandDefinition,
   cmdArgs: string[],
   namedArgs: Record<string, string>,
-): void {
+  invocationMeta?: CommandInvocationMeta,
+): NormalizedSlashArguments {
   const commandName = definition.name;
+  const parseMeta = ensureInvocationMeta(cmdArgs, namedArgs, invocationMeta);
   const namedDefinitions = definition.namedArgumentList ?? [];
+  const unnamedDefinitions = definition.unnamedArgumentList ?? [];
+
   const namedDefinitionMap = new Map<string, SlashNamedArgumentDefinition>();
-  for (const namedDef of namedDefinitions) {
-    if (namedDef?.name) {
-      namedDefinitionMap.set(namedDef.name, namedDef);
+  for (const namedDefinition of namedDefinitions) {
+    if (namedDefinition?.name) {
+      namedDefinitionMap.set(namedDefinition.name, namedDefinition);
     }
   }
 
   if (namedDefinitionMap.size > 0) {
-    const unknownNamedArgs = Object.keys(namedArgs).filter((key) => !namedDefinitionMap.has(key));
+    const unknownNamedArgs = uniqueValues(
+      parseMeta.namedArgumentList
+        .filter((arg) => {
+          if (namedDefinitionMap.has(arg.name)) {
+            return false;
+          }
+          return !isRawQuotesOverrideArgument(arg.name, definition);
+        })
+        .map((arg) => arg.name),
+    );
     if (unknownNamedArgs.length > 0) {
       throw new Error(`/${commandName} got unsupported named argument(s): ${unknownNamedArgs.join(", ")}`);
     }
-
-    const missingRequiredNamedArgs = namedDefinitions
-      .filter((namedDef) => namedDef?.isRequired)
-      .map((namedDef) => namedDef.name)
-      .filter((namedName) => namedArgs[namedName] === undefined);
-
-    if (missingRequiredNamedArgs.length > 0) {
-      throw new Error(`/${commandName} missing required named argument(s): ${missingRequiredNamedArgs.join(", ")}`);
-    }
   }
 
-  const unnamedDefinitions = definition.unnamedArgumentList ?? [];
-  if (unnamedDefinitions.length === 0) {
-    return;
+  const rawQuotesEnabled = resolveRawQuotesEnabled(definition, parseMeta.namedArgumentList);
+  const normalizedNamedArgumentList: SlashNamedArgumentAssignment[] = [];
+  const namedAssignmentsByName = new Map<string, SlashNamedArgumentAssignment[]>();
+
+  for (const parsedNamed of parseMeta.namedArgumentList) {
+    const namedDefinition = namedDefinitionMap.get(parsedNamed.name);
+    const normalized = buildNamedAssignment(parsedNamed, namedDefinition, false);
+    normalizedNamedArgumentList.push(normalized);
+    appendNamedAssignment(namedAssignmentsByName, normalized.name, normalized);
+  }
+
+  for (const namedDefinition of namedDefinitions) {
+    if (!namedDefinition?.name) {
+      continue;
+    }
+    const assigned = namedAssignmentsByName.get(namedDefinition.name);
+    if (assigned && assigned.length > 0) {
+      continue;
+    }
+    if (namedDefinition.defaultValue === undefined) {
+      continue;
+    }
+
+    const normalizedDefault = buildNamedDefaultAssignment(namedDefinition);
+    normalizedNamedArgumentList.push(normalizedDefault);
+    appendNamedAssignment(namedAssignmentsByName, namedDefinition.name, normalizedDefault);
+  }
+
+  const missingRequiredNamedArgs = namedDefinitions
+    .filter((namedDefinition) => namedDefinition?.isRequired)
+    .map((namedDefinition) => namedDefinition.name)
+    .filter((name) => {
+      const assigned = namedAssignmentsByName.get(name);
+      return !assigned || assigned.length === 0;
+    });
+  if (missingRequiredNamedArgs.length > 0) {
+    throw new Error(`/${commandName} missing required named argument(s): ${missingRequiredNamedArgs.join(", ")}`);
+  }
+
+  const normalizedNamedArgs: RuntimeNamedArgs = {};
+  for (const [name, assignments] of namedAssignmentsByName.entries()) {
+    const namedDefinition = namedDefinitionMap.get(name);
+    if (namedDefinition?.acceptsMultiple) {
+      normalizedNamedArgs[name] = assignments.map((assignment) => assignment.value);
+      continue;
+    }
+    normalizedNamedArgs[name] = assignments[assignments.length - 1]?.value ?? "";
+  }
+
+  const normalizedUnnamedArgumentList: SlashUnnamedArgumentAssignment[] = [];
+  const lastUnnamedDefinition = unnamedDefinitions[unnamedDefinitions.length - 1];
+  const acceptsExtraUnnamedArgs = Boolean(lastUnnamedDefinition?.acceptsMultiple);
+
+  if (unnamedDefinitions.length > 0 && !acceptsExtraUnnamedArgs && parseMeta.unnamedArgumentList.length > unnamedDefinitions.length) {
+    throw new Error(
+      `/${commandName} got too many unnamed arguments: expected <= ${unnamedDefinitions.length}, got ${parseMeta.unnamedArgumentList.length}`,
+    );
+  }
+
+  for (let index = 0; index < parseMeta.unnamedArgumentList.length; index++) {
+    const parsedUnnamed = parseMeta.unnamedArgumentList[index];
+    const unnamedDefinition = unnamedDefinitions[index] ?? (acceptsExtraUnnamedArgs ? lastUnnamedDefinition : undefined);
+    normalizedUnnamedArgumentList.push(buildUnnamedAssignment(parsedUnnamed, unnamedDefinition, false, rawQuotesEnabled));
+  }
+
+  for (let index = parseMeta.unnamedArgumentList.length; index < unnamedDefinitions.length; index++) {
+    const unnamedDefinition = unnamedDefinitions[index];
+    if (unnamedDefinition?.defaultValue === undefined) {
+      continue;
+    }
+    normalizedUnnamedArgumentList.push(buildUnnamedDefaultAssignment(unnamedDefinition));
   }
 
   const missingRequiredUnnamedArgs = unnamedDefinitions
-    .map((unnamedDef, index) => ({ unnamedDef, index }))
-    .filter(({ unnamedDef, index }) => unnamedDef?.isRequired && cmdArgs[index] === undefined)
+    .map((unnamedDefinition, index) => ({ unnamedDefinition, index }))
+    .filter(({ unnamedDefinition, index }) => {
+      if (!unnamedDefinition?.isRequired) {
+        return false;
+      }
+      const wasProvided = index < parseMeta.unnamedArgumentList.length;
+      const hasDefault = unnamedDefinition.defaultValue !== undefined;
+      return !wasProvided && !hasDefault;
+    })
     .map(({ index }) => `#${index + 1}`);
-
   if (missingRequiredUnnamedArgs.length > 0) {
     throw new Error(`/${commandName} missing required unnamed argument(s): ${missingRequiredUnnamedArgs.join(", ")}`);
   }
 
-  const lastUnnamedDefinition = unnamedDefinitions[unnamedDefinitions.length - 1];
-  const acceptsExtraUnnamedArgs = Boolean(lastUnnamedDefinition?.acceptsMultiple);
-  if (!acceptsExtraUnnamedArgs && cmdArgs.length > unnamedDefinitions.length) {
-    throw new Error(
-      `/${commandName} got too many unnamed arguments: expected <= ${unnamedDefinitions.length}, got ${cmdArgs.length}`,
-    );
-  }
+  const normalizedUnnamedArgs = normalizedUnnamedArgumentList.map((assignment) => assignment.value);
+  return {
+    slashArgs: normalizedUnnamedArgs.join(" "),
+    namedArgs: normalizedNamedArgs,
+    unnamedArgs: normalizedUnnamedArgs,
+    namedArgumentList: normalizedNamedArgumentList,
+    unnamedArgumentList: normalizedUnnamedArgumentList,
+  };
 }
 
-function buildNamedArgumentAssignments(
-  definition: SlashCommandDefinition,
+function ensureInvocationMeta(
+  cmdArgs: string[],
   namedArgs: Record<string, string>,
-): SlashNamedArgumentAssignment[] {
-  const namedDefinitionMap = new Map<string, SlashNamedArgumentDefinition>();
-  for (const namedDef of definition.namedArgumentList ?? []) {
-    if (namedDef?.name) {
-      namedDefinitionMap.set(namedDef.name, namedDef);
-    }
+  invocationMeta?: CommandInvocationMeta,
+): CommandInvocationMeta {
+  if (invocationMeta) {
+    return invocationMeta;
   }
 
-  return Object.entries(namedArgs).map(([name, value]) => {
-    const namedDef = namedDefinitionMap.get(name);
-    return {
+  return {
+    raw: cmdArgs.join(" "),
+    namedArgumentList: Object.entries(namedArgs).map(([name, value]) => ({
       name,
       value,
-      description: namedDef?.description,
-      isRequired: Boolean(namedDef?.isRequired),
-    };
-  });
+      rawValue: value,
+      wasQuoted: false,
+    })),
+    unnamedArgumentList: cmdArgs.map((value) => ({
+      value,
+      rawValue: value,
+      wasQuoted: false,
+    })),
+  };
 }
 
-function buildUnnamedArgumentAssignments(
+function appendNamedAssignment(
+  target: Map<string, SlashNamedArgumentAssignment[]>,
+  name: string,
+  assignment: SlashNamedArgumentAssignment,
+): void {
+  const current = target.get(name);
+  if (current) {
+    current.push(assignment);
+    return;
+  }
+  target.set(name, [assignment]);
+}
+
+function buildNamedAssignment(
+  parsed: ParsedNamedArgument,
+  definition: SlashNamedArgumentDefinition | undefined,
+  isDefaultValue: boolean,
+): SlashNamedArgumentAssignment {
+  const canonicalName = definition?.name ?? parsed.name;
+  return {
+    name: canonicalName,
+    value: parsed.value,
+    rawValue: parsed.rawValue,
+    wasQuoted: parsed.wasQuoted,
+    description: definition?.description,
+    isRequired: Boolean(definition?.isRequired),
+    acceptsMultiple: Boolean(definition?.acceptsMultiple),
+    isDefaultValue,
+  };
+}
+
+function buildNamedDefaultAssignment(
+  definition: SlashNamedArgumentDefinition,
+): SlashNamedArgumentAssignment {
+  const defaultValue = definition.defaultValue ?? "";
+  return {
+    name: definition.name,
+    value: defaultValue,
+    rawValue: defaultValue,
+    wasQuoted: false,
+    description: definition.description,
+    isRequired: Boolean(definition.isRequired),
+    acceptsMultiple: Boolean(definition.acceptsMultiple),
+    isDefaultValue: true,
+  };
+}
+
+function buildUnnamedAssignment(
+  parsed: ParsedUnnamedArgument,
+  definition: SlashUnnamedArgumentDefinition | undefined,
+  isDefaultValue: boolean,
+  rawQuotesEnabled: boolean,
+): SlashUnnamedArgumentAssignment {
+  const resolvedValue = rawQuotesEnabled && parsed.wasQuoted ? parsed.rawValue : parsed.value;
+  return {
+    value: resolvedValue,
+    rawValue: parsed.rawValue,
+    wasQuoted: parsed.wasQuoted,
+    description: definition?.description,
+    isRequired: Boolean(definition?.isRequired),
+    acceptsMultiple: Boolean(definition?.acceptsMultiple),
+    isDefaultValue,
+  };
+}
+
+function buildUnnamedDefaultAssignment(
+  definition: SlashUnnamedArgumentDefinition,
+): SlashUnnamedArgumentAssignment {
+  const defaultValue = definition.defaultValue ?? "";
+  return {
+    value: defaultValue,
+    rawValue: defaultValue,
+    wasQuoted: false,
+    description: definition.description,
+    isRequired: Boolean(definition.isRequired),
+    acceptsMultiple: Boolean(definition.acceptsMultiple),
+    isDefaultValue: true,
+  };
+}
+
+function resolveRawQuotesEnabled(
   definition: SlashCommandDefinition,
-  cmdArgs: string[],
-): SlashUnnamedArgumentAssignment[] {
-  return cmdArgs.map((value, index) => {
-    const unnamedDef = definition.unnamedArgumentList?.[index];
-    return {
-      value,
-      description: unnamedDef?.description,
-      isRequired: Boolean(unnamedDef?.isRequired),
-    };
-  });
+  namedArgumentList: ParsedNamedArgument[],
+): boolean {
+  if (!definition.rawQuotes) {
+    return false;
+  }
+  const rawArgument = findLastNamedArgumentValue(namedArgumentList, "raw");
+  if (rawArgument === undefined) {
+    return true;
+  }
+  return !isFalseBooleanLiteral(rawArgument);
+}
+
+function findLastNamedArgumentValue(
+  namedArgumentList: ParsedNamedArgument[],
+  targetName: string,
+): string | undefined {
+  for (let index = namedArgumentList.length - 1; index >= 0; index--) {
+    const current = namedArgumentList[index];
+    if (current.name === targetName) {
+      return current.value;
+    }
+  }
+  return undefined;
+}
+
+function isFalseBooleanLiteral(value: string | undefined): boolean {
+  if (value === undefined) {
+    return false;
+  }
+  const normalized = value.trim().toLowerCase();
+  return normalized === "off" || normalized === "false" || normalized === "0";
+}
+
+function isRawQuotesOverrideArgument(name: string, definition: SlashCommandDefinition): boolean {
+  return definition.rawQuotes === true && name === "raw";
+}
+
+function uniqueValues(values: string[]): string[] {
+  return Array.from(new Set(values));
 }
 
 export function handleSlashCommandResult(callbackId: string, result: unknown, error?: string): void {
@@ -259,29 +477,26 @@ export function registerSlashCommandDefinition(
     namedArgs: Record<string, string>,
     execCtx: ExecutionContext,
     pipe: string,
+    invocationMeta?: CommandInvocationMeta,
   ): Promise<string> => {
-    assertSlashCommandArguments(definition, cmdArgs, namedArgs);
-
-    const slashArgs = cmdArgs.join(" ");
-    const namedArgumentList = buildNamedArgumentAssignments(definition, namedArgs);
-    const unnamedArgumentList = buildUnnamedArgumentAssignments(definition, cmdArgs);
+    const normalized = normalizeSlashCommandArguments(definition, cmdArgs, namedArgs, invocationMeta);
     const runtimeContext = {
       ...execCtx,
       pipe,
-      namedArgumentList,
-      unnamedArgumentList,
+      namedArgumentList: normalized.namedArgumentList,
+      unnamedArgumentList: normalized.unnamedArgumentList,
     };
 
     const result = hasLocalCallback
-      ? await callback!(slashArgs, namedArgs, runtimeContext)
+      ? await callback!(normalized.slashArgs, normalized.namedArgs, runtimeContext)
       : await invokeIframeSlashCommandCallback(
         sourceIframeId,
         name,
-        slashArgs,
-        cmdArgs,
-        namedArgs,
-        namedArgumentList,
-        unnamedArgumentList,
+        normalized.slashArgs,
+        normalized.unnamedArgs,
+        normalized.namedArgs,
+        normalized.namedArgumentList,
+        normalized.unnamedArgumentList,
         pipe,
       );
 

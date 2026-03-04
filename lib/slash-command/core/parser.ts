@@ -104,6 +104,8 @@ function parseSegment(segment: string): ParseResult<AstNode> {
   const name = head.value.slice(1).toLowerCase();
   const args: string[] = [];
   const namedArgs: Record<string, string> = {};
+  const namedArgumentList: CommandNode["namedArgumentList"] = [];
+  const unnamedArgumentList: CommandNode["unnamedArgumentList"] = [];
   const blocks: BlockArgument[] = [];
 
   for (let i = 1; i < tokens.length; i++) {
@@ -117,15 +119,16 @@ function parseSegment(segment: string): ParseResult<AstNode> {
       continue;
     }
 
-    const eqIndex = token.value.indexOf("=");
-    if (eqIndex > 0) {
-      const key = token.value.slice(0, eqIndex);
-      const value = token.value.slice(eqIndex + 1);
-      namedArgs[key] = value;
+    const namedAssignment = parseNamedArgumentToken(token);
+    if (namedAssignment) {
+      namedArgs[namedAssignment.name] = namedAssignment.value;
+      namedArgumentList.push(namedAssignment);
       continue;
     }
 
-    args.push(token.value);
+    const unnamedAssignment = parseUnnamedArgumentToken(token);
+    args.push(unnamedAssignment.value);
+    unnamedArgumentList.push(unnamedAssignment);
   }
 
   const baseCommand: CommandNode = {
@@ -133,6 +136,8 @@ function parseSegment(segment: string): ParseResult<AstNode> {
     name,
     args,
     namedArgs,
+    namedArgumentList,
+    unnamedArgumentList,
     blocks,
     raw: segment,
   };
@@ -356,4 +361,50 @@ function stripQuotes(value: string): string {
     return value.slice(1, -1);
   }
   return value;
+}
+
+function parseNamedArgumentToken(
+  token: WordToken,
+): CommandNode["namedArgumentList"][number] | null {
+  const eqRawIndex = token.raw.indexOf("=");
+  if (eqRawIndex <= 0) {
+    return null;
+  }
+
+  const name = token.raw.slice(0, eqRawIndex);
+  const rawValue = token.raw.slice(eqRawIndex + 1);
+  const { value, wasQuoted } = parseRawArgumentValue(rawValue);
+  return {
+    name,
+    value,
+    rawValue,
+    wasQuoted,
+  };
+}
+
+function parseUnnamedArgumentToken(token: WordToken): CommandNode["unnamedArgumentList"][number] {
+  const { value, wasQuoted } = parseRawArgumentValue(token.raw);
+  return {
+    value,
+    rawValue: token.raw,
+    wasQuoted,
+  };
+}
+
+function parseRawArgumentValue(rawValue: string): { value: string; wasQuoted: boolean } {
+  if (rawValue.length >= 2) {
+    const head = rawValue[0];
+    const tail = rawValue[rawValue.length - 1];
+    const quoted = (head === "\"" && tail === "\"") || (head === "'" && tail === "'");
+    if (quoted) {
+      return {
+        value: rawValue.slice(1, -1),
+        wasQuoted: true,
+      };
+    }
+  }
+  return {
+    value: rawValue,
+    wasQuoted: false,
+  };
 }

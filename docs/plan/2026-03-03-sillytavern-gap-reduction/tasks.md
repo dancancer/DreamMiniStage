@@ -51,6 +51,7 @@
 - [x] 六轮增量：补齐 `branch-create / panels / bg / theme / movingui / css-var / vn / resetpanels / ?` 最小子集（UI 命令统一走宿主回调注入，缺失时显式 fail-fast；`branch-create` 复用 checkpoint 状态并自动进入分支会话）。
 - [x] 六轮回归：`pnpm vitest run lib/slash-command/__tests__/p2-branch-ui-command-gaps.test.ts lib/slash-command/__tests__/p2-checkpoint-command-gaps.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`。
 - [x] 六轮指标：Slash 覆盖率更新为 `78 / 258 = 30.23%`。
+- [x] 十四轮复评指标：Slash 覆盖率更新为 `80 / 258 = 31.01%`（`registerSlashCommand` 回调闭环 + 参数语义收敛后）。
 - [x] 目标：Slash 覆盖率提升到 `>= 30%`。
 
 ## P3 - TavernHelper API 缺口收敛
@@ -146,3 +147,28 @@
 
 - [x] 更新分析文档：`docs/analysis/sillytavern-integration-gap-2026-03.md`。
 - [x] 更新本计划执行状态（勾选完成项 + 补充 blocker）。
+
+## 下一阶段（剩余 gap）核心功能优先级（素材驱动）
+
+### P0 - 语义等价（核心迁移阻塞）
+
+- [x] `registerSlashCommand` 补齐细粒度语义：`acceptsMultiple`、`defaultValue`、`rawQuotes`、重复命名参数保序/聚合行为。
+- [x] 修复 parser 重复命名参数覆盖语义（当前 `namedArgs[key] = value` 为后写覆盖），补齐与上游一致的参数视图。
+- [x] 为以上路径补充失败/边界回归：重复命名参数、raw quote 保留、默认值注入、multi 参数溢出。
+
+### P1 - parser 深语义 + regex/worldbook 组合验证
+
+- [ ] 推进 parser 深语义：`flags/debug/scope chain`，并以 `st-baseline-slash-command` 样本落地可复现断言。
+- [ ] 新增素材驱动回归：覆盖 `test-baseline-assets/character-card/V2.0Beta.png` 与 `Sgw3.*` 的 `regex_scripts` 关键组合（`runOnEdit/substituteRegex/minDepth/maxDepth`）。
+- [ ] 强化 worldbook 组合场景：`probability/useProbability/depth/group/groupWeight` 的执行链一致性检查。
+
+### P2 - 长尾能力面收口（降级优先）
+
+- [ ] TavernHelper 长尾 API 按“真实触发失败”补齐，保持 fail-fast，不新增兼容分支。
+- [ ] 低频 slash 命令补齐改为机会性推进，不再按命令总数驱动。
+
+### 优先级依据（本轮素材统计）
+
+- [x] 宏族高频（去重统计）：`random=78`、`trim=64`、`getvar=47`、`setvar=42`、`addvar=37`、`roll=17`。
+- [x] 真实 slash 入口集中（去重统计）：`/send=9`、`/trigger=9`、`/if=5`、`/let=2`。
+- [x] regex 负载高：`Sgw3.*`（`regex_scripts=44`）+ 新增 `V2.0Beta.png`（`regex_scripts=12`）。

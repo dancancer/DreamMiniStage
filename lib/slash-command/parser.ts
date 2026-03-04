@@ -30,9 +30,21 @@ function parseSingleCommand(raw: string): SlashCommand | null {
   if (!name) return null;
 
   const argsStr = spaceIndex === -1 ? "" : trimmed.slice(spaceIndex + 1);
-  const { args, namedArgs } = parseArguments(argsStr);
+  const {
+    args,
+    namedArgs,
+    namedArgumentList,
+    unnamedArgumentList,
+  } = parseArguments(argsStr);
 
-  return { name, args, namedArgs, raw: trimmed };
+  return {
+    name,
+    args,
+    namedArgs,
+    namedArgumentList,
+    unnamedArgumentList,
+    raw: trimmed,
+  };
 }
 
 /**
@@ -42,38 +54,74 @@ function parseSingleCommand(raw: string): SlashCommand | null {
 function parseArguments(argsStr: string): { 
   args: string[]; 
   namedArgs: Record<string, string>; 
+  namedArgumentList: SlashCommand["namedArgumentList"];
+  unnamedArgumentList: SlashCommand["unnamedArgumentList"];
 } {
   const args: string[] = [];
   const namedArgs: Record<string, string> = {};
+  const namedArgumentList: NonNullable<SlashCommand["namedArgumentList"]> = [];
+  const unnamedArgumentList: NonNullable<SlashCommand["unnamedArgumentList"]> = [];
   
-  if (!argsStr.trim()) return { args, namedArgs };
+  if (!argsStr.trim()) {
+    return { args, namedArgs, namedArgumentList, unnamedArgumentList };
+  }
 
   const tokens = tokenize(argsStr);
   
   for (const token of tokens) {
-    const eqIndex = token.indexOf("=");
+    const eqIndex = token.raw.indexOf("=");
     if (eqIndex > 0) {
-      // 命名参数: key=value
-      const key = token.slice(0, eqIndex);
-      const value = unquote(token.slice(eqIndex + 1));
+      // 命名参数: key=value（保留赋值顺序）
+      const key = token.raw.slice(0, eqIndex);
+      const rawValue = token.raw.slice(eqIndex + 1);
+      const parsed = parseRawLiteral(rawValue);
+      const value = parsed.value;
       namedArgs[key] = value;
+      namedArgumentList.push({
+        name: key,
+        value,
+        rawValue,
+        wasQuoted: parsed.wasQuoted,
+      });
     } else {
       // 位置参数
-      args.push(unquote(token));
+      args.push(token.value);
+      unnamedArgumentList.push({
+        value: token.value,
+        rawValue: token.raw,
+        wasQuoted: token.wasQuoted,
+      });
     }
   }
 
-  return { args, namedArgs };
+  return { args, namedArgs, namedArgumentList, unnamedArgumentList };
 }
 
 /**
  * 分词器：处理引号和空格
  */
-function tokenize(input: string): string[] {
-  const tokens: string[] = [];
+interface ArgumentToken {
+  raw: string;
+  value: string;
+  wasQuoted: boolean;
+}
+
+function tokenize(input: string): ArgumentToken[] {
+  const tokens: ArgumentToken[] = [];
   let current = "";
   let inQuote = false;
   let quoteChar = "";
+
+  const pushToken = () => {
+    if (!current) return;
+    const parsed = parseRawLiteral(current);
+    tokens.push({
+      raw: current,
+      value: parsed.value,
+      wasQuoted: parsed.wasQuoted,
+    });
+    current = "";
+  };
 
   for (let i = 0; i < input.length; i++) {
     const char = input[i];
@@ -87,31 +135,36 @@ function tokenize(input: string): string[] {
       current += char;
       quoteChar = "";
     } else if (!inQuote && char === " ") {
-      if (current) {
-        tokens.push(current);
-        current = "";
-      }
+      pushToken();
     } else {
       current += char;
     }
   }
 
-  if (current) tokens.push(current);
+  pushToken();
   return tokens;
 }
 
 /**
  * 移除引号包裹
  */
-function unquote(str: string): string {
-  const trimmed = str.trim();
-  if (
-    (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
-    (trimmed.startsWith("\'") && trimmed.endsWith("\'"))
-  ) {
-    return trimmed.slice(1, -1);
+function parseRawLiteral(raw: string): { value: string; wasQuoted: boolean } {
+  const trimmed = raw.trim();
+  if (trimmed.length >= 2) {
+    const head = trimmed[0];
+    const tail = trimmed[trimmed.length - 1];
+    const quoted = (head === "\"" && tail === "\"") || (head === "'" && tail === "'");
+    if (quoted) {
+      return {
+        value: trimmed.slice(1, -1),
+        wasQuoted: true,
+      };
+    }
   }
-  return trimmed;
+  return {
+    value: trimmed,
+    wasQuoted: false,
+  };
 }
 
 // ============================================================================

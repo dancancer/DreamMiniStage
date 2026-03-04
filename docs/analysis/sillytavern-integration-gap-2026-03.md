@@ -10,7 +10,7 @@
 
 - 当前 gap **仍不算小**，P4 已具备可监测回归基线；本轮起停止新增 CI 方向投入，回归主线 gap 收敛。
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
-  - SillyTavern Slash 命令覆盖：**30.23%**
+  - SillyTavern Slash 命令覆盖：**31.01%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
 - 结论：P2/P3 gate 持续达标；P4 十一轮沉淀的“自动回放 + 噪音门禁 + run-index”基线继续保留。本轮主线继续收敛 `registerSlashCommand`（iframe 回调闭环后补齐参数执行期约束），优先清理真实迁移阻塞点而非继续扩 CI 能力。
 
@@ -384,13 +384,13 @@
 
 - 上游命令总量：`258`
   - 统计口径：`SillyTavern/public/scripts` 下 `SlashCommand.fromProps({ name: ... })` 唯一命令名。
-- 当前命令总量：`150`
+- 当前命令总量：`152`
   - 统计口径：
     - `lib/slash-command/registry/index.ts` 中 `COMMAND_REGISTRY`；
     - `lib/slash-command/core/parser.ts` 控制命令（`if/while/times/return/break/abort`）；
     - `lib/slash-command/core/executor.ts` 特殊命令（`let/var`）。
-- 交集：`78`
-- 覆盖率：`78 / 258 = 30.23%`
+- 交集：`80`
+- 覆盖率：`80 / 258 = 31.01%`
 
 ### 2.2 JS-Slash-Runner TavernHelper API 覆盖
 
@@ -803,3 +803,47 @@ pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts lib/sc
 1. 优先推进 parser 深语义缺口（`flags/debug/scope chain`），以 `st-baseline-slash-command` 可复现样本驱动。  
 2. 继续收敛 `registerSlashCommand` 细粒度语义（`acceptsMultiple/defaultValue/rawQuotes` 与重复命名参数行为）。  
 3. 仅把 `p4-session-replay` 作为回归基线使用，在每次主线修复后按需复跑，确保质量不倒退。
+
+## 7. 基于测试素材的优先级重排（核心功能提级）
+
+### 7.1 素材证据（2026-03-04 复评）
+
+- 本轮可结构化解析素材：
+  - `test-baseline-assets/preset/*.json`
+  - `test-baseline-assets/worldbook/*.json`
+  - `test-baseline-assets/character-card/Sgw3.card.json`
+  - `test-baseline-assets/character-card/*.png`（含新增 `V2.0Beta.png`，已按 PNG card 元数据解码）
+- 宏族出现频次（跨素材去重聚合，按 payload hash 去重）：
+  - `random=78`、`trim=64`、`getvar=47`、`setvar=42`、`addvar=37`、`roll=17`
+- 真实 slash 触发集中：
+  - `/send=9`、`/trigger=9`、`/if=5`、`/let=2`
+  - 结论：素材迁移风险并不主要来自“命令种类数量不足”，而是来自“少数高频命令 + 运行时语义一致性”。
+- Regex/Worldbook 特性密集：
+  - 新增角色卡 `V2.0Beta.png`：`regex_scripts=12`
+  - 主素材 `Sgw3.*`：`regex_scripts=44`
+  - regex 脚本字段高频出现：`findRegex/replaceString/runOnEdit/substituteRegex/minDepth/maxDepth/placement/trimStrings`
+  - worldbook 结构字段高频出现：`probability/useProbability/depth/group/groupWeight/scanDepth` 等。
+
+### 7.2 剩余 gap 重新分级（把核心功能提到最高优先）
+
+#### P0（最高，迁移阻塞优先）
+
+- `registerSlashCommand` 细粒度语义补齐：
+  - `acceptsMultiple`、`defaultValue`、`rawQuotes`、重复命名参数保序/聚合语义。
+- parser 参数解析一致性补齐：
+  - 当前 `lib/slash-command/core/parser.ts` 对重复命名参数仍“后写覆盖”，与上游复杂脚本预期存在偏差。
+- 目标：先保证素材中的高频宏/命令链在执行语义上稳定复现，再考虑继续扩命令数。
+
+#### P1（高，内容生产链稳定性）
+
+- parser 深语义补齐：
+  - `flags/debug/scope chain`（与上游 `SlashCommandParser` 的行为等价性）。
+- regex/worldbook 执行链回归加固：
+  - 围绕 `runOnEdit + substituteRegex + depth/probability` 组合做专项回归，优先覆盖新增 `V2.0Beta.png` 与 `Sgw3` 角色卡样本。
+
+#### P2（中，能力面收口）
+
+- TavernHelper 长尾 API 缺口按“真实触发失败”补齐：
+  - 继续保持 fail-fast，不做静默兼容分支。
+- 低频 slash 命令补齐降级到 P2：
+  - 不再按“命令总数”驱动优先级，改为“素材可复现阻塞”驱动。

@@ -6,7 +6,12 @@
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
-import type { ExecutionContext } from "../types";
+import type {
+  CommandInvocationMeta,
+  ExecutionContext,
+  ParsedNamedArgument,
+  ParsedUnnamedArgument,
+} from "../types";
 import type { ScopeChain } from "./scope";
 
 // =============================================================================
@@ -30,6 +35,8 @@ export interface CommandNode {
   name: string;
   args: string[];
   namedArgs: Record<string, string>;
+  namedArgumentList: ParsedNamedArgument[];
+  unnamedArgumentList: ParsedUnnamedArgument[];
   blocks: BlockArgument[];
   raw: string;
 }
@@ -132,7 +139,8 @@ export type CommandHandler = (
   namedArgs: Record<string, string>,
   context: ExecutionContext,
   pipe: string,
-  scope: ScopeChain
+  scope: ScopeChain,
+  invocationMeta?: CommandInvocationMeta,
 ) => Promise<string | void> | string | void;
 
 export interface CommandDescriptor {

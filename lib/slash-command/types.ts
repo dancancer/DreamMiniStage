@@ -37,7 +37,31 @@ export interface SlashCommand {
   name: string;                           // 命令名，如 "send"
   args: string[];                         // 位置参数
   namedArgs: Record<string, string>;      // 命名参数 key=value
+  namedArgumentList?: ParsedNamedArgument[]; // 命名参数赋值列表（保序，包含重复）
+  unnamedArgumentList?: ParsedUnnamedArgument[]; // 位置参数赋值列表（保序）
   raw: string;                            // 原始命令字符串，用于错误报告
+}
+
+/** 命名参数赋值（解析期元数据） */
+export interface ParsedNamedArgument {
+  name: string;
+  value: string;
+  rawValue: string;
+  wasQuoted: boolean;
+}
+
+/** 位置参数赋值（解析期元数据） */
+export interface ParsedUnnamedArgument {
+  value: string;
+  rawValue: string;
+  wasQuoted: boolean;
+}
+
+/** 单次命令调用元数据（执行期透传） */
+export interface CommandInvocationMeta {
+  raw: string;
+  namedArgumentList: ParsedNamedArgument[];
+  unnamedArgumentList: ParsedUnnamedArgument[];
 }
 
 /** 解析器返回结果 */
@@ -242,5 +266,6 @@ export type CommandHandler = (
   args: string[],
   namedArgs: Record<string, string>,
   context: ExecutionContext,
-  pipe: string
+  pipe: string,
+  invocationMeta?: CommandInvocationMeta,
 ) => Promise<string>;

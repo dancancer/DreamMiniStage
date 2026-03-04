@@ -130,12 +130,19 @@ async function executeCommand(node: CommandNode, ctx: ExecContext): Promise<Exec
   ));
 
   try {
+    const invocationMeta = {
+      raw: node.raw,
+      namedArgumentList: node.namedArgumentList,
+      unnamedArgumentList: node.unnamedArgumentList,
+    };
+
     const result = await descriptor.handler(
       node.args,
       node.namedArgs,
       ctx.options.context,
       ctx.pipe,
       ctx.scope,
+      invocationMeta,
     );
 
     const nextPipe = typeof result === "string" ? result : ctx.pipe;
