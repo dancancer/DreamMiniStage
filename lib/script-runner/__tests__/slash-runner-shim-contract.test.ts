@@ -60,6 +60,17 @@ describe("slash-runner shim contract", () => {
   it("exposes low-frequency compat APIs with deterministic semantics", () => {
     const source = readShimSource();
 
+    expect(source).toMatch(/builtin:\s*\{/);
+    expect(source).toMatch(/addOneMessage:\s*function\(mes\)/);
+    expect(source).toMatch(/parseRegexFromString:\s*parseRegexFromString/);
+    expect(source).toMatch(/renderMarkdown:\s*renderMarkdownFallback/);
+    expect(source).toMatch(/uuidv4:\s*createUuidLike/);
+    expect(source).toMatch(/iframe_events:\s*IFRAME_EVENTS/);
+    expect(source).toMatch(/tavern_events:\s*TAVERN_EVENTS/);
+    expect(source).toMatch(/builtin_prompt_default_order:\s*BUILTIN_PROMPT_DEFAULT_ORDER/);
+    expect(source).toMatch(/setChatMessage:\s*api\("setChatMessage"\)/);
+    expect(source).toMatch(/rotateChatMessages:\s*api\("rotateChatMessages"\)/);
+
     expect(source).toMatch(/getCharData:\s*function\(name,\s*allowAvatar\)/);
     expect(source).toMatch(/getCharAvatarPath:\s*function\(name,\s*allowAvatar\)/);
     expect(source).toMatch(/getChatHistoryBrief:\s*function\(name,\s*allowAvatar\)/);
@@ -75,6 +86,10 @@ describe("slash-runner shim contract", () => {
     expect(source).toMatch(/replaceTavernRegexes:\s*api\("replaceTavernRegexes"\)/);
     expect(source).toMatch(/updateTavernRegexesWith:\s*function\(updater,\s*option\)/);
     expect(source).toMatch(/updateTavernRegexesWith 的 updater 必须返回数组/);
+    expect(source).toMatch(/getScriptTrees:\s*api\("getScriptTrees"\)/);
+    expect(source).toMatch(/replaceScriptTrees:\s*api\("replaceScriptTrees"\)/);
+    expect(source).toMatch(/updateScriptTreesWith:\s*function\(updater,\s*option\)/);
+    expect(source).toMatch(/updateScriptTreesWith 的 updater 必须返回数组/);
   });
 
   it("exposes _bind/_th_impl and deprecated audio helper aliases", () => {

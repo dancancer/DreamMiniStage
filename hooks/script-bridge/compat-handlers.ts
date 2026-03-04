@@ -8,7 +8,7 @@
  * ║                       Script Bridge Compatibility Handlers                ║
  * ║                                                                           ║
  * ║  目标：补齐迁移高频 API，统一走 Script Bridge 单路径                           ║
- * ║  覆盖：import_raw / extension / script buttons / version 相关接口         ║
+ * ║  覆盖：import_raw / extension / script buttons / script trees / version    ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -26,6 +26,7 @@ import { compatDisplayedMessageHandlers } from "./compat-displayed-message-handl
 
 const DEFAULT_FRONTEND_VERSION = "0.1.0";
 const DEFAULT_EXTENSION_ID = "JS-Slash-Runner";
+const SCRIPT_TREE_STORAGE_KEY = "DreamMiniStage:script-trees";
 const HOST_EXTENSION_TYPES: Record<string, "local" | "global" | "system"> = {
   "JS-Slash-Runner": "system",
   "DreamMiniStage": "system",
@@ -39,6 +40,25 @@ interface ExtensionInstallationInfo {
 }
 
 type MacroPrimitive = string | number | boolean;
+type ScriptTreeScope = "global" | "preset" | "character" | "all";
+type ScriptTreeNode = Record<string, unknown>;
+
+interface ScriptTreeStore {
+  global: ScriptTreeNode[];
+  preset: Record<string, ScriptTreeNode[]>;
+  character: Record<string, ScriptTreeNode[]>;
+}
+
+interface ScriptTreeOptions {
+  scope?: ScriptTreeScope;
+  scope_id?: string;
+}
+
+let fallbackScriptTreeStore: ScriptTreeStore = {
+  global: [],
+  preset: {},
+  character: {},
+};
 
 function getFrontendVersionValue(): string {
   const globalVersion = (globalThis as { __DREAM_FRONTEND_VERSION__?: string }).__DREAM_FRONTEND_VERSION__;
@@ -180,6 +200,166 @@ function parseMessageIdFromIframeName(iframeName: string): number {
   return parsed;
 }
 
+function cloneScriptTreeStore(store: ScriptTreeStore): ScriptTreeStore {
+  return JSON.parse(JSON.stringify(store)) as ScriptTreeStore;
+}
+
+function createEmptyScriptTreeStore(): ScriptTreeStore {
+  return {
+    global: [],
+    preset: {},
+    character: {},
+  };
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeScriptTreeList(value: unknown, apiName: string): ScriptTreeNode[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`${apiName} expects script tree array`);
+  }
+
+  return value.map((item, index) => {
+    if (!isPlainObject(item)) {
+      throw new Error(`${apiName} expects object tree node at index ${index}`);
+    }
+    return item;
+  });
+}
+
+function normalizeScriptTreeScopeMap(
+  value: unknown,
+  apiName: string,
+): Record<string, ScriptTreeNode[]> {
+  if (!isPlainObject(value)) {
+    throw new Error(`${apiName} expects scope map object`);
+  }
+
+  const result: Record<string, ScriptTreeNode[]> = {};
+  for (const [key, trees] of Object.entries(value)) {
+    if (key.trim().length === 0) {
+      continue;
+    }
+    result[key] = normalizeScriptTreeList(trees, apiName);
+  }
+  return result;
+}
+
+function normalizeScriptTreeStorePayload(value: unknown, apiName: string): ScriptTreeStore {
+  if (!isPlainObject(value)) {
+    throw new Error(`${apiName} expects store object`);
+  }
+
+  return {
+    global: normalizeScriptTreeList(value.global ?? [], apiName),
+    preset: normalizeScriptTreeScopeMap(value.preset ?? {}, apiName),
+    character: normalizeScriptTreeScopeMap(value.character ?? {}, apiName),
+  };
+}
+
+function loadScriptTreeStore(): ScriptTreeStore {
+  if (typeof window === "undefined" || typeof localStorage === "undefined") {
+    return cloneScriptTreeStore(fallbackScriptTreeStore);
+  }
+
+  try {
+    const raw = localStorage.getItem(SCRIPT_TREE_STORAGE_KEY);
+    if (!raw) {
+      return createEmptyScriptTreeStore();
+    }
+    return normalizeScriptTreeStorePayload(JSON.parse(raw), "getScriptTrees");
+  } catch {
+    return createEmptyScriptTreeStore();
+  }
+}
+
+function saveScriptTreeStore(store: ScriptTreeStore): void {
+  if (typeof window === "undefined" || typeof localStorage === "undefined") {
+    fallbackScriptTreeStore = cloneScriptTreeStore(store);
+    return;
+  }
+
+  localStorage.setItem(SCRIPT_TREE_STORAGE_KEY, JSON.stringify(store));
+}
+
+function getDefaultScriptTreeScope(ctx: ApiCallContext): Exclude<ScriptTreeScope, "all"> {
+  if (ctx.characterId) {
+    return "character";
+  }
+  if (ctx.presetName) {
+    return "preset";
+  }
+  return "global";
+}
+
+function resolveScriptTreeScope(
+  rawOptions: unknown,
+  ctx: ApiCallContext,
+  apiName: string,
+): { scope: ScriptTreeScope; scopeId?: string } {
+  if (rawOptions !== undefined && !isPlainObject(rawOptions)) {
+    throw new Error(`${apiName} expects options object`);
+  }
+
+  const options = (rawOptions || {}) as ScriptTreeOptions;
+  const scope = options.scope ?? getDefaultScriptTreeScope(ctx);
+  if (!["global", "preset", "character", "all"].includes(scope)) {
+    throw new Error(`${apiName} received invalid scope: ${String(scope)}`);
+  }
+  if (scope === "all") {
+    return { scope };
+  }
+
+  if (scope === "global") {
+    return { scope };
+  }
+
+  const scopeId = options.scope_id ?? (scope === "preset" ? ctx.presetName : ctx.characterId);
+  if (typeof scopeId !== "string" || scopeId.trim().length === 0) {
+    throw new Error(`${apiName} scope=${scope} requires scope_id in options or bridge context`);
+  }
+
+  return {
+    scope,
+    scopeId: scopeId.trim(),
+  };
+}
+
+function readScriptTreesByScope(
+  store: ScriptTreeStore,
+  scope: Exclude<ScriptTreeScope, "all">,
+  scopeId?: string,
+): ScriptTreeNode[] {
+  if (scope === "global") {
+    return store.global;
+  }
+  if (scope === "preset") {
+    return store.preset[scopeId || ""] || [];
+  }
+  return store.character[scopeId || ""] || [];
+}
+
+function writeScriptTreesByScope(
+  store: ScriptTreeStore,
+  scope: Exclude<ScriptTreeScope, "all">,
+  trees: ScriptTreeNode[],
+  scopeId?: string,
+): void {
+  if (scope === "global") {
+    store.global = trees;
+    return;
+  }
+
+  const key = scopeId || "";
+  if (scope === "preset") {
+    store.preset[key] = trees;
+    return;
+  }
+  store.character[key] = trees;
+}
+
 export const compatHandlers: ApiHandlerMap = {
   "isAdmin": (): boolean => false,
 
@@ -245,6 +425,34 @@ export const compatHandlers: ApiHandlerMap = {
     }
 
     return grouped;
+  },
+
+  "getScriptTrees": (args: unknown[], ctx: ApiCallContext): ScriptTreeNode[] | ScriptTreeStore => {
+    const [rawOptions] = args as [unknown?];
+    const target = resolveScriptTreeScope(rawOptions, ctx, "getScriptTrees");
+    const store = loadScriptTreeStore();
+    if (target.scope === "all") {
+      return cloneScriptTreeStore(store);
+    }
+
+    return JSON.parse(JSON.stringify(readScriptTreesByScope(store, target.scope, target.scopeId)));
+  },
+
+  "replaceScriptTrees": (args: unknown[], ctx: ApiCallContext): boolean => {
+    const [rawTrees, rawOptions] = args as [unknown, unknown?];
+    const target = resolveScriptTreeScope(rawOptions, ctx, "replaceScriptTrees");
+
+    const store = loadScriptTreeStore();
+    if (target.scope === "all") {
+      const nextStore = normalizeScriptTreeStorePayload(rawTrees, "replaceScriptTrees");
+      saveScriptTreeStore(nextStore);
+      return true;
+    }
+
+    const nextTrees = normalizeScriptTreeList(rawTrees, "replaceScriptTrees");
+    writeScriptTreesByScope(store, target.scope, nextTrees, target.scopeId);
+    saveScriptTreeStore(store);
+    return true;
   },
 
   "importRawPreset": async (args: unknown[]): Promise<boolean> => {

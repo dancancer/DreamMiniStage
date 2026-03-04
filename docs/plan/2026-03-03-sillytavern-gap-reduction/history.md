@@ -6,7 +6,7 @@
 ## 1. 指标演进（历史）
 
 - Slash 覆盖率：`21.71%` -> `31.01%`（`80/258`）
-- TavernHelper API 覆盖率：`43.08%` -> `95.38%`（`124/130`）
+- TavernHelper API 覆盖率：`43.08%` -> `100.00%`（`130/130`）
 - P4 回放基线：`p4-session-replay` 已稳定，噪音门禁与 run-index 已落地。
 
 ## 2. 已完成里程碑（归档）
@@ -37,7 +37,7 @@
 - 噪音门禁：`noise-baseline-diff`；新增噪音 fail-fast。
 - run-index：连续回放趋势可追踪。
 
-## 3. 历史轮次摘要（12-32 轮）
+## 3. 历史轮次摘要（12-33 轮）
 
 - 第12轮：`registerSlashCommand` callback 闭环修复。
 - 第13轮：`extension-handlers` 与 `slash-runner-shim` 结构拆分。
@@ -60,6 +60,7 @@
 - 第30轮：parser 第二切片补多层 block + 反斜杠逃逸断言（odd/even backslash quote 边界 + strict fail-fast）。
 - 第31轮：parser 第二切片补 nested `REPLACE_GETVAR` 断言（named/unnamed 参数替换 + strict 转义 fail-fast）。
 - 第32轮：路线切换评估完成，主优先级从“语义边界覆盖增强”切回“能力面阻塞清零（真实触发驱动）”。
+- 第33轮：补齐 `builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order/getScriptTrees/replaceScriptTrees/updateScriptTreesWith`，TavernHelper API 覆盖达 `130/130`。
 
 ## 4. 历史回归与证据索引
 

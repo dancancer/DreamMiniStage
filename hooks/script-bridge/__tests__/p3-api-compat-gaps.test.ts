@@ -79,6 +79,7 @@ function createMockContext(overrides: Partial<ApiCallContext> = {}): ApiCallCont
 describe("P3 compat API gaps", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.removeItem("DreamMiniStage:script-trees");
   });
 
   it("returns grouped enabled script buttons", () => {
@@ -126,6 +127,46 @@ describe("P3 compat API gaps", () => {
       remote_url: "dreamministage://extensions/JS-Slash-Runner",
     });
     expect(compatHandlers.getExtensionStatus(["unknown-extension"], createMockContext())).toBeNull();
+  });
+
+  it("supports script tree helpers with scope-aware storage and fail-fast guards", () => {
+    const scopedContext = createMockContext({
+      characterId: "char-script-tree",
+      presetName: "preset-script-tree",
+    });
+    const characterTrees = [
+      { type: "script", id: "s1", name: "char-tree" },
+    ];
+    const presetTrees = [
+      { type: "script", id: "p1", name: "preset-tree" },
+    ];
+
+    expect(compatHandlers.replaceScriptTrees([characterTrees], scopedContext)).toBe(true);
+    expect(compatHandlers.getScriptTrees([], scopedContext)).toEqual(characterTrees);
+
+    expect(compatHandlers.replaceScriptTrees(
+      [presetTrees, { scope: "preset" }],
+      scopedContext,
+    )).toBe(true);
+    expect(compatHandlers.getScriptTrees(
+      [{ scope: "preset" }],
+      scopedContext,
+    )).toEqual(presetTrees);
+
+    const allTrees = compatHandlers.getScriptTrees(
+      [{ scope: "all" }],
+      scopedContext,
+    ) as Record<string, unknown>;
+    expect(allTrees).toEqual(expect.objectContaining({
+      global: expect.any(Array),
+      preset: expect.any(Object),
+      character: expect.any(Object),
+    }));
+
+    expect(() => compatHandlers.getScriptTrees(
+      [{ scope: "character" }],
+      createMockContext({ characterId: undefined }),
+    )).toThrow("scope=character requires scope_id in options or bridge context");
   });
 
   it("imports raw preset and fails fast on import error", async () => {

@@ -6,17 +6,18 @@
 ## 1. 当前状态快照（2026-03-04）
 
 - Slash 覆盖率：`80 / 258 = 31.01%`（已达 P2 门槛）
-- TavernHelper API 覆盖率：`124 / 130 = 95.38%`（已达 P3 门槛）
+- TavernHelper API 覆盖率：`130 / 130 = 100.00%`（P3 缺口清零）
 - P4：`p4-session-replay`、噪音门禁、run-index 均可用（维持基线，不扩能力面）
 
 ## 2. 当前执行主线（进行中）
 
 ### P1 - 能力面阻塞清零（主优先，真实触发驱动）
 
-- [ ] 先以真实迁移素材触发验证 `builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order`。
-- [ ] 先以真实迁移素材触发验证 script tree helper（`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`）。
-- [ ] 对触发失败项补最小单路径可执行实现（保持 fail-fast，不做静默兼容）。
-- [ ] 为新增能力补契约/集成回归，并同步 shim/handler/能力矩阵。
+- [x] 补齐 `builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order` 最小可执行实现并固化契约回归。
+- [x] 补齐 script tree helper（`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`）最小存储链路并固化回归。
+- [x] 对触发失败项补最小单路径可执行实现（保持 fail-fast，不做静默兼容）。
+- [x] 为新增能力补契约/集成回归，并同步 shim/handler/能力矩阵。
+- [ ] 用真实迁移素材进行一轮端到端复验，确认新增兼容入口在真实脚本中无偏差。
 
 ### P2 - parser 深语义守卫（按缺陷触发）
 
@@ -32,7 +33,7 @@
 - [x] 补齐 `_bind/_th_impl` 最小可运行子集（仅实现真实触发能力，未实现项显式 fail-fast）。
 - [x] 补齐音频 helper 别名：`audioEnable/audioImport/audioMode/audioPlay/audioSelect`。
 - [x] 评估并补齐 preset helper 常量族（`default_preset/isPreset*`），并固化契约测试。
-- [ ] 跟随 P1 触发验证结果推进 `builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order` 实现。
+- [x] 跟随 P1 触发验证结果推进 `builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order` 实现。
 
 ### P3 - 低频 slash（机会性）
 
@@ -41,8 +42,8 @@
 ## 3. 本轮固定回归（每轮增量后执行）
 
 - [x] `pnpm vitest run lib/slash-command/__tests__/kernel-core.test.ts lib/slash-command/__tests__/kernel-parser-flags-nested.test.ts`
-- [x] `pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
-- [x] `pnpm exec eslint lib/slash-command/core/parser.ts lib/slash-command/__tests__/kernel-core.test.ts lib/slash-command/__tests__/kernel-parser-flags-nested.test.ts public/iframe-libs/slash-runner-shim.js lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
+- [x] `pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/message-handlers-compat.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
+- [x] `pnpm exec eslint hooks/script-bridge/message-handlers.ts hooks/script-bridge/compat-handlers.ts hooks/script-bridge/capability-matrix.ts hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/message-handlers-compat.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts public/iframe-libs/slash-runner-shim.js`
 - [x] `pnpm exec tsc --noEmit`
 
 ## 4. 守卫基线（按需）

@@ -6,7 +6,7 @@
 ## 1) 当前状态
 
 - Slash 覆盖：`80/258 = 31.01%`（已达原 P2 门槛）
-- TavernHelper API 覆盖：`124/130 = 95.38%`（已达原 P3 门槛）
+- TavernHelper API 覆盖：`130/130 = 100.00%`（P3 缺口清零）
 - P4：`p4-session-replay` 可作为稳定守卫基线（维持，不扩面）
 
 ## 2) 当前目标（主线）
@@ -25,9 +25,9 @@
 
 ### P1（最高）能力面阻塞清零（真实触发驱动）
 
-- 低频常量/API（`builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order`）按真实触发失败推进。
-- script tree helper（`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`）按真实触发失败推进。
-- 触发失败后只补最小单路径可执行实现 + 对应回归，不做无触发扩面。
+- 已补齐低频常量/API：`builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order`。
+- 已补齐 script tree helper：`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`（最小存储链路）。
+- 下一步切换为“真实素材复验”，验证新增入口在迁移脚本中的语义一致性。
 
 ### P2（中）parser 深语义守卫
 

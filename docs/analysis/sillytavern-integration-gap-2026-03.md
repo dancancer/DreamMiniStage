@@ -8,7 +8,7 @@
 - 项目已从“能力面扩张”切回“真实迁移阻塞收敛”。
 - P2/P3 覆盖门槛长期达标，P4 保留为守卫基线，不再扩 CI 能力面。
 - 最近三轮 parser 语义边界已形成稳定守卫线，当前边际收益明显下降。
-- 当前主要风险已转移到少量 TavernHelper 低频 helper 常量/API 的真实迁移阻塞验证与补齐。
+- 当前主要风险已转移到“新增长尾兼容入口在真实迁移素材中的语义一致性复验”。
 
 ## 2. 核心指标（当前快照）
 
@@ -21,9 +21,9 @@
 ### 2.2 TavernHelper API 覆盖
 
 - 上游聚合 API：`130`
-- 当前 shim 顶层 API：`162`
-- 当前交集：`124`
-- 覆盖率：`95.38%`
+- 当前 shim 顶层 API：`171`
+- 当前交集：`130`
+- 覆盖率：`100.00%`
 
 ### 2.3 P4 回归基线
 
@@ -31,28 +31,32 @@
 - 噪音基线：已启用差分门禁
 - run-index：已启用趋势记录
 
-## 3. 本轮主线执行（Round 32）
+## 3. 本轮主线执行（Round 33）
 
 ### 3.1 变更摘要
 
-- 本轮完成路线评估并切换主优先级：由“语义边界覆盖增强”切到“能力面阻塞清零”。
-- 本轮为文档与执行路线更新，无新增代码实现；parser 保持守卫模式，能力面补齐改为真实触发驱动。
+- 本轮补齐 TavernHelper 长尾兼容入口：`builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order`。
+- 本轮补齐 script tree helper：`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`，实现宿主持久化最小链路并保持 fail-fast。
+- 本轮同步补齐契约回归：shim 合约、API surface 对齐、message/compat 行为回归全部通过。
 
 ### 3.2 回归结果
 
-- 本轮无代码变更，因此未新增执行回归；沿用上轮稳定回归基线（parser `2 files / 24 tests`、固定回归 `3 files / 24 tests`、`eslint + tsc` 全绿）。
+- parser 守卫回归：`2 files / 24 tests` 通过。
+- script-bridge / shim 回归：`4 files / 28 tests` 通过（含新增 `message-handlers-compat.test.ts`）。
+- 静态检查：`eslint`（7 files）+ `tsc --noEmit` 全绿。
 
 ## 4. 当前剩余 gap（按优先级）
 
 ### 4.1 P1（最高）能力面阻塞清零
 
-- 目标：能力面阻塞清零（真实触发驱动）。
-- 策略：优先验证并补齐 TavernHelper 长尾 helper 常量/API，触发失败才补最小实现。
+- 状态：长尾能力面实现已落地，进入真实迁移素材复验阶段。
+- 策略：优先跑真实脚本，若出现语义偏差再做最小修复与回归补强。
 
 ### 4.2 P2（高）TavernHelper helper 长尾
 
-- 低频常量/API 余量：`builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order`。
-- script tree helper（`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`）按“真实触发失败”推进。
+- 已补齐：`builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order`。
+- 已补齐：`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`。
+- 剩余工作：仅保留真实脚本触发下的语义细节修正。
 
 ### 4.3 P2（中）parser 深语义守卫
 
@@ -71,10 +75,10 @@
 
 ## 6. 下一步计划（短周期）
 
-1. 用真实迁移素材优先验证 `builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order`。
-2. 用真实迁移素材验证 script tree helper（`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`）并按失败项补最小实现。
+1. 用真实迁移素材回放并验证本轮新增兼容入口（重点看 `rotateChatMessages` 与 script tree helper 的行为一致性）。
+2. 若出现语义偏差，按“单路径最小修复 + 契约测试”补齐，不扩无触发能力面。
 3. parser 仅在真实缺陷触发时再扩断言/修复，保持守卫模式。
-4. 每轮主线变更后按需执行 `pnpm p4:session-replay`，仅作守卫不扩面。
+4. 主线变更后按需执行 `pnpm p4:session-replay`，仅作守卫不扩面。
 
 ## 7. 归档入口
 

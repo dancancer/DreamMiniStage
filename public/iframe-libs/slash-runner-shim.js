@@ -542,6 +542,136 @@
   }
 
   var defaultPreset = cloneJsonCompatible(DEFAULT_PRESET_TEMPLATE);
+  var BUILTIN_PROMPT_DEFAULT_ORDER = [
+    "world_info_before",
+    "persona_description",
+    "char_description",
+    "char_personality",
+    "scenario",
+    "world_info_after",
+    "dialogue_examples",
+    "chat_history",
+    "user_input",
+  ];
+  var IFRAME_EVENTS = {
+    MESSAGE_IFRAME_RENDER_STARTED: "message_iframe_render_started",
+    MESSAGE_IFRAME_RENDER_ENDED: "message_iframe_render_ended",
+    GENERATION_STARTED: "js_generation_started",
+    STREAM_TOKEN_RECEIVED_FULLY: "js_stream_token_received_fully",
+    STREAM_TOKEN_RECEIVED_INCREMENTALLY: "js_stream_token_received_incrementally",
+    GENERATION_ENDED: "js_generation_ended",
+  };
+  var TAVERN_EVENTS = {
+    APP_READY: "app_ready",
+    EXTRAS_CONNECTED: "extras_connected",
+    MESSAGE_SWIPED: "message_swiped",
+    MESSAGE_SENT: "message_sent",
+    MESSAGE_RECEIVED: "message_received",
+    MESSAGE_EDITED: "message_edited",
+    MESSAGE_DELETED: "message_deleted",
+    MESSAGE_UPDATED: "message_updated",
+    MESSAGE_FILE_EMBEDDED: "message_file_embedded",
+    IMPERSONATE_READY: "impersonate_ready",
+    CHAT_CHANGED: "chat_id_changed",
+    GENERATION_AFTER_COMMANDS: "GENERATION_AFTER_COMMANDS",
+    GENERATION_STARTED: "generation_started",
+    GENERATION_STOPPED: "generation_stopped",
+    GENERATION_ENDED: "generation_ended",
+    EXTENSIONS_FIRST_LOAD: "extensions_first_load",
+    EXTENSION_SETTINGS_LOADED: "extension_settings_loaded",
+    SETTINGS_LOADED: "settings_loaded",
+    SETTINGS_UPDATED: "settings_updated",
+    GROUP_UPDATED: "group_updated",
+    MOVABLE_PANELS_RESET: "movable_panels_reset",
+    SETTINGS_LOADED_BEFORE: "settings_loaded_before",
+    SETTINGS_LOADED_AFTER: "settings_loaded_after",
+    CHATCOMPLETION_SOURCE_CHANGED: "chatcompletion_source_changed",
+    CHATCOMPLETION_MODEL_CHANGED: "chatcompletion_model_changed",
+    OAI_PRESET_CHANGED_BEFORE: "oai_preset_changed_before",
+    OAI_PRESET_CHANGED_AFTER: "oai_preset_changed_after",
+    OAI_PRESET_EXPORT_READY: "oai_preset_export_ready",
+    OAI_PRESET_IMPORT_READY: "oai_preset_import_ready",
+    WORLDINFO_SETTINGS_UPDATED: "worldinfo_settings_updated",
+    WORLDINFO_UPDATED: "worldinfo_updated",
+    CHARACTER_EDITED: "character_edited",
+    CHARACTER_PAGE_LOADED: "character_page_loaded",
+    CHARACTER_GROUP_OVERLAY_STATE_CHANGE_BEFORE: "character_group_overlay_state_change_before",
+    CHARACTER_GROUP_OVERLAY_STATE_CHANGE_AFTER: "character_group_overlay_state_change_after",
+    USER_MESSAGE_RENDERED: "user_message_rendered",
+    CHARACTER_MESSAGE_RENDERED: "character_message_rendered",
+    FORCE_SET_BACKGROUND: "force_set_background",
+    CHAT_DELETED: "chat_deleted",
+    CHAT_CREATED: "chat_created",
+    GROUP_CHAT_DELETED: "group_chat_deleted",
+    GROUP_CHAT_CREATED: "group_chat_created",
+    GENERATE_BEFORE_COMBINE_PROMPTS: "generate_before_combine_prompts",
+    GENERATE_AFTER_COMBINE_PROMPTS: "generate_after_combine_prompts",
+    GENERATE_AFTER_DATA: "generate_after_data",
+    GROUP_MEMBER_DRAFTED: "group_member_drafted",
+    WORLD_INFO_ACTIVATED: "world_info_activated",
+    TEXT_COMPLETION_SETTINGS_READY: "text_completion_settings_ready",
+    CHAT_COMPLETION_SETTINGS_READY: "chat_completion_settings_ready",
+    CHAT_COMPLETION_PROMPT_READY: "chat_completion_prompt_ready",
+    CHARACTER_FIRST_MESSAGE_SELECTED: "character_first_message_selected",
+    CHARACTER_DELETED: "characterDeleted",
+    CHARACTER_DUPLICATED: "character_duplicated",
+    STREAM_TOKEN_RECEIVED: "stream_token_received",
+    FILE_ATTACHMENT_DELETED: "file_attachment_deleted",
+    WORLDINFO_FORCE_ACTIVATE: "worldinfo_force_activate",
+    OPEN_CHARACTER_LIBRARY: "open_character_library",
+    ONLINE_STATUS_CHANGED: "online_status_changed",
+    IMAGE_SWIPED: "image_swiped",
+    CONNECTION_PROFILE_LOADED: "connection_profile_loaded",
+    TOOL_CALLS_PERFORMED: "tool_calls_performed",
+    TOOL_CALLS_RENDERED: "tool_calls_rendered",
+    CHARACTER_MANAGEMENT_DROPDOWN: "charManagementDropdown",
+    SECRET_WRITTEN: "secret_written",
+    SECRET_DELETED: "secret_deleted",
+    SECRET_ROTATED: "secret_rotated",
+    SECRET_EDITED: "secret_edited",
+    PRESET_CHANGED: "preset_changed",
+    PRESET_DELETED: "preset_deleted",
+    PRESET_RENAMED: "preset_renamed",
+    PRESET_RENAMED_BEFORE: "preset_renamed_before",
+    MAIN_API_CHANGED: "main_api_changed",
+    WORLDINFO_ENTRIES_LOADED: "worldinfo_entries_loaded",
+  };
+
+  function parseRegexFromString(rawRegex) {
+    if (typeof rawRegex !== "string" || rawRegex.length === 0) {
+      return null;
+    }
+
+    var matched = rawRegex.match(/^\/(.+)\/([a-z]*)$/i);
+    if (!matched) {
+      return null;
+    }
+    try {
+      return new RegExp(matched[1], matched[2]);
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function createUuidLike() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(char) {
+      var random = Math.random() * 16 | 0;
+      var value = char === "x" ? random : (random & 0x3 | 0x8);
+      return value.toString(16);
+    });
+  }
+
+  function renderMarkdownFallback(markdownText) {
+    if (typeof markdownText !== "string") {
+      return "";
+    }
+
+    return markdownText
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\n/g, "<br>");
+  }
 
   // ════════════════════════════════════════════════════════════════════════
   //  事件系统：本地 handler 注册表
@@ -876,6 +1006,47 @@
     },
 
     // ──────────────────────────────────────────────────────────────────────
+    //  builtin API（兼容最小可执行子集）
+    // ──────────────────────────────────────────────────────────────────────
+    builtin: {
+      addOneMessage: function(mes) {
+        if (!mes || typeof mes !== "object") {
+          throw new Error("[builtin.addOneMessage] mes must be object");
+        }
+
+        var role = mes.is_user ? "user" : "assistant";
+        var content = typeof mes.mes === "string"
+          ? mes.mes
+          : (typeof mes.message === "string" ? mes.message : "");
+        return callApi("createChatMessages", [[{
+          role: role,
+          content: content,
+        }]]);
+      },
+      duringGenerating: function() {
+        return false;
+      },
+      getImageTokenCost: unsupportedAsync("builtin.getImageTokenCost"),
+      getVideoTokenCost: unsupportedAsync("builtin.getVideoTokenCost"),
+      parseRegexFromString: parseRegexFromString,
+      promptManager: {
+        messages: [],
+        getPromptCollection: function() {
+          return { collection: [] };
+        },
+      },
+      reloadAndRenderChatWithoutEvents: unsupportedAsync("builtin.reloadAndRenderChatWithoutEvents"),
+      reloadChatWithoutEvents: unsupportedAsync("builtin.reloadChatWithoutEvents"),
+      reloadEditor: unsupportedSync("builtin.reloadEditor"),
+      reloadEditorDebounced: unsupportedSync("builtin.reloadEditorDebounced"),
+      renderMarkdown: renderMarkdownFallback,
+      renderPromptManager: unsupportedSync("builtin.renderPromptManager"),
+      renderPromptManagerDebounced: unsupportedSync("builtin.renderPromptManagerDebounced"),
+      saveSettings: unsupportedAsync("builtin.saveSettings"),
+      uuidv4: createUuidLike,
+    },
+
+    // ──────────────────────────────────────────────────────────────────────
     //  变量 API（Requirements 2.1-2.5）
     // ──────────────────────────────────────────────────────────────────────
     variables: {
@@ -923,6 +1094,8 @@
       var data = Array.prototype.slice.call(arguments, 1);
       return callApi("eventEmit", [event].concat(data));
     },
+    iframe_events: IFRAME_EVENTS,
+    tavern_events: TAVERN_EVENTS,
 
     // ──────────────────────────────────────────────────────────────────────
     //  全局共享 API（JS-Slash-Runner 兼容）
@@ -957,8 +1130,10 @@
     // ──────────────────────────────────────────────────────────────────────
     getChatMessages: api("getChatMessages"),
     setChatMessages: api("setChatMessages"),
+    setChatMessage: api("setChatMessage"),
     createChatMessages: api("createChatMessages"),
     deleteChatMessages: api("deleteChatMessages"),
+    rotateChatMessages: api("rotateChatMessages"),
     getCurrentMessageId: api("getCurrentMessageId"),
     formatAsDisplayedMessage: api("formatAsDisplayedMessage"),
     retrieveDisplayedMessage: api("retrieveDisplayedMessage"),
@@ -968,6 +1143,7 @@
     // ──────────────────────────────────────────────────────────────────────
     generate: api("generate"),
     generateRaw: api("generateRaw"),
+    builtin_prompt_default_order: BUILTIN_PROMPT_DEFAULT_ORDER,
     stopGenerationById: api("stopGenerationById"),
     stopAllGeneration: api("stopAllGeneration"),
 
@@ -1175,6 +1351,24 @@
           }
           return callApi("replaceTavernRegexes", [nextRegexes, option]).then(function() {
             return nextRegexes;
+          });
+        });
+      });
+    },
+    getScriptTrees: api("getScriptTrees"),
+    replaceScriptTrees: api("replaceScriptTrees"),
+    updateScriptTreesWith: function(updater, option) {
+      if (typeof updater !== "function") {
+        throw new Error("updateScriptTreesWith 需要 updater 函数参数");
+      }
+
+      return callApi("getScriptTrees", [option]).then(function(currentScriptTrees) {
+        return Promise.resolve(updater(currentScriptTrees)).then(function(nextScriptTrees) {
+          if (!Array.isArray(nextScriptTrees)) {
+            throw new Error("updateScriptTreesWith 的 updater 必须返回数组");
+          }
+          return callApi("replaceScriptTrees", [nextScriptTrees, option]).then(function() {
+            return nextScriptTrees;
           });
         });
       });

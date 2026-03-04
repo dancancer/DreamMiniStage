@@ -10,8 +10,10 @@
  * ║  SillyTavern 兼容层：                                                       ║
  * ║  • getChatMessages()              - 获取所有聊天消息 (Req 4.1)              ║
  * ║  • setChatMessages(messages)      - 更新指定消息 (Req 4.2)                  ║
+ * ║  • setChatMessage(data, id)       - 旧版单条消息写接口 (Req 4.2 compat)     ║
  * ║  • createChatMessages(messages)   - 追加新消息 (Req 4.3)                    ║
  * ║  • deleteChatMessages(messageIds) - 删除指定消息 (Req 4.4)                  ║
+ * ║  • rotateChatMessages()           - 旧版区间旋转接口 (Req 4.4 compat)       ║
  * ║  • getCurrentMessageId()          - 获取最新消息 ID (Req 4.5)               ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
@@ -24,9 +26,8 @@ import type { DialogueMessage } from "@/types/character-dialogue";
 // ============================================================================
 
 interface SetMessagePayload {
-  message_id: string;
-  message?: string;
-  data?: Record<string, unknown>;
+  message_id: string | number;
+  [key: string]: unknown;
 }
 
 interface CreateMessagePayload {
@@ -37,6 +38,15 @@ interface CreateMessagePayload {
 
 interface SetMessagesOptions {
   refresh?: "none" | "affected" | "all";
+}
+
+interface SetChatMessageOptions {
+  swipe_id?: "current" | number;
+  refresh?: "none" | "display_current" | "display_and_render_current" | "all";
+}
+
+interface RotateChatMessagesOptions {
+  refresh?: "none" | "all";
 }
 
 // ============================================================================
@@ -82,9 +92,69 @@ function setChatMessages(args: unknown[], ctx: ApiCallContext): boolean {
         options: options || {},
         characterId: ctx.characterId,
       },
-    })
+    }),
   );
   return true;
+}
+
+function normalizeLegacyRefreshMode(
+  refresh: SetChatMessageOptions["refresh"] | RotateChatMessagesOptions["refresh"],
+): SetMessagesOptions["refresh"] {
+  if (refresh === "none") {
+    return "none";
+  }
+  if (refresh === "all") {
+    return "all";
+  }
+  return "affected";
+}
+
+function setChatMessage(args: unknown[], ctx: ApiCallContext): boolean {
+  const [rawFieldValues, rawMessageId, rawOptions] = args as [
+    string | { message?: string; data?: Record<string, unknown>; extra?: Record<string, unknown> },
+    number,
+    SetChatMessageOptions?,
+  ];
+
+  if (typeof rawMessageId !== "number" || !Number.isFinite(rawMessageId)) {
+    throw new Error("setChatMessage requires numeric message_id");
+  }
+
+  const options = rawOptions || {};
+  if (options.swipe_id !== undefined && options.swipe_id !== "current") {
+    throw new Error("setChatMessage currently supports swipe_id='current' only");
+  }
+
+  const fieldValues = typeof rawFieldValues === "string"
+    ? { message: rawFieldValues }
+    : rawFieldValues;
+  if (!fieldValues || typeof fieldValues !== "object") {
+    throw new Error("setChatMessage requires field values object or string message");
+  }
+
+  const payload: SetMessagePayload = {
+    message_id: String(rawMessageId),
+  };
+
+  if (fieldValues.message !== undefined) {
+    payload.message = fieldValues.message;
+  }
+  if (fieldValues.data !== undefined) {
+    payload.data = fieldValues.data;
+  }
+  if (fieldValues.extra !== undefined) {
+    payload.extra = fieldValues.extra;
+  }
+
+  return setChatMessages(
+    [
+      [payload],
+      {
+        refresh: normalizeLegacyRefreshMode(options.refresh),
+      },
+    ],
+    ctx,
+  );
 }
 
 // ============================================================================
@@ -115,7 +185,7 @@ function createChatMessages(args: unknown[], ctx: ApiCallContext): string[] {
         messages: messagesWithIds,
         characterId: ctx.characterId,
       },
-    })
+    }),
   );
 
   return messagesWithIds.map((m) => m.id);
@@ -142,10 +212,63 @@ function deleteChatMessages(args: unknown[], ctx: ApiCallContext): boolean {
         messageIds,
         characterId: ctx.characterId,
       },
-    })
+    }),
   );
 
   return true;
+}
+
+function normalizeRotationIndex(index: number, length: number): number {
+  if (!Number.isInteger(index)) {
+    throw new Error("rotateChatMessages expects integer indices");
+  }
+  return Math.min(Math.max(index, 0), length);
+}
+
+function rotateChatMessages(args: unknown[], ctx: ApiCallContext): string[] {
+  const [beginRaw, middleRaw, endRaw, rawOptions] = args as [
+    number,
+    number,
+    number,
+    RotateChatMessagesOptions?,
+  ];
+  const total = ctx.messages.length;
+  const begin = normalizeRotationIndex(beginRaw, total);
+  const middle = normalizeRotationIndex(middleRaw, total);
+  const end = normalizeRotationIndex(endRaw, total);
+
+  if (!(begin <= middle && middle <= end)) {
+    throw new Error("rotateChatMessages expects begin <= middle <= end");
+  }
+  if (begin === middle || middle === end) {
+    return [];
+  }
+
+  const rotatingRange = ctx.messages.slice(begin, end);
+  const offset = middle - begin;
+  const rotated = rotatingRange.slice(offset).concat(rotatingRange.slice(0, offset));
+  const affected = ctx.messages.slice(begin, end);
+  const updates = affected.map((message, index) => {
+    const next = rotated[index];
+    return {
+      message_id: message.id,
+      message: next?.content ?? "",
+      name: next?.name,
+      role: next?.role,
+    };
+  });
+
+  setChatMessages(
+    [
+      updates,
+      {
+        refresh: normalizeLegacyRefreshMode(rawOptions?.refresh),
+      },
+    ],
+    ctx,
+  );
+
+  return updates.map((item) => String(item.message_id));
 }
 
 // ============================================================================
@@ -161,7 +284,7 @@ function eventEmit(args: unknown[]): string {
   window.dispatchEvent(
     new CustomEvent(`DreamMiniStage:${eventName}`, {
       detail: eventData.length === 1 ? eventData[0] : eventData,
-    })
+    }),
   );
   return eventName;
 }
@@ -177,8 +300,10 @@ export const messageHandlers: ApiHandlerMap = {
 
   // 消息操作 API
   "setChatMessages": setChatMessages,
+  "setChatMessage": setChatMessage,
   "createChatMessages": createChatMessages,
   "deleteChatMessages": deleteChatMessages,
+  "rotateChatMessages": rotateChatMessages,
 
   // 事件 API（兼容）
   "eventEmit": eventEmit,
