@@ -21,16 +21,35 @@ export interface SlashCommandDefinition {
   hasCallback?: boolean;
   iframeId?: string;
   aliases?: string[];
-  namedArgumentList?: Array<{
-    name: string;
-    description?: string;
-    isRequired?: boolean;
-  }>;
-  unnamedArgumentList?: Array<{
-    description?: string;
-    isRequired?: boolean;
-  }>;
+  namedArgumentList?: SlashNamedArgumentDefinition[];
+  unnamedArgumentList?: SlashUnnamedArgumentDefinition[];
   helpString?: string;
+}
+
+interface SlashNamedArgumentDefinition {
+  name: string;
+  description?: string;
+  isRequired?: boolean;
+  acceptsMultiple?: boolean;
+}
+
+interface SlashUnnamedArgumentDefinition {
+  description?: string;
+  isRequired?: boolean;
+  acceptsMultiple?: boolean;
+}
+
+interface SlashNamedArgumentAssignment {
+  name: string;
+  value: string;
+  description?: string;
+  isRequired: boolean;
+}
+
+interface SlashUnnamedArgumentAssignment {
+  value: string;
+  description?: string;
+  isRequired: boolean;
 }
 
 interface PendingSlashCommandCall {
@@ -52,7 +71,10 @@ async function invokeIframeSlashCommandCallback(
   iframeId: string,
   name: string,
   args: string,
+  unnamedArgs: string[],
   namedArgs: Record<string, string>,
+  namedArgumentList: SlashNamedArgumentAssignment[],
+  unnamedArgumentList: SlashUnnamedArgumentAssignment[],
   pipe: string,
 ): Promise<unknown> {
   const callbackId = generateSlashCallbackId();
@@ -73,10 +95,102 @@ async function invokeIframeSlashCommandCallback(
     dispatchToIframe(iframeId, "SLASH_COMMAND_CALL", {
       name,
       args,
+      unnamedArgs,
       namedArgs,
+      namedArgumentList,
+      unnamedArgumentList,
       pipe,
       callbackId,
     });
+  });
+}
+
+function assertSlashCommandArguments(
+  definition: SlashCommandDefinition,
+  cmdArgs: string[],
+  namedArgs: Record<string, string>,
+): void {
+  const commandName = definition.name;
+  const namedDefinitions = definition.namedArgumentList ?? [];
+  const namedDefinitionMap = new Map<string, SlashNamedArgumentDefinition>();
+  for (const namedDef of namedDefinitions) {
+    if (namedDef?.name) {
+      namedDefinitionMap.set(namedDef.name, namedDef);
+    }
+  }
+
+  if (namedDefinitionMap.size > 0) {
+    const unknownNamedArgs = Object.keys(namedArgs).filter((key) => !namedDefinitionMap.has(key));
+    if (unknownNamedArgs.length > 0) {
+      throw new Error(`/${commandName} got unsupported named argument(s): ${unknownNamedArgs.join(", ")}`);
+    }
+
+    const missingRequiredNamedArgs = namedDefinitions
+      .filter((namedDef) => namedDef?.isRequired)
+      .map((namedDef) => namedDef.name)
+      .filter((namedName) => namedArgs[namedName] === undefined);
+
+    if (missingRequiredNamedArgs.length > 0) {
+      throw new Error(`/${commandName} missing required named argument(s): ${missingRequiredNamedArgs.join(", ")}`);
+    }
+  }
+
+  const unnamedDefinitions = definition.unnamedArgumentList ?? [];
+  if (unnamedDefinitions.length === 0) {
+    return;
+  }
+
+  const missingRequiredUnnamedArgs = unnamedDefinitions
+    .map((unnamedDef, index) => ({ unnamedDef, index }))
+    .filter(({ unnamedDef, index }) => unnamedDef?.isRequired && cmdArgs[index] === undefined)
+    .map(({ index }) => `#${index + 1}`);
+
+  if (missingRequiredUnnamedArgs.length > 0) {
+    throw new Error(`/${commandName} missing required unnamed argument(s): ${missingRequiredUnnamedArgs.join(", ")}`);
+  }
+
+  const lastUnnamedDefinition = unnamedDefinitions[unnamedDefinitions.length - 1];
+  const acceptsExtraUnnamedArgs = Boolean(lastUnnamedDefinition?.acceptsMultiple);
+  if (!acceptsExtraUnnamedArgs && cmdArgs.length > unnamedDefinitions.length) {
+    throw new Error(
+      `/${commandName} got too many unnamed arguments: expected <= ${unnamedDefinitions.length}, got ${cmdArgs.length}`,
+    );
+  }
+}
+
+function buildNamedArgumentAssignments(
+  definition: SlashCommandDefinition,
+  namedArgs: Record<string, string>,
+): SlashNamedArgumentAssignment[] {
+  const namedDefinitionMap = new Map<string, SlashNamedArgumentDefinition>();
+  for (const namedDef of definition.namedArgumentList ?? []) {
+    if (namedDef?.name) {
+      namedDefinitionMap.set(namedDef.name, namedDef);
+    }
+  }
+
+  return Object.entries(namedArgs).map(([name, value]) => {
+    const namedDef = namedDefinitionMap.get(name);
+    return {
+      name,
+      value,
+      description: namedDef?.description,
+      isRequired: Boolean(namedDef?.isRequired),
+    };
+  });
+}
+
+function buildUnnamedArgumentAssignments(
+  definition: SlashCommandDefinition,
+  cmdArgs: string[],
+): SlashUnnamedArgumentAssignment[] {
+  return cmdArgs.map((value, index) => {
+    const unnamedDef = definition.unnamedArgumentList?.[index];
+    return {
+      value,
+      description: unnamedDef?.description,
+      isRequired: Boolean(unnamedDef?.isRequired),
+    };
   });
 }
 
@@ -146,22 +260,32 @@ export function registerSlashCommandDefinition(
     execCtx: ExecutionContext,
     pipe: string,
   ): Promise<string> => {
-    try {
-      const slashArgs = cmdArgs.join(" ");
-      const result = hasLocalCallback
-        ? await callback!(slashArgs, namedArgs, execCtx)
-        : await invokeIframeSlashCommandCallback(
-          sourceIframeId,
-          name,
-          slashArgs,
-          namedArgs,
-          pipe,
-        );
-      return result !== undefined ? String(result) : pipe;
-    } catch (err) {
-      console.error(`[registerSlashCommand] Error in /${name}:`, err);
-      return pipe;
-    }
+    assertSlashCommandArguments(definition, cmdArgs, namedArgs);
+
+    const slashArgs = cmdArgs.join(" ");
+    const namedArgumentList = buildNamedArgumentAssignments(definition, namedArgs);
+    const unnamedArgumentList = buildUnnamedArgumentAssignments(definition, cmdArgs);
+    const runtimeContext = {
+      ...execCtx,
+      pipe,
+      namedArgumentList,
+      unnamedArgumentList,
+    };
+
+    const result = hasLocalCallback
+      ? await callback!(slashArgs, namedArgs, runtimeContext)
+      : await invokeIframeSlashCommandCallback(
+        sourceIframeId,
+        name,
+        slashArgs,
+        cmdArgs,
+        namedArgs,
+        namedArgumentList,
+        unnamedArgumentList,
+        pipe,
+      );
+
+    return result !== undefined ? String(result) : pipe;
   };
 
   registerCommand(name, handler);

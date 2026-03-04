@@ -42,6 +42,7 @@
 - `slash-handlers.ts` 现在会在上下文内注入 `runSlashCommand` 递归执行入口，供 `/run` 命令走单一路径闭环；`reload-page` 通过 `ApiCallContext.onReloadPage` 显式注入，未注入时 fail-fast。
 - `registerFunctionTool` 已收敛为单一注册表路径：`extension-handlers` 统一负责注册、调度、回调落地；`tool-handlers` 仅保留适配导出，避免双状态源漂移。
 - `extension-handlers.ts` 现为门面层：具体实现拆分到 `function-tool-bridge.ts` 与 `slash-command-bridge.ts`，通过 `iframe-dispatcher-registry.ts` 共享派发能力。
+- `slash-command-bridge.ts` 已收敛 `registerSlashCommand` 执行期参数约束：当定义了 `namedArgumentList/unnamedArgumentList` 时，缺失必填参数、未知命名参数、位置参数溢出均显式 fail-fast，并向 callback 上下文注入结构化参数列表（`namedArgumentList/unnamedArgumentList`）。
 - `ScriptSandbox` 卸载时会同时清理 `event listeners + function tools + slash command ownership`，避免跨 iframe 生命周期残留。
 - 变量 API 已补齐 `registerVariableSchema / updateVariablesWith / insertVariables`：其中 `updateVariablesWith` 在 shim 内先执行 updater，再通过 handler 单路径回写并 fail-fast 校验对象输入。
 - 已新增 `compat-handlers.ts`，补齐 `importRaw* / extension 管理最小集 / getAllEnabledScriptButtons / getTavernHelperVersion` 等高频迁移 API；其中宿主不支持的写能力（`installExtension/uninstallExtension/reinstallExtension/updateExtension/updateTavernHelper/updateFrontendVersion`）保持显式 fail-fast。

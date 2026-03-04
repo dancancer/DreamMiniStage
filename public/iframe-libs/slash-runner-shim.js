@@ -219,8 +219,32 @@
       var commandName = scPayload.name;
       var slashCallbackId = scPayload.callbackId;
       var slashArgs = scPayload.args || "";
+      var slashUnnamedArgs = Array.isArray(scPayload.unnamedArgs) ? scPayload.unnamedArgs : [];
       var slashNamedArgs = scPayload.namedArgs || {};
       var slashContext = scPayload.context || {};
+      var slashNamedArgumentList = Array.isArray(scPayload.namedArgumentList)
+        ? scPayload.namedArgumentList
+        : Object.keys(slashNamedArgs).map(function(name) {
+          return {
+            name: name,
+            value: slashNamedArgs[name],
+            isRequired: false,
+          };
+        });
+      var slashUnnamedArgumentList = Array.isArray(scPayload.unnamedArgumentList)
+        ? scPayload.unnamedArgumentList
+        : slashUnnamedArgs.map(function(value) {
+          return {
+            value: value,
+            isRequired: false,
+          };
+        });
+      var slashRuntimeContext = Object.assign({}, slashContext, {
+        pipe: scPayload.pipe || "",
+        unnamedArgs: slashUnnamedArgs,
+        namedArgumentList: slashNamedArgumentList,
+        unnamedArgumentList: slashUnnamedArgumentList,
+      });
 
       var slashCallbacks = getSlashCommandCallbacks();
       var slashCallback = slashCallbacks[commandName];
@@ -233,7 +257,7 @@
       }
 
       try {
-        var slashResult = slashCallback(slashArgs, slashNamedArgs, slashContext);
+        var slashResult = slashCallback(slashArgs, slashNamedArgs, slashRuntimeContext);
         Promise.resolve(slashResult).then(function(res) {
           options.sendMessage("SLASH_COMMAND_RESULT", { callbackId: slashCallbackId, result: res });
         }).catch(function(err) {

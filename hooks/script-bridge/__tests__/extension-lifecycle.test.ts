@@ -245,7 +245,21 @@ describe("extension handlers lifecycle", () => {
       const callbackPayload = payload as {
         callbackId: string;
         args: string;
+        unnamedArgs: string[];
+        namedArgs: Record<string, string>;
+        namedArgumentList: Array<{ name: string; value: string; isRequired: boolean }>;
+        unnamedArgumentList: Array<{ value: string; isRequired: boolean }>;
       };
+      expect(callbackPayload.args).toBe("alpha beta");
+      expect(callbackPayload.unnamedArgs).toEqual(["alpha", "beta"]);
+      expect(callbackPayload.namedArgs).toEqual({ mode: "strict" });
+      expect(callbackPayload.namedArgumentList).toEqual([
+        expect.objectContaining({ name: "mode", value: "strict", isRequired: true }),
+      ]);
+      expect(callbackPayload.unnamedArgumentList).toEqual([
+        expect.objectContaining({ value: "alpha", isRequired: true }),
+        expect.objectContaining({ value: "beta", isRequired: false }),
+      ]);
       handleSlashCommandResult(callbackPayload.callbackId, `iframe:${callbackPayload.args}`);
     });
 
@@ -254,17 +268,161 @@ describe("extension handlers lifecycle", () => {
         name: commandName,
         hasCallback: true,
         iframeId,
+        namedArgumentList: [
+          {
+            name: "mode",
+            isRequired: true,
+          },
+        ],
+        unnamedArgumentList: [
+          {
+            isRequired: true,
+          },
+          {
+            isRequired: false,
+          },
+        ],
       },
     ], createApiContext(iframeId));
     expect(registered).toBe(true);
 
-    const parsed = parseSlashCommands(`/${commandName} alpha beta`);
+    const parsed = parseSlashCommands(`/${commandName} mode=strict alpha beta`);
     const result = await executeSlashCommands(parsed.commands, createMinimalContext());
     expect(result.isError).toBe(false);
     expect(result.pipe).toBe("iframe:alpha beta");
 
     clearIframeSlashCommands(iframeId);
     unregisterIframeDispatcher(iframeId);
+  });
+
+  it("fails fast when slash command misses required named argument", async () => {
+    const iframeId = "iframe_slash_required_named";
+    const commandName = "requirednamedcmd";
+
+    const registered = extensionHandlers.registerSlashCommand([
+      {
+        name: commandName,
+        callback: vi.fn().mockResolvedValue("ok"),
+        namedArgumentList: [
+          {
+            name: "mode",
+            isRequired: true,
+          },
+        ],
+      },
+    ], createApiContext(iframeId));
+    expect(registered).toBe(true);
+
+    const parsed = parseSlashCommands(`/${commandName} alpha`);
+    const result = await executeSlashCommands(parsed.commands, createMinimalContext());
+    expect(result.isError).toBe(true);
+    expect(result.errorMessage ?? "").toContain("missing required named argument(s): mode");
+
+    clearIframeSlashCommands(iframeId);
+  });
+
+  it("fails fast when slash command receives unsupported named argument", async () => {
+    const iframeId = "iframe_slash_unknown_named";
+    const commandName = "unknownnamedcmd";
+
+    const registered = extensionHandlers.registerSlashCommand([
+      {
+        name: commandName,
+        callback: vi.fn().mockResolvedValue("ok"),
+        namedArgumentList: [
+          {
+            name: "mode",
+            isRequired: false,
+          },
+        ],
+      },
+    ], createApiContext(iframeId));
+    expect(registered).toBe(true);
+
+    const parsed = parseSlashCommands(`/${commandName} wrong=1 alpha`);
+    const result = await executeSlashCommands(parsed.commands, createMinimalContext());
+    expect(result.isError).toBe(true);
+    expect(result.errorMessage ?? "").toContain("unsupported named argument(s): wrong");
+
+    clearIframeSlashCommands(iframeId);
+  });
+
+  it("fails fast when slash command receives too many unnamed arguments", async () => {
+    const iframeId = "iframe_slash_unnamed_overflow";
+    const commandName = "unnamedoverflowcmd";
+
+    const callback = vi.fn().mockResolvedValue("ok");
+    const registered = extensionHandlers.registerSlashCommand([
+      {
+        name: commandName,
+        callback,
+        unnamedArgumentList: [
+          {
+            isRequired: true,
+          },
+        ],
+      },
+    ], createApiContext(iframeId));
+    expect(registered).toBe(true);
+
+    const parsed = parseSlashCommands(`/${commandName} alpha beta`);
+    const result = await executeSlashCommands(parsed.commands, createMinimalContext());
+    expect(result.isError).toBe(true);
+    expect(result.errorMessage ?? "").toContain("too many unnamed arguments");
+    expect(callback).not.toHaveBeenCalled();
+
+    clearIframeSlashCommands(iframeId);
+  });
+
+  it("passes structured argument lists into local slash callback context", async () => {
+    const iframeId = "iframe_slash_structured_context";
+    const commandName = "structuredcontextcmd";
+    const callback = vi.fn().mockResolvedValue("ok");
+
+    const registered = extensionHandlers.registerSlashCommand([
+      {
+        name: commandName,
+        callback,
+        namedArgumentList: [
+          {
+            name: "style",
+            isRequired: true,
+          },
+        ],
+        unnamedArgumentList: [
+          {
+            description: "content",
+            isRequired: true,
+          },
+        ],
+      },
+    ], createApiContext(iframeId));
+    expect(registered).toBe(true);
+
+    const parsed = parseSlashCommands(`/${commandName} style=compact hello`);
+    const result = await executeSlashCommands(parsed.commands, createMinimalContext());
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("ok");
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    const invocation = callback.mock.calls[0] as [
+      string,
+      Record<string, string>,
+      {
+        namedArgumentList?: Array<{ name: string; value: string; isRequired: boolean }>;
+        unnamedArgumentList?: Array<{ value: string; description?: string; isRequired: boolean }>;
+      },
+    ];
+    expect(invocation[0]).toBe("hello");
+    expect(invocation[1]).toEqual({ style: "compact" });
+    expect(invocation[2].namedArgumentList).toEqual([
+      expect.objectContaining({ name: "style", value: "compact", isRequired: true }),
+    ]);
+    expect(invocation[2].unnamedArgumentList).toEqual([
+      { value: "hello", description: "content", isRequired: true },
+    ]);
+
+    clearIframeSlashCommands(iframeId);
   });
 
   it("fails fast when registerSlashCommand has no callback path", () => {

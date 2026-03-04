@@ -12,7 +12,7 @@
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**30.23%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
-- 结论：P2/P3 gate 持续达标；P4 十一轮沉淀的“自动回放 + 噪音门禁 + run-index”基线继续保留。本轮新增主线修复（`registerSlashCommand` iframe 回调闭环），优先清理真实迁移阻塞点而非继续扩 CI 能力。
+- 结论：P2/P3 gate 持续达标；P4 十一轮沉淀的“自动回放 + 噪音门禁 + run-index”基线继续保留。本轮主线继续收敛 `registerSlashCommand`（iframe 回调闭环后补齐参数执行期约束），优先清理真实迁移阻塞点而非继续扩 CI 能力。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -359,6 +359,25 @@
   - `pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`
   - 结果：全部通过（`4 files / 66 tests`）。
 
+### 1.24 2026-03-04 主线增量执行结果（十四轮参数语义收敛）
+
+- 本轮执行目标：收敛 `registerSlashCommand` 参数语义等价性，补齐执行期约束与错误语义。
+- 本轮关键结果：
+  - `hooks/script-bridge/slash-command-bridge.ts` 已增加 `namedArgumentList/unnamedArgumentList` 执行期校验。
+  - 已收敛 fail-fast 路径：
+    - 缺失必填命名参数；
+    - 传入未声明命名参数；
+    - 位置参数数量超过定义上限（未声明 `acceptsMultiple`）。
+  - callback 运行时上下文已补齐结构化参数视图：
+    - `namedArgumentList`（name/value/isRequired）
+    - `unnamedArgumentList`（value/description/isRequired）
+  - iframe 桥接消息 `SLASH_COMMAND_CALL` 已透传 `unnamedArgs` 与结构化参数列表。
+  - `public/iframe-libs/slash-runner-shim.js` 已接入上述上下文透传，保持本地 callback 与 iframe callback 语义一致入口。
+- 本轮回归：
+  - `pnpm exec eslint hooks/script-bridge/slash-command-bridge.ts hooks/script-bridge/__tests__/extension-lifecycle.test.ts public/iframe-libs/slash-runner-shim.js`
+  - `pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts`
+  - 结果：全部通过（`3 files / 67 tests`）。
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
@@ -702,6 +721,20 @@ pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/
   - 测试：`4` files / `66` tests 全绿。
   - 结论：本轮为纯结构重排，未引入行为回退。
 
+### 3.21 主线参数语义回归（十四轮）
+
+- 执行命令：
+
+```bash
+pnpm exec eslint hooks/script-bridge/slash-command-bridge.ts hooks/script-bridge/__tests__/extension-lifecycle.test.ts public/iframe-libs/slash-runner-shim.js
+pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts lib/core/__tests__/st-baseline-slash-command.test.ts
+```
+
+- 结果：
+  - Lint：通过（bridge 参数约束 + shim 上下文透传改造文件）。
+  - 测试：`3` files / `67` tests 全绿（含新增参数约束失败路径与结构化上下文断言）。
+  - 结论：`registerSlashCommand` 参数约束从“声明位”推进到“执行位”，错误语义已进入可回归状态。
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -729,10 +762,12 @@ pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/
 ### 4.4 Tool 注册与调用闭环（P0 已完成首轮收敛）
 
 - `registerFunctionTool` 已完成单路径收敛，`tool_calls` 执行闭环可回归通过。
-- 剩余风险主要在 `registerSlashCommand` 的 callback 回流形态（当前 shim 注册与宿主执行路径仍未完全等价）。
+- `registerSlashCommand` 的参数约束与结构化上下文已打通本地/iframe 双路径。
+- 剩余风险主要集中在更细粒度语义：`acceptsMultiple/defaultValue/rawQuotes` 与重复命名参数保序行为。
 - 关键位置：
   - `hooks/script-bridge/extension-handlers.ts`
-  - `hooks/script-bridge/tool-handlers.ts`
+  - `hooks/script-bridge/slash-command-bridge.ts`
+  - `public/iframe-libs/slash-runner-shim.js`
   - `lib/nodeflow/LLMNode/LLMNodeTools.ts`
 
 ### 4.5 P2 高频缺口头部（六轮后）
@@ -747,7 +782,7 @@ pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/
 - `mcp-chrome` 抢占风险已通过 `scripts/p4-playwright-preflight.sh` + `pnpm p4:preflight` 收敛，并在 CI 工作流中落地调用。
 - 十轮已落地噪音基线差分门禁：已知噪音可追踪，新增噪音会直接 fail-fast。
 - 十一轮已补齐 run-index 与规则健康审计：跨轮趋势可见、过期规则可提示。
-- 本轮已明确停止新增 CI 方向投入；当前剩余风险主要在 parser 深语义与 callback 参数等价性，仍可能影响复杂脚本迁移。
+- 本轮已明确停止新增 CI 方向投入；当前剩余风险主要在 parser 深语义与参数细粒度语义（`acceptsMultiple/defaultValue/rawQuotes`），仍可能影响复杂脚本迁移。
 
 ## 5. 本轮结论（主线优先）
 
@@ -761,10 +796,10 @@ pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/
 6. `p4:preflight + p4:session-replay` 仍可作为回归基线入口，基建层面维持现状。
 7. 噪音基线差分已接入主链路，十轮实跑 `unknownSignatureCount=0`。
 8. run-index 已落地，历史 run 的耗时/通过率/噪音趋势可单文件查看。
-9. 本轮完成十三轮结构拆分：`extension-handlers` 与 shim 的回调/分发逻辑已分块，主线后续演进的改动面已收窄。
+9. 本轮完成十四轮参数语义收敛：`registerSlashCommand` 的参数约束与错误语义已进入执行期可回归状态，主线迁移阻塞进一步后移到 parser 深语义。
 
 ## 6. 下一阶段建议（主线执行）
 
-1. 基于已完成拆分，优先推进 `registerSlashCommand` 参数语义等价性（`namedArgumentList/unnamedArgumentList`）与错误语义对齐。  
-2. 随后推进 parser 深语义缺口（`flags/debug/scope chain`），以 `st-baseline-slash-command` 可复现样本驱动。  
+1. 优先推进 parser 深语义缺口（`flags/debug/scope chain`），以 `st-baseline-slash-command` 可复现样本驱动。  
+2. 继续收敛 `registerSlashCommand` 细粒度语义（`acceptsMultiple/defaultValue/rawQuotes` 与重复命名参数行为）。  
 3. 仅把 `p4-session-replay` 作为回归基线使用，在每次主线修复后按需复跑，确保质量不倒退。
