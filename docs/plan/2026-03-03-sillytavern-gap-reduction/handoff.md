@@ -34,9 +34,10 @@ pnpm vitest run lib/core/__tests__/st-baseline-slash-command.test.ts
 
 ## 优先级判断与下一步建议（主线）
 
-1. 优先收敛 `registerSlashCommand` 参数语义与上游等价性（`namedArgumentList/unnamedArgumentList` 的执行期约束与错误语义）。
-2. 优先推进 parser 深语义缺口（`flags/debug/scope chain`），先补最小可迁移子集并配基线用例。
-3. 在不新增 CI 投入前提下，保持 `p4-session-replay` 作为回归基线，仅在主线修复后按需复跑。
+1. 下一轮先做结构拆分：`hooks/script-bridge/extension-handlers.ts` 按职责拆为函数工具桥接与 slash 回调桥接子模块，先降复杂度再扩语义。
+2. 并行做 shim 拆分：把 `public/iframe-libs/slash-runner-shim.js` 的 slash 回调与消息分发逻辑拆出独立分块，保持行为不变。
+3. 拆分完成后再推进语义收敛：`registerSlashCommand` 参数语义等价性（`namedArgumentList/unnamedArgumentList`）与 parser 深语义（`flags/debug/scope chain`）。
+4. 在不新增 CI 投入前提下，保持 `p4-session-replay` 作为回归基线，仅在主线修复后按需复跑。
 
 ---
 

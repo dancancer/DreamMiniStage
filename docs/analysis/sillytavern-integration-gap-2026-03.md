@@ -733,6 +733,6 @@ pnpm p4:session-replay
 
 ## 6. 下一阶段建议（主线执行）
 
-1. 优先推进 parser 深语义缺口（`flags/debug/scope chain`），先落最小可迁移子集。  
-2. 优先补齐 `registerSlashCommand` 参数语义等价性（`namedArgumentList/unnamedArgumentList` 执行期约束与错误语义）。  
+1. 下一轮先做结构拆分：`hooks/script-bridge/extension-handlers.ts` 与 `public/iframe-libs/slash-runner-shim.js` 先按职责解耦，降低后续语义扩展风险。  
+2. 在拆分基础上推进 parser 深语义缺口（`flags/debug/scope chain`）与 `registerSlashCommand` 参数语义等价性（`namedArgumentList/unnamedArgumentList`）。  
 3. 仅把 `p4-session-replay` 作为回归基线使用，在每次主线修复后按需复跑，确保质量不倒退。
