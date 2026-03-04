@@ -176,6 +176,9 @@
 - [x] 二十轮增量：补齐 TavernHelper regex 长尾 API 最小读取闭环（`formatAsTavernRegexedString/isCharacterTavernRegexesEnabled/getTavernRegexes`），新增独立 `compat-regex-handlers` 并在 shim 侧暴露对应入口。
 - [x] 二十轮回归：`pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec tsc --noEmit` 全绿。
 - [x] 二十轮指标：TavernHelper API 交集提升到 `86 / 130 = 66.15%`（shim 顶层 API `124`）。
+- [x] 二十一轮增量：补齐 TavernHelper displayed-message 子簇最小闭环（`formatAsDisplayedMessage/retrieveDisplayedMessage`），新增独立 `compat-displayed-message-handlers` 并在 shim 侧暴露对应入口。
+- [x] 二十一轮回归：`pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec tsc --noEmit` 全绿。
+- [x] 二十一轮指标：TavernHelper API 交集提升到 `88 / 130 = 67.69%`（shim 顶层 API `126`）。
 
 ### 优先级依据（本轮素材统计）
 

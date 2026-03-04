@@ -276,6 +276,66 @@ describe("P3 compat API gaps", () => {
       .toThrow("无法从 iframe 名称解析消息 id");
   });
 
+  it("formats displayed message text with locator validation", () => {
+    const displayContext = createMockContext({
+      messages: [
+        { id: "m1", role: "user", content: "user-1" },
+        { id: "m2", role: "assistant", content: "char-1", name: "Alice" },
+        { id: "m3", role: "system", content: "system-1" },
+      ],
+    });
+
+    expect(compatHandlers.formatAsDisplayedMessage(
+      ["line1\nline2", { message_id: "last_user" }],
+      displayContext,
+    )).toBe("line1<br>line2");
+
+    expect(compatHandlers.formatAsDisplayedMessage(
+      ["lineA", { message_id: "last_char" }],
+      displayContext,
+    )).toBe("lineA");
+
+    expect(() => compatHandlers.formatAsDisplayedMessage(
+      ["lineA", { message_id: "bad" }],
+      displayContext,
+    )).toThrow("message_id is invalid");
+
+    expect(() => compatHandlers.formatAsDisplayedMessage(
+      ["lineA", { message_id: 7 }],
+      displayContext,
+    )).toThrow("message_id out of range");
+  });
+
+  it("retrieves displayed message payload from bridge context", () => {
+    const displayContext = createMockContext({
+      messages: [
+        { id: "m1", role: "user", content: "user-1" },
+        { id: "m2", role: "assistant", content: "char-1", name: "Alice" },
+      ],
+    });
+
+    expect(compatHandlers.retrieveDisplayedMessage(
+      [1],
+      displayContext,
+    )).toEqual({
+      message_id: 1,
+      role: "assistant",
+      name: "Alice",
+      content: "char-1",
+      formatted_content: "char-1",
+    });
+
+    expect(() => compatHandlers.retrieveDisplayedMessage(
+      ["1"],
+      displayContext,
+    )).toThrow("message_id is invalid");
+
+    expect(() => compatHandlers.retrieveDisplayedMessage(
+      [9],
+      displayContext,
+    )).toThrow("message_id out of range");
+  });
+
   it("formats regexed string through processor and validates source/destination", async () => {
     mocks.processRegexFullContext.mockResolvedValueOnce({
       originalText: "hello",

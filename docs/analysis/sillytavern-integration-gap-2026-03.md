@@ -11,8 +11,8 @@
 - 当前 gap **仍不算小**，P4 已具备可监测回归基线；本轮起停止新增 CI 方向投入，回归主线 gap 收敛。
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**31.01%**
-  - JS-Slash-Runner TavernHelper API 覆盖：**66.15%**
-- 结论：P2/P3 gate 持续达标；P4 十一轮沉淀的“自动回放 + 噪音门禁 + run-index”基线继续保留。本轮主线继续收敛 TavernHelper 长尾 regex API（`formatAsTavernRegexedString/isCharacterTavernRegexesEnabled/getTavernRegexes`），优先清理真实迁移阻塞点而非继续扩 CI 能力。
+  - JS-Slash-Runner TavernHelper API 覆盖：**67.69%**
+- 结论：P2/P3 gate 持续达标；P4 十一轮沉淀的“自动回放 + 噪音门禁 + run-index”基线继续保留。本轮主线继续收敛 TavernHelper 长尾 displayed-message API（`formatAsDisplayedMessage/retrieveDisplayedMessage`），优先清理真实迁移阻塞点而非继续扩 CI 能力。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -434,6 +434,21 @@
   - `pnpm exec tsc --noEmit`
   - 结果：全部通过（`3 files / 17 tests`，`tsc` 全绿）。
 
+### 1.28 2026-03-04 主线增量执行结果（二十一轮 displayed-message 长尾 API 收口）
+
+- 本轮执行目标：按“真实触发失败”补齐 TavernHelper displayed-message 子簇最小闭环，并保持 fail-fast 语义。
+- 本轮关键结果：
+  - `hooks/script-bridge/compat-displayed-message-handlers.ts` 新增 displayed-message API：
+    - `formatAsDisplayedMessage`：支持 `message_id(last/last_user/last_char/number)` 定位校验，并输出显示态文本（换行转 `<br>`）。
+    - `retrieveDisplayedMessage`：返回结构化消息快照（`message_id/role/name/content/formatted_content`）。
+  - `compatHandlers` 收敛为门面聚合：通过 `...compatDisplayedMessageHandlers` 合并 displayed-message 能力，避免单文件继续膨胀。
+  - `slash-runner-shim` 新增 `formatAsDisplayedMessage/retrieveDisplayedMessage` 入口，全部统一走 `API_CALL`。
+  - `capability-matrix` / `api-surface-contract` / `p3-api-compat-gaps` / `script-bridge/README` 同步更新，确保 shim 与 handler 无漂移。
+- 本轮回归：
+  - `pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
+  - `pnpm exec tsc --noEmit`
+  - 结果：全部通过（`3 files / 19 tests`，`tsc` 全绿）。
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
@@ -452,10 +467,10 @@
 
 - 上游聚合 API：`130`
   - 统计口径：`JS-Slash-Runner/src/function/index.ts` 中 `getTavernHelper()` 返回对象顶层 key。
-- 当前 shim 顶层 API：`124`
+- 当前 shim 顶层 API：`126`
   - 统计口径：`public/iframe-libs/slash-runner-shim.js` 中 `window.TavernHelper` 顶层 key。
-- 交集：`86`
-- 覆盖率：`86 / 130 = 66.15%`
+- 交集：`88`
+- 覆盖率：`88 / 130 = 67.69%`
 
 ### 2.3 JS-Slash-Runner slash_command 子集
 
@@ -816,7 +831,7 @@ pnpm exec tsc --noEmit
 
 ### 4.2 TavernHelper 能力面不完整
 
-- API 覆盖率已提升到 `66.15%` 并持续高于 `55%` 门槛，但 shim 仍是“可运行子集”，与上游聚合 API 仍有可见缺口（主要在低频 displayed-message 等簇）。
+- API 覆盖率已提升到 `67.69%` 并持续高于 `55%` 门槛，displayed-message 子簇已收口；但 shim 仍是“可运行子集”，与上游聚合 API 仍有可见缺口（主要在低频 `inject/global/lorebook` 等簇）。
 - 关键位置：
   - 当前：`public/iframe-libs/slash-runner-shim.js`
   - 上游：`JS-Slash-Runner/src/function/index.ts`
@@ -947,7 +962,7 @@ pnpm exec tsc --noEmit
 ### 8.4 非真实素材需求之外仍建议补充的能力
 
 - TavernHelper 长尾 API（低频但兼容面相关）：
-  - 继续收敛 `util/regex/displayed-message` 等簇，保持 fail-fast。
+  - 继续收敛 `inject/global/lorebook` 等簇，保持 fail-fast。
 - 低频 slash 命令族的机会性补齐：
   - 不作为主线优先级，但需在真实脚本触发失败时补齐最小闭环。
 - 解析/调试可观测性增强：

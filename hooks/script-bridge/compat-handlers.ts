@@ -22,6 +22,7 @@ import { getScriptButtons } from "@/lib/script-runner/script-storage";
 import { createMacroEvaluator } from "@/lib/core/st-macro-evaluator";
 import type { MacroEnv } from "@/lib/core/st-preset-types";
 import { compatRegexHandlers } from "./compat-regex-handlers";
+import { compatDisplayedMessageHandlers } from "./compat-displayed-message-handlers";
 
 const DEFAULT_FRONTEND_VERSION = "0.1.0";
 const DEFAULT_EXTENSION_ID = "JS-Slash-Runner";
@@ -339,6 +340,7 @@ export const compatHandlers: ApiHandlerMap = {
   },
 
   "getTavernVersion": (): string => `DreamMiniStage/${getFrontendVersionValue()}`,
+  ...compatDisplayedMessageHandlers,
   ...compatRegexHandlers,
 
   "substitudeMacros": (args: unknown[], ctx: ApiCallContext): string => {

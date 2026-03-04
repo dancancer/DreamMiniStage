@@ -474,6 +474,8 @@
     createChatMessages: api("createChatMessages"),
     deleteChatMessages: api("deleteChatMessages"),
     getCurrentMessageId: api("getCurrentMessageId"),
+    formatAsDisplayedMessage: api("formatAsDisplayedMessage"),
+    retrieveDisplayedMessage: api("retrieveDisplayedMessage"),
 
     // ──────────────────────────────────────────────────────────────────────
     //  生成控制 API（Requirements 6.1-6.5）
