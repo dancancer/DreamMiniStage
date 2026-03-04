@@ -17,7 +17,7 @@
 - [x] 补齐 script tree helper（`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`）最小存储链路并固化回归。
 - [x] 对触发失败项补最小单路径可执行实现（保持 fail-fast，不做静默兼容）。
 - [x] 为新增能力补契约/集成回归，并同步 shim/handler/能力矩阵。
-- [ ] 用真实迁移素材进行一轮端到端复验，确认新增兼容入口在真实脚本中无偏差。
+- [x] 用真实迁移素材进行一轮端到端复验，确认新增兼容入口在真实脚本中无偏差（`material-replay-round34`）。
 
 ### P2 - parser 深语义守卫（按缺陷触发）
 
@@ -42,8 +42,8 @@
 ## 3. 本轮固定回归（每轮增量后执行）
 
 - [x] `pnpm vitest run lib/slash-command/__tests__/kernel-core.test.ts lib/slash-command/__tests__/kernel-parser-flags-nested.test.ts`
-- [x] `pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/message-handlers-compat.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
-- [x] `pnpm exec eslint hooks/script-bridge/message-handlers.ts hooks/script-bridge/compat-handlers.ts hooks/script-bridge/capability-matrix.ts hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/message-handlers-compat.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts public/iframe-libs/slash-runner-shim.js`
+- [x] `pnpm vitest run hooks/script-bridge/__tests__/material-replay-round34.test.ts hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts hooks/script-bridge/__tests__/message-handlers-compat.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
+- [x] `pnpm exec eslint hooks/script-bridge/message-handlers.ts hooks/script-bridge/compat-handlers.ts hooks/script-bridge/capability-matrix.ts hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/message-handlers-compat.test.ts hooks/script-bridge/__tests__/material-replay-round34.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts public/iframe-libs/slash-runner-shim.js`
 - [x] `pnpm exec tsc --noEmit`
 
 ## 4. 守卫基线（按需）

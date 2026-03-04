@@ -27,7 +27,8 @@
 
 - 已补齐低频常量/API：`builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order`。
 - 已补齐 script tree helper：`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`（最小存储链路）。
-- 下一步切换为“真实素材复验”，验证新增入口在迁移脚本中的语义一致性。
+- 已完成一轮真实迁移素材复验（Round 34），`rotateChatMessages` 与 script tree helper 语义在素材回放中保持一致。
+- 下一步仅在真实脚本触发缺陷时进行单路径最小修复，并继续按需执行守卫回归。
 
 ### P2（中）parser 深语义守卫
 

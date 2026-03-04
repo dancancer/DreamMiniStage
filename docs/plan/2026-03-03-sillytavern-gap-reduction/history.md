@@ -37,7 +37,7 @@
 - 噪音门禁：`noise-baseline-diff`；新增噪音 fail-fast。
 - run-index：连续回放趋势可追踪。
 
-## 3. 历史轮次摘要（12-33 轮）
+## 3. 历史轮次摘要（12-34 轮）
 
 - 第12轮：`registerSlashCommand` callback 闭环修复。
 - 第13轮：`extension-handlers` 与 `slash-runner-shim` 结构拆分。
@@ -61,6 +61,7 @@
 - 第31轮：parser 第二切片补 nested `REPLACE_GETVAR` 断言（named/unnamed 参数替换 + strict 转义 fail-fast）。
 - 第32轮：路线切换评估完成，主优先级从“语义边界覆盖增强”切回“能力面阻塞清零（真实触发驱动）”。
 - 第33轮：补齐 `builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order/getScriptTrees/replaceScriptTrees/updateScriptTreesWith`，TavernHelper API 覆盖达 `130/130`。
+- 第34轮：新增真实迁移素材回放基线（`material-replay-round34`），复验 `rotateChatMessages` 四个上游语义样例与 script tree helper 的 scope 隔离/持久化链路。
 
 ## 4. 历史回归与证据索引
 

@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "source": "JS-Slash-Runner CHANGELOG 3.1.2 rotateChatMessages examples + DreamMiniStage migration script tree sample"
+  },
+  "messages": [
+    { "id": "m0", "role": "system", "content": "seed-0" },
+    { "id": "m1", "role": "user", "content": "seed-1" },
+    { "id": "m2", "role": "assistant", "content": "seed-2" },
+    { "id": "m3", "role": "assistant", "content": "seed-3" },
+    { "id": "m4", "role": "user", "content": "seed-4" },
+    { "id": "m5", "role": "assistant", "content": "seed-5" },
+    { "id": "m6", "role": "assistant", "content": "seed-6" },
+    { "id": "m7", "role": "user", "content": "seed-7" }
+  ],
+  "rotateCases": [
+    {
+      "name": "move-[4,7)-before-[2,4)",
+      "begin": 2,
+      "middle": 4,
+      "end": 7
+    },
+    {
+      "name": "move-last-message-before-5",
+      "begin": 5,
+      "middle": 7,
+      "end": 8
+    },
+    {
+      "name": "move-last-3-before-1",
+      "begin": 1,
+      "middle": 5,
+      "end": 8
+    },
+    {
+      "name": "move-first-3-to-tail",
+      "begin": 0,
+      "middle": 3,
+      "end": 8
+    }
+  ],
+  "scriptTreeSeed": {
+    "character": [
+      { "type": "script", "id": "mvu_init_check", "name": "MVU init check" },
+      { "type": "script", "id": "mvu_cleanup", "name": "MVU cleanup" }
+    ],
+    "preset": [
+      { "type": "script", "id": "preset_guard", "name": "Preset guard" }
+    ],
+    "appendNode": {
+      "type": "script",
+      "id": "mvu_snapshot_replay",
+      "name": "MVU snapshot replay"
+    }
+  }
+}

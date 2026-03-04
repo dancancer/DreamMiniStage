@@ -8,7 +8,7 @@
 - 项目已从“能力面扩张”切回“真实迁移阻塞收敛”。
 - P2/P3 覆盖门槛长期达标，P4 保留为守卫基线，不再扩 CI 能力面。
 - 最近三轮 parser 语义边界已形成稳定守卫线，当前边际收益明显下降。
-- 当前主要风险已转移到“新增长尾兼容入口在真实迁移素材中的语义一致性复验”。
+- Round 34 已完成真实迁移素材复验，当前主要风险转为“后续真实脚本新增触发点的机会性语义偏差”。
 
 ## 2. 核心指标（当前快照）
 
@@ -31,26 +31,27 @@
 - 噪音基线：已启用差分门禁
 - run-index：已启用趋势记录
 
-## 3. 本轮主线执行（Round 33）
+## 3. 本轮主线执行（Round 34）
 
 ### 3.1 变更摘要
 
-- 本轮补齐 TavernHelper 长尾兼容入口：`builtin/setChatMessage/rotateChatMessages/tavern_events/iframe_events/builtin_prompt_default_order`。
-- 本轮补齐 script tree helper：`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`，实现宿主持久化最小链路并保持 fail-fast。
-- 本轮同步补齐契约回归：shim 合约、API surface 对齐、message/compat 行为回归全部通过。
+- 本轮新增真实素材回放基线：`hooks/script-bridge/__tests__/material-replay-round34.test.ts` + `hooks/script-bridge/__tests__/fixtures/round34-migration-material.json`。
+- 本轮回放覆盖 `rotateChatMessages` 四个上游示例区间（来自 JS-Slash-Runner 变更日志语义）与 script tree helper 的 `get/replace/updateWith` 组合链路。
+- 本轮确认 scope 隔离与持久化语义：`character/preset/all` 读取结果一致，跨 context 重建后数据可复现。
 
 ### 3.2 回归结果
 
 - parser 守卫回归：`2 files / 24 tests` 通过。
-- script-bridge / shim 回归：`4 files / 28 tests` 通过（含新增 `message-handlers-compat.test.ts`）。
-- 静态检查：`eslint`（7 files）+ `tsc --noEmit` 全绿。
+- script-bridge / shim 回归：`5 files / 33 tests` 通过（含新增 `material-replay-round34.test.ts`）。
+- 合并回归总计：`7 files / 57 tests` 通过。
+- 静态检查：`eslint`（8 files）+ `tsc --noEmit` 全绿。
 
 ## 4. 当前剩余 gap（按优先级）
 
 ### 4.1 P1（最高）能力面阻塞清零
 
-- 状态：长尾能力面实现已落地，进入真实迁移素材复验阶段。
-- 策略：优先跑真实脚本，若出现语义偏差再做最小修复与回归补强。
+- 状态：长尾能力面实现 + 真实迁移素材复验均已落地。
+- 策略：保持守卫模式，仅在真实脚本触发偏差时做单路径最小修复与回归补强。
 
 ### 4.2 P2（高）TavernHelper helper 长尾
 
@@ -75,10 +76,9 @@
 
 ## 6. 下一步计划（短周期）
 
-1. 用真实迁移素材回放并验证本轮新增兼容入口（重点看 `rotateChatMessages` 与 script tree helper 的行为一致性）。
-2. 若出现语义偏差，按“单路径最小修复 + 契约测试”补齐，不扩无触发能力面。
-3. parser 仅在真实缺陷触发时再扩断言/修复，保持守卫模式。
-4. 主线变更后按需执行 `pnpm p4:session-replay`，仅作守卫不扩面。
+1. 持续接入新增真实迁移脚本素材；若触发 `rotateChatMessages` / script tree 语义偏差，按“单路径最小修复 + 契约测试”补齐。
+2. parser 仅在真实缺陷触发时再扩断言/修复，保持守卫模式。
+3. 主线变更后按需执行 `pnpm p4:session-replay`，仅作守卫不扩面。
 
 ## 7. 归档入口
 

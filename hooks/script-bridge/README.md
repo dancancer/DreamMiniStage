@@ -56,4 +56,5 @@
 - `public/iframe-libs/slash-runner-shim.js` 已补齐 `_th_impl/_bind` 最小子集（日志透传占位 + util/global/variables 宿主绑定），并新增 `audioEnable/audioImport/audioMode/audioPlay/audioSelect` helper 别名，统一收敛到现有音频 API 单路径。
 - 群聊相关 `getGroupMembers` / `isGroupChat` 目前为显式未支持（fail-fast），不再返回静默默认值。
 - 新增 `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`，覆盖 `registerFunctionTool/registerSlashCommand` 的注册→调用→清理→再注册回归链路。
+- 新增 `hooks/script-bridge/__tests__/material-replay-round34.test.ts` + `hooks/script-bridge/__tests__/fixtures/round34-migration-material.json`，用于真实迁移素材回放守卫（`rotateChatMessages` + script tree helper）。
 - `ApiCallContext` 已增加 UI 注入位（`onTogglePanels/onResetPanels/onToggleVisualNovelMode/onSetBackground/onSetTheme/onSetMovingUiPreset/onSetCssVariable`），`slash-handlers.ts` 会透传到 Slash 执行上下文，未注入时对应命令显式 fail-fast。
