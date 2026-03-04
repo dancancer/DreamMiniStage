@@ -11,8 +11,8 @@
 - 当前 gap **仍不算小**，P4 已具备可监测回归基线；本轮起停止新增 CI 方向投入，回归主线 gap 收敛。
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**31.01%**
-  - JS-Slash-Runner TavernHelper API 覆盖：**77.69%**
-- 结论：P2/P3 gate 持续达标；P4 十一轮沉淀的“自动回放 + 噪音门禁 + run-index”基线继续保留。本轮主线继续收敛 TavernHelper `lorebook/global/worldbook` 长尾别名 API，优先清理真实迁移阻塞点而非继续扩 CI 能力。
+  - JS-Slash-Runner TavernHelper API 覆盖：**80.77%**
+- 结论：P2/P3 gate 持续达标；P4 十一轮沉淀的“自动回放 + 噪音门禁 + run-index”基线继续保留。本轮主线完成低频 `inject` 入口显式能力声明与 `tavern_regex` 写链路收口，继续优先清理真实迁移阻塞点而非扩 CI 能力面。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -469,6 +469,24 @@
   - `pnpm exec tsc --noEmit`
   - 结果：全部通过（`2 files / 6 tests`，`eslint + tsc` 全绿）。
 
+### 1.30 2026-03-04 主线增量执行结果（二十三轮 inject + tavern_regex 写链路收口）
+
+- 本轮执行目标：按“真实触发失败”补齐 TavernHelper 低频 `inject` 与 `tavern_regex-write` 子簇，保持单路径与 fail-fast。
+- 本轮关键结果：
+  - `public/iframe-libs/slash-runner-shim.js` 新增 `replaceTavernRegexes/updateTavernRegexesWith`：
+    - `replaceTavernRegexes` 直连 `API_CALL`；
+    - `updateTavernRegexesWith` 在 shim 侧执行 updater（先读后改再写），避免跨 iframe 传递函数导致的结构化克隆问题。
+  - `hooks/script-bridge/compat-regex-handlers.ts` 新增 `replaceTavernRegexes` handler：
+    - 支持 `scope=all|global|character`；
+    - 对 scope 不匹配、缺失 `characterId`、字段类型不合法统一显式 fail-fast。
+  - `public/iframe-libs/slash-runner-shim.js` 新增 `injectPrompts/uninjectPrompts` 入口，当前宿主模式保持显式 fail-fast（不做静默 no-op）。
+  - `capability-matrix` / `api-surface-contract` / `p3-api-compat-gaps` / `script-bridge/README` 同步更新，确保 shim 与 handler 无漂移。
+- 本轮回归：
+  - `pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
+  - `pnpm exec eslint public/iframe-libs/slash-runner-shim.js hooks/script-bridge/compat-regex-handlers.ts hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts hooks/script-bridge/capability-matrix.ts`
+  - `pnpm exec tsc --noEmit`
+  - 结果：全部通过（`3 files / 22 tests`，`eslint + tsc` 全绿）。
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
@@ -487,10 +505,10 @@
 
 - 上游聚合 API：`130`
   - 统计口径：`JS-Slash-Runner/src/function/index.ts` 中 `getTavernHelper()` 返回对象顶层 key。
-- 当前 shim 顶层 API：`139`
+- 当前 shim 顶层 API：`143`
   - 统计口径：`public/iframe-libs/slash-runner-shim.js` 中 `window.TavernHelper` 顶层 key。
-- 交集：`101`
-- 覆盖率：`101 / 130 = 77.69%`
+- 交集：`105`
+- 覆盖率：`105 / 130 = 80.77%`
 
 ### 2.3 JS-Slash-Runner slash_command 子集
 
@@ -855,6 +873,21 @@ pnpm exec tsc --noEmit
   - Lint/类型检查：通过。
   - 结论：shim 长尾别名扩展未引入 `API_CALL` 漂移，兼容契约保持稳定。
 
+### 3.24 inject + regex 写链路回归（二十三轮）
+
+- 执行命令：
+
+```bash
+pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts
+pnpm exec eslint public/iframe-libs/slash-runner-shim.js hooks/script-bridge/compat-regex-handlers.ts hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts hooks/script-bridge/capability-matrix.ts
+pnpm exec tsc --noEmit
+```
+
+- 结果：
+  - 测试：`3` files / `22` tests 全绿（新增 `replaceTavernRegexes` scope/fail-fast 断言与 shim 低频 API 暴露断言）。
+  - Lint/类型检查：通过。
+  - 结论：`inject`/`tavern_regex-write` 最小能力收口后，shim/handler/矩阵仍保持单路径一致。
+
 ## 4. 关键缺口（按影响面排序）
 
 ### 4.1 Slash 内核能力仍偏轻
@@ -866,7 +899,7 @@ pnpm exec tsc --noEmit
 
 ### 4.2 TavernHelper 能力面不完整
 
-- API 覆盖率已提升到 `77.69%` 并持续高于 `55%` 门槛，`lorebook/global/worldbook` 别名子簇已收口；但 shim 仍是“可运行子集”，与上游聚合 API 仍有可见缺口（主要在低频 `inject/macro_like/raw_character/tavern_regex-write` 等簇）。
+- API 覆盖率已提升到 `80.77%` 并持续高于 `55%` 门槛，`inject` 与 `tavern_regex-write` 子簇已完成最小收口；但 shim 仍是“可运行子集”，与上游聚合 API 仍有可见缺口（主要在低频 `macro_like/raw_character` 等簇）。
 - 关键位置：
   - 当前：`public/iframe-libs/slash-runner-shim.js`
   - 上游：`JS-Slash-Runner/src/function/index.ts`
@@ -997,7 +1030,7 @@ pnpm exec tsc --noEmit
 ### 8.4 非真实素材需求之外仍建议补充的能力
 
 - TavernHelper 长尾 API（低频但兼容面相关）：
-  - 继续收敛 `inject/global/lorebook` 等簇，保持 fail-fast。
+  - 继续收敛 `macro_like/raw_character` 等簇，保持 fail-fast。
 - 低频 slash 命令族的机会性补齐：
   - 不作为主线优先级，但需在真实脚本触发失败时补齐最小闭环。
 - 解析/调试可观测性增强：

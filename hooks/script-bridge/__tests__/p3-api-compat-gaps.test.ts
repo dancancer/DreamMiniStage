@@ -416,6 +416,138 @@ describe("P3 compat API gaps", () => {
     )).rejects.toThrow("scope=character requires characterId");
   });
 
+  it("replaces tavern regexes with scope-aware fail-fast guards", async () => {
+    mocks.updateRegexScripts.mockResolvedValue(true);
+
+    await expect(compatHandlers.replaceTavernRegexes(
+      [[
+        {
+          id: "g1",
+          script_name: "Global One",
+          enabled: true,
+          run_on_edit: false,
+          scope: "global",
+          find_regex: "foo",
+          replace_string: "bar",
+          source: {
+            user_input: true,
+            ai_output: false,
+            slash_command: false,
+            world_info: false,
+            reasoning: false,
+          },
+          destination: {
+            display: false,
+            prompt: true,
+          },
+          min_depth: null,
+          max_depth: null,
+        },
+        {
+          id: "c1",
+          script_name: "Char One",
+          enabled: false,
+          run_on_edit: true,
+          scope: "character",
+          find_regex: "baz",
+          replace_string: "qux",
+          source: {
+            user_input: false,
+            ai_output: true,
+            slash_command: true,
+            world_info: false,
+            reasoning: false,
+          },
+          destination: {
+            display: true,
+            prompt: false,
+          },
+          min_depth: 1,
+          max_depth: 3,
+        },
+      ], { scope: "all" }],
+      createMockContext({ characterId: "char-regex" }),
+    )).resolves.toBeUndefined();
+
+    expect(mocks.updateRegexScripts).toHaveBeenNthCalledWith(
+      1,
+      "global",
+      expect.arrayContaining([
+        expect.objectContaining({
+          scriptName: "Global One",
+          source: "global",
+        }),
+      ]),
+    );
+
+    expect(mocks.updateRegexScripts).toHaveBeenNthCalledWith(
+      2,
+      "char-regex",
+      expect.arrayContaining([
+        expect.objectContaining({
+          scriptName: "Char One",
+          source: "character",
+        }),
+      ]),
+    );
+
+    await expect(compatHandlers.replaceTavernRegexes(
+      [[
+        {
+          id: "c2",
+          script_name: "Char Two",
+          enabled: true,
+          run_on_edit: false,
+          scope: "character",
+          find_regex: "hello",
+          replace_string: "world",
+          source: {
+            user_input: true,
+            ai_output: false,
+            slash_command: false,
+            world_info: false,
+            reasoning: false,
+          },
+          destination: {
+            display: false,
+            prompt: true,
+          },
+          min_depth: null,
+          max_depth: null,
+        },
+      ], { scope: "global" }],
+      createMockContext({ characterId: "char-regex" }),
+    )).rejects.toThrow("scope=global only accepts global regex entries");
+
+    await expect(compatHandlers.replaceTavernRegexes(
+      [[
+        {
+          id: "c3",
+          script_name: "Char Three",
+          enabled: true,
+          run_on_edit: false,
+          scope: "character",
+          find_regex: "hello",
+          replace_string: "world",
+          source: {
+            user_input: true,
+            ai_output: false,
+            slash_command: false,
+            world_info: false,
+            reasoning: false,
+          },
+          destination: {
+            display: false,
+            prompt: true,
+          },
+          min_depth: null,
+          max_depth: null,
+        },
+      ], { scope: "character" }],
+      createMockContext({ characterId: undefined }),
+    )).rejects.toThrow("scope=character requires characterId");
+  });
+
   it("reads character regex enable state from settings", async () => {
     mocks.getRegexScriptSettings.mockResolvedValueOnce({ enabled: true });
     await expect(compatHandlers.isCharacterTavernRegexesEnabled(

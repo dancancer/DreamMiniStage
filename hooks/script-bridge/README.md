@@ -15,7 +15,7 @@
 | `character-handlers.ts` | 处理器 | 角色事件处理 |
 | `compat-handlers.ts` | 处理器 | JS-Slash-Runner 高频兼容 API（import_raw / extension / script buttons / version） |
 | `compat-displayed-message-handlers.ts` | 处理器 | JS-Slash-Runner displayed-message 兼容 API（format/retrieve） |
-| `compat-regex-handlers.ts` | 处理器 | JS-Slash-Runner regex 兼容 API（format/get/enabled） |
+| `compat-regex-handlers.ts` | 处理器 | JS-Slash-Runner regex 兼容 API（format/get/enabled/replace） |
 | `event-handlers.ts` | 处理器 | 通用事件处理 |
 | `extension-handlers.ts` | 门面 | 扩展 API 门面层（聚合函数工具与 slash 回调桥接） |
 | `function-tool-bridge.ts` | 子模块 | 函数工具注册/调用/回调与清理 |
@@ -49,7 +49,8 @@
 - 变量 API 已补齐 `registerVariableSchema / updateVariablesWith / insertVariables`：其中 `updateVariablesWith` 在 shim 内先执行 updater，再通过 handler 单路径回写并 fail-fast 校验对象输入。
 - 已新增 `compat-handlers.ts`，补齐 `importRaw* / extension 管理最小集 / getAllEnabledScriptButtons / getTavernHelperVersion` 等高频迁移 API；其中宿主不支持的写能力（`installExtension/uninstallExtension/reinstallExtension/updateExtension/updateTavernHelper/updateFrontendVersion`）保持显式 fail-fast。
 - 已新增 `compat-displayed-message-handlers.ts`，补齐 `formatAsDisplayedMessage/retrieveDisplayedMessage` 最小闭环；消息定位参数（`last/last_user/last_char/number`）异常时统一显式 fail-fast。
-- 已新增 `compat-regex-handlers.ts`，补齐 `formatAsTavernRegexedString/isCharacterTavernRegexesEnabled/getTavernRegexes` 最小 regex 读取链路，继续保持参数错误显式 fail-fast。
+- 已新增 `compat-regex-handlers.ts`，补齐 `formatAsTavernRegexedString/isCharacterTavernRegexesEnabled/getTavernRegexes/replaceTavernRegexes` regex 读写链路，继续保持参数错误显式 fail-fast。
+- `public/iframe-libs/slash-runner-shim.js` 已补齐低频兼容入口：`replaceTavernRegexes/updateTavernRegexesWith`（写链路 + updater 包装）与 `injectPrompts/uninjectPrompts`（宿主模式显式 fail-fast）。
 - 群聊相关 `getGroupMembers` / `isGroupChat` 目前为显式未支持（fail-fast），不再返回静默默认值。
 - 新增 `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`，覆盖 `registerFunctionTool/registerSlashCommand` 的注册→调用→清理→再注册回归链路。
 - `ApiCallContext` 已增加 UI 注入位（`onTogglePanels/onResetPanels/onToggleVisualNovelMode/onSetBackground/onSetTheme/onSetMovingUiPreset/onSetCssVariable`），`slash-handlers.ts` 会透传到 Slash 执行上下文，未注入时对应命令显式 fail-fast。

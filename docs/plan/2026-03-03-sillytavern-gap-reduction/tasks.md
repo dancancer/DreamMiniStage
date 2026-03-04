@@ -182,6 +182,9 @@
 - [x] 二十二轮增量：在 `slash-runner-shim` 补齐 `lorebook/global/worldbook` 长尾别名 API（`initializeGlobal/waitGlobalInitialized/getLorebooks/createLorebook/deleteLorebook/getCharLorebooks/setCurrentCharLorebooks/getCurrentCharPrimaryLorebook/getChatLorebook/setChatLorebook/getOrCreateChatLorebook/setLorebookSettings/getWorldbook`），保持参数错误显式 fail-fast。
 - [x] 二十二轮回归：`pnpm vitest run lib/script-runner/__tests__/slash-runner-shim-contract.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`、`pnpm exec eslint public/iframe-libs/slash-runner-shim.js lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec tsc --noEmit` 全绿。
 - [x] 二十二轮指标：TavernHelper API 交集提升到 `101 / 130 = 77.69%`（shim 顶层 API `139`）。
+- [x] 二十三轮增量：补齐低频 `injectPrompts/uninjectPrompts` 入口（宿主模式显式 fail-fast）与 `replaceTavernRegexes/updateTavernRegexesWith` 最小写链路（shim updater 包装 + handler 单路径持久化）。
+- [x] 二十三轮回归：`pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec eslint public/iframe-libs/slash-runner-shim.js hooks/script-bridge/compat-regex-handlers.ts hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts hooks/script-bridge/capability-matrix.ts`、`pnpm exec tsc --noEmit` 全绿。
+- [x] 二十三轮指标：TavernHelper API 交集提升到 `105 / 130 = 80.77%`（shim 顶层 API `143`）。
 
 ### 优先级依据（本轮素材统计）
 

@@ -754,6 +754,8 @@
     importRawChat: api("importRawChat"),
     importRawWorldbook: api("importRawWorldbook"),
     importRawTavernRegex: api("importRawTavernRegex"),
+    injectPrompts: unsupportedAsync("injectPrompts"),
+    uninjectPrompts: unsupportedAsync("uninjectPrompts"),
 
     // ──────────────────────────────────────────────────────────────────────
     //  tavern_regex API（长尾兼容最小子集）
@@ -761,6 +763,23 @@
     formatAsTavernRegexedString: api("formatAsTavernRegexedString"),
     isCharacterTavernRegexesEnabled: api("isCharacterTavernRegexesEnabled"),
     getTavernRegexes: api("getTavernRegexes"),
+    replaceTavernRegexes: api("replaceTavernRegexes"),
+    updateTavernRegexesWith: function(updater, option) {
+      if (typeof updater !== "function") {
+        throw new Error("updateTavernRegexesWith 需要 updater 函数参数");
+      }
+
+      return callApi("getTavernRegexes", [option]).then(function(currentRegexes) {
+        return Promise.resolve(updater(currentRegexes)).then(function(nextRegexes) {
+          if (!Array.isArray(nextRegexes)) {
+            throw new Error("updateTavernRegexesWith 的 updater 必须返回数组");
+          }
+          return callApi("replaceTavernRegexes", [nextRegexes, option]).then(function() {
+            return nextRegexes;
+          });
+        });
+      });
+    },
 
     // ──────────────────────────────────────────────────────────────────────
     //  Slash Command API（Requirements 1.1-1.5, 8.1-8.4）

@@ -96,6 +96,7 @@ export const SCRIPT_BRIDGE_API_MATRIX = [
   "registerSlashCommand",
   "replaceAudioList",
   "retrieveDisplayedMessage",
+  "replaceTavernRegexes",
   "replaceVariables",
   "setAudioEnabled",
   "setAudioMode",

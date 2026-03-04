@@ -56,4 +56,14 @@ describe("slash-runner shim contract", () => {
       /only selected_global_lorebooks is supported in host mode/,
     );
   });
+
+  it("exposes low-frequency compat APIs with deterministic semantics", () => {
+    const source = readShimSource();
+
+    expect(source).toMatch(/injectPrompts:\s*unsupportedAsync\("injectPrompts"\)/);
+    expect(source).toMatch(/uninjectPrompts:\s*unsupportedAsync\("uninjectPrompts"\)/);
+    expect(source).toMatch(/replaceTavernRegexes:\s*api\("replaceTavernRegexes"\)/);
+    expect(source).toMatch(/updateTavernRegexesWith:\s*function\(updater,\s*option\)/);
+    expect(source).toMatch(/updateTavernRegexesWith 的 updater 必须返回数组/);
+  });
 });
