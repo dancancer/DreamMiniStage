@@ -236,6 +236,39 @@ describe("parser — nested blocks and pipes", () => {
       expect.objectContaining({ name: "text", value: "outer \"inner\" {: marker", wasQuoted: true }),
     ]);
   });
+
+  it("keeps multi-level block delimiters stable with escaped-quote payloads", () => {
+    const parsed = parseKernelScript(String.raw`/parser-flag STRICT_ESCAPING on|/if outer {: /if inner {: /echo value="a\"b :} c"|/echo text='x {: y \\ z' :} :}|/echo tail`);
+    expect(parsed.isError).toBe(false);
+    expect(parsed.script).toHaveLength(2);
+
+    const outerIf = parsed.script[0];
+    if (outerIf.type !== "if") throw new Error("expected outer if node");
+    expect(outerIf.thenBlock).toHaveLength(1);
+
+    const innerIf = outerIf.thenBlock[0];
+    if (innerIf.type !== "if") throw new Error("expected inner if node");
+    expect(innerIf.thenBlock).toHaveLength(2);
+
+    const firstInner = innerIf.thenBlock[0];
+    if (firstInner.type !== "command") throw new Error("expected command node");
+    expect(firstInner.parserFlags.STRICT_ESCAPING).toBe(true);
+    expect(firstInner.namedArgumentList).toEqual([
+      expect.objectContaining({ name: "value", value: "a\\\"b :} c", wasQuoted: true }),
+    ]);
+
+    const secondInner = innerIf.thenBlock[1];
+    if (secondInner.type !== "command") throw new Error("expected command node");
+    expect(secondInner.namedArgumentList).toEqual([
+      expect.objectContaining({ name: "text", value: "x {: y \\\\ z", wasQuoted: true }),
+    ]);
+  });
+
+  it("fails fast on even-backslash quote boundary in nested strict blocks", () => {
+    const parsed = parseKernelScript(String.raw`/parser-flag STRICT_ESCAPING on|/if outer {: /if inner {: /echo value="a\\"b :} c" :} :}|/echo tail`);
+    expect(parsed.isError).toBe(true);
+    expect(parsed.errorMessage).toContain("Unclosed quote under STRICT_ESCAPING");
+  });
 });
 
 describe("scope chain — shadowing and cleanup", () => {

@@ -30,14 +30,14 @@
 - 噪音基线：已启用差分门禁
 - run-index：已启用趋势记录
 
-## 3. 本轮主线执行（Round 29）
+## 3. 本轮主线执行（Round 30）
 
 ### 3.1 变更摘要
 
-- 在 `lib/slash-command/core/parser.ts` 补齐 block 深语义边界：`readBlock` 新增引号/转义感知，仅在非引号上下文识别 `{:/:}`，避免把字面量误判为 block 终止符。
-- 在 `lib/slash-command/__tests__/kernel-core.test.ts` 新增第二切片断言：
-  - block 内引号文本包含 `{:/:}` 时保持稳定解析。
-  - `STRICT_ESCAPING` + 混合引号下，block 内 `{:/:}` 字面量仍可稳定解析。
+- 本轮按“先断言后实现”推进 parser 第二切片，在 `lib/slash-command/__tests__/kernel-core.test.ts` 新增多层 block + 转义组合断言：
+  - `STRICT_ESCAPING` 下 nested block 中 odd-backslash escaped quote + `{:/:}` 字面量稳定解析。
+  - nested strict block 中 even-backslash quote 边界触发 `Unclosed quote under STRICT_ESCAPING` fail-fast。
+- 代码行为面本轮未扩展，重点是先固化语义边界，避免后续修复回归。
 
 ### 3.2 回归结果
 
@@ -48,7 +48,7 @@ pnpm exec eslint lib/slash-command/core/parser.ts lib/slash-command/__tests__/ke
 pnpm exec tsc --noEmit
 ```
 
-- 结果：`kernel-core 1 file / 20 tests` 全绿（本轮新增 2 条 parser 断言）；固定回归 `3 files / 24 tests` 全绿，`eslint + tsc` 全绿。
+- 结果：`kernel-core 1 file / 22 tests` 全绿（本轮新增 2 条 parser 断言）；固定回归 `3 files / 24 tests` 全绿，`eslint + tsc` 全绿。
 
 ## 4. 当前剩余 gap（按优先级）
 
@@ -75,7 +75,7 @@ pnpm exec tsc --noEmit
 
 ## 6. 下一步计划（短周期）
 
-1. 继续补齐 parser 第二切片剩余边界（多层 block + 反斜杠逃逸组合）。
+1. 继续补齐 parser 第二切片剩余边界（nested block 中 `REPLACE_GETVAR` + 转义链路组合）。
 2. 按真实迁移阻塞评估 `builtin/setChatMessage/rotateChatMessages` 三项低频 API 是否需要补齐到可执行路径。
 3. 评估 script tree helper（`getScriptTrees/replaceScriptTrees/updateScriptTreesWith`）是否存在真实迁移阻塞。
 4. 每轮主线变更后按需执行 `pnpm p4:session-replay`，仅作守卫不扩面。
