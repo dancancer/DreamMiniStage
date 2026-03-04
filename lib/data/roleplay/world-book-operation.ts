@@ -116,10 +116,32 @@ export class WorldBookOperations {
     const worldBooks = await this.getWorldBooks();
 
     const processEntry = (entry: WorldBookEntry): WorldBookEntry => {
+      const ext = (entry.extensions || {}) as Record<string, unknown>;
+      const extDepth = typeof ext.depth === "number" ? ext.depth : undefined;
+      const extPosition = typeof ext.position === "number" ? ext.position : undefined;
+      const extProbability = typeof ext.probability === "number" ? ext.probability : undefined;
+      const extUseProbability = typeof ext.useProbability === "boolean"
+        ? ext.useProbability
+        : (typeof ext.use_probability === "boolean" ? ext.use_probability : undefined);
+      const extGroup = typeof ext.group === "string" ? ext.group : undefined;
+      const extGroupPriority = typeof ext.group_priority === "number"
+        ? ext.group_priority
+        : (typeof ext.groupPriority === "number" ? ext.groupPriority : undefined);
+      const extGroupWeight = typeof ext.group_weight === "number"
+        ? ext.group_weight
+        : (typeof ext.groupWeight === "number" ? ext.groupWeight : undefined);
+
       return {
         ...entry,
-        depth: entry.extensions?.depth ?? 1,
-        position: entry.extensions?.position ?? 4,
+        depth: extDepth ?? entry.depth ?? 1,
+        position: extPosition ?? entry.position ?? 4,
+        probability: entry.probability ?? extProbability,
+        useProbability: entry.useProbability ?? extUseProbability,
+        group: entry.group ?? extGroup,
+        group_priority: entry.group_priority ?? entry.groupPriority ?? extGroupPriority,
+        group_weight: entry.group_weight ?? entry.groupWeight ?? extGroupWeight,
+        groupPriority: entry.groupPriority ?? entry.group_priority ?? extGroupPriority,
+        groupWeight: entry.groupWeight ?? entry.group_weight ?? extGroupWeight,
       } as WorldBookEntry;
     };
 

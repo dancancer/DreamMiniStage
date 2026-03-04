@@ -258,6 +258,9 @@ export function normalizeRegexScript(script: unknown): RegexScript {
   } else {
     substituteRegex = SubstituteRegexMode.NONE;
   }
+
+  const minDepth = typeof raw.minDepth === "number" ? raw.minDepth : undefined;
+  const maxDepth = typeof raw.maxDepth === "number" ? raw.maxDepth : undefined;
   
   /* ─────────────────────────────────────────────────────────────────────────
      第三步：构建规范化对象
@@ -282,8 +285,8 @@ export function normalizeRegexScript(script: unknown): RegexScript {
     markdownOnly: (raw.markdownOnly as boolean | undefined) ?? false,
     promptOnly: (raw.promptOnly as boolean | undefined) ?? false,
     runOnEdit: (raw.runOnEdit as boolean | undefined) ?? false,
-    minDepth: raw.minDepth as number | undefined,
-    maxDepth: raw.maxDepth as number | undefined,
+    minDepth,
+    maxDepth,
 
     // 来源元数据
     source: raw.source as ScriptSource | undefined,

@@ -1,39 +1,58 @@
-# Handoff（2026-03-04 / 十七轮能力需求清单补齐）
+# Handoff（2026-03-04 / 十八轮素材驱动组合回归）
 
-## 本轮完成（文档收敛）
+## 本轮完成（代码 + 回归）
 
-- `docs/analysis/sillytavern-integration-gap-2026-03.md` 新增独立章节：`8. 能力需求清单（真实素材 vs 非素材）`。
-- 新章节按列表明确了四类信息：
-  - 当前真实素材能力需求；
-  - 当前项目已支持能力；
-  - 真实素材仍待补充能力；
-  - 非真实素材需求之外仍建议补充能力。
-- 本轮不涉及代码逻辑变更，仅进行文档结构化收敛，便于后续按清单执行。
+- 落地 regex 素材驱动回归：
+  - 新增 `lib/core/__tests__/st-baseline-regex-material.test.ts`；
+  - 覆盖 `Sgw3.card.json` 与 `Sgw3.png` 的关键字段分布一致性；
+  - 覆盖 `Sgw3.*` 的 `minDepth/maxDepth` 边界过滤；
+  - 覆盖 `V2.0Beta.png` 的 `runOnEdit/substituteRegex` 元信息保真。
+- 落地 worldbook 组合回归：
+  - 新增 `lib/core/__tests__/st-baseline-worldbook-material.test.ts`；
+  - 覆盖 `服装随机化.json` 导入后的 `useProbability/depth/groupWeight` 字段保真；
+  - 覆盖 `probability/useProbability/depth/group/groupWeight` 执行链一致性（分组选择 + depth 注入）。
+- 修复语义缺口：
+  - `lib/models/regex-script-model.ts`：将 `minDepth/maxDepth=null` 归一为 `undefined`，消除深度过滤误判。
+  - `lib/core/world-book-advanced.ts`：`applyProbability` 接入 `useProbability`；group 评分接入 `groupWeight/group_weight`；并补齐 `extensions` 回退读取。
+  - `lib/adapters/import/worldbook-import.ts`、`function/worldbook/import.ts`、`lib/data/roleplay/world-book-operation.ts`：补齐 `useProbability/groupWeight` 导入与存储链路，收敛到单一路径。
+- 文档同步：
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/tasks.md`：P1 两个剩余项已勾选完成，并记录十八轮回归命令。
+  - `docs/analysis/sillytavern-integration-gap-2026-03.md`：更新“仍待补充”状态，新增“9. 十八轮执行结果”。
 
 ## 本轮验证（命令级）
 
 ```bash
-# 文档改动，本轮未触发代码测试
+pnpm vitest run \
+  lib/core/__tests__/st-baseline-regex-material.test.ts \
+  lib/core/__tests__/st-baseline-worldbook-material.test.ts \
+  lib/core/__tests__/st-baseline-worldbook.test.ts \
+  lib/core/__tests__/world-book-advanced-features.test.ts \
+  lib/models/__tests__/regex-script-model.property.test.ts
+
+pnpm exec tsc --noEmit
 ```
 
-- 结果：文档变更已完成并与当前任务清单对齐。
+- 结果：全部通过（`81` tests passed，`tsc` 全绿）。
 
 ## 计划状态同步
 
 - `docs/plan/2026-03-03-sillytavern-gap-reduction/tasks.md`
-  - 状态不变：`P1` 剩余 2 项（regex 素材驱动回归、worldbook 组合语义回归）。
-  - 新增能力清单章节可直接作为这两项的执行输入。
+  - `P1` 两项素材驱动回归已完成（regex + worldbook）。
+  - 当前未完成项主要在：
+    - parser 深语义第二切片；
+    - `P2` 长尾 API/低频命令机会性收口。
 
 ## 下一步建议（主线）
 
-1. 先按新清单落地 regex 素材回归：`V2.0Beta.png + Sgw3.*` 的 `runOnEdit/substituteRegex/minDepth/maxDepth` 组合断言。
-2. 再按新清单落地 worldbook 组合回归：`probability/useProbability/depth/group/groupWeight` 一致性检查。
-3. 每个切片完成后按需复跑 `pnpm p4:session-replay`，仅作为守卫基线，不扩展 CI 能力面。
+1. 继续推进 parser 深语义第二切片（严格转义与 parser 指令交互），优先补素材可复现断言后再扩能力面。
+2. 按“真实触发失败”推进 `P2` 长尾 API，保持 fail-fast，不新增兼容分支。
+3. 主线改动后按需复跑 `pnpm p4:session-replay` 作为守卫基线，继续冻结 CI 能力面扩展。
 
 ---
 
 ## 历史记录（简版）
 
+- 十八轮：完成 regex/worldbook 素材驱动回归；修复 `minDepth/maxDepth=null` 归一、`useProbability/groupWeight` 执行语义与导入存储映射；定向回归 + `tsc` 全绿。
 - 十七轮：补齐“真实素材 vs 非素材”能力需求清单，形成可执行列表（已支持/待补充/额外补充）。
 - 十六轮：完成 `flags/debug/scope chain` 第一切片（`parser-flag + breakpoint + scopeDepth/parserFlags`）并固化基线断言。
 - 十五轮：完成 parser/executor/bridge 参数元数据闭环与 `acceptsMultiple/defaultValue/rawQuotes` 语义复核，定向回归全绿。

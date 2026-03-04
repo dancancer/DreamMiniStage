@@ -99,12 +99,18 @@ export interface WorldBookEntry {
 
   /** 激活概率 (0-100) */
   probability?: number;
+  /** 是否启用概率判定（false 时忽略 probability） */
+  useProbability?: boolean;
   /** 互斥组名称 */
   group?: string;
   /** 组内优先级 (数字越大优先级越高) */
   group_priority?: number;
+  /** 组内优先级（兼容字段） */
+  groupPriority?: number;
   /** 组内权重 (用于评分系统) */
   group_weight?: number;
+  /** 组内权重（兼容字段） */
+  groupWeight?: number;
 
   /* ─────────────────────────────────────────────────────────────────────────
      高级功能 - 递归激活

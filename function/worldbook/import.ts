@@ -26,7 +26,7 @@ export interface ImportWorldBookResult {
 
 export async function importWorldBookFromJson(
   characterId: string,
-  jsonData: any,
+  jsonData: unknown,
   options?: {
     saveAsGlobal?: boolean;
     globalName?: string;
@@ -91,8 +91,11 @@ export async function importWorldBookFromJson(
           cooldown: entry.cooldown,
           delay: entry.delay,
           probability: entry.probability,
+          useProbability: entry.useProbability,
           group: entry.group,
           group_priority: entry.group_priority,
+          groupWeight: entry.groupWeight,
+          group_weight: entry.group_weight,
           extensions: {
             position: entry.position as number,
             depth: entry.depth,
@@ -130,8 +133,11 @@ export async function importWorldBookFromJson(
               result.globalId = globalResult.globalId;
               result.message += ` and saved as global world book "${options.globalName}"`;
             }
-          } catch (globalError: any) {
-            result.errors.push(`Failed to save as global: ${globalError.message}`);
+          } catch (globalError: unknown) {
+            const globalErrorMessage = globalError instanceof Error
+              ? globalError.message
+              : "Unknown error";
+            result.errors.push(`Failed to save as global: ${globalErrorMessage}`);
           }
         }
       } else {

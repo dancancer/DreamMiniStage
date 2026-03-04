@@ -904,10 +904,10 @@ pnpm exec tsc --noEmit
 
 ### 8.3 当前真实素材仍待补充
 
-- regex 组合场景专项回归仍缺：
-  - `V2.0Beta.png` 与 `Sgw3.*` 的 `runOnEdit/substituteRegex/minDepth/maxDepth` 组合断言尚未固化。
-- worldbook 组合语义回归仍缺：
-  - `probability/useProbability/depth/group/groupWeight` 的执行链一致性尚未形成专项测试。
+- regex 组合场景专项回归：
+  - 已补齐 `V2.0Beta.png` 与 `Sgw3.*` 的 `runOnEdit/substituteRegex/minDepth/maxDepth` 组合断言（素材驱动测试已固化）。
+- worldbook 组合语义回归：
+  - 已补齐 `probability/useProbability/depth/group/groupWeight` 的执行链一致性测试，并修复 `useProbability/groupWeight` 兼容读取。
 - parser 深语义第二切片仍缺：
   - 严格转义与 parser 指令交互细节（在当前第一切片基础上继续对齐上游）。
 
@@ -919,3 +919,23 @@ pnpm exec tsc --noEmit
   - 不作为主线优先级，但需在真实脚本触发失败时补齐最小闭环。
 - 解析/调试可观测性增强：
   - 在现有 `debug:breakpoint` 基础上继续补齐更细粒度 parser 执行轨迹（仅在 debug gate 下生效）。
+
+## 9. 2026-03-04 十八轮执行结果（素材驱动收敛）
+
+- 新增 regex 素材回归：
+  - `lib/core/__tests__/st-baseline-regex-material.test.ts`
+  - 覆盖 `Sgw3.card.json` 与 `Sgw3.png` 关键字段分布一致性；
+  - 覆盖 `Sgw3.*` 的 `minDepth/maxDepth` 边界过滤；
+  - 覆盖 `V2.0Beta.png` 的 `runOnEdit/substituteRegex` 元信息完整性。
+- 新增 worldbook 组合回归：
+  - `lib/core/__tests__/st-baseline-worldbook-material.test.ts`
+  - 覆盖 `服装随机化.json` 的 `useProbability/depth/groupWeight` 导入保真；
+  - 覆盖 `probability/useProbability/depth/group/groupWeight` 执行链一致性（含分组筛选 + depth 注入）。
+- 主线修复与兼容收敛：
+  - `normalizeRegexScript` 对 `minDepth/maxDepth=null` 统一归一为 `undefined`，避免深度过滤误判；
+  - worldbook 导入与存储链路补齐 `useProbability/groupWeight` 字段；
+  - `WorldBookAdvancedManager` 增加 `extensions` 回退读取（`probability/useProbability/group/depth/groupWeight`）。
+- 本轮验证：
+  - `pnpm vitest run lib/core/__tests__/st-baseline-regex-material.test.ts lib/core/__tests__/st-baseline-worldbook-material.test.ts lib/core/__tests__/st-baseline-worldbook.test.ts lib/core/__tests__/world-book-advanced-features.test.ts lib/models/__tests__/regex-script-model.property.test.ts`
+  - `pnpm exec tsc --noEmit`
+  - 结果：全部通过。

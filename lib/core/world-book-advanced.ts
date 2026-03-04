@@ -67,6 +67,8 @@ export interface DepthInjection {
   order: number;
 }
 
+type ExtensionFields = Record<string, unknown>;
+
 /* ═══════════════════════════════════════════════════════════════════════════
    缓存管理器（好品味：LRU 自动淘汰，无 if-else）
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -326,7 +328,7 @@ export class WorldBookAdvancedManager {
     // 时间效果检查
     if (enableTimeEffects) {
       if (entry._stickyRemaining && entry._stickyRemaining > 0) {
-        return { entry, matchReason: "sticky", depth: entry.depth };
+        return { entry, matchReason: "sticky", depth: this.resolveDepth(entry) };
       }
       if (entry._cooldownRemaining && entry._cooldownRemaining > 0) {
         return null;
@@ -336,7 +338,7 @@ export class WorldBookAdvancedManager {
       }
       if (entry._delayUntilTurn && this.currentTurn >= entry._delayUntilTurn) {
         entry._delayUntilTurn = undefined;
-        return { entry, matchReason: "delay", depth: entry.depth };
+        return { entry, matchReason: "delay", depth: this.resolveDepth(entry) };
       }
     }
 
@@ -387,7 +389,7 @@ export class WorldBookAdvancedManager {
     return {
       entry,
       matchReason: "keyword",
-      depth: entry.depth,
+      depth: this.resolveDepth(entry),
       matchedKeyword,
     };
   }
@@ -531,13 +533,69 @@ export class WorldBookAdvancedManager {
     }
   }
 
+  private getExtension(entry: WorldBookEntry): ExtensionFields | undefined {
+    if (!entry.extensions || typeof entry.extensions !== "object") {
+      return undefined;
+    }
+    return entry.extensions as ExtensionFields;
+  }
+
+  private resolveDepth(entry: WorldBookEntry): number | undefined {
+    if (typeof entry.depth === "number") return entry.depth;
+    const ext = this.getExtension(entry);
+    const extDepth = ext?.depth;
+    return typeof extDepth === "number" ? extDepth : undefined;
+  }
+
+  private resolveUseProbability(entry: WorldBookEntry): boolean | undefined {
+    if (typeof entry.useProbability === "boolean") return entry.useProbability;
+    const ext = this.getExtension(entry);
+    const extValue = ext?.useProbability ?? ext?.use_probability;
+    return typeof extValue === "boolean" ? extValue : undefined;
+  }
+
+  private resolveProbability(entry: WorldBookEntry): number | undefined {
+    if (typeof entry.probability === "number") return entry.probability;
+    const ext = this.getExtension(entry);
+    const extValue = ext?.probability;
+    return typeof extValue === "number" ? extValue : undefined;
+  }
+
+  private resolveGroupName(entry: WorldBookEntry): string {
+    if (typeof entry.group === "string") return entry.group;
+    const ext = this.getExtension(entry);
+    const extGroup = ext?.group;
+    return typeof extGroup === "string" ? extGroup : "";
+  }
+
+  private resolveGroupPriority(entry: WorldBookEntry): number {
+    if (typeof entry.group_priority === "number") return entry.group_priority;
+    if (typeof entry.groupPriority === "number") return entry.groupPriority;
+
+    const ext = this.getExtension(entry);
+    const extValue = ext?.group_priority ?? ext?.groupPriority;
+    return typeof extValue === "number" ? extValue : 0;
+  }
+
+  private resolveGroupWeight(entry: WorldBookEntry): number {
+    if (typeof entry.group_weight === "number") return entry.group_weight;
+    if (typeof entry.groupWeight === "number") return entry.groupWeight;
+
+    const ext = this.getExtension(entry);
+    const extValue = ext?.group_weight ?? ext?.groupWeight;
+    return typeof extValue === "number" ? extValue : 0;
+  }
+
   /* ─────────────────────────────────────────────────────────────────────────
      概率激活
      ───────────────────────────────────────────────────────────────────────── */
 
   private applyProbability(matched: MatchedEntry[]): MatchedEntry[] {
     return matched.filter((m) => {
-      const prob = m.entry.probability;
+      const useProbability = this.resolveUseProbability(m.entry) ?? true;
+      if (!useProbability) return true;
+
+      const prob = this.resolveProbability(m.entry);
       if (prob === undefined || prob >= 100) return true;
       if (prob <= 0) return false;
       return Math.random() * 100 < prob;
@@ -553,10 +611,11 @@ export class WorldBookAdvancedManager {
 
     // 按组分类
     for (const m of matched) {
-      if (m.entry.group) {
-        const existing = groups.get(m.entry.group) || [];
+      const groupName = this.resolveGroupName(m.entry);
+      if (groupName) {
+        const existing = groups.get(groupName) || [];
         existing.push(m);
-        groups.set(m.entry.group, existing);
+        groups.set(groupName, existing);
       }
     }
 
@@ -589,8 +648,8 @@ export class WorldBookAdvancedManager {
    * 公式：(group_priority * 1000) + (group_weight || 0)
    */
   private calculateGroupScore(entry: WorldBookEntry): number {
-    const priority = entry.group_priority || 0;
-    const weight = entry.group_weight || 0;
+    const priority = this.resolveGroupPriority(entry);
+    const weight = this.resolveGroupWeight(entry);
     return priority * 1000 + weight;
   }
 

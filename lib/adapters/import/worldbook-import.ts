@@ -66,8 +66,12 @@ interface RawWorldBookEntry {
   cooldown?: number;
   delay?: number;
   probability?: number;
+  useProbability?: boolean;
   group?: string;
   group_priority?: number;
+  groupPriority?: number;
+  group_weight?: number;
+  groupWeight?: number;
 
   [key: string]: unknown;
 }
@@ -147,8 +151,11 @@ export function normalizeWorldBookEntry(raw: RawWorldBookEntry): NormalizedWorld
     cooldown: raw.cooldown,
     delay: raw.delay,
     probability: raw.probability,
+    useProbability: raw.useProbability,
     group: raw.group,
-    group_priority: raw.group_priority,
+    group_priority: raw.group_priority ?? raw.groupPriority,
+    groupWeight: raw.groupWeight ?? raw.group_weight,
+    group_weight: raw.group_weight ?? raw.groupWeight,
   };
 }
 
