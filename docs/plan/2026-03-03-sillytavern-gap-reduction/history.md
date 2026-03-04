@@ -55,6 +55,7 @@
 - 第25轮：`RawCharacter/Character` + `getCharAvatarPath` 深层对象最小闭环。
 - 第26轮：`_bind/_th_impl` 最小子集 + `audioEnable/audioImport/audioMode/audioPlay/audioSelect` helper 别名。
 - 第27轮：`isPresetNormalPrompt/isPresetSystemPrompt/isPresetPlaceholderPrompt/default_preset` 兼容常量族补齐并固化契约断言。
+- 第28轮：parser 第二切片首批落地（escaped quote/pipe + `STRICT_ESCAPING/REPLACE_GETVAR` 交互边界）。
 
 ## 4. 历史回归与证据索引
 

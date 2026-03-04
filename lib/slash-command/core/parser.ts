@@ -238,13 +238,13 @@ function splitTopLevel(input: string, delimiter: string): string[] {
       continue;
     }
     const ch = input[i];
-    if (!inQuote && (ch === "\"" || ch === "'")) {
+    if (!inQuote && (ch === "\"" || ch === "'") && !isEscapedCharacter(input, i)) {
       inQuote = true;
       quoteChar = ch;
       current += ch;
       continue;
     }
-    if (inQuote && ch === quoteChar) {
+    if (inQuote && ch === quoteChar && !isEscapedCharacter(input, i)) {
       inQuote = false;
       quoteChar = "";
       current += ch;
@@ -281,14 +281,14 @@ function tokenize(segment: string, strictEscaping: boolean): ParseResult<Token[]
       continue;
     }
     const ch = segment[i];
-    if (!inQuote && (ch === "\"" || ch === "'")) {
+    if (!inQuote && (ch === "\"" || ch === "'") && !isEscapedCharacter(segment, i)) {
       inQuote = true;
       quoteChar = ch;
       buffer += ch;
       i++;
       continue;
     }
-    if (inQuote && ch === quoteChar) {
+    if (inQuote && ch === quoteChar && !isEscapedCharacter(segment, i)) {
       inQuote = false;
       quoteChar = "";
       buffer += ch;
@@ -308,6 +308,14 @@ function tokenize(segment: string, strictEscaping: boolean): ParseResult<Token[]
   }
   flushWord();
   return { ok: true, value: tokens };
+}
+function isEscapedCharacter(input: string, index: number): boolean {
+  let slashCount = 0;
+  for (let i = index - 1; i >= 0; i -= 1) {
+    if (input[i] !== "\\") break;
+    slashCount += 1;
+  }
+  return slashCount % 2 === 1;
 }
 function readBlock(segment: string, start: number): ParseResult<{ content: string; nextIndex: number }> {
   let depth = 1;

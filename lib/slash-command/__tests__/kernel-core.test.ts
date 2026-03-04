@@ -148,6 +148,44 @@ describe("parser — nested blocks and pipes", () => {
     expect(looseResult.isError).toBe(false);
     expect(looseResult.script).toHaveLength(1);
   });
+
+  it("keeps escaped quote + inner pipe stable across STRICT_ESCAPING toggles", () => {
+    const parsed = parseKernelScript(
+      "/parser-flag STRICT_ESCAPING on|/echo value=\"a\\\"|b\"|/parser-flag STRICT_ESCAPING off|/echo \"unterminated",
+    );
+    expect(parsed.isError).toBe(false);
+    expect(parsed.script).toHaveLength(2);
+
+    const strictEcho = parsed.script[0];
+    if (strictEcho.type !== "command") throw new Error("expected command node");
+    expect(strictEcho.parserFlags.STRICT_ESCAPING).toBe(true);
+    expect(strictEcho.namedArgumentList).toEqual([
+      expect.objectContaining({ name: "value", value: "a\\\"|b", wasQuoted: true }),
+    ]);
+
+    const looseEcho = parsed.script[1];
+    if (looseEcho.type !== "command") throw new Error("expected command node");
+    expect(looseEcho.parserFlags.STRICT_ESCAPING).toBe(false);
+    expect(looseEcho.unnamedArgumentList).toEqual([
+      expect.objectContaining({ value: "\"unterminated", wasQuoted: false }),
+    ]);
+  });
+
+  it("applies REPLACE_GETVAR after strict quote parsing with escaped quotes", () => {
+    const parsed = parseKernelScript(
+      "/parser-flag REPLACE_GETVAR on|/parser-flag STRICT_ESCAPING on|/echo value=\"{{getvar::foo}}\\\"tail\"",
+    );
+    expect(parsed.isError).toBe(false);
+    expect(parsed.script).toHaveLength(1);
+
+    const node = parsed.script[0];
+    if (node.type !== "command") throw new Error("expected command node");
+    expect(node.parserFlags.REPLACE_GETVAR).toBe(true);
+    expect(node.parserFlags.STRICT_ESCAPING).toBe(true);
+    expect(node.namedArgumentList).toEqual([
+      expect.objectContaining({ name: "value", value: "{{var::foo}}\\\"tail", wasQuoted: true }),
+    ]);
+  });
 });
 
 describe("scope chain — shadowing and cleanup", () => {
