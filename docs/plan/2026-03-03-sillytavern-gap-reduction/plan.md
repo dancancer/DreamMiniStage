@@ -1,95 +1,50 @@
-# SillyTavern 整合增量计划（2026-03-03）
+# SillyTavern 整合增量计划（聚焦版）
 
-> 目标：在保持当前稳定性的前提下，优先收敛“迁移成功率瓶颈”，再进入 Playwright E2E。  
-> 当前基线：Slash 覆盖 `21.71%`，TavernHelper API 覆盖 `43.08%`。
+> 更新时间：2026-03-04  
+> 历史细节归档：`docs/plan/2026-03-03-sillytavern-gap-reduction/history.md`
 
-## 1) 规划原则（本轮执行约束）
+## 1) 当前状态
 
-- 单路径优先：同类能力只保留一个主入口（去掉双入口/兼容回写）。
-- fail-fast：未实现能力显式报错，不做静默兜底。
-- 指标驱动：每个阶段都以“覆盖率 + 回归结果”作为完成判定。
-- 小步快跑：每个阶段最多改一个能力面，改完立刻 `pnpm vitest run` 回归。
+- Slash 覆盖：`80/258 = 31.01%`（已达原 P2 门槛）
+- TavernHelper API 覆盖：`113/130 = 86.92%`（已达原 P3 门槛）
+- P4：`p4-session-replay` 可作为稳定守卫基线（维持，不扩面）
 
-## 2) 优先级路线图（可逐步试错）
+## 2) 当前目标（主线）
 
-### P0（最高优先）工具调用主链路收敛
+- 主目标：继续收敛真实迁移阻塞，避免能力面无效扩张。
+- 次目标：保持回归稳定，不引入兼容分支和隐式兜底。
 
-**目标**
-- 打通 `registerFunctionTool -> LLM tool_calls -> 回调执行 -> 结果回传` 单路径。
-- 补齐 TavernHelper 变量高价值缺口：`registerVariableSchema`、`updateVariablesWith`、`insertVariables`。
+## 3) 执行约束
 
-**建议先试的最小切片**
-1. 先把 `registerFunctionTool` 生命周期收敛到一个注册表（注册、调用、清理、重注册）。
-2. 再把 `LLMNodeTools` 的 tool call 执行路径接到该注册表。
-3. 最后补齐上面 3 个变量 API，并加失败语义（参数错误直接 fail-fast）。
+- 单路径优先：同类能力只保留一个主入口。
+- fail-fast：未支持能力明确报错。
+- 指标驱动：每轮更新覆盖率 + 回归结果。
+- 小步快跑：每轮聚焦一个能力面。
 
-**完成门槛**
-- `extension-lifecycle`、`api-surface-contract`、`mvu-handlers-option-semantics` 全绿。
-- 新增“函数工具闭环”专项测试（至少覆盖同步与异步 callback 两条路径）。
+## 4) 当前优先级路线
 
-### P1（高优先）MVU strict 语义 + Slash 宏条件流
+### P1（最高）parser 深语义第二切片
 
-**目标**
-- 将 `strictSet` / `strictTemplate` / `concatTemplateArray` 从“类型声明”推进到“执行器生效”。
-- 解除 `st-baseline-slash-command` 中宏条件流 skip（`{{getvar::}}` 相关）。
+- 严格转义与 parser 指令交互边界。
+- 先补断言，再扩实现。
 
-**建议先试的最小切片**
-1. 先实现 `strictSet` 执行语义，并补充冲突/拒绝写入测试。
-2. 再做 Slash 条件表达式的宏预处理层（仅注入已支持宏，未知宏报错）。
-3. 最后解除 skip 并固定行为快照。
+### P2（高）TavernHelper helper 长尾
 
-**完成门槛**
-- `st-baseline-slash-command.test.ts` 的宏条件流 skip 清零（或仅保留有明确豁免说明的最小集合）。
-- `st-baseline-mvu.test.ts` 全绿。
+- `_bind/_th_impl` 最小可运行子集。
+- `audioEnable/audioImport/audioMode/audioPlay/audioSelect` helper 别名。
+- preset helper 常量族按真实触发失败推进。
 
-### P2（中优先）扩展高频 Slash 命令族
+### P2（中）低频 slash 命令
 
-**目标**
-- 从“可迁移脚本使用频率”出发补命令，不追求一次性追平 258。
-- 优先补 `checkpoint / chat-manager / api / branch / ui` 等常见迁移阻塞命令族。
+- 改为机会性补齐（仅处理真实素材触发失败）。
 
-**建议先试的最小切片**
-1. 基于 `test-baseline-assets` 和现有脚本样本抽取 Top N 命令频次。
-2. 每轮只补一族命令（含参数签名 + 错误语义 + 测试）。
-3. 每轮更新覆盖率并评估收益。
+### P4（守卫）回归基线
 
-**完成门槛**
-- Slash 覆盖率从 `21.71%` 提升到 `>= 30%`。
-- 新增命令全部有回归测试和最少一个失败路径测试。
+- 每轮按需执行 `pnpm p4:session-replay`。
+- 出现新增噪音签名时，先修复再决定是否更新基线。
 
-### P3（中优先）TavernHelper API 缺口收敛
+## 5) 完成标准
 
-**目标**
-- 将 API 覆盖从 `43.08%` 推进到 `>= 55%`。
-- 优先补脚本执行链上“直接导致迁移失败”的 API，而非低频边缘 API。
-
-**建议先试的最小切片**
-1. 先补 import_raw / script buttons / version 相关高频读取接口。
-2. 再补 extension 管理相关接口（若宿主不支持则显式 fail-fast）。
-3. 持续保持 shim 与 handler capability matrix 同步。
-
-**完成门槛**
-- 覆盖率 `>= 55%`。
-- `api-surface-contract` 仍保持全绿。
-
-### P4（触发阶段）Playwright MCP E2E
-
-**触发条件（全部满足才进入）**
-- Slash 覆盖率 `>= 30%`
-- TavernHelper API 覆盖率 `>= 55%`
-- 宏条件流 skip 收敛完成
-- P0/P1 核心回归全绿
-
-**E2E 场景来源**
-- 使用 `test-baseline-assets` 中的脚本/会话素材，优先覆盖：
-  1) 脚本注册与调用  
-  2) Slash 控制流脚本  
-  3) MVU 变量更新链路  
-  4) 音频/事件命令链路
-
-## 3) 里程碑与退出条件
-
-- M1（完成 P0）：工具闭环稳定可回归。
-- M2（完成 P1）：MVU strict + Slash 宏条件流达成可测等价。
-- M3（完成 P2/P3）：覆盖率达到 E2E 门槛。
-- M4（完成 P4）：Playwright 场景可重复通过，形成可持续回归资产。
+- 新增能力有对应回归测试。
+- shim/handler/能力矩阵保持一致。
+- 文档同步：`tasks.md`、`handoff.md`、分析文档。
