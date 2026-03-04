@@ -244,6 +244,104 @@
     }, text);
   }
 
+  function normalizeCharacterQueryName(name, apiName) {
+    if (name === undefined || name === null || name === "") {
+      return "current";
+    }
+    if (typeof name !== "string") {
+      throw new Error("[" + apiName + "] name must be string");
+    }
+    return name;
+  }
+
+  function ensureOptionalBoolean(value, apiName, argName) {
+    if (value !== undefined && typeof value !== "boolean") {
+      throw new Error("[" + apiName + "] " + argName + " must be boolean");
+    }
+  }
+
+  function loadCharacterDataByName(name) {
+    if (name === "current") {
+      return callApi("getCurrentCharacter", []);
+    }
+    return callApi("getCharacter", [name]);
+  }
+
+  function readCharacterAvatarPath(characterData) {
+    if (!characterData || typeof characterData !== "object") {
+      return null;
+    }
+
+    var candidates = [
+      characterData.avatar,
+      characterData.avatarPath,
+      characterData.avatar_path,
+      characterData.imagePath,
+      characterData.image_path,
+    ];
+
+    for (var i = 0; i < candidates.length; i++) {
+      var value = candidates[i];
+      if (typeof value === "string" && value.length > 0) {
+        return value;
+      }
+    }
+
+    return null;
+  }
+
+  function RawCharacter(characterData) {
+    if (!characterData || typeof characterData !== "object") {
+      throw new Error("[RawCharacter] characterData must be object");
+    }
+    this.characterData = characterData;
+  }
+
+  RawCharacter.find = function(options) {
+    var normalizedOptions = options || {};
+    var targetName = normalizeCharacterQueryName(normalizedOptions.name, "RawCharacter.find");
+    var allowAvatar = normalizedOptions.allow_avatar;
+    ensureOptionalBoolean(allowAvatar, "RawCharacter.find", "allow_avatar");
+    return loadCharacterDataByName(targetName);
+  };
+
+  RawCharacter.getChatsFromFiles = function(data, isGroupChat) {
+    if (!Array.isArray(data)) {
+      throw new Error("[RawCharacter.getChatsFromFiles] data must be array");
+    }
+    ensureOptionalBoolean(isGroupChat, "RawCharacter.getChatsFromFiles", "isGroupChat");
+    return window.TavernHelper.getChatHistoryDetail(data, Boolean(isGroupChat));
+  };
+
+  RawCharacter.prototype.getCardData = function() {
+    return this.characterData;
+  };
+
+  RawCharacter.prototype.getAvatarId = function() {
+    var avatarPath = readCharacterAvatarPath(this.characterData);
+    return avatarPath || "";
+  };
+
+  RawCharacter.prototype.getRegexScripts = function() {
+    var data = this.characterData && this.characterData.data;
+    var extensions = data && data.extensions;
+    var regexScripts = extensions && extensions.regex_scripts;
+    return Array.isArray(regexScripts) ? regexScripts : [];
+  };
+
+  RawCharacter.prototype.getCharacterBook = function() {
+    var data = this.characterData && this.characterData.data;
+    var characterBook = data && data.character_book;
+    return characterBook && typeof characterBook === "object" ? characterBook : null;
+  };
+
+  RawCharacter.prototype.getWorldName = function() {
+    var data = this.characterData && this.characterData.data;
+    var extensions = data && data.extensions;
+    var worldName = extensions && extensions.world;
+    return typeof worldName === "string" ? worldName : "";
+  };
+
   // ════════════════════════════════════════════════════════════════════════
   //  事件系统：本地 handler 注册表
   //  设计：本地维护 handler 映射，通过 handlerId 与主应用通信
@@ -843,33 +941,26 @@
     getCurrentCharacter: api("getCurrentCharacter"),
     getCharacterById: api("getCharacterById"),
     getAllEnabledScriptButtons: api("getAllEnabledScriptButtons"),
+    Character: RawCharacter,
+    RawCharacter: RawCharacter,
     getCharData: function(name, allowAvatar) {
-      var targetName = name;
-      if (targetName === undefined || targetName === null || targetName === "") {
-        targetName = "current";
-      }
-      if (typeof targetName !== "string") {
-        throw new Error("[getCharData] name must be string");
-      }
-      if (allowAvatar !== undefined && typeof allowAvatar !== "boolean") {
-        throw new Error("[getCharData] allowAvatar must be boolean");
-      }
-      if (targetName === "current") {
-        return callApi("getCurrentCharacter", []);
-      }
-      return callApi("getCharacter", [targetName]);
+      var targetName = normalizeCharacterQueryName(name, "getCharData");
+      ensureOptionalBoolean(allowAvatar, "getCharData", "allowAvatar");
+      return loadCharacterDataByName(targetName);
+    },
+    getCharAvatarPath: function(name, allowAvatar) {
+      var targetName = normalizeCharacterQueryName(name, "getCharAvatarPath");
+      ensureOptionalBoolean(allowAvatar, "getCharAvatarPath", "allowAvatar");
+      return window.TavernHelper.getCharData(targetName, allowAvatar).then(function(character) {
+        if (!character) {
+          return null;
+        }
+        return readCharacterAvatarPath(character);
+      });
     },
     getChatHistoryBrief: function(name, allowAvatar) {
-      var targetName = name;
-      if (targetName === undefined || targetName === null || targetName === "") {
-        targetName = "current";
-      }
-      if (typeof targetName !== "string") {
-        throw new Error("[getChatHistoryBrief] name must be string");
-      }
-      if (allowAvatar !== undefined && typeof allowAvatar !== "boolean") {
-        throw new Error("[getChatHistoryBrief] allowAvatar must be boolean");
-      }
+      var targetName = normalizeCharacterQueryName(name, "getChatHistoryBrief");
+      ensureOptionalBoolean(allowAvatar, "getChatHistoryBrief", "allowAvatar");
 
       return window.TavernHelper.getCharData(targetName, allowAvatar).then(function(character) {
         if (!character) {

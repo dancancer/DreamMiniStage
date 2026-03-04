@@ -1,15 +1,15 @@
-# Handoff（2026-03-04 / 二十四轮 macro_like + raw_character 收口）
+# Handoff（2026-03-04 / 二十五轮 raw_character 深层对象收口）
 
 ## 本轮完成（代码 + 回归）
 
-- 落地 TavernHelper `macro_like/raw_character` 长尾 API 最小读链路（保持单路径 + fail-fast）：
-  - 在 `public/iframe-libs/slash-runner-shim.js` 新增 `registerMacroLike/unregisterMacroLike` 本地注册表；仅接受 `RegExp + function`，并保持去重与显式参数校验。
-  - 在 `public/iframe-libs/slash-runner-shim.js` 调整 `substitudeMacros`：先执行本地 macro_like 替换，再统一走 `API_CALL(substitudeMacros)`，避免分叉路径。
-  - 在 `public/iframe-libs/slash-runner-shim.js` 新增 `getCharData/getChatHistoryBrief/getChatHistoryDetail`，统一复用现有 `getCurrentCharacter/getCharacter/getChatMessages` 读能力。
+- 落地 TavernHelper `raw_character` 深层对象最小闭环（保持单路径 + fail-fast）：
+  - 在 `public/iframe-libs/slash-runner-shim.js` 新增 `RawCharacter` 构造器及 `Character` 别名，补齐 `getCardData/getAvatarId/getRegexScripts/getCharacterBook/getWorldName` 最小实例能力。
+  - 在 `public/iframe-libs/slash-runner-shim.js` 新增 `RawCharacter.find/getChatsFromFiles` 静态入口，统一复用 `getCharData/getChatHistoryDetail` 的既有单路径读链路。
+  - 在 `public/iframe-libs/slash-runner-shim.js` 新增 `getCharAvatarPath`，与 `getCharData` 共用 `name + allowAvatar` 参数语义，按字段优先级解析头像路径（缺失返回 `null`）。
 - 契约与文档同步：
-  - `lib/script-runner/__tests__/slash-runner-shim-contract.test.ts` 新增 `macro_like/raw_character` 暴露断言。
+  - `lib/script-runner/__tests__/slash-runner-shim-contract.test.ts` 新增 `RawCharacter/Character/getCharAvatarPath` 暴露断言。
   - `hooks/script-bridge/README.md` 更新最新兼容能力说明。
-  - `docs/plan/2026-03-03-sillytavern-gap-reduction/tasks.md`、`docs/analysis/sillytavern-integration-gap-2026-03.md` 已更新二十四轮记录与覆盖率快照。
+  - `docs/plan/2026-03-03-sillytavern-gap-reduction/tasks.md`、`docs/analysis/sillytavern-integration-gap-2026-03.md` 已更新二十五轮记录与覆盖率快照。
 
 ## 本轮验证（命令级）
 
@@ -31,22 +31,23 @@ pnpm exec tsc --noEmit
 ## 计划状态同步
 
 - `docs/plan/2026-03-03-sillytavern-gap-reduction/tasks.md`
-  - `P2` 长尾 API 延续“真实触发失败驱动”策略，本轮完成 `macro_like/raw_character` 最小闭环；
-  - TavernHelper API 覆盖率更新为 `110 / 130 = 84.62%`（shim 顶层 API `148`）；
+  - `P2` 长尾 API 延续“真实触发失败驱动”策略，本轮完成 `raw_character` 深层对象最小闭环；
+  - TavernHelper API 覆盖率更新为 `113 / 130 = 86.92%`（shim 顶层 API `151`）；
   - 当前未完成项主要在：
     - parser 深语义第二切片；
-    - `getCharAvatarPath/RawCharacter` 深层对象能力与低频 slash 的机会性补齐。
+    - `_bind/_th_impl`、音频 helper 别名与 preset helper 常量族等低频长尾能力补齐。
 
 ## 下一步建议（主线）
 
 1. 继续推进 parser 深语义第二切片（严格转义与 parser 指令交互），先补可复现断言再扩行为面。
-2. 按“真实触发失败”继续推进 TavernHelper 长尾 API：优先 `raw_character` 深层对象（`getCharAvatarPath/RawCharacter`）并保持 fail-fast。
+2. 按“真实触发失败”继续推进 TavernHelper 长尾 API：优先 `_bind/_th_impl` 与 `audioEnable/audioImport/audioMode/audioPlay/audioSelect` helper 别名，保持 fail-fast。
 3. 每次主线增量后按需复跑 `pnpm p4:session-replay` 作为守卫基线，继续冻结 CI 能力面扩展。
 
 ---
 
 ## 历史记录（简版）
 
+- 二十五轮：补齐 `RawCharacter/Character` 构造器与 `getCharAvatarPath`；新增 deep-object 契约断言，TavernHelper API 覆盖提升到 `86.92%`。
 - 二十四轮：补齐 `registerMacroLike/unregisterMacroLike` 本地注册与 `getCharData/getChatHistory*` 最小读链路；新增契约断言，TavernHelper API 覆盖提升到 `84.62%`。
 - 二十三轮：补齐 `injectPrompts/uninjectPrompts` 入口与 `replaceTavernRegexes/updateTavernRegexesWith` 写链路；新增 scope/fail-fast 回归，TavernHelper API 覆盖提升到 `80.77%`。
 - 二十二轮：补齐 `lorebook/global/worldbook` 长尾别名 API（含 `initializeGlobal/waitGlobalInitialized/getWorldbook`）；新增 shim 契约断言，TavernHelper API 覆盖提升到 `77.69%`。
@@ -67,4 +68,4 @@ pnpm exec tsc --noEmit
 - 七轮 P4：`/session` 修复复验 `3/3` 通过（slash 直达、刷新持久化、会话隔离）。
 - 六轮 P4：审计链路 `3/3` 已执行，确认两项缺口（slash 直达未命中、失败后输入未持久化）。
 - 五轮 P4：`/session` 真实 UI 场景 `1/1` 通过。
-- P2/P3 指标门槛维持达标：Slash `31.01%`（`80/258`），TavernHelper API `84.62%`（`110/130`）。
+- P2/P3 指标门槛维持达标：Slash `31.01%`（`80/258`），TavernHelper API `86.92%`（`113/130`）。

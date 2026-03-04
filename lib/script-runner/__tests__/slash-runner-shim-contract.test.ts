@@ -61,8 +61,13 @@ describe("slash-runner shim contract", () => {
     const source = readShimSource();
 
     expect(source).toMatch(/getCharData:\s*function\(name,\s*allowAvatar\)/);
+    expect(source).toMatch(/getCharAvatarPath:\s*function\(name,\s*allowAvatar\)/);
     expect(source).toMatch(/getChatHistoryBrief:\s*function\(name,\s*allowAvatar\)/);
     expect(source).toMatch(/getChatHistoryDetail:\s*function\(data,\s*isGroupChat\)/);
+    expect(source).toMatch(/Character:\s*RawCharacter/);
+    expect(source).toMatch(/RawCharacter:\s*RawCharacter/);
+    expect(source).toMatch(/function RawCharacter\(characterData\)/);
+    expect(source).toMatch(/RawCharacter\.prototype\.getAvatarId/);
     expect(source).toMatch(/registerMacroLike:\s*function\(regex,\s*replaceFn\)/);
     expect(source).toMatch(/unregisterMacroLike:\s*function\(regex\)/);
     expect(source).toMatch(/injectPrompts:\s*unsupportedAsync\("injectPrompts"\)/);

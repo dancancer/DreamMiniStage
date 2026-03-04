@@ -188,6 +188,9 @@
 - [x] 二十四轮增量：补齐 `macro_like/raw_character` 长尾最小读链路（`registerMacroLike/unregisterMacroLike` 本地注册表、`getCharData/getChatHistoryBrief/getChatHistoryDetail` 复用现有角色/消息 API），保持单路径与参数 fail-fast。
 - [x] 二十四轮回归：`pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec eslint public/iframe-libs/slash-runner-shim.js lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec tsc --noEmit` 全绿。
 - [x] 二十四轮指标：TavernHelper API 交集提升到 `110 / 130 = 84.62%`（shim 顶层 API `148`）。
+- [x] 二十五轮增量：补齐 `raw_character` 深层对象最小闭环（`RawCharacter/Character` 构造器 + `getCharAvatarPath`），并复用既有 `getCurrentCharacter/getCharacter/getChatHistoryDetail` 单路径读能力。
+- [x] 二十五轮回归：`pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec eslint public/iframe-libs/slash-runner-shim.js lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec tsc --noEmit` 全绿。
+- [x] 二十五轮指标：TavernHelper API 交集提升到 `113 / 130 = 86.92%`（shim 顶层 API `151`）。
 
 ### 优先级依据（本轮素材统计）
 

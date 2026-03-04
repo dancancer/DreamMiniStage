@@ -51,7 +51,7 @@
 - 已新增 `compat-displayed-message-handlers.ts`，补齐 `formatAsDisplayedMessage/retrieveDisplayedMessage` 最小闭环；消息定位参数（`last/last_user/last_char/number`）异常时统一显式 fail-fast。
 - 已新增 `compat-regex-handlers.ts`，补齐 `formatAsTavernRegexedString/isCharacterTavernRegexesEnabled/getTavernRegexes/replaceTavernRegexes` regex 读写链路，继续保持参数错误显式 fail-fast。
 - `public/iframe-libs/slash-runner-shim.js` 已补齐低频兼容入口：`replaceTavernRegexes/updateTavernRegexesWith`（写链路 + updater 包装）与 `injectPrompts/uninjectPrompts`（宿主模式显式 fail-fast）。
-- `public/iframe-libs/slash-runner-shim.js` 已补齐 `macro_like/raw_character` 长尾入口：`registerMacroLike/unregisterMacroLike` 本地注册表可用；`getCharData/getChatHistoryBrief/getChatHistoryDetail` 复用现有角色/消息 API 收敛为单路径读接口。
+- `public/iframe-libs/slash-runner-shim.js` 已补齐 `macro_like/raw_character` 长尾入口：`registerMacroLike/unregisterMacroLike` 本地注册表可用；`RawCharacter/Character` 构造器与 `getCharAvatarPath/getCharData/getChatHistoryBrief/getChatHistoryDetail` 已接入最小读链路并保持 fail-fast。
 - 群聊相关 `getGroupMembers` / `isGroupChat` 目前为显式未支持（fail-fast），不再返回静默默认值。
 - 新增 `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`，覆盖 `registerFunctionTool/registerSlashCommand` 的注册→调用→清理→再注册回归链路。
 - `ApiCallContext` 已增加 UI 注入位（`onTogglePanels/onResetPanels/onToggleVisualNovelMode/onSetBackground/onSetTheme/onSetMovingUiPreset/onSetCssVariable`），`slash-handlers.ts` 会透传到 Slash 执行上下文，未注入时对应命令显式 fail-fast。
