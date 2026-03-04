@@ -185,6 +185,9 @@
 - [x] 二十三轮增量：补齐低频 `injectPrompts/uninjectPrompts` 入口（宿主模式显式 fail-fast）与 `replaceTavernRegexes/updateTavernRegexesWith` 最小写链路（shim updater 包装 + handler 单路径持久化）。
 - [x] 二十三轮回归：`pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec eslint public/iframe-libs/slash-runner-shim.js hooks/script-bridge/compat-regex-handlers.ts hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts hooks/script-bridge/capability-matrix.ts`、`pnpm exec tsc --noEmit` 全绿。
 - [x] 二十三轮指标：TavernHelper API 交集提升到 `105 / 130 = 80.77%`（shim 顶层 API `143`）。
+- [x] 二十四轮增量：补齐 `macro_like/raw_character` 长尾最小读链路（`registerMacroLike/unregisterMacroLike` 本地注册表、`getCharData/getChatHistoryBrief/getChatHistoryDetail` 复用现有角色/消息 API），保持单路径与参数 fail-fast。
+- [x] 二十四轮回归：`pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec eslint public/iframe-libs/slash-runner-shim.js lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec tsc --noEmit` 全绿。
+- [x] 二十四轮指标：TavernHelper API 交集提升到 `110 / 130 = 84.62%`（shim 顶层 API `148`）。
 
 ### 优先级依据（本轮素材统计）
 

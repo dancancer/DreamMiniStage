@@ -210,6 +210,40 @@
     });
   }
 
+  var macroLikeRegistry = [];
+
+  function ensureRegExp(value, apiName, argName) {
+    if (!(value instanceof RegExp)) {
+      throw new Error("[" + apiName + "] " + argName + " must be RegExp");
+    }
+    return value;
+  }
+
+  function normalizeMacroLikeContext(value) {
+    if (!value || typeof value !== "object") {
+      return {};
+    }
+    return value;
+  }
+
+  function applyRegisteredMacroLikes(text, context) {
+    return macroLikeRegistry.reduce(function(acc, macro) {
+      var runtimeRegex = new RegExp(macro.source, macro.flags);
+      return acc.replace(runtimeRegex, function() {
+        var replaceArgs = Array.prototype.slice.call(arguments);
+        var matchedText = replaceArgs[0];
+        var captureEnd = replaceArgs.length - 2;
+        var lastArg = replaceArgs[replaceArgs.length - 1];
+        if (lastArg && typeof lastArg === "object") {
+          captureEnd -= 1;
+        }
+        var captures = replaceArgs.slice(1, captureEnd);
+        var replaced = macro.replaceFn.apply(null, [context, matchedText].concat(captures));
+        return replaced == null ? "" : String(replaced);
+      });
+    }, text);
+  }
+
   // ════════════════════════════════════════════════════════════════════════
   //  事件系统：本地 handler 注册表
   //  设计：本地维护 handler 映射，通过 handlerId 与主应用通信
@@ -809,6 +843,76 @@
     getCurrentCharacter: api("getCurrentCharacter"),
     getCharacterById: api("getCharacterById"),
     getAllEnabledScriptButtons: api("getAllEnabledScriptButtons"),
+    getCharData: function(name, allowAvatar) {
+      var targetName = name;
+      if (targetName === undefined || targetName === null || targetName === "") {
+        targetName = "current";
+      }
+      if (typeof targetName !== "string") {
+        throw new Error("[getCharData] name must be string");
+      }
+      if (allowAvatar !== undefined && typeof allowAvatar !== "boolean") {
+        throw new Error("[getCharData] allowAvatar must be boolean");
+      }
+      if (targetName === "current") {
+        return callApi("getCurrentCharacter", []);
+      }
+      return callApi("getCharacter", [targetName]);
+    },
+    getChatHistoryBrief: function(name, allowAvatar) {
+      var targetName = name;
+      if (targetName === undefined || targetName === null || targetName === "") {
+        targetName = "current";
+      }
+      if (typeof targetName !== "string") {
+        throw new Error("[getChatHistoryBrief] name must be string");
+      }
+      if (allowAvatar !== undefined && typeof allowAvatar !== "boolean") {
+        throw new Error("[getChatHistoryBrief] allowAvatar must be boolean");
+      }
+
+      return window.TavernHelper.getCharData(targetName, allowAvatar).then(function(character) {
+        if (!character) {
+          return null;
+        }
+        return callApi("getChatMessages", []).then(function(messages) {
+          var normalizedMessages = Array.isArray(messages) ? messages : [];
+          var chatFileName = (sessionContext.chatId || sessionContext.sessionId || "current-chat") + ".jsonl";
+          return [{
+            file_name: chatFileName,
+            message_count: normalizedMessages.length,
+            character_name: character.name || targetName,
+            is_current_chat: true,
+          }];
+        });
+      });
+    },
+    getChatHistoryDetail: function(data, isGroupChat) {
+      if (!Array.isArray(data)) {
+        throw new Error("[getChatHistoryDetail] data must be array");
+      }
+      if (isGroupChat !== undefined && typeof isGroupChat !== "boolean") {
+        throw new Error("[getChatHistoryDetail] isGroupChat must be boolean");
+      }
+      return callApi("getChatMessages", []).then(function(messages) {
+        var normalizedMessages = Array.isArray(messages) ? messages : [];
+        var mappedMessages = normalizedMessages.map(function(message) {
+          return {
+            role: message.role,
+            name: message.name || "",
+            content: message.content || "",
+          };
+        });
+        var detail = {};
+        data.forEach(function(item, index) {
+          var fileName = item && typeof item.file_name === "string" && item.file_name.length > 0
+            ? item.file_name
+            : "chat-" + String(index) + ".jsonl";
+          detail[fileName] = mappedMessages;
+        });
+        return detail;
+      });
+    },
 
     // ──────────────────────────────────────────────────────────────────────
     //  Extension API（宿主模式：读接口可用，写接口 fail-fast）
@@ -841,7 +945,45 @@
     // ──────────────────────────────────────────────────────────────────────
     //  工具方法
     // ──────────────────────────────────────────────────────────────────────
-    substitudeMacros: api("substitudeMacros"),
+    registerMacroLike: function(regex, replaceFn) {
+      var normalizedRegex = ensureRegExp(regex, "registerMacroLike", "regex");
+      if (typeof replaceFn !== "function") {
+        throw new Error("[registerMacroLike] replace must be function");
+      }
+
+      var existed = macroLikeRegistry.some(function(item) {
+        return item.source === normalizedRegex.source;
+      });
+      if (existed) {
+        return false;
+      }
+
+      macroLikeRegistry.push({
+        source: normalizedRegex.source,
+        flags: normalizedRegex.flags,
+        replaceFn: replaceFn,
+      });
+      return true;
+    },
+    unregisterMacroLike: function(regex) {
+      var normalizedRegex = ensureRegExp(regex, "unregisterMacroLike", "regex");
+      var index = macroLikeRegistry.findIndex(function(item) {
+        return item.source === normalizedRegex.source;
+      });
+      if (index < 0) {
+        return false;
+      }
+      macroLikeRegistry.splice(index, 1);
+      return true;
+    },
+    substitudeMacros: function(text, context) {
+      if (typeof text !== "string") {
+        throw new Error("substitudeMacros requires text string");
+      }
+      var macroContext = normalizeMacroLikeContext(context);
+      var resolvedText = applyRegisteredMacroLikes(text, macroContext);
+      return callApi("substitudeMacros", [resolvedText]);
+    },
     getLastMessageId: api("getLastMessageId"),
     getMessageId: api("getMessageId"),
     errorCatched: function(fn) {

@@ -60,6 +60,11 @@ describe("slash-runner shim contract", () => {
   it("exposes low-frequency compat APIs with deterministic semantics", () => {
     const source = readShimSource();
 
+    expect(source).toMatch(/getCharData:\s*function\(name,\s*allowAvatar\)/);
+    expect(source).toMatch(/getChatHistoryBrief:\s*function\(name,\s*allowAvatar\)/);
+    expect(source).toMatch(/getChatHistoryDetail:\s*function\(data,\s*isGroupChat\)/);
+    expect(source).toMatch(/registerMacroLike:\s*function\(regex,\s*replaceFn\)/);
+    expect(source).toMatch(/unregisterMacroLike:\s*function\(regex\)/);
     expect(source).toMatch(/injectPrompts:\s*unsupportedAsync\("injectPrompts"\)/);
     expect(source).toMatch(/uninjectPrompts:\s*unsupportedAsync\("uninjectPrompts"\)/);
     expect(source).toMatch(/replaceTavernRegexes:\s*api\("replaceTavernRegexes"\)/);
