@@ -453,6 +453,96 @@
     };
   }
 
+  var PRESET_SYSTEM_PROMPT_IDS = [
+    "main",
+    "nsfw",
+    "jailbreak",
+    "enhancedefinitions",
+  ];
+  var PRESET_PLACEHOLDER_PROMPT_IDS = [
+    "worldinfobefore",
+    "personadescription",
+    "chardescription",
+    "charpersonality",
+    "scenario",
+    "worldinfoafter",
+    "dialogueexamples",
+    "chathistory",
+  ];
+  var DEFAULT_PRESET_TEMPLATE = {
+    settings: {
+      max_context: 2000000,
+      max_completion_tokens: 300,
+      reply_count: 1,
+      should_stream: false,
+      temperature: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      repetition_penalty: 1,
+      top_p: 1,
+      min_p: 0,
+      top_k: 0,
+      top_a: 0,
+      seed: -1,
+      squash_system_messages: false,
+      reasoning_effort: "auto",
+      request_thoughts: false,
+      request_images: false,
+      enable_function_calling: false,
+      enable_web_search: false,
+      allow_sending_images: "disabled",
+      allow_sending_videos: false,
+      character_name_prefix: "none",
+      wrap_user_messages_in_quotes: false,
+    },
+    prompts: [
+      { id: "worldInfoBefore", name: "World Info (before)", enabled: true, position: { type: "relative" }, role: "system" },
+      { id: "personaDescription", name: "Persona Description", enabled: true, position: { type: "relative" }, role: "system" },
+      { id: "charDescription", name: "Char Description", enabled: true, position: { type: "relative" }, role: "system" },
+      { id: "charPersonality", name: "Char Personality", enabled: true, position: { type: "relative" }, role: "system" },
+      { id: "scenario", name: "Scenario", enabled: true, position: { type: "relative" }, role: "system" },
+      { id: "worldInfoAfter", name: "World Info (after)", enabled: true, position: { type: "relative" }, role: "system" },
+      { id: "dialogueExamples", name: "Chat Examples", enabled: true, position: { type: "relative" }, role: "system" },
+      { id: "chatHistory", name: "Chat History", enabled: true, position: { type: "relative" }, role: "system" },
+    ],
+    prompts_unused: [],
+    extensions: {},
+  };
+
+  function cloneJsonCompatible(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function normalizePresetPromptId(id) {
+    if (typeof id !== "string") {
+      return "";
+    }
+    return id.replace(/[\s_-]+/g, "").toLowerCase();
+  }
+
+  function isPresetSystemPrompt(prompt) {
+    if (!prompt || typeof prompt !== "object") {
+      return false;
+    }
+    return PRESET_SYSTEM_PROMPT_IDS.indexOf(normalizePresetPromptId(prompt.id)) >= 0;
+  }
+
+  function isPresetPlaceholderPrompt(prompt) {
+    if (!prompt || typeof prompt !== "object") {
+      return false;
+    }
+    return PRESET_PLACEHOLDER_PROMPT_IDS.indexOf(normalizePresetPromptId(prompt.id)) >= 0;
+  }
+
+  function isPresetNormalPrompt(prompt) {
+    if (!prompt || typeof prompt !== "object") {
+      return false;
+    }
+    return !isPresetSystemPrompt(prompt) && !isPresetPlaceholderPrompt(prompt);
+  }
+
+  var defaultPreset = cloneJsonCompatible(DEFAULT_PRESET_TEMPLATE);
+
   // ════════════════════════════════════════════════════════════════════════
   //  事件系统：本地 handler 注册表
   //  设计：本地维护 handler 映射，通过 handlerId 与主应用通信
@@ -1037,6 +1127,10 @@
     // ──────────────────────────────────────────────────────────────────────
     //  Preset API（Requirements 7.1-7.5）
     // ──────────────────────────────────────────────────────────────────────
+    isPresetNormalPrompt: isPresetNormalPrompt,
+    isPresetSystemPrompt: isPresetSystemPrompt,
+    isPresetPlaceholderPrompt: isPresetPlaceholderPrompt,
+    default_preset: defaultPreset,
     getPresetNames: api("preset.getPresetNames"),
     getPreset: api("preset.getPreset"),
     loadPreset: api("preset.loadPreset"),

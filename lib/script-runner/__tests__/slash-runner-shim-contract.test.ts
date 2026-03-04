@@ -97,4 +97,17 @@ describe("slash-runner shim contract", () => {
     expect(source).toMatch(/audioPlay:\s*function\(args\)/);
     expect(source).toMatch(/audioSelect:\s*function\(args,\s*url\)/);
   });
+
+  it("exposes preset helper constants and prompt type guards", () => {
+    const source = readShimSource();
+
+    expect(source).toMatch(/isPresetNormalPrompt:\s*isPresetNormalPrompt/);
+    expect(source).toMatch(/isPresetSystemPrompt:\s*isPresetSystemPrompt/);
+    expect(source).toMatch(/isPresetPlaceholderPrompt:\s*isPresetPlaceholderPrompt/);
+    expect(source).toMatch(/default_preset:\s*defaultPreset/);
+    expect(source).toMatch(/var DEFAULT_PRESET_TEMPLATE = \{/);
+    expect(source).toMatch(/function isPresetNormalPrompt\(prompt\)/);
+    expect(source).toMatch(/function isPresetSystemPrompt\(prompt\)/);
+    expect(source).toMatch(/function isPresetPlaceholderPrompt\(prompt\)/);
+  });
 });
