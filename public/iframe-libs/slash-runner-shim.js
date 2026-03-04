@@ -608,6 +608,29 @@
     // ──────────────────────────────────────────────────────────────────────
     //  工具方法
     // ──────────────────────────────────────────────────────────────────────
+    substitudeMacros: api("substitudeMacros"),
+    getLastMessageId: api("getLastMessageId"),
+    getMessageId: api("getMessageId"),
+    errorCatched: function(fn) {
+      if (typeof fn !== "function") {
+        throw new Error("errorCatched requires function");
+      }
+
+      return function() {
+        var args = Array.prototype.slice.call(arguments);
+        try {
+          var result = fn.apply(this, args);
+          if (result && typeof result.then === "function") {
+            return result.catch(function(error) {
+              throw error;
+            });
+          }
+          return result;
+        } catch (error) {
+          throw error;
+        }
+      };
+    },
     utils: { log: log, waitFor: function(ms) { return window.DreamMiniStage.utils.waitFor(ms); } },
     log: log,
 

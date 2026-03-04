@@ -11,8 +11,8 @@
 - 当前 gap **仍不算小**，P4 已具备可监测回归基线；本轮起停止新增 CI 方向投入，回归主线 gap 收敛。
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**31.01%**
-  - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
-- 结论：P2/P3 gate 持续达标；P4 十一轮沉淀的“自动回放 + 噪音门禁 + run-index”基线继续保留。本轮主线继续收敛 `registerSlashCommand`（iframe 回调闭环后补齐参数执行期约束），优先清理真实迁移阻塞点而非继续扩 CI 能力。
+  - JS-Slash-Runner TavernHelper API 覆盖：**63.85%**
+- 结论：P2/P3 gate 持续达标；P4 十一轮沉淀的“自动回放 + 噪音门禁 + run-index”基线继续保留。本轮主线继续收敛 TavernHelper 长尾 util API（`substitudeMacros/getLastMessageId/getMessageId`），优先清理真实迁移阻塞点而非继续扩 CI 能力。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -401,6 +401,23 @@
   - `pnpm exec tsc --noEmit`
   - 结果：全部通过（`2 files / 74 tests`，lint/tsc 均全绿）。
 
+### 1.26 2026-03-04 主线增量执行结果（十九轮 util 长尾 API 收口）
+
+- 本轮执行目标：按“真实触发失败”补齐 TavernHelper 长尾 util API，统一 fail-fast 语义。
+- 本轮关键结果：
+  - `compatHandlers` 新增 util API：
+    - `substitudeMacros`：使用 `STMacroEvaluator` 执行宏替换，注入 `lastMessage/lastUserMessage/lastCharMessage/lastMessageId` 与全局+角色变量快照。
+    - `getLastMessageId`：返回当前会话最后一条消息索引（无消息时返回 `null`）。
+    - `getMessageId`：按上游 iframe 命名约定 `TH-message--<id>--<suffix>` 解析楼层 id，格式不合法显式 fail-fast。
+  - `slash-runner-shim` 新增 util 暴露：
+    - `substitudeMacros/getLastMessageId/getMessageId` 统一走 `API_CALL`；
+    - `errorCatched` 在 shim 侧提供本地包装器，参数非法显式 fail-fast。
+  - `capability-matrix` / 合同测试同步更新，避免 shim 与 handler 漂移。
+- 本轮回归：
+  - `pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
+  - `pnpm exec tsc --noEmit`
+  - 结果：全部通过（`3 files / 14 tests`，`tsc` 全绿）。
+
 ## 2. 审计口径与量化结果
 
 ### 2.1 SillyTavern Slash 覆盖（核心差距）
@@ -419,10 +436,10 @@
 
 - 上游聚合 API：`130`
   - 统计口径：`JS-Slash-Runner/src/function/index.ts` 中 `getTavernHelper()` 返回对象顶层 key。
-- 当前 shim 顶层 API：`117`
+- 当前 shim 顶层 API：`121`
   - 统计口径：`public/iframe-libs/slash-runner-shim.js` 中 `window.TavernHelper` 顶层 key。
-- 交集：`79`
-- 覆盖率：`79 / 130 = 60.77%`
+- 交集：`83`
+- 覆盖率：`83 / 130 = 63.85%`
 
 ### 2.3 JS-Slash-Runner slash_command 子集
 

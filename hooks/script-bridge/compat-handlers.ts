@@ -19,6 +19,8 @@ import { importDialogueJsonl } from "@/function/dialogue/jsonl";
 import { canImportRegexScripts, importRegexScripts } from "@/lib/adapters/import";
 import { RegexScriptOperations } from "@/lib/data/roleplay/regex-script-operation";
 import { getScriptButtons } from "@/lib/script-runner/script-storage";
+import { createMacroEvaluator } from "@/lib/core/st-macro-evaluator";
+import type { MacroEnv } from "@/lib/core/st-preset-types";
 
 const DEFAULT_FRONTEND_VERSION = "0.1.0";
 const DEFAULT_EXTENSION_ID = "JS-Slash-Runner";
@@ -33,6 +35,8 @@ interface ExtensionInstallationInfo {
   is_up_to_date: boolean;
   remote_url: string;
 }
+
+type MacroPrimitive = string | number | boolean;
 
 function getFrontendVersionValue(): string {
   const globalVersion = (globalThis as { __DREAM_FRONTEND_VERSION__?: string }).__DREAM_FRONTEND_VERSION__;
@@ -95,6 +99,83 @@ function parseExtensionId(args: unknown[], apiName: string): string {
 
 function getHostExtensionType(extensionId: string): "local" | "global" | "system" | null {
   return HOST_EXTENSION_TYPES[extensionId] ?? null;
+}
+
+function toMacroPrimitive(value: unknown): MacroPrimitive | undefined {
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return value;
+  }
+
+  return undefined;
+}
+
+function pickMacroVariables(source: Record<string, unknown> | undefined): Record<string, MacroPrimitive> {
+  if (!source) {
+    return {};
+  }
+
+  const result: Record<string, MacroPrimitive> = {};
+  for (const [key, value] of Object.entries(source)) {
+    const primitive = toMacroPrimitive(value);
+    if (primitive !== undefined) {
+      result[key] = primitive;
+    }
+  }
+  return result;
+}
+
+function findLastMessageContent(
+  messages: ApiCallContext["messages"],
+  matcher: (role: string) => boolean,
+): string {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message && matcher(message.role)) {
+      return message.content;
+    }
+  }
+  return "";
+}
+
+function buildMacroEnv(ctx: ApiCallContext): MacroEnv {
+  const variableSnapshot = ctx.getVariablesSnapshot();
+  const characterVariables = ctx.characterId
+    ? variableSnapshot.character[ctx.characterId]
+    : undefined;
+  const lastMessage = ctx.messages[ctx.messages.length - 1];
+
+  return {
+    user: "User",
+    char: ctx.characterId || "Character",
+    lastMessage: lastMessage?.content || "",
+    lastUserMessage: findLastMessageContent(ctx.messages, (role) => role === "user"),
+    lastCharMessage: findLastMessageContent(
+      ctx.messages,
+      (role) => role !== "user" && role !== "system",
+    ),
+    lastMessageId: ctx.messages.length > 0 ? ctx.messages.length - 1 : undefined,
+    messageCount: ctx.messages.length,
+    ...pickMacroVariables(variableSnapshot.global),
+    ...pickMacroVariables(characterVariables),
+  };
+}
+
+function parseMessageIdFromIframeName(iframeName: string): number {
+  const normalizedName = iframeName.trim();
+  const matched = normalizedName.match(/^TH-message--(\d+)--\d+$/);
+  if (!matched) {
+    throw new Error(`getMessageId 无法从 iframe 名称解析消息 id: ${iframeName}`);
+  }
+
+  const parsed = Number(matched[1]);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`getMessageId 解析失败: ${iframeName}`);
+  }
+  return parsed;
 }
 
 export const compatHandlers: ApiHandlerMap = {
@@ -257,4 +338,31 @@ export const compatHandlers: ApiHandlerMap = {
   },
 
   "getTavernVersion": (): string => `DreamMiniStage/${getFrontendVersionValue()}`,
+
+  "substitudeMacros": (args: unknown[], ctx: ApiCallContext): string => {
+    const [text] = args as [unknown];
+    if (typeof text !== "string") {
+      throw new Error("substitudeMacros requires text string");
+    }
+
+    const macroEnv = buildMacroEnv(ctx);
+    return createMacroEvaluator().evaluate(text, macroEnv);
+  },
+
+  "getLastMessageId": (_args: unknown[], ctx: ApiCallContext): number | null => {
+    if (ctx.messages.length === 0) {
+      return null;
+    }
+
+    return ctx.messages.length - 1;
+  },
+
+  "getMessageId": (args: unknown[]): number => {
+    const [iframeName] = args as [unknown];
+    if (typeof iframeName !== "string" || iframeName.trim().length === 0) {
+      throw new Error("getMessageId requires iframe name");
+    }
+
+    return parseMessageIdFromIframeName(iframeName);
+  },
 };

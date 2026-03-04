@@ -217,4 +217,42 @@ describe("P3 compat API gaps", () => {
     expect(frontendVersion).toBe(helperVersion);
     expect(tavernVersion).toContain("DreamMiniStage/");
   });
+
+  it("provides util macro APIs with deterministic fail-fast guards", () => {
+    const macroContext = createMockContext({
+      characterId: "char-macro",
+      messages: [
+        { id: "m1", role: "user", content: "hello" },
+        { id: "m2", role: "assistant", content: "world" },
+      ],
+      getVariablesSnapshot: () => ({
+        global: {
+          foo: "globalFoo",
+          ignoreMe: { nested: true },
+        },
+        character: {
+          "char-macro": {
+            bar: "characterBar",
+            count: 3,
+          },
+        },
+      }),
+    });
+
+    expect(compatHandlers.substitudeMacros(
+      ["{{foo}}-{{bar}}-{{lastMessageId}}-{{lastUserMessage}}"],
+      macroContext,
+    )).toBe("globalFoo-characterBar-1-hello");
+
+    expect(compatHandlers.getLastMessageId([], macroContext)).toBe(1);
+    expect(compatHandlers.getLastMessageId([], createMockContext({ messages: [] }))).toBeNull();
+
+    expect(compatHandlers.getMessageId(["TH-message--12--99"], macroContext)).toBe(12);
+
+    expect(() => compatHandlers.substitudeMacros([123], macroContext))
+      .toThrow("requires text string");
+
+    expect(() => compatHandlers.getMessageId(["iframe_123"], macroContext))
+      .toThrow("无法从 iframe 名称解析消息 id");
+  });
 });

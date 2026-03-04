@@ -170,6 +170,9 @@
 
 - [ ] TavernHelper 长尾 API 按“真实触发失败”补齐，保持 fail-fast，不新增兼容分支。
 - [ ] 低频 slash 命令补齐改为机会性推进，不再按命令总数驱动。
+- [x] 十九轮增量：补齐 TavernHelper util 长尾 API 最小闭环（`substitudeMacros/getLastMessageId/getMessageId`），并在 shim 侧补 `errorCatched` 本地包装器；参数异常统一显式 fail-fast。
+- [x] 十九轮回归：`pnpm vitest run hooks/script-bridge/__tests__/p3-api-compat-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`、`pnpm exec tsc --noEmit` 全绿。
+- [x] 十九轮指标：TavernHelper API 交集提升到 `83 / 130 = 63.85%`（shim 顶层 API `121`）。
 
 ### 优先级依据（本轮素材统计）
 
