@@ -153,6 +153,7 @@ interface PendingToolCall {
 }
 
 const pendingToolCalls = new Map<string, PendingToolCall>();
+const CALLBACK_TIMEOUT_MS = 30000;
 
 /**
  * 生成唯一的回调 ID
@@ -209,13 +210,11 @@ export async function invokeFunctionTool(
   // 如果工具来自 iframe，通过消息机制调用
   if (tool.sourceIframe) {
     const callbackId = generateCallbackId();
-    const timeout = 30000;
-
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         pendingToolCalls.delete(callbackId);
         reject(new Error(`Function tool timeout: ${name}`));
-      }, timeout);
+      }, CALLBACK_TIMEOUT_MS);
 
       pendingToolCalls.set(callbackId, { resolve, reject, timeout: timeoutId });
 
@@ -250,7 +249,9 @@ export function clearIframeFunctionTools(iframeId: string): void {
  */
 interface SlashCommandDefinition {
   name: string;
-  callback: (...args: unknown[]) => unknown | Promise<unknown>;
+  callback?: (...args: unknown[]) => unknown | Promise<unknown>;
+  hasCallback?: boolean;
+  iframeId?: string;
   aliases?: string[];
   namedArgumentList?: Array<{
     name: string;
@@ -270,6 +271,73 @@ interface SlashCommandDefinition {
 const customSlashCommands = new Map<string, { iframeId: string }>();
 
 /**
+ * 等待 iframe 返回斜杠命令回调结果
+ * Key: callbackId, Value: { resolve, reject, timeout, iframeId }
+ */
+interface PendingSlashCommandCall {
+  resolve: (result: unknown) => void;
+  reject: (error: Error) => void;
+  timeout: ReturnType<typeof setTimeout>;
+  iframeId: string;
+}
+
+const pendingSlashCommandCalls = new Map<string, PendingSlashCommandCall>();
+
+function generateSlashCallbackId(): string {
+  return `scc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function handleSlashCommandResult(callbackId: string, result: unknown, error?: string): void {
+  const pending = pendingSlashCommandCalls.get(callbackId);
+  if (!pending) {
+    console.warn("[handleSlashCommandResult] Unknown callbackId:", callbackId);
+    return;
+  }
+
+  clearTimeout(pending.timeout);
+  pendingSlashCommandCalls.delete(callbackId);
+
+  if (error) {
+    pending.reject(new Error(error));
+    return;
+  }
+
+  pending.resolve(result);
+}
+
+async function invokeIframeSlashCommandCallback(
+  iframeId: string,
+  name: string,
+  args: string,
+  namedArgs: Record<string, string>,
+  pipe: string,
+): Promise<unknown> {
+  const callbackId = generateSlashCallbackId();
+
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      pendingSlashCommandCalls.delete(callbackId);
+      reject(new Error(`Slash command callback timeout: /${name}`));
+    }, CALLBACK_TIMEOUT_MS);
+
+    pendingSlashCommandCalls.set(callbackId, {
+      resolve,
+      reject,
+      timeout: timeoutId,
+      iframeId,
+    });
+
+    dispatchToIframe(iframeId, "SLASH_COMMAND_CALL", {
+      name,
+      args,
+      namedArgs,
+      pipe,
+      callbackId,
+    });
+  });
+}
+
+/**
  * 清理指定 iframe 注册的所有斜杠命令
  */
 export function clearIframeSlashCommands(iframeId: string): void {
@@ -278,6 +346,15 @@ export function clearIframeSlashCommands(iframeId: string): void {
       customSlashCommands.delete(name);
       // 注意：当前 registry 不支持 unregister，命令会保留但标记为已清理
     }
+  }
+
+  for (const [callbackId, pending] of pendingSlashCommandCalls.entries()) {
+    if (pending.iframeId !== iframeId) {
+      continue;
+    }
+    clearTimeout(pending.timeout);
+    pending.reject(new Error(`Slash command callback cancelled: iframe disposed (${iframeId})`));
+    pendingSlashCommandCalls.delete(callbackId);
   }
 }
 
@@ -343,7 +420,20 @@ export const extensionHandlers: ApiHandlerMap = {
       return false;
     }
 
-    const { name, callback, aliases } = definition;
+    const { name, callback, aliases, hasCallback } = definition;
+    const sourceIframeId = definition.iframeId || ctx.iframeId || "unknown";
+    const hasLocalCallback = typeof callback === "function";
+    const shouldBridgeToIframe = hasCallback === true;
+
+    if (!hasLocalCallback && !shouldBridgeToIframe) {
+      console.warn(`[registerSlashCommand] Missing callback for /${name}`);
+      return false;
+    }
+
+    if (shouldBridgeToIframe && sourceIframeId === "unknown") {
+      console.warn(`[registerSlashCommand] Missing iframeId for bridged command /${name}`);
+      return false;
+    }
 
     // 创建命令处理器
     const handler: CommandHandler = async (
@@ -353,8 +443,16 @@ export const extensionHandlers: ApiHandlerMap = {
       pipe: string
     ): Promise<string> => {
       try {
-        // 调用注册的回调
-        const result = await callback(cmdArgs.join(" "), namedArgs, execCtx);
+        const slashArgs = cmdArgs.join(" ");
+        const result = hasLocalCallback
+          ? await callback!(slashArgs, namedArgs, execCtx)
+          : await invokeIframeSlashCommandCallback(
+            sourceIframeId,
+            name,
+            slashArgs,
+            namedArgs,
+            pipe,
+          );
         return result !== undefined ? String(result) : pipe;
       } catch (err) {
         console.error(`[registerSlashCommand] Error in /${name}:`, err);
@@ -365,7 +463,7 @@ export const extensionHandlers: ApiHandlerMap = {
     // 注册主命令
     registerCommand(name, handler);
     customSlashCommands.set(name, {
-      iframeId: (ctx as ApiCallContext & { iframeId?: string }).iframeId || "unknown",
+      iframeId: sourceIframeId,
     });
 
     // 注册别名
@@ -373,7 +471,7 @@ export const extensionHandlers: ApiHandlerMap = {
       for (const alias of aliases) {
         registerCommand(alias, handler);
         customSlashCommands.set(alias, {
-          iframeId: (ctx as ApiCallContext & { iframeId?: string }).iframeId || "unknown",
+          iframeId: sourceIframeId,
         });
       }
     }

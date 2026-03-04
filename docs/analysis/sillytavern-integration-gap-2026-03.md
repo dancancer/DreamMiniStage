@@ -8,11 +8,11 @@
 
 ## 1. 本轮复评结论（先给结论）
 
-- 当前 gap **仍不算小**，但 P4 已从“关键交互链路收敛”进入“自动回放 + CI 固化”阶段。
+- 当前 gap **仍不算小**，P4 已具备可监测回归基线；本轮起停止新增 CI 方向投入，回归主线 gap 收敛。
 - 相比上一轮，基础能力和回归稳定性继续改善，核心迁移指标更新为：
   - SillyTavern Slash 命令覆盖：**30.23%**
   - JS-Slash-Runner TavernHelper API 覆盖：**60.77%**
-- 结论：P2/P3 gate 持续达标；P4 十二轮已完成（四轮脚本执行面 + 五轮 `/session` 交互面 + 六轮缺口审计 + 七轮修复复验 + 八轮普通输入失败链路独立证据 + 九轮自动回放与 CI 固化 + 十轮噪音基线门禁 + 十一轮 run 索引与规则健康审计 + 十二轮 CI 展示与 PR 风险前置），关键 UI 缺口已形成“修复 + 浏览器证据 + 自动回归 + 判读门禁 + 趋势聚合 + 评审入口前置”闭环。
+- 结论：P2/P3 gate 持续达标；P4 十一轮沉淀的“自动回放 + 噪音门禁 + run-index”基线继续保留。本轮新增主线修复（`registerSlashCommand` iframe 回调闭环），优先清理真实迁移阻塞点而非继续扩 CI 能力。
 
 ### 1.1 2026-03-03 P0 增量执行结果
 
@@ -327,21 +327,19 @@
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r11-1772588355116/round10-noise-baseline-report.md`
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.md`
 
-### 1.22 2026-03-04 P4 增量执行结果（十二轮：CI Summary + PR 风险前置）
+### 1.22 2026-03-04 主线增量执行结果（registerSlashCommand 回调闭环）
 
-- 十二轮执行目标：优先收敛“评审入口可见性”，把 `run-index` 指标从产物层前置到 CI/PR 首屏。
-- 十二轮关键结果：
-  - 新增 CI 报告脚本：`scripts/p4-session-replay-ci-report.mjs`。
-  - 报告脚本直接读取 `p4-session-replay-run-index.json`，输出以下核心字段：
-    - `latestRunId`
-    - `unknownSignatureCount`
-    - `staleRuleCount`（含 console/network 拆分）
-    - `checkpoints`、`duration`、`summaryPath`、`noiseReportPath`
-  - 工作流 `p4-session-replay.yml` 新增 `Build P4 CI report` 步骤，并将上述字段注入 `GITHUB_STEP_SUMMARY`。
-  - 工作流新增 PR 风险自动评论门禁：仅当 `unknownSignatureCount>0` 或 `staleRuleCount>0` 时触发，且采用 marker upsert，避免重复刷屏。
-  - `p4-session-replay` 默认 `runId` 前缀升级为 `p4r12-*`，保证后续回放批次可与十一轮区分。
-- 十二轮回归：
-  - `pnpm vitest run scripts/__tests__/p4-session-replay-lib.test.ts scripts/__tests__/p4-session-replay-ci-report.test.ts`
+- 本轮执行目标：回归主线 gap 收敛，优先修复“已注册 slash 回调在宿主端不可执行”的真实迁移阻塞。
+- 本轮关键结果：
+  - `registerSlashCommand` 新增 `hasCallback + iframeId` 执行路径，命令执行时通过 `SLASH_COMMAND_CALL` 派发到 iframe callback，再由 `SLASH_COMMAND_RESULT` 回传结果。
+  - `ScriptSandbox` 新增 `SLASH_COMMAND_RESULT` 处理，接入 extension-handlers 的 pending/timeout 机制。
+  - shim 新增 `SLASH_COMMAND_CALL` 分支，并统一为 slash 定义补齐 `iframeId` 透传。
+  - 注册阶段新增 fail-fast：若既无本地 callback，又无 iframe callback 声明，直接拒绝注册。
+  - iframe 卸载时新增未完成 slash callback 清理，避免悬挂 promise。
+- 本轮回归：
+  - `pnpm vitest run hooks/script-bridge/__tests__/extension-lifecycle.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
+  - `pnpm vitest run lib/core/__tests__/st-baseline-slash-command.test.ts`
+  - 结果：全部通过。
 
 ## 2. 审计口径与量化结果
 
@@ -711,31 +709,30 @@ pnpm p4:session-replay
 - 头部缺口已进一步后移到低频命令与深语义能力（如 parser flags/debug/scope chain 细节），短期更适合通过 E2E 曝露真实阻塞点。
 - 建议从“继续堆命令数”转向“以 E2E 场景驱动补缺”，优先修复能复现实际迁移失败的路径。
 
-### 4.6 P4 现阶段风险（十二轮后）
+### 4.6 P4 现阶段风险（主线回归后）
 
 - 八轮已补齐“普通输入触发 `401` 后刷新仍保留 user 节点”浏览器独立证据，失败路径不再只依赖单测。
 - `mcp-chrome` 抢占风险已通过 `scripts/p4-playwright-preflight.sh` + `pnpm p4:preflight` 收敛，并在 CI 工作流中落地调用。
 - 十轮已落地噪音基线差分门禁：已知噪音可追踪，新增噪音会直接 fail-fast。
 - 十一轮已补齐 run-index 与规则健康审计：跨轮趋势可见、过期规则可提示。
-- 十二轮已将关键指标前置到 CI Summary 与 PR 评论门禁，剩余风险主要在“耗时漂移告警尚未自动化”。
+- 本轮已明确停止新增 CI 方向投入；当前剩余风险主要在 parser 深语义与 callback 参数等价性，仍可能影响复杂脚本迁移。
 
-## 5. P4 十二轮结论
+## 5. 本轮结论（主线优先）
 
-本轮判定：**P4 已完成“可回归 + 缺口显式化 + 修复复验 + 普通输入失败链路独立证据 + 自动回放固化 + CI 落地 + 噪音门禁 + 跨轮趋势索引 + 规则健康审计 + 评审入口风险前置”十目标**。
+本轮判定：**项目方向已回归“主线 gap 收敛优先”，P4 保留为可监测回归基线，不再继续扩展 CI 能力面**。
 
 1. 脚本执行面保持 `9/9` 全绿（`4` 主链路 + `5` 故障注入）。  
 2. `/session` 真实 UI 链路已覆盖输入、slash、刷新、隔离四类关键路径。  
 3. 六轮暴露的两项阻塞已在七轮闭环，八轮进一步补齐普通输入 `401` 失败链路浏览器证据。  
 4. preflight 入口已固定化，可复用性提升（`pnpm p4:preflight` / `pnpm p4:session-dev`）。
 5. round7+round8 已收敛为单命令回放（`pnpm p4:session-replay`），并形成 runId 产物目录。
-6. CI 已接入 `p4:preflight + p4:session-replay`，回归资产可自动上传归档。
+6. `p4:preflight + p4:session-replay` 仍可作为回归基线入口，基建层面维持现状。
 7. 噪音基线差分已接入主链路，十轮实跑 `unknownSignatureCount=0`。
 8. run-index 已落地，历史 run 的耗时/通过率/噪音趋势可单文件查看。
-9. 规则健康审计已落地，可按连续 miss 阈值提示 stale 规则清理。
-10. 十二轮已把 `latest run / unknown signatures / stale rules` 注入 CI Summary，并在风险触发时自动 upsert PR 评论。
+9. 本轮新增 `registerSlashCommand` iframe callback 闭环，消除“注册成功但执行断路”的主线阻塞。
 
-## 6. 下一阶段建议（P4 十三轮）
+## 6. 下一阶段建议（主线执行）
 
-1. 以 `run-index` 为输入增加“近 N 轮耗时漂移告警”（如 P95 耗时突增），优先守住主链路稳定性。  
-2. 为 PR 风险评论增加“自动收敛”策略（风险恢复为 0 时自动更新为恢复态），减少人工追踪成本。  
-3. 将 stale rule 清理建议升级为“可执行动作列表”（建议删除规则 + 最近命中证据）。
+1. 优先推进 parser 深语义缺口（`flags/debug/scope chain`），先落最小可迁移子集。  
+2. 优先补齐 `registerSlashCommand` 参数语义等价性（`namedArgumentList/unnamedArgumentList` 执行期约束与错误语义）。  
+3. 仅把 `p4-session-replay` 作为回归基线使用，在每次主线修复后按需复跑，确保质量不倒退。

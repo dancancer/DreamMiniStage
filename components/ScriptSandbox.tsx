@@ -21,6 +21,7 @@ import {
   clearIframeFunctionTools,
   clearIframeSlashCommands,
   handleFunctionToolResult,
+  handleSlashCommandResult,
   registerIframeDispatcher,
   unregisterIframeDispatcher,
 } from "@/hooks/script-bridge/extension-handlers";
@@ -119,6 +120,11 @@ export const ScriptSandbox = memo(function ScriptSandbox({
       // Function Tool 调用结果返回
       if (type === "FUNCTION_TOOL_RESULT" && payload?.callbackId) {
         handleFunctionToolResult(payload.callbackId, payload.result, payload.error);
+      }
+
+      // Slash Command 回调结果返回
+      if (type === "SLASH_COMMAND_RESULT" && payload?.callbackId) {
+        handleSlashCommandResult(payload.callbackId, payload.result, payload.error);
       }
 
       // iframe shim 就绪，注册派发函数

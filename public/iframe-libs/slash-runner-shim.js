@@ -514,7 +514,7 @@
      */
     registerSlashCommand: function(definition) {
       // 注意：callback 函数无法序列化，需要特殊处理
-      // 将回调存储在本地，通过事件机制调用
+      // 将回调存储在本地，通过 postMessage 回调执行
       if (definition && typeof definition.callback === "function") {
         var cmdName = definition.name;
         var callback = definition.callback;
@@ -524,16 +524,13 @@
           window._slashCommandCallbacks = {};
         }
         window._slashCommandCallbacks[cmdName] = callback;
-
-        // 监听来自主应用的命令调用事件
-        window.addEventListener("DreamMiniStage:slash_command_" + cmdName, function(e) {
-          var detail = e.detail || {};
-          var result = callback(detail.args, detail.namedArgs, detail.context);
-          // 通过事件返回结果
-          if (detail.callbackId) {
-            window.DreamMiniStage.events.emit("slash_command_result_" + detail.callbackId, result);
-          }
-        });
+        if (Array.isArray(definition.aliases)) {
+          definition.aliases.forEach(function(alias) {
+            if (typeof alias === "string" && alias.length > 0) {
+              window._slashCommandCallbacks[alias] = callback;
+            }
+          });
+        }
 
         // 发送注册请求（不含回调函数）
         var defCopy = Object.assign({}, definition);
@@ -542,6 +539,13 @@
         defCopy.iframeId = iframeId;
 
         return callApi("registerSlashCommand", [defCopy]);
+      }
+
+      // 无 callback 的定义也补充 iframeId，便于主应用做归属清理
+      if (definition && !definition.iframeId) {
+        var plainDef = Object.assign({}, definition);
+        plainDef.iframeId = iframeId;
+        return callApi("registerSlashCommand", [plainDef]);
       }
 
       return callApi("registerSlashCommand", [definition]);
@@ -614,6 +618,35 @@
           }
         } else {
           sendMessage("FUNCTION_TOOL_RESULT", { callbackId: callbackId, error: "Function tool not found: " + toolName });
+        }
+        break;
+
+      case "SLASH_COMMAND_CALL":
+        var scPayload = e.data.payload || {};
+        var commandName = scPayload.name;
+        var slashCallbackId = scPayload.callbackId;
+        var slashArgs = scPayload.args || "";
+        var slashNamedArgs = scPayload.namedArgs || {};
+        var slashContext = scPayload.context || {};
+
+        var slashCallbacks = window._slashCommandCallbacks || {};
+        var slashCallback = slashCallbacks[commandName];
+        if (slashCallback) {
+          try {
+            var slashResult = slashCallback(slashArgs, slashNamedArgs, slashContext);
+            Promise.resolve(slashResult).then(function(res) {
+              sendMessage("SLASH_COMMAND_RESULT", { callbackId: slashCallbackId, result: res });
+            }).catch(function(err) {
+              sendMessage("SLASH_COMMAND_RESULT", { callbackId: slashCallbackId, error: err.message || String(err) });
+            });
+          } catch (err) {
+            sendMessage("SLASH_COMMAND_RESULT", { callbackId: slashCallbackId, error: err.message || String(err) });
+          }
+        } else {
+          sendMessage("SLASH_COMMAND_RESULT", {
+            callbackId: slashCallbackId,
+            error: "Slash command callback not found: " + commandName,
+          });
         }
         break;
 

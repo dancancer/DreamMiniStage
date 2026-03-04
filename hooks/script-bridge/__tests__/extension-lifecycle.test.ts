@@ -13,6 +13,7 @@ import {
   extensionHandlers,
   getRegisteredFunctionTools,
   handleFunctionToolResult,
+  handleSlashCommandResult,
   invokeFunctionTool,
   registerIframeDispatcher,
   unregisterIframeDispatcher,
@@ -231,5 +232,48 @@ describe("extension handlers lifecycle", () => {
     expect(secondResult.isError).toBe(false);
     expect(secondResult.pipe).toBe("v2");
     expect(secondCallback).toHaveBeenCalledTimes(1);
+  });
+
+  it("bridges slash command callback through iframe dispatcher", async () => {
+    const iframeId = "iframe_slash_bridge";
+    const commandName = "bridgecmdxyz";
+
+    registerIframeDispatcher(iframeId, (type, payload) => {
+      if (type !== "SLASH_COMMAND_CALL") {
+        return;
+      }
+      const callbackPayload = payload as {
+        callbackId: string;
+        args: string;
+      };
+      handleSlashCommandResult(callbackPayload.callbackId, `iframe:${callbackPayload.args}`);
+    });
+
+    const registered = extensionHandlers.registerSlashCommand([
+      {
+        name: commandName,
+        hasCallback: true,
+        iframeId,
+      },
+    ], createApiContext(iframeId));
+    expect(registered).toBe(true);
+
+    const parsed = parseSlashCommands(`/${commandName} alpha beta`);
+    const result = await executeSlashCommands(parsed.commands, createMinimalContext());
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("iframe:alpha beta");
+
+    clearIframeSlashCommands(iframeId);
+    unregisterIframeDispatcher(iframeId);
+  });
+
+  it("fails fast when registerSlashCommand has no callback path", () => {
+    const result = extensionHandlers.registerSlashCommand([
+      {
+        name: "invalidslashcallback",
+      },
+    ], createApiContext("iframe_invalid_slash_callback"));
+
+    expect(result).toBe(false);
   });
 });
