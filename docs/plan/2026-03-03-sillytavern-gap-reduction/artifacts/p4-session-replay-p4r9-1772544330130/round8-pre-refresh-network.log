@@ -1,0 +1,2 @@
+[2026-03-03T13:25:45.749Z] [MOCK-401] POST https://api.openai.com/v1/chat/completions
+[2026-03-03T13:25:45.749Z] [401] POST https://api.openai.com/v1/chat/completions
