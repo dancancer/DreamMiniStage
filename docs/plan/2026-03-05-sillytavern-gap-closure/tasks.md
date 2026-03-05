@@ -35,3 +35,9 @@
 - [x] 补齐会话推理命令（`/reasoning-get` `/get-reasoning` `/reasoning-set` `/set-reasoning`），支持默认末条消息与 `at=` 定位。
 - [x] 补齐注入运维命令（`/listinjects`），并打通 Slash `/inject` 与 `injectPrompts` 的共享注入存储。
 - [x] 运行定向回归 + gap 分析并更新文档与 handoff。
+
+## 7. P2 增量收敛（群聊编辑）
+
+- [x] 补齐群聊编辑命令（`/member-get` `/getmember` `/member-add` `/addmember` `/addswipe`）并统一 fail-fast 语义。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）以支持 `getGroupMember`、`addGroupMember`、`addSwipe` 回调。
+- [x] 运行定向回归 + gap 分析并更新文档与 handoff。

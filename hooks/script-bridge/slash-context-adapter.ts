@@ -102,6 +102,9 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onSwipe = ctx.onSwipe;
   const onGetChatName = ctx.onGetChatName;
   const onSetInput = ctx.onSetInput;
+  const onGetGroupMember = ctx.onGetGroupMember;
+  const onAddGroupMember = ctx.onAddGroupMember;
+  const onAddSwipe = ctx.onAddSwipe;
   const onReloadPage = ctx.onReloadPage;
   const onTogglePanels = ctx.onTogglePanels;
   const onResetPanels = ctx.onResetPanels;
@@ -411,6 +414,9 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     onSwipe,
     getCurrentChatName: onGetChatName,
     setInputText: onSetInput,
+    getGroupMember: onGetGroupMember,
+    addGroupMember: onAddGroupMember,
+    addSwipe: onAddSwipe,
     reloadPage: onReloadPage,
     togglePanels: onTogglePanels,
     resetPanels: onResetPanels,

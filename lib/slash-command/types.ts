@@ -166,6 +166,17 @@ export interface ExecutionContext {
   deleteCurrentChat?: () => void | Promise<void>;
   deleteMessagesByName?: (name: string) => number | Promise<number>;
   deleteSwipe?: (swipeId?: number) => string | number | void | Promise<string | number | void>;
+  getGroupMember?: (
+    target: string,
+    field: GroupMemberField,
+  ) => string | number | undefined | Promise<string | number | undefined>;
+  addGroupMember?: (
+    target: string,
+  ) => string | number | void | Promise<string | number | void>;
+  addSwipe?: (
+    text: string,
+    options?: { switch?: boolean },
+  ) => string | number | void | Promise<string | number | void>;
   getCurrentChatName?: () => string | Promise<string>;
   setInputText?: (text: string) => void | Promise<void>;
   getCurrentCharacter?: () => CharacterSummary | undefined | Promise<CharacterSummary | undefined>;
@@ -330,6 +341,8 @@ export interface InjectOptions {
   role?: "system" | "user" | "assistant";
   ephemeral?: boolean;
 }
+
+export type GroupMemberField = "name" | "index" | "id" | "avatar";
 
 /** 激活 Lore 选项 */
 export interface ActivateLoreOptions {

@@ -83,6 +83,85 @@ describe("P2 chat command gaps", () => {
     expect(setInputText).toHaveBeenNthCalledWith(4, "");
   });
 
+  it("/member-get 与别名支持读取群成员字段", async () => {
+    const getGroupMember = vi.fn().mockImplementation(async (_target: string, field: string) => {
+      if (field === "index") {
+        return 2;
+      }
+      return "Alice";
+    });
+    const ctx = createContext({ getGroupMember });
+
+    const defaultField = await executeSlashCommandScript("/getmember Alice", ctx);
+    const withField = await executeSlashCommandScript("/memberget field=index Alice", ctx);
+
+    expect(defaultField.isError).toBe(false);
+    expect(withField.isError).toBe(false);
+    expect(defaultField.pipe).toBe("Alice");
+    expect(withField.pipe).toBe("2");
+    expect(getGroupMember).toHaveBeenNthCalledWith(1, "Alice", "name");
+    expect(getGroupMember).toHaveBeenNthCalledWith(2, "Alice", "index");
+  });
+
+  it("/member-get 对无效字段显式 fail-fast", async () => {
+    const getGroupMember = vi.fn().mockResolvedValue("Alice");
+    const ctx = createContext({ getGroupMember });
+
+    const result = await executeSlashCommandScript("/member-get field=nickname Alice", ctx);
+
+    expect(result.isError).toBe(true);
+    expect(result.errorMessage).toContain("invalid field");
+  });
+
+  it("/member-add 与别名支持添加群成员", async () => {
+    const addGroupMember = vi
+      .fn()
+      .mockResolvedValueOnce("Alice")
+      .mockResolvedValueOnce(undefined);
+    const ctx = createContext({ addGroupMember });
+
+    const canonical = await executeSlashCommandScript("/member-add Alice", ctx);
+    const alias = await executeSlashCommandScript("/addmember Bob", ctx);
+
+    expect(canonical.isError).toBe(false);
+    expect(alias.isError).toBe(false);
+    expect(canonical.pipe).toBe("Alice");
+    expect(alias.pipe).toBe("");
+    expect(addGroupMember).toHaveBeenNthCalledWith(1, "Alice");
+    expect(addGroupMember).toHaveBeenNthCalledWith(2, "Bob");
+  });
+
+  it("/addswipe 支持文本与 switch 参数", async () => {
+    const addSwipe = vi
+      .fn()
+      .mockResolvedValueOnce(3)
+      .mockResolvedValueOnce(undefined);
+    const ctx = createContext({ addSwipe });
+
+    const first = await executeSlashCommandScript("/addswipe switch=true new answer", ctx);
+    const second = await executeSlashCommandScript("/echo piped answer|/addswipe", ctx);
+
+    expect(first.isError).toBe(false);
+    expect(second.isError).toBe(false);
+    expect(first.pipe).toBe("3");
+    expect(second.pipe).toBe("");
+    expect(addSwipe).toHaveBeenNthCalledWith(1, "new answer", { switch: true });
+    expect(addSwipe).toHaveBeenNthCalledWith(2, "piped answer", { switch: undefined });
+  });
+
+  it("/addswipe 对空文本与非法 switch 显式 fail-fast", async () => {
+    const addSwipe = vi.fn().mockResolvedValue(undefined);
+    const ctx = createContext({ addSwipe });
+
+    const emptyText = await executeSlashCommandScript("/addswipe", ctx);
+    const badSwitch = await executeSlashCommandScript("/addswipe switch=maybe hi", ctx);
+
+    expect(emptyText.isError).toBe(true);
+    expect(badSwitch.isError).toBe(true);
+    expect(emptyText.errorMessage).toContain("requires swipe text");
+    expect(badSwitch.errorMessage).toContain("invalid switch value");
+  });
+
   it("/set-reasoning 与 /get-reasoning 支持默认末条消息与显式索引", async () => {
     const ctx = createContext({
       messages: [
@@ -312,6 +391,9 @@ describe("P2 chat command gaps", () => {
     const reloadResult = await executeSlashCommandScript("/chat-reload", ctx);
     const getChatNameResult = await executeSlashCommandScript("/getchatname", ctx);
     const setInputResult = await executeSlashCommandScript("/setinput test", ctx);
+    const getMemberResult = await executeSlashCommandScript("/getmember Alice", ctx);
+    const addMemberResult = await executeSlashCommandScript("/addmember Alice", ctx);
+    const addSwipeResult = await executeSlashCommandScript("/addswipe hi", ctx);
     const jumpResult = await executeSlashCommandScript("/chat-jump 1", ctx);
     const renderResult = await executeSlashCommandScript("/chat-render 1", ctx);
     const listInjectsResult = await executeSlashCommandScript("/listinjects", ctx);
@@ -324,6 +406,9 @@ describe("P2 chat command gaps", () => {
     expect(reloadResult.isError).toBe(true);
     expect(getChatNameResult.isError).toBe(true);
     expect(setInputResult.isError).toBe(true);
+    expect(getMemberResult.isError).toBe(true);
+    expect(addMemberResult.isError).toBe(true);
+    expect(addSwipeResult.isError).toBe(true);
     expect(jumpResult.isError).toBe(true);
     expect(renderResult.isError).toBe(true);
     expect(listInjectsResult.isError).toBe(true);
@@ -335,6 +420,9 @@ describe("P2 chat command gaps", () => {
     expect(reloadResult.errorMessage).toContain("not available");
     expect(getChatNameResult.errorMessage).toContain("not available");
     expect(setInputResult.errorMessage).toContain("not available");
+    expect(getMemberResult.errorMessage).toContain("not available");
+    expect(addMemberResult.errorMessage).toContain("not available");
+    expect(addSwipeResult.errorMessage).toContain("not available");
     expect(jumpResult.errorMessage).toContain("not available");
     expect(renderResult.errorMessage).toContain("not available");
     expect(listInjectsResult.errorMessage).toContain("not available");

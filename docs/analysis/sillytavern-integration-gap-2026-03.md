@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`152/426 = 35.68%`（较上一轮 `34.51%` 提升 `+1.17`pp）。
+- Slash 命令覆盖面继续提升：`159/426 = 37.32%`（较上一轮 `35.68%` 提升 `+1.64`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -32,11 +32,11 @@
    - world/lore 语义别名：`/getcharbook`、`/getchatbook`、`/getglobalbooks`、`/getpersonabook`、`/getentryfield`、`/setentryfield`
    - regex/chat：`/regex-preset`、`/regex-toggle`、`/chat-jump`、`/chat-render`、`/chat-scrollto`
    - 会话运维：`/getchatname`、`/setinput`
+   - 群聊编辑：`/member-get`、`/getmember`、`/member-add`、`/addmember`、`/addswipe`
    - 会话推理/注入运维：`/reasoning-get`、`/get-reasoning`、`/reasoning-set`、`/set-reasoning`、`/listinjects`
    - prompt/message 元数据：`/message-name`、`/message-role`、`/getpromptentry`、`/getpromptentries`、`/setpromptentry`、`/setpromptentries`
 2. 仍待推进的 P2 长尾以高频编辑/会话运维命令为主：
-   - `/addmember`、`/addswipe`、`/getmember` 等群聊编辑命令
-   - `/delay`、`/generate-stop`、`/genraw`、`/listchatvar` 等脚本运维命令
+   - `/delay`、`/generate-stop`、`/genraw`、`/listchatvar`、`/list-gallery` 等脚本运维命令
 3. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
@@ -65,6 +65,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 推进群聊编辑命令簇：`/addmember`、`/addswipe`、`/getmember`，继续压缩 P2 Top gaps。
-2. 推进脚本运维命令簇：`/delay`、`/generate-stop`、`/genraw`、`/listchatvar`，补强自动化链路控制力。
-3. 把 `delchat/delswipe/message-*` 与 `reasoning-set` 统一接入宿主可见回调，确保“命令可执行”与“界面可见效果”一致。
+1. 推进脚本运维命令簇：`/delay`、`/generate-stop`、`/genraw`、`/listchatvar`、`/list-gallery`，补强自动化链路控制力。
+2. 为 `member-*/addswipe` 打通宿主 UI 可见回调（而不止命令层），确保“命令可执行”与“界面可见效果”一致。
+3. 把 `delchat/delswipe/message-*` 与 `reasoning-set` 统一接入端到端可见断言，持续收紧回归面。

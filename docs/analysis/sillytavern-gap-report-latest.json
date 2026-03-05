@@ -1,24 +1,10 @@
 {
-  "generatedAt": "2026-03-05T04:01:50.147Z",
+  "generatedAt": "2026-03-05T04:23:04.880Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 152,
-    "coverage": "35.68%",
+    "covered": 159,
+    "coverage": "37.32%",
     "missingTop": [
-      {
-        "command": "addmember",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "addswipe",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
       {
         "command": "delay",
         "upstreamRefs": 1,
@@ -35,13 +21,6 @@
       },
       {
         "command": "genraw",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "getmember",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 5,
@@ -874,13 +853,6 @@
         "priority": "P3"
       },
       {
-        "command": "member-add",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "member-count",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -909,13 +881,6 @@
         "priority": "P3"
       },
       {
-        "command": "member-get",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "member-peek",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -931,13 +896,6 @@
       },
       {
         "command": "member-up",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "memberadd",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -966,13 +924,6 @@
       },
       {
         "command": "memberenable",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "memberget",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

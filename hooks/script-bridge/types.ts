@@ -10,7 +10,11 @@
  */
 
 import type { DialogueMessage } from "@/types/character-dialogue";
-import type { CharacterSwitchResult, SendOptions } from "@/lib/slash-command/types";
+import type {
+  CharacterSwitchResult,
+  GroupMemberField,
+  SendOptions,
+} from "@/lib/slash-command/types";
 
 // ============================================================================
 //                              API Handler 上下文
@@ -56,6 +60,17 @@ export interface ApiCallContext {
   onSwipe?: (target?: string) => void | Promise<void>;
   onGetChatName?: () => string | Promise<string>;
   onSetInput?: (text: string) => void | Promise<void>;
+  onGetGroupMember?: (
+    target: string,
+    field: GroupMemberField,
+  ) => string | number | undefined | Promise<string | number | undefined>;
+  onAddGroupMember?: (
+    target: string,
+  ) => string | number | void | Promise<string | number | void>;
+  onAddSwipe?: (
+    text: string,
+    options?: { switch?: boolean },
+  ) => string | number | void | Promise<string | number | void>;
   onReloadPage?: () => void | Promise<void>;
   onTogglePanels?: () => void | Promise<void>;
   onResetPanels?: () => void | Promise<void>;

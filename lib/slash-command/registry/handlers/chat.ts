@@ -2,7 +2,7 @@
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                 Chat Management Command Handlers                          ║
  * ║                                                                           ║
- * ║  聊天管理命令 - chat-* / delchat / delmode / delname / delswipe          ║
+ * ║  聊天管理命令 - chat-* / member-* / delchat / delmode / delname / swipe  ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -49,6 +49,19 @@ function parseSwipeId(raw: string | undefined): number | undefined {
     throw new Error(`/delswipe invalid swipe id: ${raw}`);
   }
   return parsed;
+}
+
+function parseGroupMemberField(raw: string | undefined): "name" | "index" | "id" | "avatar" {
+  if (!raw || raw.trim().length === 0) {
+    return "name";
+  }
+
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === "name" || normalized === "index" || normalized === "id" || normalized === "avatar") {
+    return normalized;
+  }
+
+  throw new Error(`/getmember invalid field: ${raw}`);
 }
 
 function resolveReasoningMessageIndex(
@@ -158,6 +171,88 @@ export const handleSetInput: CommandHandler = async (args, namedArgs, ctx, pipe)
   const nextInput = fromArgs || fromNamed || pipe;
   await Promise.resolve(ctx.setInputText(nextInput));
   return nextInput;
+};
+
+/**
+ * /member-get [member] [field=name|index|id|avatar]
+ * 别名：/getmember /memberget
+ */
+export const handleGetMember: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.getGroupMember) {
+    throw new Error("/getmember is not available in current context");
+  }
+
+  const target = (args.join(" ") || namedArgs.member || pipe || "").trim();
+  if (!target) {
+    throw new Error("/getmember requires a member target");
+  }
+
+  const field = parseGroupMemberField(namedArgs.field);
+  const value = await Promise.resolve(ctx.getGroupMember(target, field));
+  if (value === undefined || value === null) {
+    return "";
+  }
+  if (typeof value !== "string" && typeof value !== "number") {
+    throw new Error("/getmember host returned invalid value");
+  }
+
+  return String(value);
+};
+
+/**
+ * /member-add [member] - 添加群聊成员
+ * 别名：/addmember /memberadd
+ */
+export const handleAddMember: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.addGroupMember) {
+    throw new Error("/addmember is not available in current context");
+  }
+
+  const target = (args.join(" ") || namedArgs.name || pipe || "").trim();
+  if (!target) {
+    throw new Error("/addmember requires a member target");
+  }
+
+  const result = await Promise.resolve(ctx.addGroupMember(target));
+  if (result === undefined || result === null) {
+    return "";
+  }
+  if (typeof result !== "string" && typeof result !== "number") {
+    throw new Error("/addmember host returned invalid value");
+  }
+
+  return String(result);
+};
+
+/**
+ * /addswipe [text] [switch=true|false] - 为末条 assistant 追加 swipe
+ */
+export const handleAddSwipe: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.addSwipe) {
+    throw new Error("/addswipe is not available in current context");
+  }
+
+  const swipeText = args.join(" ") || namedArgs.text || pipe || "";
+  if (!swipeText.trim()) {
+    throw new Error("/addswipe requires swipe text");
+  }
+
+  const switchToNewSwipe = parseBoolean(namedArgs.switch, undefined);
+  if (namedArgs.switch !== undefined && switchToNewSwipe === undefined) {
+    throw new Error(`/addswipe invalid switch value: ${namedArgs.switch}`);
+  }
+
+  const result = await Promise.resolve(
+    ctx.addSwipe(swipeText, { switch: switchToNewSwipe }),
+  );
+  if (result === undefined || result === null) {
+    return "";
+  }
+  if (typeof result !== "string" && typeof result !== "number") {
+    throw new Error("/addswipe host returned invalid value");
+  }
+
+  return String(result);
 };
 
 /**

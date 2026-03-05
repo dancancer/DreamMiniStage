@@ -18,7 +18,11 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useScriptVariables } from "@/lib/store/script-variables";
 import { handleApiCall } from "./script-bridge";
 import type { DialogueMessage } from "@/types/character-dialogue";
-import type { CharacterSwitchResult, SendOptions } from "@/lib/slash-command/types";
+import type {
+  CharacterSwitchResult,
+  GroupMemberField,
+  SendOptions,
+} from "@/lib/slash-command/types";
 import type { ScriptMessageData } from "@/types/script-message";
 
 // ============================================================================
@@ -48,6 +52,17 @@ interface UseScriptBridgeOptions {
   onSwipe?: (target?: string) => void | Promise<void>;
   onGetChatName?: () => string | Promise<string>;
   onSetInput?: (text: string) => void | Promise<void>;
+  onGetGroupMember?: (
+    target: string,
+    field: GroupMemberField,
+  ) => string | number | undefined | Promise<string | number | undefined>;
+  onAddGroupMember?: (
+    target: string,
+  ) => string | number | void | Promise<string | number | void>;
+  onAddSwipe?: (
+    text: string,
+    options?: { switch?: boolean },
+  ) => string | number | void | Promise<string | number | void>;
   onJumpToMessage?: (index: number) => void | Promise<void>;
   onRenderChatMessages?: (
     count: number,
@@ -101,6 +116,9 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onSwipe,
     onGetChatName,
     onSetInput,
+    onGetGroupMember,
+    onAddGroupMember,
+    onAddSwipe,
     onJumpToMessage,
     onRenderChatMessages,
     onSwitchCharacter,
@@ -214,6 +232,9 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onSwipe,
           onGetChatName,
           onSetInput,
+          onGetGroupMember,
+          onAddGroupMember,
+          onAddSwipe,
           onJumpToMessage,
           onRenderChatMessages,
           onSwitchCharacter: onSwitchCharacter ? handleCharacterSwitch : undefined,
@@ -261,6 +282,9 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onSwipe,
       onGetChatName,
       onSetInput,
+      onGetGroupMember,
+      onAddGroupMember,
+      onAddSwipe,
       onJumpToMessage,
       onRenderChatMessages,
       onSwitchCharacter,

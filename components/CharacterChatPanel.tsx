@@ -18,7 +18,11 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { getDisplayUsername, setDisplayUsername } from "@/utils/username-helper";
 import { useApiConfig } from "@/hooks/useApiConfig";
 import { useScriptBridge } from "@/hooks/useScriptBridge";
-import type { CharacterSwitchResult, SendOptions } from "@/lib/slash-command/types";
+import type {
+  CharacterSwitchResult,
+  GroupMemberField,
+  SendOptions,
+} from "@/lib/slash-command/types";
 import { useLocalStorageBoolean } from "@/hooks/useLocalStorage";
 import UserNameSettingModal from "@/components/UserNameSettingModal";
 import ScriptDebugPanel from "@/components/ScriptDebugPanel";
@@ -82,6 +86,17 @@ interface Props {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
+  onGetGroupMember?: (
+    target: string,
+    field: GroupMemberField,
+  ) => string | number | undefined | Promise<string | number | undefined>;
+  onAddGroupMember?: (
+    target: string,
+  ) => string | number | void | Promise<string | number | void>;
+  onAddSwipe?: (
+    text: string,
+    options?: { switch?: boolean },
+  ) => string | number | void | Promise<string | number | void>;
   onSwitchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
@@ -123,6 +138,9 @@ export default function CharacterChatPanel({
   onImpersonate,
   onContinue,
   onSwipe,
+  onGetGroupMember,
+  onAddGroupMember,
+  onAddSwipe,
   onSwitchCharacter,
   onExportJsonl,
   onImportJsonl,
@@ -180,6 +198,9 @@ export default function CharacterChatPanel({
     onSwipe: handleSwipe,
     onGetChatName: () => chatName || dialogueKey || character.name || "",
     onSetInput: (text) => setUserInput(text),
+    onGetGroupMember,
+    onAddGroupMember,
+    onAddSwipe,
     onSwitchCharacter,
   });
 
