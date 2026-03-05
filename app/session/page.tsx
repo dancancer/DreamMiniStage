@@ -146,6 +146,7 @@ function SessionPageContent() {
   const [isBranchOpen, setIsBranchOpen] = useState(false);
   const { setHeaderContent } = useHeaderContent();
   const currentCharacterName = loader.character?.name;
+  const currentSessionName = sessionId ? getSessionById(sessionId)?.name || "" : "";
 
   useEffect(() => {
     if (!loader.character) {
@@ -299,6 +300,8 @@ function SessionPageContent() {
       onImpersonate: async (text) => dialogue.addRoleMessage("assistant", text),
       onContinue: async () => dialogue.triggerGeneration(),
       onSwipe: dialogue.handleSwipe,
+      getCurrentChatName: () => currentSessionName || sessionId || "",
+      setInputText: async (text) => setUserInput(text),
       switchCharacter: handleSwitchCharacter,
       getVariable,
       setVariable,
@@ -372,6 +375,8 @@ function SessionPageContent() {
   }, [
     dialogue,
     characterId,
+    currentSessionName,
+    sessionId,
     handleSwitchCharacter,
     setScriptVariable,
     deleteScriptVariable,
@@ -529,6 +534,7 @@ function SessionPageContent() {
             setActiveModes={setActiveModes as React.Dispatch<React.SetStateAction<Record<string, unknown>>>}
             language={language as "zh" | "en"}
             dialogueKey={sessionId}
+            chatName={currentSessionName}
             onSendMessage={dialogue.addUserMessage}
             onTriggerGeneration={dialogue.triggerGeneration}
             onSendAs={(role, text) => dialogue.addRoleMessage(role, text)}

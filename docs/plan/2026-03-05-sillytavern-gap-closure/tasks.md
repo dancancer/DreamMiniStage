@@ -23,3 +23,9 @@
 - [x] 补齐 world/lore 语义别名（`/getcharbook` `/getchatbook` `/getglobalbooks` `/getpersonabook`）。
 - [x] 补齐消息元数据与 prompt-entry 命令（`/message-name` `/message-role` `/getpromptentry*` `/setpromptentry*`）。
 - [x] 更新能力矩阵、契约测试与 handoff 进展记录。
+
+## 5. P2 增量收敛（续）
+
+- [x] 补齐 world-info 字段别名命令（`/getentryfield` `/setentryfield`），统一到 lore field 单路径实现。
+- [x] 补齐会话运维命令（`/getchatname` `/setinput`），并接入 Script Bridge/UI 上下文回调。
+- [x] 运行定向回归 + gap 分析并更新报告与 handoff。

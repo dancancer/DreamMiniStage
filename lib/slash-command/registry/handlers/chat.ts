@@ -82,6 +82,38 @@ export const handleChatReload: CommandHandler = async (_args, _namedArgs, ctx, _
 };
 
 /**
+ * /getchatname - 获取当前聊天名称
+ * SillyTavern 语义：返回聊天名称字符串。
+ */
+export const handleGetChatName: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  if (!ctx.getCurrentChatName) {
+    throw new Error("/getchatname is not available in current context");
+  }
+
+  const chatName = await Promise.resolve(ctx.getCurrentChatName());
+  if (typeof chatName !== "string") {
+    throw new Error("/getchatname host returned non-string chat name");
+  }
+  return chatName;
+};
+
+/**
+ * /setinput [text] - 设置聊天输入框内容
+ * SillyTavern 语义：支持位置参数、namedArgs.text、pipe 作为写入来源。
+ */
+export const handleSetInput: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.setInputText) {
+    throw new Error("/setinput is not available in current context");
+  }
+
+  const fromArgs = args.join(" ");
+  const fromNamed = namedArgs.text;
+  const nextInput = fromArgs || fromNamed || pipe;
+  await Promise.resolve(ctx.setInputText(nextInput));
+  return nextInput;
+};
+
+/**
  * /delchat - 删除当前聊天
  * SillyTavern 语义：无返回值（空字符串）。
  */

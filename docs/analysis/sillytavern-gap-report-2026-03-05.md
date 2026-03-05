@@ -1,11 +1,11 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T03:35:24.159Z
+- generatedAt: 2026-03-05T03:47:55.943Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 143/426 (33.57%)
+- slash commands: 147/426 (34.51%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
@@ -17,15 +17,11 @@
 - [P2] /generate-stop (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /genraw (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /get-reasoning (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /getchatname (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /getentryfield (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /getmember (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /list-gallery (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /listchatvar (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /listinjects (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /set-reasoning (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /setentryfield (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /setinput (score=5, upstreamRefs=1, localRefs=0)
 - [P3] /createlore (score=3, upstreamRefs=1, localRefs=0)
 - [P3] /findlore (score=3, upstreamRefs=1, localRefs=0)
 - [P3] /vector-worldinfo-state (score=3, upstreamRefs=1, localRefs=0)
@@ -36,6 +32,10 @@
 - [P3] /bgcol (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /bglock (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /bgunlock (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /bind (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /bubble (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /bubbles (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /buttons (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

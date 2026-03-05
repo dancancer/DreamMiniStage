@@ -60,4 +60,4 @@
 - 群聊相关 `getGroupMembers` / `isGroupChat` 目前为显式未支持（fail-fast），不再返回静默默认值。
 - 新增 `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`，覆盖 `registerFunctionTool/registerSlashCommand` 的注册→调用→清理→再注册回归链路。
 - 新增 `hooks/script-bridge/__tests__/material-replay-round34.test.ts` + `hooks/script-bridge/__tests__/fixtures/round34-migration-material.json`，用于真实迁移素材回放守卫（`rotateChatMessages` + script tree helper）。
-- `ApiCallContext` UI 注入位已扩展为 `onTogglePanels/onResetPanels/onToggleVisualNovelMode/onSetBackground/onSetTheme/onSetMovingUiPreset/onSetCssVariable/onJumpToMessage/onRenderChatMessages`，并由 `slash-context-adapter.ts` 透传到 Slash 执行上下文，未注入时对应命令显式 fail-fast。
+- `ApiCallContext` UI 注入位已扩展为 `onTogglePanels/onResetPanels/onToggleVisualNovelMode/onSetBackground/onSetTheme/onSetMovingUiPreset/onSetCssVariable/onJumpToMessage/onRenderChatMessages/onGetChatName/onSetInput`，并由 `slash-context-adapter.ts` 透传到 Slash 执行上下文，未注入时对应命令显式 fail-fast。

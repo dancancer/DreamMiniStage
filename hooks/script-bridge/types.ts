@@ -54,6 +54,8 @@ export interface ApiCallContext {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
+  onGetChatName?: () => string | Promise<string>;
+  onSetInput?: (text: string) => void | Promise<void>;
   onReloadPage?: () => void | Promise<void>;
   onTogglePanels?: () => void | Promise<void>;
   onResetPanels?: () => void | Promise<void>;

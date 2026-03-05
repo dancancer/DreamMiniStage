@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-05T03:35:24.159Z",
+  "generatedAt": "2026-03-05T03:47:55.943Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 143,
-    "coverage": "33.57%",
+    "covered": 147,
+    "coverage": "34.51%",
     "missingTop": [
       {
         "command": "addmember",
@@ -48,20 +48,6 @@
         "priority": "P2"
       },
       {
-        "command": "getchatname",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "getentryfield",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
         "command": "getmember",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -91,20 +77,6 @@
       },
       {
         "command": "set-reasoning",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "setentryfield",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "setinput",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 5,

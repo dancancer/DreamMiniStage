@@ -79,7 +79,7 @@ describe("P2 world/lore command gaps", () => {
     expect(persona.pipe).toBe("persona-book");
   });
 
-  it("/getlorefield 与 /setlorefield 支持字段别名与读写闭环", async () => {
+  it("/getlorefield 与 entry/wi 别名共享字段读写路径", async () => {
     const getLoreField = vi.fn(async (_file: string, _uid: string, field: string) => {
       if (field === "keys") {
         return ["alpha", "beta"];
@@ -90,9 +90,14 @@ describe("P2 world/lore command gaps", () => {
     const ctx = createContext({ getLoreField, setLoreField });
 
     const readContent = await executeSlashCommandScript("/getlorefield file=book-1 uid-1", ctx);
+    const readEntryAlias = await executeSlashCommandScript("/getentryfield file=book-1 uid-1", ctx);
     const readKeys = await executeSlashCommandScript("/getwifield file=book-1 field=key uid-1", ctx);
     const writeContent = await executeSlashCommandScript(
       "/setlorefield file=book-1 uid=uid-1 field=content updated-text",
+      ctx,
+    );
+    const writeEntryAlias = await executeSlashCommandScript(
+      "/setentryfield file=book-1 uid=uid-1 field=content updated-entry",
       ctx,
     );
     const writeKeys = await executeSlashCommandScript(
@@ -101,13 +106,17 @@ describe("P2 world/lore command gaps", () => {
     );
 
     expect(readContent.isError).toBe(false);
+    expect(readEntryAlias.isError).toBe(false);
     expect(readKeys.isError).toBe(false);
     expect(writeContent.isError).toBe(false);
+    expect(writeEntryAlias.isError).toBe(false);
     expect(writeKeys.isError).toBe(false);
     expect(readContent.pipe).toBe("lore-content");
+    expect(readEntryAlias.pipe).toBe("lore-content");
     expect(readKeys.pipe).toBe("alpha,beta");
     expect(setLoreField).toHaveBeenNthCalledWith(1, "book-1", "uid-1", "content", "updated-text");
-    expect(setLoreField).toHaveBeenNthCalledWith(2, "book-1", "uid-1", "keys", "alpha,beta,gamma");
+    expect(setLoreField).toHaveBeenNthCalledWith(2, "book-1", "uid-1", "content", "updated-entry");
+    expect(setLoreField).toHaveBeenNthCalledWith(3, "book-1", "uid-1", "keys", "alpha,beta,gamma");
   });
 
   it("world/lore 命令在宿主不支持时显式 fail-fast", async () => {
@@ -119,7 +128,9 @@ describe("P2 world/lore command gaps", () => {
     const globalLore = await executeSlashCommandScript("/getgloballore", ctx);
     const personaLore = await executeSlashCommandScript("/getpersonalore", ctx);
     const getField = await executeSlashCommandScript("/getlorefield file=book-1 uid-1", ctx);
+    const getEntryField = await executeSlashCommandScript("/getentryfield file=book-1 uid-1", ctx);
     const setField = await executeSlashCommandScript("/setlorefield file=book-1 uid=uid-1 value", ctx);
+    const setEntryField = await executeSlashCommandScript("/setentryfield file=book-1 uid=uid-1 value", ctx);
 
     expect(world.isError).toBe(true);
     expect(charLore.isError).toBe(true);
@@ -127,7 +138,9 @@ describe("P2 world/lore command gaps", () => {
     expect(globalLore.isError).toBe(true);
     expect(personaLore.isError).toBe(true);
     expect(getField.isError).toBe(true);
+    expect(getEntryField.isError).toBe(true);
     expect(setField.isError).toBe(true);
+    expect(setEntryField.isError).toBe(true);
 
     expect(world.errorMessage).toContain("not available");
     expect(charLore.errorMessage).toContain("not available");
@@ -135,6 +148,8 @@ describe("P2 world/lore command gaps", () => {
     expect(globalLore.errorMessage).toContain("not available");
     expect(personaLore.errorMessage).toContain("not available");
     expect(getField.errorMessage).toContain("not available");
+    expect(getEntryField.errorMessage).toContain("not available");
     expect(setField.errorMessage).toContain("not available");
+    expect(setEntryField.errorMessage).toContain("not available");
   });
 });

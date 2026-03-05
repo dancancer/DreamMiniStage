@@ -49,6 +49,40 @@ describe("P2 chat command gaps", () => {
     expect(reloadCurrentChat).toHaveBeenCalledTimes(1);
   });
 
+  it("/getchatname 返回当前聊天名称字符串", async () => {
+    const getCurrentChatName = vi.fn().mockResolvedValue("Session Alpha");
+    const ctx = createContext({ getCurrentChatName });
+
+    const result = await executeSlashCommandScript("/getchatname", ctx);
+
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("Session Alpha");
+    expect(getCurrentChatName).toHaveBeenCalledTimes(1);
+  });
+
+  it("/setinput 支持参数、namedArgs 与 pipe 三种写入来源", async () => {
+    const setInputText = vi.fn().mockResolvedValue(undefined);
+    const ctx = createContext({ setInputText });
+
+    const fromArgs = await executeSlashCommandScript("/setinput hello world", ctx);
+    const fromNamed = await executeSlashCommandScript("/setinput text=named-value", ctx);
+    const fromPipe = await executeSlashCommandScript("/echo piped|/setinput", ctx);
+    const clearInput = await executeSlashCommandScript("/setinput", ctx);
+
+    expect(fromArgs.isError).toBe(false);
+    expect(fromNamed.isError).toBe(false);
+    expect(fromPipe.isError).toBe(false);
+    expect(clearInput.isError).toBe(false);
+    expect(fromArgs.pipe).toBe("hello world");
+    expect(fromNamed.pipe).toBe("named-value");
+    expect(fromPipe.pipe).toBe("piped");
+    expect(clearInput.pipe).toBe("");
+    expect(setInputText).toHaveBeenNthCalledWith(1, "hello world");
+    expect(setInputText).toHaveBeenNthCalledWith(2, "named-value");
+    expect(setInputText).toHaveBeenNthCalledWith(3, "piped");
+    expect(setInputText).toHaveBeenNthCalledWith(4, "");
+  });
+
   it("/delchat 可触发当前聊天删除回调并返回空字符串", async () => {
     const deleteCurrentChat = vi.fn().mockResolvedValue(undefined);
     const ctx = createContext({ deleteCurrentChat });
@@ -196,6 +230,8 @@ describe("P2 chat command gaps", () => {
 
     const managerResult = await executeSlashCommandScript("/chat-manager", ctx);
     const reloadResult = await executeSlashCommandScript("/chat-reload", ctx);
+    const getChatNameResult = await executeSlashCommandScript("/getchatname", ctx);
+    const setInputResult = await executeSlashCommandScript("/setinput test", ctx);
     const jumpResult = await executeSlashCommandScript("/chat-jump 1", ctx);
     const renderResult = await executeSlashCommandScript("/chat-render 1", ctx);
     const delChatResult = await executeSlashCommandScript("/delchat", ctx);
@@ -205,6 +241,8 @@ describe("P2 chat command gaps", () => {
 
     expect(managerResult.isError).toBe(true);
     expect(reloadResult.isError).toBe(true);
+    expect(getChatNameResult.isError).toBe(true);
+    expect(setInputResult.isError).toBe(true);
     expect(jumpResult.isError).toBe(true);
     expect(renderResult.isError).toBe(true);
     expect(delChatResult.isError).toBe(true);
@@ -213,6 +251,8 @@ describe("P2 chat command gaps", () => {
     expect(delSwipeResult.isError).toBe(true);
     expect(managerResult.errorMessage).toContain("not available");
     expect(reloadResult.errorMessage).toContain("not available");
+    expect(getChatNameResult.errorMessage).toContain("not available");
+    expect(setInputResult.errorMessage).toContain("not available");
     expect(jumpResult.errorMessage).toContain("not available");
     expect(renderResult.errorMessage).toContain("not available");
     expect(delChatResult.errorMessage).toContain("not available");

@@ -70,6 +70,8 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["chat-history", ChatHandlers.handleChatManager],
   ["manage-chats", ChatHandlers.handleChatManager],
   ["chat-reload", ChatHandlers.handleChatReload],
+  ["getchatname", ChatHandlers.handleGetChatName],
+  ["setinput", ChatHandlers.handleSetInput],
   ["chat-jump", ChatHandlers.handleChatJump],
   ["chat-scrollto", ChatHandlers.handleChatJump],
   ["chat-render", ChatHandlers.handleChatRender],
@@ -161,8 +163,10 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["getpersonalore", LoreHandlers.handleGetPersonaLore],
   ["getpersonawi", LoreHandlers.handleGetPersonaLore],
   ["getlorefield", LoreHandlers.handleGetLoreField],
+  ["getentryfield", LoreHandlers.handleGetLoreField],
   ["getwifield", LoreHandlers.handleGetLoreField],
   ["setlorefield", LoreHandlers.handleSetLoreField],
+  ["setentryfield", LoreHandlers.handleSetLoreField],
   ["setwifield", LoreHandlers.handleSetLoreField],
 
   // ─── 生成命令 ───

@@ -46,6 +46,8 @@ interface UseScriptBridgeOptions {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
+  onGetChatName?: () => string | Promise<string>;
+  onSetInput?: (text: string) => void | Promise<void>;
   onJumpToMessage?: (index: number) => void | Promise<void>;
   onRenderChatMessages?: (
     count: number,
@@ -97,6 +99,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onImpersonate,
     onContinue,
     onSwipe,
+    onGetChatName,
+    onSetInput,
     onJumpToMessage,
     onRenderChatMessages,
     onSwitchCharacter,
@@ -123,7 +127,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     window.dispatchEvent(
       new CustomEvent("DreamMiniStage:broadcast", {
         detail: { eventName, data },
-      })
+      }),
     );
   }, []);
 
@@ -208,6 +212,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onImpersonate,
           onContinue,
           onSwipe,
+          onGetChatName,
+          onSetInput,
           onJumpToMessage,
           onRenderChatMessages,
           onSwitchCharacter: onSwitchCharacter ? handleCharacterSwitch : undefined,
@@ -221,7 +227,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
         const eventName = (payload as Record<string, unknown>).eventName as string;
         const eventData = (payload as Record<string, unknown>).data;
         window.dispatchEvent(
-          new CustomEvent(`DreamMiniStage:${eventName}`, { detail: eventData })
+          new CustomEvent(`DreamMiniStage:${eventName}`, { detail: eventData }),
         );
         return eventName;
       }
@@ -253,6 +259,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onImpersonate,
       onContinue,
       onSwipe,
+      onGetChatName,
+      onSetInput,
       onJumpToMessage,
       onRenderChatMessages,
       onSwitchCharacter,
@@ -269,7 +277,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           eventName: "character:changed",
           data: { id: characterId, name: characterName },
         },
-      })
+      }),
     );
   }, [characterId, characterName]);
 
@@ -279,7 +287,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     window.dispatchEvent(
       new CustomEvent("DreamMiniStage:broadcast", {
         detail: { eventName, data: message },
-      })
+      }),
     );
   }, []);
 
@@ -292,7 +300,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           eventName: "character:changed",
           data: { id: characterId, name: characterName },
         },
-      })
+      }),
     );
   }, [characterId, characterName]);
 

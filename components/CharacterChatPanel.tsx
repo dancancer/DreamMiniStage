@@ -73,6 +73,7 @@ interface Props {
   language: "zh" | "en";
   // ─── 提示词查看器参数 ───
   dialogueKey?: string;
+  chatName?: string;
   // ─── Slash Command 回调 ───
   onSendMessage?: (text: string, options?: SendOptions) => void | Promise<void>;
   onTriggerGeneration?: () => void | Promise<void>;
@@ -114,6 +115,7 @@ export default function CharacterChatPanel({
   setActiveModes,
   language,
   dialogueKey,
+  chatName,
   onSendMessage,
   onTriggerGeneration,
   onSendAs,
@@ -176,6 +178,8 @@ export default function CharacterChatPanel({
     onImpersonate: handleImpersonate,
     onContinue: handleContinue,
     onSwipe: handleSwipe,
+    onGetChatName: () => chatName || dialogueKey || character.name || "",
+    onSetInput: (text) => setUserInput(text),
     onSwitchCharacter,
   });
 

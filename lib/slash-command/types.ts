@@ -150,6 +150,8 @@ export interface ExecutionContext {
   deleteCurrentChat?: () => void | Promise<void>;
   deleteMessagesByName?: (name: string) => number | Promise<number>;
   deleteSwipe?: (swipeId?: number) => string | number | void | Promise<string | number | void>;
+  getCurrentChatName?: () => string | Promise<string>;
+  setInputText?: (text: string) => void | Promise<void>;
   getCurrentCharacter?: () => CharacterSummary | undefined | Promise<CharacterSummary | undefined>;
   listCharacters?: () => CharacterSummary[] | Promise<CharacterSummary[]>;
   switchCharacter?: (

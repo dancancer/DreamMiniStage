@@ -96,6 +96,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onImpersonate = ctx.onImpersonate;
   const onContinue = ctx.onContinue;
   const onSwipe = ctx.onSwipe;
+  const onGetChatName = ctx.onGetChatName;
+  const onSetInput = ctx.onSetInput;
   const onReloadPage = ctx.onReloadPage;
   const onTogglePanels = ctx.onTogglePanels;
   const onResetPanels = ctx.onResetPanels;
@@ -344,6 +346,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     onImpersonate,
     onContinue,
     onSwipe,
+    getCurrentChatName: onGetChatName,
+    setInputText: onSetInput,
     reloadPage: onReloadPage,
     togglePanels: onTogglePanels,
     resetPanels: onResetPanels,
