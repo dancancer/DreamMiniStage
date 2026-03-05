@@ -1,5 +1,5 @@
 /**
- * @input  hooks/script-bridge/types, lib/slash-command/executor, lib/audio/store, lib/data/roleplay/*
+ * @input  hooks/script-bridge/types, lib/slash-command/executor, lib/audio/store, lib/data/roleplay/*, lib/slash-command/prompt-injection-store
  * @output adaptSlashExecutionContext
  * @pos    Slash 执行上下文适配器
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
@@ -27,6 +27,7 @@ import {
 import {
   upsertPromptInjection,
   listPromptInjections,
+  removePromptInjections,
 } from "@/lib/slash-command/prompt-injection-store";
 import type { WorldBookEntry } from "@/lib/models/world-book-model";
 import { createLoreRegexAdapters } from "./slash-context-lore-regex";
@@ -98,6 +99,107 @@ function resolvePluginId(entry: HostPluginRegistryEntry, extensionName: string):
     return manifestId;
   }
   return extensionName.trim();
+}
+
+function isCssColorValue(value: string): boolean {
+  if (typeof document === "undefined") {
+    return value.trim().length > 0;
+  }
+
+  const probe = document.createElement("span");
+  probe.style.color = "";
+  probe.style.color = value;
+  return probe.style.color.length > 0;
+}
+
+function applyChatDisplayMode(mode: "default" | "bubble" | "document"): void {
+  if (typeof document === "undefined") {
+    throw new Error("chat display mode is not available in current context");
+  }
+
+  const body = document.body;
+  if (!body) {
+    throw new Error("chat display mode host body is not available");
+  }
+
+  body.classList.remove("bubblechat", "documentstyle");
+  if (mode === "bubble") {
+    body.classList.add("bubblechat");
+    return;
+  }
+  if (mode === "document") {
+    body.classList.add("documentstyle");
+  }
+}
+
+function resolveAutoBackgroundColor(): string {
+  if (typeof document === "undefined") {
+    throw new Error("bgcol is not available in current context");
+  }
+
+  const rootStyle = getComputedStyle(document.documentElement);
+  const bodyStyle = getComputedStyle(document.body);
+  const candidates = [
+    rootStyle.getPropertyValue("--SmartThemeBlurTintColor"),
+    bodyStyle.backgroundColor,
+    rootStyle.backgroundColor,
+  ];
+
+  for (const candidate of candidates) {
+    const normalized = candidate.trim();
+    if (normalized.length > 0 && normalized !== "rgba(0, 0, 0, 0)" && normalized !== "transparent") {
+      return normalized;
+    }
+  }
+
+  return "rgb(0, 0, 0)";
+}
+
+async function defaultShowButtonsPopup(
+  text: string,
+  labels: string[],
+  options?: { multiple?: boolean },
+): Promise<string | string[]> {
+  if (typeof window === "undefined" || typeof window.prompt !== "function") {
+    throw new Error("/buttons host popup is not available in current context");
+  }
+
+  const promptBody = labels
+    .map((label, index) => `${index + 1}. ${label}`)
+    .join("\n");
+  const promptTitle = (text || "Select option").trim();
+
+  if (options?.multiple) {
+    const raw = window.prompt(
+      `${promptTitle}\n${promptBody}\nInput comma-separated numbers:`,
+      "",
+    );
+    if (!raw || raw.trim().length === 0) {
+      return [];
+    }
+
+    const selected = Array.from(new Set(
+      raw
+        .split(",")
+        .map((chunk) => Number.parseInt(chunk.trim(), 10))
+        .filter((index) => Number.isInteger(index) && index > 0 && index <= labels.length),
+    ));
+    return selected.map((index) => labels[index - 1]);
+  }
+
+  const raw = window.prompt(
+    `${promptTitle}\n${promptBody}\nInput number:`,
+    "",
+  );
+  if (!raw || raw.trim().length === 0) {
+    return "";
+  }
+
+  const index = Number.parseInt(raw.trim(), 10);
+  if (!Number.isInteger(index) || index <= 0 || index > labels.length) {
+    return "";
+  }
+  return labels[index - 1];
 }
 
 export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContext {
@@ -239,6 +341,27 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
       return pluginId;
     }
     : undefined;
+  const defaultSetAverageBackgroundColor = typeof document !== "undefined"
+    ? async (color?: string): Promise<string> => {
+      const nextColor = (color || resolveAutoBackgroundColor()).trim();
+      if (!nextColor) {
+        throw new Error("/bgcol could not resolve target color");
+      }
+      if (!isCssColorValue(nextColor)) {
+        throw new Error(`/bgcol invalid color value: ${color}`);
+      }
+      document.documentElement.style.setProperty("--SmartThemeBlurTintColor", nextColor);
+      return nextColor;
+    }
+    : undefined;
+  const defaultSetChatDisplayMode = typeof document !== "undefined"
+    ? async (mode: "default" | "bubble" | "document"): Promise<void> => {
+      applyChatDisplayMode(mode);
+    }
+    : undefined;
+  const defaultButtonsPopupCallback = typeof window !== "undefined"
+    ? defaultShowButtonsPopup
+    : undefined;
   const onIsExtensionInstalled = ctx.onIsExtensionInstalled ?? defaultIsExtensionInstalled;
   const onGetExtensionEnabledState = ctx.onGetExtensionEnabledState ?? defaultGetExtensionEnabledState;
   const onSetExtensionEnabled = ctx.onSetExtensionEnabled ?? defaultSetExtensionEnabled;
@@ -252,6 +375,9 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onSetTheme = ctx.onSetTheme;
   const onSetMovingUiPreset = ctx.onSetMovingUiPreset;
   const onSetCssVariable = ctx.onSetCssVariable;
+  const onSetAverageBackgroundColor = ctx.onSetAverageBackgroundColor ?? defaultSetAverageBackgroundColor;
+  const onSetChatDisplayMode = ctx.onSetChatDisplayMode ?? defaultSetChatDisplayMode;
+  const onShowButtonsPopup = ctx.onShowButtonsPopup ?? defaultButtonsPopupCallback;
   const onGenerateCaption = ctx.onGenerateCaption;
   const onPlayNotificationSound = ctx.onPlayNotificationSound;
   const onSetExpression = ctx.onSetExpression;
@@ -263,6 +389,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onRenderChatMessages = ctx.onRenderChatMessages;
   const onSelectContextPreset = ctx.onSelectContextPreset;
   const onSwitchCharacter = ctx.onSwitchCharacter;
+  const onRemovePromptInjections = ctx.onRemovePromptInjections;
 
   const getWorldBookEntry = async (id: string): Promise<WorldBookEntryData | undefined> => {
     if (!ctx.characterId) return undefined;
@@ -620,6 +747,44 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     });
   };
 
+  const removeInjectedPrompts = async (id?: string): Promise<number> => {
+    if (onRemovePromptInjections) {
+      const removed = await Promise.resolve(onRemovePromptInjections(id));
+      if (!Number.isInteger(removed) || removed < 0) {
+        throw new Error("removePromptInjections host callback must return non-negative integer");
+      }
+      return removed;
+    }
+
+    const scopedInjections = listPromptInjections({
+      characterId: ctx.characterId,
+      dialogueId: ctx.dialogueId,
+      iframeId: ctx.iframeId,
+    });
+    const targetIds = id
+      ? scopedInjections.filter((item) => item.id === id).map((item) => item.id)
+      : scopedInjections.map((item) => item.id);
+    if (targetIds.length === 0) {
+      return 0;
+    }
+
+    const removed = removePromptInjections(targetIds);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("DreamMiniStage:uninjectPrompts", {
+          detail: {
+            ids: targetIds,
+            removed,
+            characterId: ctx.characterId,
+            dialogueId: ctx.dialogueId,
+            iframeId: ctx.iframeId,
+          },
+        }),
+      );
+    }
+    return removed;
+  };
+
   const loreRegexAdapters = createLoreRegexAdapters(ctx);
 
   const executionContext: ExecutionContext = {
@@ -666,6 +831,9 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     setTheme: onSetTheme,
     setMovingUiPreset: onSetMovingUiPreset,
     setCssVariable: onSetCssVariable,
+    setAverageBackgroundColor: onSetAverageBackgroundColor,
+    setChatDisplayMode: onSetChatDisplayMode,
+    showButtonsPopup: onShowButtonsPopup,
     generateCaption: onGenerateCaption,
     playNotificationSound: onPlayNotificationSound,
     setExpression: onSetExpression,
@@ -732,6 +900,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     setMessageReasoning,
     injectPrompt,
     listPromptInjections: listInjectedPrompts,
+    removePromptInjections: removeInjectedPrompts,
     playAudio,
     stopAudio,
     pauseAudio,

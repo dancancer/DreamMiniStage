@@ -1,38 +1,10 @@
 {
-  "generatedAt": "2026-03-05T08:46:30.459Z",
+  "generatedAt": "2026-03-05T09:02:39.055Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 249,
-    "coverage": "58.45%",
+    "covered": 259,
+    "coverage": "60.80%",
     "missingTop": [
-      {
-        "command": "bgcol",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "bubble",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "bubbles",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "buttons",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
       {
         "command": "closechat",
         "upstreamRefs": 1,
@@ -76,13 +48,6 @@
         "priority": "P3"
       },
       {
-        "command": "default",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "depth",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -111,28 +76,7 @@
         "priority": "P3"
       },
       {
-        "command": "flat",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "floor-teleport",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "flushinject",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "flushinjects",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -895,13 +839,6 @@
         "priority": "P3"
       },
       {
-        "command": "single",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "sort",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -931,13 +868,6 @@
       },
       {
         "command": "stopping-strings",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "story",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

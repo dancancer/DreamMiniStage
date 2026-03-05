@@ -101,3 +101,10 @@
 - [x] 补齐 UI 反馈命令簇（`/caption`、`/beep|/ding`），统一单路径与 fail-fast 语义。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `generateCaption`、`playNotificationSound` 回调能力。
 - [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
+
+## 18. P3 增量收敛（UI 样式 + 注入清理）
+
+- [x] 补齐 UI 样式/交互命令簇（`/bgcol`、`/bubble|/bubbles`、`/flat|/default`、`/single|/story`、`/buttons`），统一单路径与 fail-fast 语义。
+- [x] 补齐注入清理命令（`/flushinject|/flushinjects`），并接入会话作用域注入存储清理闭环。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `setAverageBackgroundColor/setChatDisplayMode/showButtonsPopup/removePromptInjections`，并补齐宿主默认实现。
+- [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。

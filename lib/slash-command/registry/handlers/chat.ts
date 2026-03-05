@@ -362,6 +362,24 @@ export const handleListInjects: CommandHandler = async (_args, _namedArgs, ctx, 
 };
 
 /**
+ * /flushinject [id] - 删除当前会话注入项
+ * 别名：/flushinjects
+ * SillyTavern 语义：无返回值（空字符串）；未提供 id 时删除全部。
+ */
+export const handleFlushInjects: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.removePromptInjections) {
+    throw new Error("/flushinject is not available in current context");
+  }
+
+  const targetId = (args[0] || namedArgs.id || pipe || "").trim() || undefined;
+  const removed = await Promise.resolve(ctx.removePromptInjections(targetId));
+  if (!Number.isInteger(removed) || removed < 0) {
+    throw new Error("/flushinject host returned invalid remove count");
+  }
+  return "";
+};
+
+/**
  * /delchat - 删除当前聊天
  * SillyTavern 语义：无返回值（空字符串）。
  */

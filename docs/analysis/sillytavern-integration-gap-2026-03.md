@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`249/426 = 58.45%`（较上一轮 `57.75%` 提升 `+0.70`pp）。
+- Slash 命令覆盖面继续提升：`259/426 = 60.80%`（较上一轮 `58.45%` 提升 `+2.35`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -44,6 +44,8 @@
    - P3 expression 簇：`/expression-set`、`/sprite`、`/emote`、`/expression-folder-override`、`/spriteoverride`、`/costume`、`/expression-last`、`/lastsprite`、`/expression-list`、`/expressions`、`/expression-classify`、`/classify`
    - P3 extension 运维簇：`/extension-enable`、`/extension-disable`、`/extension-toggle`、`/extension-state`、`/extension-exists`、`/extension-installed`
    - P3 UI 反馈簇：`/caption`、`/beep`、`/ding`
+   - P3 UI 样式/交互簇：`/bgcol`、`/bubble`、`/bubbles`、`/flat`、`/default`、`/single`、`/story`、`/buttons`
+   - P3 注入清理簇：`/flushinject`、`/flushinjects`
 2. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
@@ -52,7 +54,7 @@
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已移除 `ask/context/clipboard-*`、`data-bank-*`、`closure-*`、`/bind`、`/disable`、`/enable`、`member-* enable/disable`、`expression-*`、`extension-*`、`caption`、`beep|ding` 命令簇；当前主要剩余为 UI/交互类 P3 长尾命令（如 `bgcol`、`bubble|bubbles`、`buttons`）。
+- Top25 已移除 `ask/context/clipboard-*`、`data-bank-*`、`closure-*`、`/bind`、`/disable`、`/enable`、`member-* enable/disable`、`expression-*`、`extension-*`、`caption`、`beep|ding`、`bgcol`、`bubble|bubbles`、`buttons`、`flat|default`、`flushinject|flushinjects` 命令簇；当前主要剩余为会话与图像相关 P3 长尾命令（如 `closechat`、`count`、`countmember`、`cut`、`image|img|imagine*`）。
 
 ## 4. 基线素材与回归状态
 
@@ -73,6 +75,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 为 `member-*/addswipe` 打通宿主 UI 可见回调（而不止命令层），确保“命令可执行”与“界面可见效果”一致。
-2. 把 `data-bank-search` 与 `vector-worldinfo-state` 统一接入端到端可见断言，持续收紧回归面。
-3. 继续推进一个 P3 命令簇（建议 `bgcol` + `bubble|bubbles|buttons`），按素材驱动小步收敛。
+1. 推进会话运维长尾（`/closechat`、`/count`、`/countmember`、`/cut`），优先选择宿主已有状态可读写的命令，保持单路径实现。
+2. 推进图像命令首批（`/image|/img` 与 `imagine*` 的最小可用子集），优先打通“命令可执行 + 返回值可断言”闭环。
+3. 为 `member-*/addswipe`、`data-bank-search` 与 `vector-worldinfo-state` 增加端到端 UI/结果可见断言，继续收紧回归面。

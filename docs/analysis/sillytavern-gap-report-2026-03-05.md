@@ -1,41 +1,41 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T08:46:30.459Z
+- generatedAt: 2026-03-05T09:02:39.055Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 249/426 (58.45%)
+- slash commands: 259/426 (60.80%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
 ## Priority Command Gaps (Top 25)
 
-- [P3] /bgcol (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /bubble (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /bubbles (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /buttons (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /closechat (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /count (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /countmember (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /custom-stop-strings (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /custom-stopping-strings (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /cut (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /default (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /depth (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /downmember (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /dupe (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /expression-upload (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /flat (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /floor-teleport (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /flushinject (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /flushinjects (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /forcesave (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /freq (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /hide (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /icw (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /image (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /imagine (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /imagine-comfy-workflow (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /imagine-source (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /imagine-style (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /img (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /img-source (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /img-style (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /import (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /input (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

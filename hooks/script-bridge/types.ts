@@ -11,6 +11,7 @@
 
 import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
+  ButtonsCommandOptions,
   CaptionCommandOptions,
   CharacterSwitchResult,
   ExpressionClassifyOptions,
@@ -158,6 +159,17 @@ export interface ApiCallContext {
   onSetTheme?: (theme?: string) => string | Promise<string>;
   onSetMovingUiPreset?: (presetName: string) => string | Promise<string>;
   onSetCssVariable?: (args: { varName: string; value: string; target?: string }) => void | Promise<void>;
+  onSetAverageBackgroundColor?: (
+    color?: string,
+  ) => string | Promise<string>;
+  onSetChatDisplayMode?: (
+    mode: "default" | "bubble" | "document",
+  ) => void | Promise<void>;
+  onShowButtonsPopup?: (
+    text: string,
+    labels: string[],
+    options?: ButtonsCommandOptions,
+  ) => string | string[] | Promise<string | string[]>;
   onGenerateCaption?: (
     options?: CaptionCommandOptions,
   ) => string | Promise<string>;
@@ -190,6 +202,7 @@ export interface ApiCallContext {
   onSwitchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
+  onRemovePromptInjections?: (id?: string) => number | Promise<number>;
 }
 
 // ============================================================================

@@ -91,6 +91,10 @@ export interface CaptionCommandOptions {
   index?: number;
 }
 
+export interface ButtonsCommandOptions {
+  multiple?: boolean;
+}
+
 // ============================================================================
 //                              解析结果类型
 // ============================================================================
@@ -266,6 +270,7 @@ export interface ExecutionContext {
   stopGeneration?: () => boolean | Promise<boolean>;
   injectPrompt?: (prompt: string, options?: InjectOptions) => void | Promise<void>;
   listPromptInjections?: () => PromptInjectionState[] | Promise<PromptInjectionState[]>;
+  removePromptInjections?: (id?: string) => number | Promise<number>;
 
   // 扩展操作 - World Info 激活
   activateWorldInfoEntry?: (name: string, options?: ActivateLoreOptions) => void | Promise<void>;
@@ -397,6 +402,15 @@ export interface ExecutionContext {
   setTheme?: (theme?: string) => string | Promise<string>;
   setMovingUiPreset?: (presetName: string) => string | Promise<string>;
   setCssVariable?: (args: { varName: string; value: string; target?: string }) => void | Promise<void>;
+  setAverageBackgroundColor?: (color?: string) => string | Promise<string>;
+  setChatDisplayMode?: (
+    mode: "default" | "bubble" | "document",
+  ) => void | Promise<void>;
+  showButtonsPopup?: (
+    text: string,
+    labels: string[],
+    options?: ButtonsCommandOptions,
+  ) => string | string[] | Promise<string | string[]>;
   generateCaption?: (
     options?: CaptionCommandOptions,
   ) => string | Promise<string>;

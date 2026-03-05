@@ -38,6 +38,43 @@ function parseNonNegativeInteger(
   return parsed;
 }
 
+function parseButtonLabels(raw: string | undefined): string[] {
+  if (!raw) {
+    throw new Error("/buttons requires labels argument");
+  }
+
+  const normalized = raw.trim();
+  if (!normalized) {
+    throw new Error("/buttons requires labels argument");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(normalized);
+  } catch (_error) {
+    const fallback = normalized
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+    if (fallback.length > 0) {
+      return fallback;
+    }
+    throw new Error(`/buttons invalid labels value: ${raw}`);
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error("/buttons labels must be a JSON array");
+  }
+
+  const labels = parsed
+    .map((item) => typeof item === "string" ? item.trim() : "")
+    .filter((item) => item.length > 0);
+  if (labels.length === 0) {
+    throw new Error("/buttons labels must contain at least one non-empty string");
+  }
+  return labels;
+}
+
 /** /panels - 切换 UI 面板显示 */
 export const handlePanels: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
   const callback = ensureHostCallback(ctx.togglePanels, "panels");
@@ -139,6 +176,69 @@ export const handleCssVar: CommandHandler = async (args, namedArgs, ctx, pipe) =
     target: namedArgs.to?.trim() || undefined,
   });
   return "";
+};
+
+/** /bgcol [color] - 根据当前背景或显式颜色设置对话主色调 */
+export const handleBgCol: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  const callback = ensureHostCallback(ctx.setAverageBackgroundColor, "bgcol");
+  const color = resolveCommandText(args, pipe);
+  const result = await Promise.resolve(callback(color || undefined));
+  if (typeof result !== "string") {
+    throw new Error("/bgcol host callback must return a string");
+  }
+  return result;
+};
+
+/** /bubble - 切换到气泡聊天样式（别名 /bubbles） */
+export const handleBubble: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  const callback = ensureHostCallback(ctx.setChatDisplayMode, "bubble");
+  await Promise.resolve(callback("bubble"));
+  return "";
+};
+
+/** /flat - 切换到默认平铺样式（别名 /default） */
+export const handleFlat: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  const callback = ensureHostCallback(ctx.setChatDisplayMode, "flat");
+  await Promise.resolve(callback("default"));
+  return "";
+};
+
+/** /single - 切换到文档样式（别名 /story） */
+export const handleStory: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  const callback = ensureHostCallback(ctx.setChatDisplayMode, "single");
+  await Promise.resolve(callback("document"));
+  return "";
+};
+
+/** /buttons labels=[...] [multiple=true|false] <text> - 显示按钮弹窗并返回结果 */
+export const handleButtons: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const callback = ensureHostCallback(ctx.showButtonsPopup, "buttons");
+  const labels = parseButtonLabels(namedArgs.labels);
+  const parsedMultiple = parseBoolean(namedArgs.multiple, undefined);
+  if (namedArgs.multiple !== undefined && parsedMultiple === undefined) {
+    throw new Error(`/buttons invalid multiple value: ${namedArgs.multiple}`);
+  }
+  const multiple = parsedMultiple ?? false;
+
+  const text = resolveCommandText(args, pipe);
+  if (!text) {
+    throw new Error("/buttons requires popup text");
+  }
+
+  const result = await Promise.resolve(callback(text, labels, { multiple }));
+  if (result === undefined || result === null) {
+    return "";
+  }
+  if (typeof result === "string") {
+    return result;
+  }
+  if (Array.isArray(result)) {
+    if (!result.every((item) => typeof item === "string")) {
+      throw new Error("/buttons host callback must return string array when multiple=true");
+    }
+    return JSON.stringify(result);
+  }
+  throw new Error("/buttons host callback must return string or string[]");
 };
 
 /** /caption [prompt] - 生成图片描述 */

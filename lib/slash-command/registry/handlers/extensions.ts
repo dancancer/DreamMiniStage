@@ -114,7 +114,8 @@ async function applyExtensionState(
   reload: boolean,
   ctx: Parameters<CommandHandler>[2],
 ): Promise<string> {
-  if (reload && !ctx.reloadPage) {
+  const reloadPage = ctx.reloadPage;
+  if (reload && !reloadPage) {
     throw new Error(`/${commandName} reload requested but /reload-page is not available in current context`);
   }
 
@@ -124,8 +125,8 @@ async function applyExtensionState(
     await Promise.resolve(setState(extensionName, targetState, { reload })),
   ) || extensionName;
 
-  if (reload) {
-    await Promise.resolve(ctx.reloadPage());
+  if (reload && reloadPage) {
+    await Promise.resolve(reloadPage());
   }
 
   return normalizedName;
