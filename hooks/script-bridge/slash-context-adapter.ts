@@ -135,6 +135,11 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onSetTheme = ctx.onSetTheme;
   const onSetMovingUiPreset = ctx.onSetMovingUiPreset;
   const onSetCssVariable = ctx.onSetCssVariable;
+  const onSetExpression = ctx.onSetExpression;
+  const onSetExpressionFolderOverride = ctx.onSetExpressionFolderOverride;
+  const onGetLastExpression = ctx.onGetLastExpression;
+  const onListExpressions = ctx.onListExpressions;
+  const onClassifyExpression = ctx.onClassifyExpression;
   const onJumpToMessage = ctx.onJumpToMessage;
   const onRenderChatMessages = ctx.onRenderChatMessages;
   const onSelectContextPreset = ctx.onSelectContextPreset;
@@ -539,6 +544,11 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     setTheme: onSetTheme,
     setMovingUiPreset: onSetMovingUiPreset,
     setCssVariable: onSetCssVariable,
+    setExpression: onSetExpression,
+    setExpressionFolderOverride: onSetExpressionFolderOverride,
+    getLastExpression: onGetLastExpression,
+    listExpressions: onListExpressions,
+    classifyExpression: onClassifyExpression,
     jumpToMessage: onJumpToMessage,
     renderChatMessages: onRenderChatMessages,
     selectContextPreset: onSelectContextPreset,

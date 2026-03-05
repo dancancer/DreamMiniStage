@@ -83,3 +83,9 @@
 - [x] 补齐群聊成员启停命令簇（`/member-disable|/disable|/disablemember`、`/member-enable|/enable|/enablemember`）并统一 fail-fast 语义。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `setGroupMemberEnabled` 回调能力，确保成员启停命令可由宿主接管。
 - [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
+
+## 15. P3 增量收敛（Expression 命令簇）
+
+- [x] 补齐表情命令簇（`/expression-set|/sprite|/emote`、`/expression-folder-override|/spriteoverride|/costume`、`/expression-last|/lastsprite`、`/expression-list|/expressions`、`/expression-classify|/classify`），统一单路径与 fail-fast 语义。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 expression 相关回调能力，确保命令可由宿主接管。
+- [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。

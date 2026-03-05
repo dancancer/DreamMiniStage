@@ -57,12 +57,31 @@ export interface PromptInjectionState {
 export type DataBankSource = "global" | "character" | "chat";
 export type PersonaLockType = "chat" | "character" | "default";
 export type PersonaLockState = "on" | "off" | "toggle";
+export type ExpressionSetType = "expression" | "sprite";
 
 export interface DataBankEntrySnapshot {
   name: string;
   url: string;
   source?: DataBankSource;
   enabled?: boolean;
+}
+
+export interface ExpressionSetOptions {
+  type?: ExpressionSetType;
+}
+
+export interface ExpressionFolderOverrideOptions {
+  name?: string;
+}
+
+export interface ExpressionListOptions {
+  filterAvailable?: boolean;
+}
+
+export interface ExpressionClassifyOptions {
+  api?: string;
+  filterAvailable?: boolean;
+  prompt?: string;
 }
 
 // ============================================================================
@@ -360,6 +379,22 @@ export interface ExecutionContext {
   setTheme?: (theme?: string) => string | Promise<string>;
   setMovingUiPreset?: (presetName: string) => string | Promise<string>;
   setCssVariable?: (args: { varName: string; value: string; target?: string }) => void | Promise<void>;
+  setExpression?: (
+    label: string,
+    options?: ExpressionSetOptions,
+  ) => string | Promise<string>;
+  setExpressionFolderOverride?: (
+    folder: string,
+    options?: ExpressionFolderOverrideOptions,
+  ) => string | void | Promise<string | void>;
+  getLastExpression?: (name?: string) => string | Promise<string>;
+  listExpressions?: (
+    options?: ExpressionListOptions,
+  ) => string[] | Promise<string[]>;
+  classifyExpression?: (
+    text: string,
+    options?: ExpressionClassifyOptions,
+  ) => string | Promise<string>;
   jumpToMessage?: (index: number) => void | Promise<void>;
   renderChatMessages?: (
     count: number,

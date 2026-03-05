@@ -23,6 +23,7 @@ import * as UtilityHandlers from "./handlers/utility";
 import * as UiHandlers from "./handlers/ui";
 import * as LoreHandlers from "./handlers/lore";
 import * as DataBankHandlers from "./handlers/data-bank";
+import * as ExpressionHandlers from "./handlers/expression";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -153,6 +154,18 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["cancel", ChatHandlers.handleDelName],
   ["delswipe", ChatHandlers.handleDelSwipe],
   ["swipedel", ChatHandlers.handleDelSwipe],
+  ["expression-set", ExpressionHandlers.handleExpressionSet],
+  ["sprite", ExpressionHandlers.handleExpressionSet],
+  ["emote", ExpressionHandlers.handleExpressionSet],
+  ["expression-folder-override", ExpressionHandlers.handleExpressionFolderOverride],
+  ["spriteoverride", ExpressionHandlers.handleExpressionFolderOverride],
+  ["costume", ExpressionHandlers.handleExpressionFolderOverride],
+  ["expression-last", ExpressionHandlers.handleExpressionLast],
+  ["lastsprite", ExpressionHandlers.handleExpressionLast],
+  ["expression-list", ExpressionHandlers.handleExpressionList],
+  ["expressions", ExpressionHandlers.handleExpressionList],
+  ["expression-classify", ExpressionHandlers.handleExpressionClassify],
+  ["classify", ExpressionHandlers.handleExpressionClassify],
 
   // ─── 工具命令 ───
   ["?", CoreHandlers.handleHelp],

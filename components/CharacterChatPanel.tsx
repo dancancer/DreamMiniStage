@@ -20,6 +20,10 @@ import { useApiConfig } from "@/hooks/useApiConfig";
 import { useScriptBridge } from "@/hooks/useScriptBridge";
 import type {
   CharacterSwitchResult,
+  ExpressionClassifyOptions,
+  ExpressionFolderOverrideOptions,
+  ExpressionListOptions,
+  ExpressionSetOptions,
   GroupMemberField,
   SendOptions,
 } from "@/lib/slash-command/types";
@@ -101,6 +105,22 @@ interface Props {
     text: string,
     options?: { switch?: boolean },
   ) => string | number | void | Promise<string | number | void>;
+  onSetExpression?: (
+    label: string,
+    options?: ExpressionSetOptions,
+  ) => string | Promise<string>;
+  onSetExpressionFolderOverride?: (
+    folder: string,
+    options?: ExpressionFolderOverrideOptions,
+  ) => string | void | Promise<string | void>;
+  onGetLastExpression?: (name?: string) => string | Promise<string>;
+  onListExpressions?: (
+    options?: ExpressionListOptions,
+  ) => string[] | Promise<string[]>;
+  onClassifyExpression?: (
+    text: string,
+    options?: ExpressionClassifyOptions,
+  ) => string | Promise<string>;
   onSwitchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
@@ -146,6 +166,11 @@ export default function CharacterChatPanel({
   onAddGroupMember,
   onSetGroupMemberEnabled,
   onAddSwipe,
+  onSetExpression,
+  onSetExpressionFolderOverride,
+  onGetLastExpression,
+  onListExpressions,
+  onClassifyExpression,
   onSwitchCharacter,
   onExportJsonl,
   onImportJsonl,
@@ -207,6 +232,11 @@ export default function CharacterChatPanel({
     onAddGroupMember,
     onSetGroupMemberEnabled,
     onAddSwipe,
+    onSetExpression,
+    onSetExpressionFolderOverride,
+    onGetLastExpression,
+    onListExpressions,
+    onClassifyExpression,
     onSwitchCharacter,
   });
 

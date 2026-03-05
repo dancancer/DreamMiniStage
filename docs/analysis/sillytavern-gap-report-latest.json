@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-05T07:46:28.501Z",
+  "generatedAt": "2026-03-05T08:17:45.167Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 228,
-    "coverage": "53.52%",
+    "covered": 240,
+    "coverage": "56.34%",
     "missingTop": [
       {
         "command": "beep",
@@ -48,21 +48,7 @@
         "priority": "P3"
       },
       {
-        "command": "classify",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "closechat",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "costume",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -139,56 +125,7 @@
         "priority": "P3"
       },
       {
-        "command": "emote",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "expression-classify",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "expression-folder-override",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "expression-last",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "expression-list",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "expression-set",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "expression-upload",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "expressions",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -399,13 +336,6 @@
       },
       {
         "command": "is-mobile",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "lastsprite",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -1043,20 +973,6 @@
       },
       {
         "command": "speak",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sprite",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "spriteoverride",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

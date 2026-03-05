@@ -12,6 +12,10 @@
 import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
   CharacterSwitchResult,
+  ExpressionClassifyOptions,
+  ExpressionFolderOverrideOptions,
+  ExpressionListOptions,
+  ExpressionSetOptions,
   DataBankEntrySnapshot,
   DataBankSource,
   GroupMemberField,
@@ -142,6 +146,22 @@ export interface ApiCallContext {
   onSetTheme?: (theme?: string) => string | Promise<string>;
   onSetMovingUiPreset?: (presetName: string) => string | Promise<string>;
   onSetCssVariable?: (args: { varName: string; value: string; target?: string }) => void | Promise<void>;
+  onSetExpression?: (
+    label: string,
+    options?: ExpressionSetOptions,
+  ) => string | Promise<string>;
+  onSetExpressionFolderOverride?: (
+    folder: string,
+    options?: ExpressionFolderOverrideOptions,
+  ) => string | void | Promise<string | void>;
+  onGetLastExpression?: (name?: string) => string | Promise<string>;
+  onListExpressions?: (
+    options?: ExpressionListOptions,
+  ) => string[] | Promise<string[]>;
+  onClassifyExpression?: (
+    text: string,
+    options?: ExpressionClassifyOptions,
+  ) => string | Promise<string>;
   onJumpToMessage?: (index: number) => void | Promise<void>;
   onRenderChatMessages?: (
     count: number,

@@ -20,6 +20,10 @@ import { handleApiCall } from "./script-bridge";
 import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
   CharacterSwitchResult,
+  ExpressionClassifyOptions,
+  ExpressionFolderOverrideOptions,
+  ExpressionListOptions,
+  ExpressionSetOptions,
   GroupMemberField,
   SendOptions,
 } from "@/lib/slash-command/types";
@@ -67,6 +71,22 @@ interface UseScriptBridgeOptions {
     text: string,
     options?: { switch?: boolean },
   ) => string | number | void | Promise<string | number | void>;
+  onSetExpression?: (
+    label: string,
+    options?: ExpressionSetOptions,
+  ) => string | Promise<string>;
+  onSetExpressionFolderOverride?: (
+    folder: string,
+    options?: ExpressionFolderOverrideOptions,
+  ) => string | void | Promise<string | void>;
+  onGetLastExpression?: (name?: string) => string | Promise<string>;
+  onListExpressions?: (
+    options?: ExpressionListOptions,
+  ) => string[] | Promise<string[]>;
+  onClassifyExpression?: (
+    text: string,
+    options?: ExpressionClassifyOptions,
+  ) => string | Promise<string>;
   onJumpToMessage?: (index: number) => void | Promise<void>;
   onRenderChatMessages?: (
     count: number,
@@ -124,6 +144,11 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onAddGroupMember,
     onSetGroupMemberEnabled,
     onAddSwipe,
+    onSetExpression,
+    onSetExpressionFolderOverride,
+    onGetLastExpression,
+    onListExpressions,
+    onClassifyExpression,
     onJumpToMessage,
     onRenderChatMessages,
     onSwitchCharacter,
@@ -241,6 +266,11 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onAddGroupMember,
           onSetGroupMemberEnabled,
           onAddSwipe,
+          onSetExpression,
+          onSetExpressionFolderOverride,
+          onGetLastExpression,
+          onListExpressions,
+          onClassifyExpression,
           onJumpToMessage,
           onRenderChatMessages,
           onSwitchCharacter: onSwitchCharacter ? handleCharacterSwitch : undefined,
@@ -292,6 +322,11 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onAddGroupMember,
       onSetGroupMemberEnabled,
       onAddSwipe,
+      onSetExpression,
+      onSetExpressionFolderOverride,
+      onGetLastExpression,
+      onListExpressions,
+      onClassifyExpression,
       onJumpToMessage,
       onRenderChatMessages,
       onSwitchCharacter,
