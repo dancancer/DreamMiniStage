@@ -84,6 +84,13 @@ export interface ExpressionClassifyOptions {
   prompt?: string;
 }
 
+export interface CaptionCommandOptions {
+  prompt?: string;
+  quiet?: boolean;
+  mesId?: number;
+  index?: number;
+}
+
 // ============================================================================
 //                              解析结果类型
 // ============================================================================
@@ -390,6 +397,10 @@ export interface ExecutionContext {
   setTheme?: (theme?: string) => string | Promise<string>;
   setMovingUiPreset?: (presetName: string) => string | Promise<string>;
   setCssVariable?: (args: { varName: string; value: string; target?: string }) => void | Promise<void>;
+  generateCaption?: (
+    options?: CaptionCommandOptions,
+  ) => string | Promise<string>;
+  playNotificationSound?: () => void | Promise<void>;
   setExpression?: (
     label: string,
     options?: ExpressionSetOptions,

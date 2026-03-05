@@ -95,3 +95,9 @@
 - [x] 补齐扩展运维命令簇（`/extension-enable`、`/extension-disable`、`/extension-toggle`、`/extension-state`、`/extension-exists|/extension-installed`），统一单路径与 fail-fast 语义。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 extension 相关回调能力，并为宿主路径补齐 `window.pluginRegistry` 默认适配。
 - [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
+
+## 17. P3 增量收敛（caption/beep）
+
+- [x] 补齐 UI 反馈命令簇（`/caption`、`/beep|/ding`），统一单路径与 fail-fast 语义。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `generateCaption`、`playNotificationSound` 回调能力。
+- [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。

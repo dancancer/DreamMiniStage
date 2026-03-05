@@ -1,17 +1,10 @@
 {
-  "generatedAt": "2026-03-05T08:31:55.036Z",
+  "generatedAt": "2026-03-05T08:46:30.459Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 246,
-    "coverage": "57.75%",
+    "covered": 249,
+    "coverage": "58.45%",
     "missingTop": [
-      {
-        "command": "beep",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
       {
         "command": "bgcol",
         "upstreamRefs": 1,
@@ -35,13 +28,6 @@
       },
       {
         "command": "buttons",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "caption",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -98,13 +84,6 @@
       },
       {
         "command": "depth",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "ding",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

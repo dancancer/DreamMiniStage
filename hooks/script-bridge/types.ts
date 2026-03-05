@@ -11,6 +11,7 @@
 
 import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
+  CaptionCommandOptions,
   CharacterSwitchResult,
   ExpressionClassifyOptions,
   ExpressionFolderOverrideOptions,
@@ -157,6 +158,10 @@ export interface ApiCallContext {
   onSetTheme?: (theme?: string) => string | Promise<string>;
   onSetMovingUiPreset?: (presetName: string) => string | Promise<string>;
   onSetCssVariable?: (args: { varName: string; value: string; target?: string }) => void | Promise<void>;
+  onGenerateCaption?: (
+    options?: CaptionCommandOptions,
+  ) => string | Promise<string>;
+  onPlayNotificationSound?: () => void | Promise<void>;
   onSetExpression?: (
     label: string,
     options?: ExpressionSetOptions,

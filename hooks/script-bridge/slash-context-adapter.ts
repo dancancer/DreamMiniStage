@@ -252,6 +252,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onSetTheme = ctx.onSetTheme;
   const onSetMovingUiPreset = ctx.onSetMovingUiPreset;
   const onSetCssVariable = ctx.onSetCssVariable;
+  const onGenerateCaption = ctx.onGenerateCaption;
+  const onPlayNotificationSound = ctx.onPlayNotificationSound;
   const onSetExpression = ctx.onSetExpression;
   const onSetExpressionFolderOverride = ctx.onSetExpressionFolderOverride;
   const onGetLastExpression = ctx.onGetLastExpression;
@@ -664,6 +666,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     setTheme: onSetTheme,
     setMovingUiPreset: onSetMovingUiPreset,
     setCssVariable: onSetCssVariable,
+    generateCaption: onGenerateCaption,
+    playNotificationSound: onPlayNotificationSound,
     setExpression: onSetExpression,
     setExpressionFolderOverride: onSetExpressionFolderOverride,
     getLastExpression: onGetLastExpression,
