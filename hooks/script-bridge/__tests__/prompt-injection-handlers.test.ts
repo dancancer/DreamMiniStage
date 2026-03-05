@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ApiCallContext } from "../types";
 import { promptInjectionHandlers } from "../prompt-injection-handlers";
+import { clearPromptInjections } from "@/lib/slash-command/prompt-injection-store";
 
 function createMockContext(overrides: Partial<ApiCallContext> = {}): ApiCallContext {
   return {
@@ -21,6 +22,7 @@ function createMockContext(overrides: Partial<ApiCallContext> = {}): ApiCallCont
 describe("prompt injection handlers", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    clearPromptInjections();
   });
 
   it("injectPrompts stores prompts and returns generated ids", () => {

@@ -12,6 +12,10 @@
  */
 
 import type { ApiCallContext, ApiHandlerMap } from "./types";
+import {
+  upsertPromptInjection,
+  removePromptInjections,
+} from "@/lib/slash-command/prompt-injection-store";
 
 type PromptRole = "system" | "assistant" | "user";
 type PromptPosition = "in_chat" | "none";
@@ -26,7 +30,7 @@ interface InjectPromptPayload {
 }
 
 interface PromptInjectionRecord {
-  id: string;
+  id?: string;
   content: string;
   role: PromptRole;
   position: PromptPosition;
@@ -37,12 +41,6 @@ interface PromptInjectionRecord {
 
 interface InjectPromptOptions {
   once?: boolean;
-}
-
-const promptInjectionStore = new Map<string, PromptInjectionRecord>();
-
-function createInjectionId(): string {
-  return `inject_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function ensurePromptRole(value: unknown, index: number): PromptRole {
@@ -104,7 +102,7 @@ function normalizeInjectPrompts(args: unknown[]): {
     return {
       id: typeof prompt.id === "string" && prompt.id.trim().length > 0
         ? prompt.id.trim()
-        : createInjectionId(),
+        : undefined,
       content: prompt.content,
       role: ensurePromptRole(prompt.role, index),
       position: ensurePromptPosition(prompt.position, index),
@@ -136,14 +134,19 @@ function normalizePromptIds(args: unknown[]): string[] {
 
 function injectPrompts(args: unknown[], ctx: ApiCallContext): string[] {
   const { prompts, once } = normalizeInjectPrompts(args);
-  for (const prompt of prompts) {
-    promptInjectionStore.set(prompt.id, prompt);
-  }
+  const savedPrompts = prompts.map((prompt) => upsertPromptInjection(
+    prompt,
+    {
+      characterId: ctx.characterId,
+      dialogueId: ctx.dialogueId,
+      iframeId: ctx.iframeId,
+    },
+  ));
 
   window.dispatchEvent(
     new CustomEvent("DreamMiniStage:injectPrompts", {
       detail: {
-        prompts,
+        prompts: savedPrompts,
         once,
         characterId: ctx.characterId,
         dialogueId: ctx.dialogueId,
@@ -152,17 +155,12 @@ function injectPrompts(args: unknown[], ctx: ApiCallContext): string[] {
     }),
   );
 
-  return prompts.map((prompt) => prompt.id);
+  return savedPrompts.map((prompt) => prompt.id);
 }
 
 function uninjectPrompts(args: unknown[], ctx: ApiCallContext): number {
   const ids = normalizePromptIds(args);
-  let removed = 0;
-  for (const id of ids) {
-    if (promptInjectionStore.delete(id)) {
-      removed += 1;
-    }
-  }
+  const removed = removePromptInjections(ids);
 
   window.dispatchEvent(
     new CustomEvent("DreamMiniStage:uninjectPrompts", {

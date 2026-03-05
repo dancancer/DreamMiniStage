@@ -51,6 +51,53 @@ function parseSwipeId(raw: string | undefined): number | undefined {
   return parsed;
 }
 
+function resolveReasoningMessageIndex(
+  raw: string | undefined,
+  messages: Array<{ content: string }>,
+  commandName: "get-reasoning" | "set-reasoning",
+): number {
+  if (messages.length === 0) {
+    throw new Error(`/${commandName} requires at least one message`);
+  }
+
+  if (!raw || raw.trim().length === 0) {
+    return messages.length - 1;
+  }
+
+  const parsed = Number.parseInt(raw.trim(), 10);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(`/${commandName} invalid message index: ${raw}`);
+  }
+  if (parsed >= messages.length) {
+    throw new Error(`/${commandName} message index out of range: ${parsed}`);
+  }
+  return parsed;
+}
+
+function normalizeInjectionRecord(record: unknown): Record<string, unknown> {
+  if (!record || typeof record !== "object" || Array.isArray(record)) {
+    throw new Error("/listinjects host returned invalid injection record");
+  }
+
+  const raw = record as Record<string, unknown>;
+  if (typeof raw.id !== "string" || raw.id.trim().length === 0) {
+    throw new Error("/listinjects host returned injection with invalid id");
+  }
+  if (typeof raw.content !== "string") {
+    throw new Error(`/listinjects host returned injection ${raw.id} with invalid content`);
+  }
+
+  return {
+    id: raw.id,
+    content: raw.content,
+    role: typeof raw.role === "string" ? raw.role : "system",
+    position: typeof raw.position === "string" ? raw.position : "in_chat",
+    depth: typeof raw.depth === "number" ? raw.depth : 0,
+    should_scan: raw.should_scan === true,
+    createdAt: typeof raw.createdAt === "string" ? raw.createdAt : "",
+  };
+}
+
 function isMessageNameMatched(messageName: string | undefined, targetName: string): boolean {
   return (messageName || "").trim().toLowerCase() === targetName;
 }
@@ -111,6 +158,72 @@ export const handleSetInput: CommandHandler = async (args, namedArgs, ctx, pipe)
   const nextInput = fromArgs || fromNamed || pipe;
   await Promise.resolve(ctx.setInputText(nextInput));
   return nextInput;
+};
+
+/**
+ * /get-reasoning [index] - 获取消息推理块
+ * SillyTavern 语义：默认读取最后一条消息的 reasoning 内容。
+ */
+export const handleGetReasoning: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const messages = ctx.messages ?? [];
+  const index = resolveReasoningMessageIndex(args[0] || namedArgs.at || pipe, messages, "get-reasoning");
+
+  if (ctx.getMessageReasoning) {
+    const reasoning = await Promise.resolve(ctx.getMessageReasoning(index));
+    if (reasoning === undefined || reasoning === null) {
+      return "";
+    }
+    if (typeof reasoning !== "string") {
+      throw new Error("/get-reasoning host returned non-string reasoning");
+    }
+    return reasoning;
+  }
+
+  return messages[index]?.thinkingContent || "";
+};
+
+/**
+ * /set-reasoning [text] - 设置消息推理块
+ * SillyTavern 语义：默认写入最后一条消息，可通过 at= 指定索引。
+ */
+export const handleSetReasoning: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const messages = ctx.messages ?? [];
+  const index = resolveReasoningMessageIndex(namedArgs.at, messages, "set-reasoning");
+  const reasoning = args.join(" ") || pipe || "";
+
+  const collapse = parseBoolean(namedArgs.collapse, undefined);
+  if (namedArgs.collapse !== undefined && collapse === undefined) {
+    throw new Error(`/set-reasoning invalid collapse value: ${namedArgs.collapse}`);
+  }
+
+  if (ctx.setMessageReasoning) {
+    await Promise.resolve(ctx.setMessageReasoning(index, reasoning, { collapse }));
+    return reasoning;
+  }
+
+  const message = messages[index];
+  if (!message) {
+    throw new Error(`/set-reasoning message index out of range: ${index}`);
+  }
+  message.thinkingContent = reasoning;
+  return reasoning;
+};
+
+/**
+ * /listinjects - 列出当前会话注入项
+ * SillyTavern 语义：返回注入对象；这里统一返回 JSON 字符串。
+ */
+export const handleListInjects: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  if (!ctx.listPromptInjections) {
+    throw new Error("/listinjects is not available in current context");
+  }
+
+  const injections = await Promise.resolve(ctx.listPromptInjections());
+  if (!Array.isArray(injections)) {
+    throw new Error("/listinjects host returned non-array injections");
+  }
+
+  return JSON.stringify(injections.map(normalizeInjectionRecord));
 };
 
 /**

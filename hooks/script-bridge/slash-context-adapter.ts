@@ -20,6 +20,10 @@ import { getAudioManager } from "@/lib/audio/store";
 import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
 import { PresetOperations } from "@/lib/data/roleplay/preset-operation";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
+import {
+  upsertPromptInjection,
+  listPromptInjections,
+} from "@/lib/slash-command/prompt-injection-store";
 import type { WorldBookEntry } from "@/lib/models/world-book-model";
 import { createLoreRegexAdapters } from "./slash-context-lore-regex";
 
@@ -334,6 +338,65 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     return records.map(toCharacterSummary);
   };
 
+  const getMessageReasoning = async (index: number): Promise<string | undefined> => {
+    const message = ctx.messages[index];
+    if (!message) {
+      throw new Error(`/get-reasoning message index out of range: ${index}`);
+    }
+    return message.thinkingContent || "";
+  };
+
+  const setMessageReasoning = async (index: number, reasoning: string): Promise<void> => {
+    const message = ctx.messages[index];
+    if (!message) {
+      throw new Error(`/set-reasoning message index out of range: ${index}`);
+    }
+    message.thinkingContent = reasoning;
+  };
+
+  const injectPrompt = async (prompt: string, options?: {
+    position?: "before" | "after" | "chat" | "in_chat" | "none";
+    depth?: number;
+    role?: "system" | "user" | "assistant";
+    ephemeral?: boolean;
+  }): Promise<void> => {
+    const injection = upsertPromptInjection(
+      {
+        content: prompt,
+        role: options?.role,
+        position: options?.position || "in_chat",
+        depth: options?.depth,
+      },
+      {
+        characterId: ctx.characterId,
+        dialogueId: ctx.dialogueId,
+        iframeId: ctx.iframeId,
+      },
+    );
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("DreamMiniStage:injectPrompts", {
+          detail: {
+            prompts: [injection],
+            once: options?.ephemeral === true,
+            characterId: ctx.characterId,
+            dialogueId: ctx.dialogueId,
+            iframeId: ctx.iframeId,
+          },
+        }),
+      );
+    }
+  };
+
+  const listInjectedPrompts = async () => {
+    return listPromptInjections({
+      characterId: ctx.characterId,
+      dialogueId: ctx.dialogueId,
+      iframeId: ctx.iframeId,
+    });
+  };
+
   const loreRegexAdapters = createLoreRegexAdapters(ctx);
 
   const executionContext: ExecutionContext = {
@@ -407,6 +470,10 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
       }
       message.name = name;
     },
+    getMessageReasoning,
+    setMessageReasoning,
+    injectPrompt,
+    listPromptInjections: listInjectedPrompts,
     playAudio,
     stopAudio,
     pauseAudio,

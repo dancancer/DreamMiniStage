@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-05T03:47:55.943Z",
+  "generatedAt": "2026-03-05T04:01:50.147Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 147,
-    "coverage": "34.51%",
+    "covered": 152,
+    "coverage": "35.68%",
     "missingTop": [
       {
         "command": "addmember",
@@ -41,13 +41,6 @@
         "priority": "P2"
       },
       {
-        "command": "get-reasoning",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
         "command": "getmember",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -63,20 +56,6 @@
       },
       {
         "command": "listchatvar",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "listinjects",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "set-reasoning",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 5,
@@ -1420,13 +1399,6 @@
         "priority": "P3"
       },
       {
-        "command": "reasoning-get",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "reasoning-parse",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -1435,13 +1407,6 @@
       },
       {
         "command": "reasoning-preset",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "reasoning-set",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

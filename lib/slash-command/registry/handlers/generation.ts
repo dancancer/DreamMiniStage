@@ -516,7 +516,7 @@ export const handleInject: CommandHandler = async (args, namedArgs, ctx, pipe) =
   const prompt = args.join(" ") || pipe;
   if (!prompt) return pipe;
   const options = {
-    position: namedArgs.position as "before" | "after" | undefined,
+    position: namedArgs.position as "before" | "after" | "chat" | "in_chat" | "none" | undefined,
     depth: namedArgs.depth ? parseInt(namedArgs.depth, 10) : undefined,
     role: namedArgs.role as "system" | "user" | "assistant" | undefined,
     ephemeral: parseBoolean(namedArgs.ephemeral, true),

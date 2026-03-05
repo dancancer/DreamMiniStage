@@ -83,6 +83,86 @@ describe("P2 chat command gaps", () => {
     expect(setInputText).toHaveBeenNthCalledWith(4, "");
   });
 
+  it("/set-reasoning 与 /get-reasoning 支持默认末条消息与显式索引", async () => {
+    const ctx = createContext({
+      messages: [
+        { id: "m-0", role: "assistant", content: "one", thinkingContent: "old-0" },
+        { id: "m-1", role: "assistant", content: "two", thinkingContent: "old-1" },
+      ],
+    });
+
+    const setLatest = await executeSlashCommandScript("/set-reasoning latest-think", ctx);
+    const getLatest = await executeSlashCommandScript("/get-reasoning", ctx);
+    const setTarget = await executeSlashCommandScript("/set-reasoning at=0 first-think", ctx);
+    const getTarget = await executeSlashCommandScript("/get-reasoning 0", ctx);
+
+    expect(setLatest.isError).toBe(false);
+    expect(getLatest.isError).toBe(false);
+    expect(setTarget.isError).toBe(false);
+    expect(getTarget.isError).toBe(false);
+    expect(setLatest.pipe).toBe("latest-think");
+    expect(getLatest.pipe).toBe("latest-think");
+    expect(setTarget.pipe).toBe("first-think");
+    expect(getTarget.pipe).toBe("first-think");
+  });
+
+  it("/set-reasoning 支持宿主覆写回调与 collapse 参数", async () => {
+    const setMessageReasoning = vi.fn().mockResolvedValue(undefined);
+    const getMessageReasoning = vi.fn().mockResolvedValue("from-host");
+    const ctx = createContext({
+      setMessageReasoning,
+      getMessageReasoning,
+    });
+
+    const setResult = await executeSlashCommandScript("/set-reasoning at=1 collapse=true host-think", ctx);
+    const getResult = await executeSlashCommandScript("/get-reasoning 1", ctx);
+
+    expect(setResult.isError).toBe(false);
+    expect(getResult.isError).toBe(false);
+    expect(setResult.pipe).toBe("host-think");
+    expect(getResult.pipe).toBe("from-host");
+    expect(setMessageReasoning).toHaveBeenCalledWith(1, "host-think", { collapse: true });
+    expect(getMessageReasoning).toHaveBeenCalledWith(1);
+  });
+
+  it("/get-reasoning 与 /set-reasoning 对非法索引显式 fail-fast", async () => {
+    const ctx = createContext({
+      messages: [{ id: "m-0", role: "assistant", content: "only-one" }],
+    });
+
+    const setInvalid = await executeSlashCommandScript("/set-reasoning at=nope hi", ctx);
+    const getInvalid = await executeSlashCommandScript("/get-reasoning nope", ctx);
+    const getOutOfRange = await executeSlashCommandScript("/get-reasoning 9", ctx);
+
+    expect(setInvalid.isError).toBe(true);
+    expect(getInvalid.isError).toBe(true);
+    expect(getOutOfRange.isError).toBe(true);
+    expect(setInvalid.errorMessage).toContain("invalid message index");
+    expect(getInvalid.errorMessage).toContain("invalid message index");
+    expect(getOutOfRange.errorMessage).toContain("out of range");
+  });
+
+  it("/listinjects 返回当前会话注入记录 JSON", async () => {
+    const listPromptInjections = vi.fn().mockResolvedValue([
+      {
+        id: "inject-1",
+        content: "alpha",
+        role: "system",
+        position: "in_chat",
+        depth: 0,
+        should_scan: false,
+        createdAt: "2026-03-05T00:00:00.000Z",
+      },
+    ]);
+    const ctx = createContext({ listPromptInjections });
+
+    const result = await executeSlashCommandScript("/listinjects", ctx);
+
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("[{\"id\":\"inject-1\",\"content\":\"alpha\",\"role\":\"system\",\"position\":\"in_chat\",\"depth\":0,\"should_scan\":false,\"createdAt\":\"2026-03-05T00:00:00.000Z\"}]");
+    expect(listPromptInjections).toHaveBeenCalledTimes(1);
+  });
+
   it("/delchat 可触发当前聊天删除回调并返回空字符串", async () => {
     const deleteCurrentChat = vi.fn().mockResolvedValue(undefined);
     const ctx = createContext({ deleteCurrentChat });
@@ -234,6 +314,7 @@ describe("P2 chat command gaps", () => {
     const setInputResult = await executeSlashCommandScript("/setinput test", ctx);
     const jumpResult = await executeSlashCommandScript("/chat-jump 1", ctx);
     const renderResult = await executeSlashCommandScript("/chat-render 1", ctx);
+    const listInjectsResult = await executeSlashCommandScript("/listinjects", ctx);
     const delChatResult = await executeSlashCommandScript("/delchat", ctx);
     const delModeResult = await executeSlashCommandScript("/delmode", ctx);
     const delNameResult = await executeSlashCommandScript("/delname Alice", ctx);
@@ -245,6 +326,7 @@ describe("P2 chat command gaps", () => {
     expect(setInputResult.isError).toBe(true);
     expect(jumpResult.isError).toBe(true);
     expect(renderResult.isError).toBe(true);
+    expect(listInjectsResult.isError).toBe(true);
     expect(delChatResult.isError).toBe(true);
     expect(delModeResult.isError).toBe(true);
     expect(delNameResult.isError).toBe(true);
@@ -255,6 +337,7 @@ describe("P2 chat command gaps", () => {
     expect(setInputResult.errorMessage).toContain("not available");
     expect(jumpResult.errorMessage).toContain("not available");
     expect(renderResult.errorMessage).toContain("not available");
+    expect(listInjectsResult.errorMessage).toContain("not available");
     expect(delChatResult.errorMessage).toContain("not available");
     expect(delModeResult.errorMessage).toContain("not available");
     expect(delNameResult.errorMessage).toContain("not available");

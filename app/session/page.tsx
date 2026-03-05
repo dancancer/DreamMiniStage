@@ -38,6 +38,10 @@ import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-re
 import { buildSwitchedSessionName } from "@/app/session/session-switch";
 import { executeSlashCommandScript } from "@/lib/slash-command";
 import type { CharacterSwitchResult, ExecutionContext } from "@/lib/slash-command/types";
+import {
+  upsertPromptInjection,
+  listPromptInjections,
+} from "@/lib/slash-command/prompt-injection-store";
 import DialogueTreeModal from "@/components/DialogueTreeModal";
 
 // ============================================================================
@@ -302,6 +306,42 @@ function SessionPageContent() {
       onSwipe: dialogue.handleSwipe,
       getCurrentChatName: () => currentSessionName || sessionId || "",
       setInputText: async (text) => setUserInput(text),
+      getMessageReasoning: async (index) => {
+        const message = dialogue.messages[index];
+        if (!message) {
+          throw new Error(`/get-reasoning message index out of range: ${index}`);
+        }
+        return message.thinkingContent || "";
+      },
+      setMessageReasoning: async (index, reasoning) => {
+        if (!dialogue.messages[index]) {
+          throw new Error(`/set-reasoning message index out of range: ${index}`);
+        }
+        const nextMessages = dialogue.messages.map((message, currentIndex) => currentIndex === index
+          ? { ...message, thinkingContent: reasoning }
+          : message);
+        dialogue.setMessages(nextMessages);
+      },
+      injectPrompt: async (prompt, options) => {
+        upsertPromptInjection(
+          {
+            content: prompt,
+            role: options?.role,
+            position: options?.position || "in_chat",
+            depth: options?.depth,
+          },
+          {
+            characterId: characterId || undefined,
+            dialogueId: sessionId || undefined,
+          },
+        );
+      },
+      listPromptInjections: async () => {
+        return listPromptInjections({
+          characterId: characterId || undefined,
+          dialogueId: sessionId || undefined,
+        });
+      },
       switchCharacter: handleSwitchCharacter,
       getVariable,
       setVariable,

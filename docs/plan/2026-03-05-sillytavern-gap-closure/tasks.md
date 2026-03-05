@@ -29,3 +29,9 @@
 - [x] 补齐 world-info 字段别名命令（`/getentryfield` `/setentryfield`），统一到 lore field 单路径实现。
 - [x] 补齐会话运维命令（`/getchatname` `/setinput`），并接入 Script Bridge/UI 上下文回调。
 - [x] 运行定向回归 + gap 分析并更新报告与 handoff。
+
+## 6. P2 增量收敛（会话推理/注入）
+
+- [x] 补齐会话推理命令（`/reasoning-get` `/get-reasoning` `/reasoning-set` `/set-reasoning`），支持默认末条消息与 `at=` 定位。
+- [x] 补齐注入运维命令（`/listinjects`），并打通 Slash `/inject` 与 `injectPrompts` 的共享注入存储。
+- [x] 运行定向回归 + gap 分析并更新文档与 handoff。

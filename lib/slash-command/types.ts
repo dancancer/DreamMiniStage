@@ -44,6 +44,16 @@ export interface PromptEntryStateUpdate {
   enabled: boolean;
 }
 
+export interface PromptInjectionState {
+  id: string;
+  content: string;
+  role: "system" | "assistant" | "user";
+  position: "before" | "after" | "in_chat" | "none";
+  depth: number;
+  should_scan: boolean;
+  createdAt: string;
+}
+
 // ============================================================================
 //                              解析结果类型
 // ============================================================================
@@ -147,6 +157,12 @@ export interface ExecutionContext {
   getMessageCount?: () => number;
   setMessageRole?: (index: number, role: "user" | "assistant" | "system") => void | Promise<void>;
   setMessageName?: (index: number, name: string) => void | Promise<void>;
+  getMessageReasoning?: (index: number) => string | undefined | Promise<string | undefined>;
+  setMessageReasoning?: (
+    index: number,
+    reasoning: string,
+    options?: { collapse?: boolean },
+  ) => void | Promise<void>;
   deleteCurrentChat?: () => void | Promise<void>;
   deleteMessagesByName?: (name: string) => number | Promise<number>;
   deleteSwipe?: (swipeId?: number) => string | number | void | Promise<string | number | void>;
@@ -187,6 +203,7 @@ export interface ExecutionContext {
   generate?: (prompt: string, options?: GenerateOptions) => Promise<string>;
   generateQuiet?: (prompt: string, options?: GenerateOptions) => Promise<string>;
   injectPrompt?: (prompt: string, options?: InjectOptions) => void | Promise<void>;
+  listPromptInjections?: () => PromptInjectionState[] | Promise<PromptInjectionState[]>;
 
   // 扩展操作 - World Info 激活
   activateWorldInfoEntry?: (name: string, options?: ActivateLoreOptions) => void | Promise<void>;
@@ -308,7 +325,7 @@ export interface GenerateOptions {
 
 /** 注入选项 */
 export interface InjectOptions {
-  position?: "before" | "after";
+  position?: "before" | "after" | "chat" | "in_chat" | "none";
   depth?: number;
   role?: "system" | "user" | "assistant";
   ephemeral?: boolean;
