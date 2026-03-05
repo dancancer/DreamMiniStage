@@ -1,19 +1,16 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T04:35:28.246Z
+- generatedAt: 2026-03-05T04:58:12.302Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 167/426 (39.20%)
+- slash commands: 173/426 (40.61%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
 ## Priority Command Gaps (Top 25)
 
-- [P3] /createlore (score=3, upstreamRefs=1, localRefs=0)
-- [P3] /findlore (score=3, upstreamRefs=1, localRefs=0)
-- [P3] /vector-worldinfo-state (score=3, upstreamRefs=1, localRefs=0)
 - [P3] /ask (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /autobg (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /beep (score=2, upstreamRefs=1, localRefs=0)
@@ -36,6 +33,9 @@
 - [P3] /costume (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /count (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /countmember (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /custom-stop-strings (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /custom-stopping-strings (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /cut (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

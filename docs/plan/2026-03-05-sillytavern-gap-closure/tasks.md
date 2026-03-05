@@ -47,3 +47,9 @@
 - [x] 补齐脚本运维命令（`/delay` `/wait` `/sleep` `/generate-stop` `/genraw` `/list-gallery`）。
 - [x] 补齐变量别名命令（`/listchatvar`）并同步 Slash capability matrix。
 - [x] 运行定向回归 + gap 分析并更新文档与 handoff。
+
+## 9. P3 增量收敛（worldinfo 长尾）
+
+- [x] 补齐 worldinfo 长尾命令簇（`/findentry|/findlore|/findwi`、`/createlore|/createwi`、`/vector-worldinfo-state`）。
+- [x] 为 `createWorldBookEntry(file)` 与 vector-worldinfo 状态补齐 Slash 上下文适配，确保命令可在宿主路径执行。
+- [x] 运行定向回归 + gap 分析并更新报告与 handoff。

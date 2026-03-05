@@ -1,31 +1,10 @@
 {
-  "generatedAt": "2026-03-05T04:35:28.246Z",
+  "generatedAt": "2026-03-05T04:58:12.302Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 167,
-    "coverage": "39.20%",
+    "covered": 173,
+    "coverage": "40.61%",
     "missingTop": [
-      {
-        "command": "createlore",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 3,
-        "priority": "P3"
-      },
-      {
-        "command": "findlore",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 3,
-        "priority": "P3"
-      },
-      {
-        "command": "vector-worldinfo-state",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 3,
-        "priority": "P3"
-      },
       {
         "command": "ask",
         "upstreamRefs": 1,
@@ -175,13 +154,6 @@
       },
       {
         "command": "countmember",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "createwi",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -595,20 +567,6 @@
       },
       {
         "command": "extension-toggle",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "findentry",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "findwi",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

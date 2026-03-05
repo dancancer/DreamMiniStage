@@ -186,6 +186,12 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["setlorefield", LoreHandlers.handleSetLoreField],
   ["setentryfield", LoreHandlers.handleSetLoreField],
   ["setwifield", LoreHandlers.handleSetLoreField],
+  ["findentry", LoreHandlers.handleFindLore],
+  ["findlore", LoreHandlers.handleFindLore],
+  ["findwi", LoreHandlers.handleFindLore],
+  ["createlore", LoreHandlers.handleCreateLore],
+  ["createwi", LoreHandlers.handleCreateLore],
+  ["vector-worldinfo-state", LoreHandlers.handleVectorWorldInfoState],
 
   // ─── 生成命令 ───
   ["gen", GenerationHandlers.handleGen],

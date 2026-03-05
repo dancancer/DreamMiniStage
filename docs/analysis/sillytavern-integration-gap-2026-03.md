@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`167/426 = 39.20%`（较上一轮 `37.32%` 提升 `+1.88`pp）。
+- Slash 命令覆盖面继续提升：`173/426 = 40.61%`（较上一轮 `39.20%` 提升 `+1.41`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -36,6 +36,7 @@
    - 会话推理/注入运维：`/reasoning-get`、`/get-reasoning`、`/reasoning-set`、`/set-reasoning`、`/listinjects`
    - prompt/message 元数据：`/message-name`、`/message-role`、`/getpromptentry`、`/getpromptentries`、`/setpromptentry`、`/setpromptentries`
    - 脚本运维：`/delay`、`/wait`、`/sleep`、`/generate-stop`、`/genraw`、`/list-gallery`、`/listchatvar`
+   - worldinfo 长尾首簇：`/findentry`、`/findlore`、`/findwi`、`/createlore`、`/createwi`、`/vector-worldinfo-state`
 2. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
@@ -64,6 +65,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 以 P3 命令簇为单位推进机会性补齐（优先 `createlore/findlore/vector-worldinfo-state`），每轮只推进一簇并绑定回归。
+1. 继续按 P3 命令簇机会性补齐（建议先做 `ask/context/clipboard-*` 或 `autobg/bgauto/bglock` 二选一），每轮只推进一簇并绑定回归。
 2. 为 `member-*/addswipe` 打通宿主 UI 可见回调（而不止命令层），确保“命令可执行”与“界面可见效果”一致。
-3. 把 `delchat/delswipe/message-*` 与 `reasoning-set` 统一接入端到端可见断言，持续收紧回归面。
+3. 把 `vector-worldinfo-state` 与 `generate-stop/genraw` 统一接入端到端可见断言，持续收紧回归面。

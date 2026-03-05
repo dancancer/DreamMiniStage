@@ -2,11 +2,12 @@
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                    World/Lore Command Handlers                            ║
  * ║                                                                           ║
- * ║  world/get*lore/getlorefield/setlorefield 命令簇                           ║
+ * ║  world/get*lore/find/create lore/vector-state 命令簇                       ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
 import type { CommandHandler } from "../types";
+import { parseBoolean } from "../utils/helpers";
 
 type WorldState = "on" | "off" | "toggle";
 type LoreType = "primary" | "additional" | "all";
@@ -77,6 +78,91 @@ function resolveLoreTarget(
   }
 
   return { file, uid, valueIndex: cursor };
+}
+
+function resolveLoreSearchInput(
+  args: string[],
+  namedArgs: Record<string, string>,
+  pipe: string,
+): { file: string; query: string } {
+  let cursor = 0;
+  let file = (namedArgs.file || "").trim();
+
+  if (!file) {
+    file = (args[cursor] || "").trim();
+    cursor += 1;
+  }
+  if (!file) {
+    throw new Error("/findlore requires file=<name>");
+  }
+
+  const query = (args.slice(cursor).join(" ") || pipe || "").trim();
+  if (!query) {
+    throw new Error("/findlore requires search text");
+  }
+
+  return { file, query };
+}
+
+function normalizeCreateLoreInput(
+  args: string[],
+  namedArgs: Record<string, string>,
+  pipe: string,
+): { file: string; key?: string; content?: string } {
+  const file = (namedArgs.file || "").trim();
+  if (!file) {
+    throw new Error("/createlore requires file=<name>");
+  }
+
+  const key = (namedArgs.key || "").trim();
+  const content = (args.join(" ") || pipe || "").trim();
+  return {
+    file,
+    key: key || undefined,
+    content: content || undefined,
+  };
+}
+
+function normalizeVectorWorldInfoState(raw: string): boolean {
+  const parsed = parseBoolean(raw, undefined);
+  if (parsed === undefined) {
+    throw new Error(`/vector-worldinfo-state invalid boolean value: ${raw}`);
+  }
+  return parsed;
+}
+
+function getFieldStrings(
+  entry: Record<string, unknown>,
+  field: string,
+): string[] {
+  const rawValue = entry[field];
+  if (rawValue === undefined || rawValue === null) {
+    return [];
+  }
+
+  if (Array.isArray(rawValue)) {
+    return rawValue.map((item) => String(item));
+  }
+
+  return [String(rawValue)];
+}
+
+function scoreLoreMatch(candidate: string, query: string): number {
+  const normalizedCandidate = candidate.trim().toLowerCase();
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedCandidate || !normalizedQuery) {
+    return Number.POSITIVE_INFINITY;
+  }
+  if (normalizedCandidate === normalizedQuery) {
+    return 0;
+  }
+  if (normalizedCandidate.startsWith(normalizedQuery)) {
+    return 1;
+  }
+  if (normalizedCandidate.includes(normalizedQuery)) {
+    return 2;
+  }
+  return Number.POSITIVE_INFINITY;
 }
 
 /** /world [name] [state=on|off|toggle] - 查询或切换全局世界书绑定 */
@@ -190,4 +276,88 @@ export const handleSetLoreField: CommandHandler = async (args, namedArgs, ctx, p
   const nextValue = valueFromArgs || pipe;
   await Promise.resolve(ctx.setLoreField(file, uid, field, nextValue));
   return "";
+};
+
+/** /findlore file=<book> [field=key] <query> - 按字段模糊查找条目 uid */
+export const handleFindLore: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.listWorldBookEntries) {
+    throw new Error("/findlore is not available in current context");
+  }
+
+  const { file, query } = resolveLoreSearchInput(args, namedArgs, pipe);
+  const field = normalizeLoreFieldName(namedArgs.field || "key");
+  const entries = await Promise.resolve(ctx.listWorldBookEntries(file));
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return "";
+  }
+
+  let bestMatch: { id: string; score: number } | undefined;
+  for (const item of entries) {
+    const entry = item as unknown as Record<string, unknown>;
+    const entryId = String(entry.id ?? entry.uid ?? "").trim();
+    if (!entryId) {
+      continue;
+    }
+
+    const candidates = getFieldStrings(entry, field);
+    const score = candidates.reduce((best, candidate) => {
+      const current = scoreLoreMatch(candidate, query);
+      return current < best ? current : best;
+    }, Number.POSITIVE_INFINITY);
+
+    if (!Number.isFinite(score)) {
+      continue;
+    }
+    if (!bestMatch || score < bestMatch.score) {
+      bestMatch = { id: entryId, score };
+    }
+  }
+
+  return bestMatch?.id || "";
+};
+
+/** /createlore file=<book> [key=<text>] [content] - 创建 lore 条目并返回 uid */
+export const handleCreateLore: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.createWorldBookEntry) {
+    throw new Error("/createlore is not available in current context");
+  }
+
+  const { file, key, content } = normalizeCreateLoreInput(args, namedArgs, pipe);
+  const created = await Promise.resolve(ctx.createWorldBookEntry({
+    keys: key ? [key] : [],
+    comment: key,
+    content: content || "",
+    enabled: true,
+  }, file));
+
+  if (!created?.id) {
+    throw new Error(`/createlore failed for file=${file}`);
+  }
+  return String(created.id);
+};
+
+/** /vector-worldinfo-state [bool] - 查询或设置 worldinfo 向量化开关 */
+export const handleVectorWorldInfoState: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.getVectorWorldInfoState) {
+    throw new Error("/vector-worldinfo-state is not available in current context");
+  }
+
+  const raw = (args.join(" ") || pipe || "").trim();
+  if (!raw) {
+    const current = await Promise.resolve(ctx.getVectorWorldInfoState());
+    return String(current);
+  }
+
+  if (!ctx.setVectorWorldInfoState) {
+    throw new Error("/vector-worldinfo-state set is not available in current context");
+  }
+
+  const nextState = normalizeVectorWorldInfoState(raw);
+  const applied = await Promise.resolve(ctx.setVectorWorldInfoState(nextState));
+  if (typeof applied === "boolean") {
+    return String(applied);
+  }
+
+  const current = await Promise.resolve(ctx.getVectorWorldInfoState());
+  return String(current);
 };

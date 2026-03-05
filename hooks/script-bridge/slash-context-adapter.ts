@@ -21,6 +21,10 @@ import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
 import { PresetOperations } from "@/lib/data/roleplay/preset-operation";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import {
+  isVectorMemoryEnabled,
+  setVectorMemoryEnabled,
+} from "@/lib/vector-memory/manager";
+import {
   upsertPromptInjection,
   listPromptInjections,
 } from "@/lib/slash-command/prompt-injection-store";
@@ -167,6 +171,79 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
       enabled: e.enabled !== false,
       comment: e.comment,
     }));
+  };
+
+  const createWorldBookEntry = async (
+    data: Partial<WorldBookEntryData>,
+    bookName?: string,
+  ): Promise<WorldBookEntryData | undefined> => {
+    const targetBook = (bookName || ctx.characterId || "").trim();
+    if (!targetBook) {
+      throw new Error("/createlore requires file=<book>");
+    }
+
+    const worldBook = await WorldBookOperations.getWorldBook(targetBook) || {};
+    const nextUid = Object.values(worldBook).reduce((maxUid, entry) => {
+      const ids = [entry.id, entry.entry_id]
+        .map((candidate) => Number.parseInt(String(candidate), 10))
+        .filter((candidate) => Number.isInteger(candidate) && candidate >= 0);
+      if (ids.length === 0) {
+        return maxUid;
+      }
+      return Math.max(maxUid, ...ids);
+    }, 0) + 1;
+
+    const keys = Array.isArray(data.keys)
+      ? data.keys.map((item) => String(item).trim()).filter((item) => item.length > 0)
+      : [];
+    const content = typeof data.content === "string" ? data.content : "";
+    const comment = typeof data.comment === "string" ? data.comment : undefined;
+    const enabled = data.enabled !== false;
+
+    const entry: WorldBookEntry = {
+      id: nextUid,
+      entry_id: String(nextUid),
+      keys,
+      content,
+      comment,
+      enabled,
+      selective: false,
+      constant: false,
+      position: 4,
+    };
+
+    const nextEntryIndex = Object.keys(worldBook).reduce((maxIndex, entryKey) => {
+      const matched = /^entry_(\d+)$/.exec(entryKey);
+      if (!matched) {
+        return maxIndex;
+      }
+      const parsed = Number.parseInt(matched[1], 10);
+      if (!Number.isInteger(parsed) || parsed < 0) {
+        return maxIndex;
+      }
+      return Math.max(maxIndex, parsed);
+    }, -1) + 1;
+
+    worldBook[`entry_${nextEntryIndex}`] = entry;
+    const saved = await WorldBookOperations.updateWorldBook(targetBook, worldBook);
+    if (!saved) {
+      throw new Error(`/createlore failed to persist entry in file=${targetBook}`);
+    }
+
+    return {
+      id: String(nextUid),
+      keys,
+      content,
+      comment,
+      enabled,
+    };
+  };
+
+  const getVectorWorldInfoState = (): boolean => isVectorMemoryEnabled();
+
+  const setVectorWorldInfoState = (enabled: boolean): boolean => {
+    setVectorMemoryEnabled(enabled);
+    return isVectorMemoryEnabled();
   };
 
   const getPreset = async (): Promise<PresetInfo | undefined> => {
@@ -428,6 +505,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     jumpToMessage: onJumpToMessage,
     renderChatMessages: onRenderChatMessages,
     switchCharacter: onSwitchCharacter,
+    getVectorWorldInfoState,
+    setVectorWorldInfoState,
     getVariable: getLocalVariable,
     setVariable: setLocalVariable,
     deleteVariable: deleteLocalVariable,
@@ -457,6 +536,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     getWorldBookEntry,
     searchWorldBook,
     listWorldBookEntries,
+    createWorldBookEntry,
     getPreset,
     setPreset,
     listPresets,

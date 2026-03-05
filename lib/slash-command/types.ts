@@ -189,7 +189,10 @@ export interface ExecutionContext {
   getWorldBookEntry?: (id: string) => WorldBookEntryData | undefined | Promise<WorldBookEntryData | undefined>;
   searchWorldBook?: (query: string) => WorldBookEntryData[] | Promise<WorldBookEntryData[]>;
   setWorldBookEntry?: (id: string, data: Partial<WorldBookEntryData>) => void | Promise<void>;
-  createWorldBookEntry?: (data: Partial<WorldBookEntryData>) => WorldBookEntryData | Promise<WorldBookEntryData | undefined>;
+  createWorldBookEntry?: (
+    data: Partial<WorldBookEntryData>,
+    bookName?: string,
+  ) => WorldBookEntryData | Promise<WorldBookEntryData | undefined>;
   deleteWorldBookEntry?: (id: string) => void | Promise<void>;
   activateWorldBookEntry?: (id: string) => void | Promise<void>;
   listWorldBookEntries?: (bookName?: string) => WorldBookEntryData[] | Promise<WorldBookEntryData[]>;
@@ -270,6 +273,10 @@ export interface ExecutionContext {
   listGallery?: (
     options?: ListGalleryOptions,
   ) => string[] | Promise<string[]>;
+  getVectorWorldInfoState?: () => boolean | Promise<boolean>;
+  setVectorWorldInfoState?: (
+    enabled: boolean,
+  ) => boolean | void | Promise<boolean | void>;
 
   // 扩展操作 - P2 高频缺口（branch / ui）
   togglePanels?: () => void | Promise<void>;
