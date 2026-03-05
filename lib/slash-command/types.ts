@@ -54,6 +54,15 @@ export interface PromptInjectionState {
   createdAt: string;
 }
 
+export type DataBankSource = "global" | "character" | "chat";
+
+export interface DataBankEntrySnapshot {
+  name: string;
+  url: string;
+  source?: DataBankSource;
+  enabled?: boolean;
+}
+
 // ============================================================================
 //                              解析结果类型
 // ============================================================================
@@ -284,6 +293,47 @@ export interface ExecutionContext {
   listGallery?: (
     options?: ListGalleryOptions,
   ) => string[] | Promise<string[]>;
+  openDataBank?: () => void | Promise<void>;
+  listDataBankEntries?: (
+    options?: { source?: DataBankSource },
+  ) => DataBankEntrySnapshot[] | Promise<DataBankEntrySnapshot[]>;
+  getDataBankText?: (
+    target: string,
+    options?: { source?: DataBankSource },
+  ) => string | Promise<string>;
+  addDataBankText?: (
+    content: string,
+    options?: { source?: DataBankSource; name?: string },
+  ) => string | Promise<string>;
+  updateDataBankText?: (
+    target: string,
+    content: string,
+    options?: { source?: DataBankSource },
+  ) => string | void | Promise<string | void>;
+  deleteDataBankEntry?: (
+    target: string,
+    options?: { source?: DataBankSource },
+  ) => void | Promise<void>;
+  setDataBankEntryEnabled?: (
+    target: string,
+    enabled: boolean,
+    options?: { source?: DataBankSource },
+  ) => void | Promise<void>;
+  ingestDataBank?: (
+    options?: { source?: DataBankSource },
+  ) => void | Promise<void>;
+  purgeDataBank?: (
+    options?: { source?: DataBankSource },
+  ) => void | Promise<void>;
+  searchDataBank?: (
+    query: string,
+    options?: {
+      source?: DataBankSource;
+      threshold?: number;
+      count?: number;
+      returnType?: "urls" | "chunks";
+    },
+  ) => string[] | string | Promise<string[] | string>;
   getVectorWorldInfoState?: () => boolean | Promise<boolean>;
   setVectorWorldInfoState?: (
     enabled: boolean,

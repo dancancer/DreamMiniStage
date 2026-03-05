@@ -12,6 +12,8 @@
 import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
   CharacterSwitchResult,
+  DataBankEntrySnapshot,
+  DataBankSource,
   GroupMemberField,
   SendOptions,
 } from "@/lib/slash-command/types";
@@ -79,6 +81,47 @@ export interface ApiCallContext {
   onReloadPage?: () => void | Promise<void>;
   onGetClipboardText?: () => string | Promise<string>;
   onSetClipboardText?: (text: string) => void | Promise<void>;
+  onOpenDataBank?: () => void | Promise<void>;
+  onListDataBankEntries?: (
+    options?: { source?: DataBankSource },
+  ) => DataBankEntrySnapshot[] | Promise<DataBankEntrySnapshot[]>;
+  onGetDataBankText?: (
+    target: string,
+    options?: { source?: DataBankSource },
+  ) => string | Promise<string>;
+  onAddDataBankText?: (
+    content: string,
+    options?: { source?: DataBankSource; name?: string },
+  ) => string | Promise<string>;
+  onUpdateDataBankText?: (
+    target: string,
+    content: string,
+    options?: { source?: DataBankSource },
+  ) => string | void | Promise<string | void>;
+  onDeleteDataBankEntry?: (
+    target: string,
+    options?: { source?: DataBankSource },
+  ) => void | Promise<void>;
+  onSetDataBankEntryEnabled?: (
+    target: string,
+    enabled: boolean,
+    options?: { source?: DataBankSource },
+  ) => void | Promise<void>;
+  onIngestDataBank?: (
+    options?: { source?: DataBankSource },
+  ) => void | Promise<void>;
+  onPurgeDataBank?: (
+    options?: { source?: DataBankSource },
+  ) => void | Promise<void>;
+  onSearchDataBank?: (
+    query: string,
+    options?: {
+      source?: DataBankSource;
+      threshold?: number;
+      count?: number;
+      returnType?: "urls" | "chunks";
+    },
+  ) => string[] | string | Promise<string[] | string>;
   onTogglePanels?: () => void | Promise<void>;
   onResetPanels?: () => void | Promise<void>;
   onToggleVisualNovelMode?: () => void | Promise<void>;

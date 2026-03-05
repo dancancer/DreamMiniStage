@@ -1,16 +1,17 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T06:17:36.933Z
+- generatedAt: 2026-03-05T06:43:36.723Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 183/426 (42.96%)
+- slash commands: 216/426 (50.70%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
 ## Priority Command Gaps (Top 25)
 
+- [P2] /disable (score=7, upstreamRefs=1, localRefs=1)
 - [P3] /beep (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /bgcol (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /bind (score=2, upstreamRefs=1, localRefs=0)
@@ -28,14 +29,13 @@
 - [P3] /custom-stop-strings (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /custom-stopping-strings (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /cut (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /data-bank (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /data-bank-add (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /data-bank-delete (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /data-bank-disable (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /data-bank-enable (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /data-bank-get (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /data-bank-ingest (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /data-bank-list (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /default (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /depth (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /ding (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /disablemember (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /downmember (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /dupe (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /emote (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

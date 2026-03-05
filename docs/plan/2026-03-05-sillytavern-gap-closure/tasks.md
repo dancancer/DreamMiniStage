@@ -65,3 +65,9 @@
 - [x] 补齐脚本调试命令簇（`/ask`、`/context`、`/clipboard-get`、`/clipboard-set`），统一宿主回调单路径与 fail-fast 语义。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `ask/context/clipboard` 回调能力。
 - [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
+
+## 12. P3 增量收敛（Data Bank）
+
+- [x] 补齐 Data Bank 命令簇（`/data-bank`、`/data-bank-list`、`/data-bank-get`、`/data-bank-add`、`/data-bank-update`、`/data-bank-delete`、`/data-bank-disable`、`/data-bank-enable`、`/data-bank-ingest`、`/data-bank-purge`、`/data-bank-search`）并统一 fail-fast 语义。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 Data Bank 运维回调能力。
+- [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。

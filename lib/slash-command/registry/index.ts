@@ -22,6 +22,7 @@ import * as ChatHandlers from "./handlers/chat";
 import * as UtilityHandlers from "./handlers/utility";
 import * as UiHandlers from "./handlers/ui";
 import * as LoreHandlers from "./handlers/lore";
+import * as DataBankHandlers from "./handlers/data-bank";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -75,6 +76,39 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["lg", UtilityHandlers.handleListGallery],
   ["clipboard-get", UtilityHandlers.handleClipboardGet],
   ["clipboard-set", UtilityHandlers.handleClipboardSet],
+  ["data-bank", DataBankHandlers.handleDataBank],
+  ["databank", DataBankHandlers.handleDataBank],
+  ["db", DataBankHandlers.handleDataBank],
+  ["data-bank-list", DataBankHandlers.handleDataBankList],
+  ["databank-list", DataBankHandlers.handleDataBankList],
+  ["db-list", DataBankHandlers.handleDataBankList],
+  ["data-bank-get", DataBankHandlers.handleDataBankGet],
+  ["databank-get", DataBankHandlers.handleDataBankGet],
+  ["db-get", DataBankHandlers.handleDataBankGet],
+  ["data-bank-add", DataBankHandlers.handleDataBankAdd],
+  ["databank-add", DataBankHandlers.handleDataBankAdd],
+  ["db-add", DataBankHandlers.handleDataBankAdd],
+  ["data-bank-update", DataBankHandlers.handleDataBankUpdate],
+  ["databank-update", DataBankHandlers.handleDataBankUpdate],
+  ["db-update", DataBankHandlers.handleDataBankUpdate],
+  ["data-bank-delete", DataBankHandlers.handleDataBankDelete],
+  ["databank-delete", DataBankHandlers.handleDataBankDelete],
+  ["db-delete", DataBankHandlers.handleDataBankDelete],
+  ["data-bank-disable", DataBankHandlers.handleDataBankDisable],
+  ["databank-disable", DataBankHandlers.handleDataBankDisable],
+  ["db-disable", DataBankHandlers.handleDataBankDisable],
+  ["data-bank-enable", DataBankHandlers.handleDataBankEnable],
+  ["databank-enable", DataBankHandlers.handleDataBankEnable],
+  ["db-enable", DataBankHandlers.handleDataBankEnable],
+  ["data-bank-ingest", DataBankHandlers.handleDataBankIngest],
+  ["databank-ingest", DataBankHandlers.handleDataBankIngest],
+  ["db-ingest", DataBankHandlers.handleDataBankIngest],
+  ["data-bank-purge", DataBankHandlers.handleDataBankPurge],
+  ["databank-purge", DataBankHandlers.handleDataBankPurge],
+  ["db-purge", DataBankHandlers.handleDataBankPurge],
+  ["data-bank-search", DataBankHandlers.handleDataBankSearch],
+  ["databank-search", DataBankHandlers.handleDataBankSearch],
+  ["db-search", DataBankHandlers.handleDataBankSearch],
   ["api", ApiHandlers.handleApi],
   ["api-url", ApiHandlers.handleApiUrl],
   ["server", ApiHandlers.handleApiUrl],

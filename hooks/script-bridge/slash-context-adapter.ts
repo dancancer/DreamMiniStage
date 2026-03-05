@@ -113,6 +113,16 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onReloadPage = ctx.onReloadPage;
   const onGetClipboardText = ctx.onGetClipboardText;
   const onSetClipboardText = ctx.onSetClipboardText;
+  const onOpenDataBank = ctx.onOpenDataBank;
+  const onListDataBankEntries = ctx.onListDataBankEntries;
+  const onGetDataBankText = ctx.onGetDataBankText;
+  const onAddDataBankText = ctx.onAddDataBankText;
+  const onUpdateDataBankText = ctx.onUpdateDataBankText;
+  const onDeleteDataBankEntry = ctx.onDeleteDataBankEntry;
+  const onSetDataBankEntryEnabled = ctx.onSetDataBankEntryEnabled;
+  const onIngestDataBank = ctx.onIngestDataBank;
+  const onPurgeDataBank = ctx.onPurgeDataBank;
+  const onSearchDataBank = ctx.onSearchDataBank;
   const onTogglePanels = ctx.onTogglePanels;
   const onResetPanels = ctx.onResetPanels;
   const onToggleVisualNovelMode = ctx.onToggleVisualNovelMode;
@@ -505,6 +515,16 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     reloadPage: onReloadPage,
     getClipboardText: onGetClipboardText,
     setClipboardText: onSetClipboardText,
+    openDataBank: onOpenDataBank,
+    listDataBankEntries: onListDataBankEntries,
+    getDataBankText: onGetDataBankText,
+    addDataBankText: onAddDataBankText,
+    updateDataBankText: onUpdateDataBankText,
+    deleteDataBankEntry: onDeleteDataBankEntry,
+    setDataBankEntryEnabled: onSetDataBankEntryEnabled,
+    ingestDataBank: onIngestDataBank,
+    purgeDataBank: onPurgeDataBank,
+    searchDataBank: onSearchDataBank,
     togglePanels: onTogglePanels,
     resetPanels: onResetPanels,
     toggleVisualNovelMode: onToggleVisualNovelMode,
