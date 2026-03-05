@@ -24,6 +24,7 @@ import * as UiHandlers from "./handlers/ui";
 import * as LoreHandlers from "./handlers/lore";
 import * as DataBankHandlers from "./handlers/data-bank";
 import * as ExpressionHandlers from "./handlers/expression";
+import * as ExtensionHandlers from "./handlers/extensions";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -166,6 +167,12 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["expressions", ExpressionHandlers.handleExpressionList],
   ["expression-classify", ExpressionHandlers.handleExpressionClassify],
   ["classify", ExpressionHandlers.handleExpressionClassify],
+  ["extension-enable", ExtensionHandlers.handleExtensionEnable],
+  ["extension-disable", ExtensionHandlers.handleExtensionDisable],
+  ["extension-toggle", ExtensionHandlers.handleExtensionToggle],
+  ["extension-state", ExtensionHandlers.handleExtensionState],
+  ["extension-exists", ExtensionHandlers.handleExtensionExists],
+  ["extension-installed", ExtensionHandlers.handleExtensionExists],
 
   // ─── 工具命令 ───
   ["?", CoreHandlers.handleHelp],

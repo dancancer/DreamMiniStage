@@ -31,6 +31,75 @@ import {
 import type { WorldBookEntry } from "@/lib/models/world-book-model";
 import { createLoreRegexAdapters } from "./slash-context-lore-regex";
 
+interface HostPluginRegistryEntry {
+  manifest?: {
+    id?: string;
+    name?: string;
+  };
+  enabled?: boolean;
+}
+
+interface HostPluginOperationResult {
+  success?: boolean;
+  error?: string;
+  message?: string;
+}
+
+interface HostPluginRegistry {
+  initialize?: () => Promise<void> | void;
+  getPlugins?: () => unknown[];
+  enablePlugin?: (pluginId: string) => Promise<HostPluginOperationResult> | HostPluginOperationResult;
+  disablePlugin?: (pluginId: string) => Promise<HostPluginOperationResult> | HostPluginOperationResult;
+}
+
+function normalizeExtensionToken(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function resolveHostPluginRegistry(): HostPluginRegistry | undefined {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  const registry = (window as Window & { pluginRegistry?: unknown }).pluginRegistry;
+  if (!registry || typeof registry !== "object") {
+    return undefined;
+  }
+  return registry as HostPluginRegistry;
+}
+
+function readPluginEntries(registry: HostPluginRegistry): HostPluginRegistryEntry[] {
+  const entries = registry.getPlugins?.();
+  if (!Array.isArray(entries)) {
+    throw new Error("plugin registry getPlugins is not available");
+  }
+  return entries as HostPluginRegistryEntry[];
+}
+
+function findPluginEntry(
+  entries: HostPluginRegistryEntry[],
+  extensionName: string,
+): HostPluginRegistryEntry | undefined {
+  const target = normalizeExtensionToken(extensionName);
+  return entries.find((entry) => {
+    const id = typeof entry.manifest?.id === "string"
+      ? normalizeExtensionToken(entry.manifest.id)
+      : "";
+    const name = typeof entry.manifest?.name === "string"
+      ? normalizeExtensionToken(entry.manifest.name)
+      : "";
+    return id === target || name === target;
+  });
+}
+
+function resolvePluginId(entry: HostPluginRegistryEntry, extensionName: string): string {
+  const manifestId = typeof entry.manifest?.id === "string" ? entry.manifest.id.trim() : "";
+  if (manifestId.length > 0) {
+    return manifestId;
+  }
+  return extensionName.trim();
+}
+
 export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContext {
   const snapshot = ctx.getVariablesSnapshot();
   const globalVariables: Record<string, unknown> = { ...snapshot.global };
@@ -125,6 +194,54 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onIngestDataBank = ctx.onIngestDataBank;
   const onPurgeDataBank = ctx.onPurgeDataBank;
   const onSearchDataBank = ctx.onSearchDataBank;
+  const hostPluginRegistry = resolveHostPluginRegistry();
+  const defaultIsExtensionInstalled = hostPluginRegistry
+    ? async (extensionName: string): Promise<boolean> => {
+      await Promise.resolve(hostPluginRegistry.initialize?.());
+      const entries = readPluginEntries(hostPluginRegistry);
+      return !!findPluginEntry(entries, extensionName);
+    }
+    : undefined;
+  const defaultGetExtensionEnabledState = hostPluginRegistry
+    ? async (extensionName: string): Promise<boolean> => {
+      await Promise.resolve(hostPluginRegistry.initialize?.());
+      const entries = readPluginEntries(hostPluginRegistry);
+      const entry = findPluginEntry(entries, extensionName);
+      if (!entry) {
+        throw new Error(`/extension-state extension not installed: ${extensionName}`);
+      }
+      if (typeof entry.enabled !== "boolean") {
+        throw new Error(`/extension-state host returned non-boolean enabled state: ${extensionName}`);
+      }
+      return entry.enabled;
+    }
+    : undefined;
+  const defaultSetExtensionEnabled = hostPluginRegistry
+    ? async (extensionName: string, enabled: boolean): Promise<string> => {
+      await Promise.resolve(hostPluginRegistry.initialize?.());
+      const entries = readPluginEntries(hostPluginRegistry);
+      const entry = findPluginEntry(entries, extensionName);
+      if (!entry) {
+        throw new Error(`/extension-toggle extension not installed: ${extensionName}`);
+      }
+
+      const pluginId = resolvePluginId(entry, extensionName);
+      const action = enabled ? hostPluginRegistry.enablePlugin : hostPluginRegistry.disablePlugin;
+      if (!action) {
+        throw new Error("/extension-toggle host callback is not available in current context");
+      }
+
+      const result = await Promise.resolve(action.call(hostPluginRegistry, pluginId));
+      if (result && result.success === false) {
+        throw new Error(result.error || result.message || `/extension-toggle failed for ${pluginId}`);
+      }
+
+      return pluginId;
+    }
+    : undefined;
+  const onIsExtensionInstalled = ctx.onIsExtensionInstalled ?? defaultIsExtensionInstalled;
+  const onGetExtensionEnabledState = ctx.onGetExtensionEnabledState ?? defaultGetExtensionEnabledState;
+  const onSetExtensionEnabled = ctx.onSetExtensionEnabled ?? defaultSetExtensionEnabled;
   const onTogglePanels = ctx.onTogglePanels;
   const onResetPanels = ctx.onResetPanels;
   const onToggleVisualNovelMode = ctx.onToggleVisualNovelMode;
@@ -534,6 +651,9 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     ingestDataBank: onIngestDataBank,
     purgeDataBank: onPurgeDataBank,
     searchDataBank: onSearchDataBank,
+    isExtensionInstalled: onIsExtensionInstalled,
+    getExtensionEnabledState: onGetExtensionEnabledState,
+    setExtensionEnabled: onSetExtensionEnabled,
     togglePanels: onTogglePanels,
     resetPanels: onResetPanels,
     toggleVisualNovelMode: onToggleVisualNovelMode,

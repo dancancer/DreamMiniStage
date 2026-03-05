@@ -1,11 +1,11 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T08:17:45.167Z
+- generatedAt: 2026-03-05T08:31:55.036Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 240/426 (56.34%)
+- slash commands: 246/426 (57.75%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
@@ -29,13 +29,13 @@
 - [P3] /downmember (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /dupe (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /expression-upload (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /extension-disable (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /extension-enable (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /extension-exists (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /extension-installed (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /extension-state (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /extension-toggle (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /flat (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /floor-teleport (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /flushinject (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /flushinjects (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /forcesave (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /freq (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /hide (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

@@ -363,6 +363,17 @@ export interface ExecutionContext {
       returnType?: "urls" | "chunks";
     },
   ) => string[] | string | Promise<string[] | string>;
+  isExtensionInstalled?: (
+    extensionName: string,
+  ) => boolean | Promise<boolean>;
+  getExtensionEnabledState?: (
+    extensionName: string,
+  ) => boolean | Promise<boolean>;
+  setExtensionEnabled?: (
+    extensionName: string,
+    enabled: boolean,
+    options?: { reload?: boolean },
+  ) => string | void | Promise<string | void>;
   getVectorWorldInfoState?: () => boolean | Promise<boolean>;
   setVectorWorldInfoState?: (
     enabled: boolean,

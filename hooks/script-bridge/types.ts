@@ -136,6 +136,17 @@ export interface ApiCallContext {
       returnType?: "urls" | "chunks";
     },
   ) => string[] | string | Promise<string[] | string>;
+  onIsExtensionInstalled?: (
+    extensionName: string,
+  ) => boolean | Promise<boolean>;
+  onGetExtensionEnabledState?: (
+    extensionName: string,
+  ) => boolean | Promise<boolean>;
+  onSetExtensionEnabled?: (
+    extensionName: string,
+    enabled: boolean,
+    options?: { reload?: boolean },
+  ) => string | void | Promise<string | void>;
   onTogglePanels?: () => void | Promise<void>;
   onResetPanels?: () => void | Promise<void>;
   onToggleVisualNovelMode?: () => void | Promise<void>;

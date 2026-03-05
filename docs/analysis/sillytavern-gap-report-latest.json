@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-05T08:17:45.167Z",
+  "generatedAt": "2026-03-05T08:31:55.036Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 240,
-    "coverage": "56.34%",
+    "covered": 246,
+    "coverage": "57.75%",
     "missingTop": [
       {
         "command": "beep",
@@ -126,48 +126,6 @@
       },
       {
         "command": "expression-upload",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "extension-disable",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "extension-enable",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "extension-exists",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "extension-installed",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "extension-state",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "extension-toggle",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

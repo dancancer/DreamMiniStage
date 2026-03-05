@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`240/426 = 56.34%`（较上一轮 `53.52%` 提升 `+2.82`pp）。
+- Slash 命令覆盖面继续提升：`246/426 = 57.75%`（较上一轮 `56.34%` 提升 `+1.41`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -42,6 +42,7 @@
    - P3 Data Bank 运维簇：`/data-bank`、`/data-bank-list`、`/data-bank-get`、`/data-bank-add`、`/data-bank-update`、`/data-bank-delete`、`/data-bank-disable`、`/data-bank-enable`、`/data-bank-ingest`、`/data-bank-purge`、`/data-bank-search`
    - P3 闭包/Persona Lock 簇：`/closure-serialize`、`/closure-deserialize`、`/lock`、`/bind`
    - P3 expression 簇：`/expression-set`、`/sprite`、`/emote`、`/expression-folder-override`、`/spriteoverride`、`/costume`、`/expression-last`、`/lastsprite`、`/expression-list`、`/expressions`、`/expression-classify`、`/classify`
+   - P3 extension 运维簇：`/extension-enable`、`/extension-disable`、`/extension-toggle`、`/extension-state`、`/extension-exists`、`/extension-installed`
 2. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
@@ -50,7 +51,7 @@
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已移除 `ask/context/clipboard-*`、`data-bank-*`、`closure-*`、`/bind`、`/disable`、`/enable`、`member-* enable/disable` 以及 `expression-*` 命令簇；当前主要剩余为 UI 与扩展运维类 P3 长尾命令（如 `caption`、`extension-*`）。
+- Top25 已移除 `ask/context/clipboard-*`、`data-bank-*`、`closure-*`、`/bind`、`/disable`、`/enable`、`member-* enable/disable`、`expression-*` 与 `extension-*` 命令簇；当前主要剩余为 UI/交互类 P3 长尾命令（如 `caption`、`beep|ding`、`bgcol`、`buttons`）。
 
 ## 4. 基线素材与回归状态
 
@@ -73,4 +74,4 @@
 
 1. 为 `member-*/addswipe` 打通宿主 UI 可见回调（而不止命令层），确保“命令可执行”与“界面可见效果”一致。
 2. 把 `data-bank-search` 与 `vector-worldinfo-state` 统一接入端到端可见断言，持续收紧回归面。
-3. 继续推进一个 P3 命令簇（建议 `caption` + `beep/ding` 或 `extension-*`），按素材驱动小步收敛。
+3. 继续推进一个 P3 命令簇（建议 `caption` + `beep/ding` 或 `bgcol/bubble/buttons`），按素材驱动小步收敛。
