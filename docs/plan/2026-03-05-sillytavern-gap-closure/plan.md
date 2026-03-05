@@ -20,6 +20,7 @@
 
 - Slash（第一批）：`/world`、`/getcharlore`、`/getchatlore`、`/getgloballore`、`/getpersonalore`、`/getlorefield`、`/setlorefield`。
 - Slash（第二批）：`/regex-preset`、`/regex-toggle`、`/chat-jump`、`/chat-render`、`/chat-scrollto`。
+- Slash（第三批）：`/getcharbook`、`/getchatbook`、`/getglobalbooks`、`/getpersonabook`、`/message-role`、`/message-name`、`/getpromptentry*`、`/setpromptentry*`。
 - TavernHelper：`createCharacter/createOrReplaceCharacter/deleteCharacter/replaceCharacter/updateCharacterWith/getCurrentCharacterName/refreshOneMessage`。
 - 验收：gap report 中对应条目下降，基线测试全绿。
 

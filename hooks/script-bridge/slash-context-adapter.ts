@@ -113,7 +113,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     const wb = await WorldBookOperations.getWorldBook(ctx.characterId);
     if (!wb) return undefined;
     const entry = Object.values(wb).find(
-      (e: WorldBookEntry) => String(e.id) === id || String(e.entry_id) === id
+      (e: WorldBookEntry) => String(e.id) === id || String(e.entry_id) === id,
     );
     if (!entry) return undefined;
     return {
@@ -135,7 +135,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     return Object.values(wb)
       .filter((e: WorldBookEntry) =>
         e.keys?.some((k: string) => k.toLowerCase().includes(lowerQuery)) ||
-        e.content?.toLowerCase().includes(lowerQuery)
+        e.content?.toLowerCase().includes(lowerQuery),
       )
       .map((e: WorldBookEntry) => ({
         id: String(e.id || e.entry_id || ""),
@@ -181,6 +181,68 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const listPresets = async (): Promise<PresetInfo[]> => {
     const presets = await PresetOperations.getAllPresets();
     return presets.map((p) => ({ name: p.name, type: "openai" as const }));
+  };
+
+  const getActivePreset = async () => {
+    const presets = await PresetOperations.getAllPresets();
+    return presets.find((preset) => preset.enabled !== false && typeof preset.id === "string");
+  };
+
+  const listPromptEntries = async () => {
+    const activePreset = await getActivePreset();
+    if (!activePreset) {
+      return [];
+    }
+
+    return (activePreset.prompts || [])
+      .map((prompt) => {
+        const identifier = (prompt.identifier || "").trim();
+        if (!identifier) {
+          return null;
+        }
+
+        const normalizedName = (prompt.name || identifier).trim();
+        return {
+          identifier,
+          name: normalizedName || identifier,
+          enabled: prompt.enabled !== false,
+        };
+      })
+      .filter((entry): entry is { identifier: string; name: string; enabled: boolean } => !!entry);
+  };
+
+  const setPromptEntriesEnabled = async (
+    updates: Array<{ identifier: string; enabled: boolean }>,
+  ): Promise<void> => {
+    if (updates.length === 0) {
+      return;
+    }
+
+    const activePreset = await getActivePreset();
+    if (!activePreset?.id) {
+      throw new Error("active preset is not available");
+    }
+
+    const enabledMap = new Map(
+      updates.map((item) => [item.identifier, item.enabled] as const),
+    );
+    const nextPrompts = (activePreset.prompts || []).map((prompt) => {
+      const identifier = (prompt.identifier || "").trim();
+      if (!identifier || !enabledMap.has(identifier)) {
+        return prompt;
+      }
+      return {
+        ...prompt,
+        enabled: enabledMap.get(identifier),
+      };
+    });
+
+    const saved = await PresetOperations.updatePreset(activePreset.id, {
+      prompts: nextPrompts,
+    });
+    if (!saved) {
+      throw new Error("failed to update prompt entries");
+    }
   };
 
   const playAudio = (url: string, audioOptions?: { volume?: number; loop?: boolean }) => {
@@ -325,6 +387,22 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     getPreset,
     setPreset,
     listPresets,
+    listPromptEntries,
+    setPromptEntriesEnabled,
+    setMessageRole: async (index, role) => {
+      const message = ctx.messages[index];
+      if (!message) {
+        throw new Error(`/message-role message index out of range: ${index}`);
+      }
+      message.role = role;
+    },
+    setMessageName: async (index, name) => {
+      const message = ctx.messages[index];
+      if (!message) {
+        throw new Error(`/message-name message index out of range: ${index}`);
+      }
+      message.name = name;
+    },
     playAudio,
     stopAudio,
     pauseAudio,

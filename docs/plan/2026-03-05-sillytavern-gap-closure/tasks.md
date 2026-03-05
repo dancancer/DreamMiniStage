@@ -17,3 +17,9 @@
 - [x] 运行 `pnpm analyze:sillytavern-gap` 并更新最新报告。
 - [x] 运行 baseline + material replay 定向测试。
 - [x] 更新分析文档与计划状态（仅保留当前版本，历史进档案）。
+
+## 4. P2 增量收敛（本轮）
+
+- [x] 补齐 world/lore 语义别名（`/getcharbook` `/getchatbook` `/getglobalbooks` `/getpersonabook`）。
+- [x] 补齐消息元数据与 prompt-entry 命令（`/message-name` `/message-role` `/getpromptentry*` `/setpromptentry*`）。
+- [x] 更新能力矩阵、契约测试与 handoff 进展记录。

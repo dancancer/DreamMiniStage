@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`126/426 = 29.58%`（较上一轮 `25.35%` 明显提升）。
+- Slash 命令覆盖面继续提升：`143/426 = 33.57%`（较上一轮 `31.22%` 提升 `+2.35`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -29,10 +29,13 @@
 
 1. 已完成本轮高价值命令簇收敛：
    - world/lore：`/world`、`/getcharlore`、`/getchatlore`、`/getgloballore`、`/getpersonalore`、`/getlorefield`、`/setlorefield`
+   - world/lore 语义别名：`/getcharbook`、`/getchatbook`、`/getglobalbooks`、`/getpersonabook`
    - regex/chat：`/regex-preset`、`/regex-toggle`、`/chat-jump`、`/chat-render`、`/chat-scrollto`
+   - prompt/message 元数据：`/message-name`、`/message-role`、`/getpromptentry`、`/getpromptentries`、`/setpromptentry`、`/setpromptentries`
 2. 仍待推进的 P2 长尾以高频编辑/会话运维命令为主：
-   - `/getcharbook` `/getchatbook` `/getglobalbooks` `/getpersonabook`
-   - `/message-name` `/message-role` `/getpromptentry` 等
+   - `/getchatname`
+   - `/getentryfield` `/setentryfield`（与 lore field 别名体系对齐）
+   - `/setinput`、`/set-reasoning`、`/get-reasoning` 等会话运维命令
 3. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
@@ -61,6 +64,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 推进 `get*book` 语义别名（`/getcharbook` `/getchatbook` `/getglobalbooks` `/getpersonabook`），减少 world/lore 语义裂缝。
-2. 补齐消息元数据命令（`/message-name` `/message-role` `/getpromptentry`），完善脚本侧消息运维能力。
-3. 把 `delchat/delswipe` 接入宿主真实 UI 回调，确保“命令可执行”与“界面可见效果”一致。
+1. 补齐 world-info 字段别名命令：`/getentryfield`、`/setentryfield`，与 `get/setlorefield` 统一语义。
+2. 推进会话态命令缺口：`/getchatname`、`/setinput`，补强脚本运维链路。
+3. 把 `delchat/delswipe/message-*` 接入宿主真实 UI 回调，确保“命令可执行”与“界面可见效果”一致。

@@ -2,7 +2,7 @@
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                  Message Management Handlers                              ║
  * ║                                                                           ║
- * ║  消息管理命令 - getmessage / setmessage / messages / delmessage 等         ║
+ * ║  消息管理命令 - getmessage / setmessage / message-* / delmessage 等       ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -17,6 +17,8 @@ interface SerializableMessage {
   compact?: boolean;
 }
 
+const MESSAGE_ROLE_SET = new Set(["user", "assistant", "system"]);
+
 function normalizeMessageIndex(raw: string, length: number): number {
   const parsed = Number.parseInt(raw, 10);
   if (Number.isNaN(parsed)) {
@@ -27,6 +29,56 @@ function normalizeMessageIndex(raw: string, length: number): number {
     throw new Error(`Message index out of range: ${raw}`);
   }
   return normalized;
+}
+
+function resolveMessageByIndex(
+  ctx: Parameters<CommandHandler>[2],
+  index: number,
+): {
+  id: string;
+  role: string;
+  content: string;
+  name?: string;
+  compact?: boolean;
+} {
+  const message = ctx.getMessage ? ctx.getMessage(index) : ctx.messages[index];
+  if (!message) {
+    throw new Error(`Message not found at index: ${index}`);
+  }
+  return message;
+}
+
+function resolveMessageIndexFromAt(
+  rawAt: string | undefined,
+  length: number,
+  commandName: "message-role" | "message-name",
+): number {
+  if (length <= 0) {
+    throw new Error(`/${commandName} requires at least one message`);
+  }
+
+  if (!rawAt || rawAt.trim().length === 0) {
+    return length - 1;
+  }
+
+  const parsed = Number.parseInt(rawAt, 10);
+  if (Number.isNaN(parsed)) {
+    throw new Error(`/${commandName} invalid at index: ${rawAt}`);
+  }
+
+  const resolved = parsed < 0 ? length + parsed : parsed;
+  if (resolved < 0 || resolved >= length) {
+    throw new Error(`/${commandName} message index out of range: ${rawAt}`);
+  }
+  return resolved;
+}
+
+function normalizeMessageRole(raw: string): "user" | "assistant" | "system" {
+  const normalized = raw.trim().toLowerCase();
+  if (!MESSAGE_ROLE_SET.has(normalized)) {
+    throw new Error(`/message-role invalid role: ${raw}`);
+  }
+  return normalized as "user" | "assistant" | "system";
 }
 
 function toSerializableMessage(
@@ -96,4 +148,49 @@ export const handleMessages: CommandHandler = async (args, _namedArgs, ctx) => {
 export const handleMessageCount: CommandHandler = async (_args, _namedArgs, ctx, pipe) => {
   if (!ctx.getMessageCount) return String(ctx.messages?.length ?? 0);
   return String(ctx.getMessageCount());
+};
+
+/** /message-role [role] [at=<index>] - 读取或更新指定消息的角色 */
+export const handleMessageRole: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const index = resolveMessageIndexFromAt(
+    namedArgs.at,
+    ctx.messages?.length ?? 0,
+    "message-role",
+  );
+  const message = resolveMessageByIndex(ctx, index);
+
+  const roleRaw = (args.join(" ") || pipe || "").trim();
+  if (!roleRaw) {
+    return message.role || "";
+  }
+
+  const nextRole = normalizeMessageRole(roleRaw);
+  if (ctx.setMessageRole) {
+    await Promise.resolve(ctx.setMessageRole(index, nextRole));
+  } else {
+    message.role = nextRole;
+  }
+  return nextRole;
+};
+
+/** /message-name [name] [at=<index>] - 读取或更新指定消息的名称 */
+export const handleMessageName: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const index = resolveMessageIndexFromAt(
+    namedArgs.at,
+    ctx.messages?.length ?? 0,
+    "message-name",
+  );
+  const message = resolveMessageByIndex(ctx, index);
+
+  const nameRaw = (args.join(" ") || pipe || "").trim();
+  if (!nameRaw) {
+    return message.name || "";
+  }
+
+  if (ctx.setMessageName) {
+    await Promise.resolve(ctx.setMessageName(index, nameRaw));
+  } else {
+    message.name = nameRaw;
+  }
+  return nameRaw;
 };

@@ -41,7 +41,7 @@ describe("P2 world/lore command gaps", () => {
     expect(setGlobalLorebooks).toHaveBeenCalledTimes(2);
   });
 
-  it("/getcharlore 支持 primary/additional/all 三种读取模式", async () => {
+  it("/getcharlore 与 /getcharbook 支持 primary/additional/all 三种读取模式", async () => {
     const getCharLorebooks = vi.fn().mockResolvedValue({
       primary: "char-main",
       additional: ["char-extra-a", "char-extra-b"],
@@ -49,7 +49,7 @@ describe("P2 world/lore command gaps", () => {
     const ctx = createContext({ getCharLorebooks });
 
     const primary = await executeSlashCommandScript("/getcharlore", ctx);
-    const additional = await executeSlashCommandScript("/getcharlore type=additional", ctx);
+    const additional = await executeSlashCommandScript("/getcharbook type=additional", ctx);
     const all = await executeSlashCommandScript("/getcharwi type=all", ctx);
 
     expect(primary.isError).toBe(false);
@@ -60,16 +60,16 @@ describe("P2 world/lore command gaps", () => {
     expect(JSON.parse(all.pipe)).toEqual(["char-main", "char-extra-a", "char-extra-b"]);
   });
 
-  it("/getchatlore /getgloballore /getpersonalore 返回绑定信息", async () => {
+  it("/getchatbook /getglobalbooks /getpersonabook 复用 lore 数据路径", async () => {
     const ctx = createContext({
       getChatLorebook: vi.fn().mockResolvedValue("chat-book"),
       getGlobalLorebooks: vi.fn().mockResolvedValue(["global-a", "global-b"]),
       getPersonaLorebook: vi.fn().mockResolvedValue("persona-book"),
     });
 
-    const chat = await executeSlashCommandScript("/getchatlore", ctx);
-    const global = await executeSlashCommandScript("/getgloballore", ctx);
-    const persona = await executeSlashCommandScript("/getpersonalore", ctx);
+    const chat = await executeSlashCommandScript("/getchatbook", ctx);
+    const global = await executeSlashCommandScript("/getglobalbooks", ctx);
+    const persona = await executeSlashCommandScript("/getpersonabook", ctx);
 
     expect(chat.isError).toBe(false);
     expect(global.isError).toBe(false);

@@ -33,6 +33,17 @@ export interface LorebookBindings {
   additional: string[];
 }
 
+export interface PromptEntryState {
+  identifier: string;
+  name: string;
+  enabled: boolean;
+}
+
+export interface PromptEntryStateUpdate {
+  identifier: string;
+  enabled: boolean;
+}
+
 // ============================================================================
 //                              解析结果类型
 // ============================================================================
@@ -134,6 +145,8 @@ export interface ExecutionContext {
   editMessage?: (index: number, content: string) => void | Promise<void>;
   deleteMessage?: (index: number) => void | Promise<void>;
   getMessageCount?: () => number;
+  setMessageRole?: (index: number, role: "user" | "assistant" | "system") => void | Promise<void>;
+  setMessageName?: (index: number, name: string) => void | Promise<void>;
   deleteCurrentChat?: () => void | Promise<void>;
   deleteMessagesByName?: (name: string) => number | Promise<number>;
   deleteSwipe?: (swipeId?: number) => string | number | void | Promise<string | number | void>;
@@ -180,6 +193,10 @@ export interface ExecutionContext {
   getPreset?: () => PresetInfo | undefined | Promise<PresetInfo | undefined>;
   setPreset?: (name: string) => void | Promise<void>;
   listPresets?: () => PresetInfo[] | Promise<PresetInfo[]>;
+  listPromptEntries?: () => PromptEntryState[] | Promise<PromptEntryState[]>;
+  setPromptEntriesEnabled?: (
+    updates: PromptEntryStateUpdate[],
+  ) => void | Promise<void>;
 
   // 扩展操作 - Regex
   listRegexScripts?: () => RegexScriptInfo[] | Promise<RegexScriptInfo[]>;

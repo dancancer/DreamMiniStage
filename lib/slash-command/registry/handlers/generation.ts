@@ -10,6 +10,14 @@ import type { CommandHandler } from "../types";
 import { parseBoolean } from "../utils/helpers";
 
 type RegexToggleState = "on" | "off" | "toggle";
+type PromptEntryReturnType = "simple" | "list" | "dict";
+type PromptEntrySwitchState = "on" | "off" | "toggle";
+
+interface PromptEntrySnapshot {
+  identifier: string;
+  name: string;
+  enabled: boolean;
+}
 
 function normalizeRegexToggleState(raw?: string): RegexToggleState {
   const normalized = (raw || "toggle").trim().toLowerCase();
@@ -25,6 +33,93 @@ function normalizeRegexScriptName(raw: string, commandName: string): string {
     throw new Error(`/${commandName} requires a script name`);
   }
   return normalized;
+}
+
+function parsePromptEntryTargets(raw: string | undefined): string[] {
+  const normalized = (raw || "").trim();
+  if (!normalized) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(normalized);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((item) => String(item).trim())
+        .filter((item) => item.length > 0);
+    }
+    if (typeof parsed === "string") {
+      return parsed.trim().length > 0 ? [parsed.trim()] : [];
+    }
+  } catch {
+    // keep raw as plain string
+  }
+
+  return [normalized];
+}
+
+function collectPromptTargets(
+  key: "identifier" | "name",
+  namedArgs: Record<string, string>,
+  invocationMeta: Parameters<CommandHandler>[4],
+): string[] {
+  const rawValues: string[] = [];
+  const metaValues = invocationMeta?.namedArgumentList
+    ?.filter((item) => item.name === key)
+    .map((item) => item.value) || [];
+  rawValues.push(...metaValues);
+
+  if (rawValues.length === 0 && namedArgs[key] !== undefined) {
+    rawValues.push(namedArgs[key]);
+  }
+
+  const values = rawValues.flatMap((item) => parsePromptEntryTargets(item));
+  return Array.from(new Set(values));
+}
+
+function normalizePromptEntryReturnType(raw: string | undefined): PromptEntryReturnType {
+  const normalized = (raw || "simple").trim().toLowerCase();
+  if (normalized === "simple" || normalized === "list" || normalized === "dict") {
+    return normalized;
+  }
+  throw new Error(`/getpromptentry invalid return type: ${raw || ""}`);
+}
+
+function normalizePromptEntryState(raw: string | undefined): PromptEntrySwitchState {
+  const normalized = (raw || "toggle").trim().toLowerCase();
+  if (normalized === "toggle" || normalized === "on" || normalized === "off") {
+    return normalized;
+  }
+  if (normalized === "true" || normalized === "1") return "on";
+  if (normalized === "false" || normalized === "0") return "off";
+  throw new Error(`/setpromptentry invalid state: ${raw || ""}`);
+}
+
+function resolvePromptEntries(
+  entries: PromptEntrySnapshot[],
+  identifiers: string[],
+  names: string[],
+): PromptEntrySnapshot[] {
+  const selected = new Map<string, PromptEntrySnapshot>();
+  const byIdentifier = new Map(entries.map((entry) => [entry.identifier, entry]));
+
+  for (const identifier of identifiers) {
+    const matched = byIdentifier.get(identifier);
+    if (matched) {
+      selected.set(matched.identifier, matched);
+    }
+  }
+
+  if (names.length > 0) {
+    const nameSet = new Set(names);
+    for (const entry of entries) {
+      if (nameSet.has(entry.name)) {
+        selected.set(entry.identifier, entry);
+      }
+    }
+  }
+
+  return Array.from(selected.values());
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -176,6 +271,80 @@ export const handleListPresets: CommandHandler = async (_args, _namedArgs, ctx, 
   if (!ctx.listPresets) return pipe;
   const presets = ctx.listPresets();
   return JSON.stringify(presets);
+};
+
+/** /getpromptentry - 获取指定 prompt 条目的启用状态 */
+export const handleGetPromptEntry: CommandHandler = async (
+  _args,
+  namedArgs,
+  ctx,
+  _pipe,
+  invocationMeta,
+) => {
+  if (!ctx.listPromptEntries) {
+    throw new Error("/getpromptentry is not available in current context");
+  }
+
+  const identifiers = collectPromptTargets("identifier", namedArgs, invocationMeta);
+  const names = collectPromptTargets("name", namedArgs, invocationMeta);
+  if (identifiers.length === 0 && names.length === 0) {
+    throw new Error("/getpromptentry requires identifier or name");
+  }
+
+  let returnType = normalizePromptEntryReturnType(namedArgs.return);
+  const entries = await Promise.resolve(ctx.listPromptEntries());
+  const matched = resolvePromptEntries(entries, identifiers, names);
+  const states = new Map(matched.map((entry) => [entry.identifier, entry.enabled === true]));
+  if (states.size === 0) {
+    return "";
+  }
+
+  if (returnType === "simple" && states.size > 1) {
+    returnType = identifiers.length > 0 ? "dict" : "list";
+  }
+
+  if (returnType === "list") {
+    return JSON.stringify(Array.from(states.values()));
+  }
+  if (returnType === "dict") {
+    return JSON.stringify(Object.fromEntries(states));
+  }
+  return states.values().next().value ? "true" : "false";
+};
+
+/** /setpromptentry - 设置指定 prompt 条目的启用状态 */
+export const handleSetPromptEntry: CommandHandler = async (
+  args,
+  namedArgs,
+  ctx,
+  pipe,
+  invocationMeta,
+) => {
+  if (!ctx.listPromptEntries || !ctx.setPromptEntriesEnabled) {
+    throw new Error("/setpromptentry is not available in current context");
+  }
+
+  const identifiers = collectPromptTargets("identifier", namedArgs, invocationMeta);
+  const names = collectPromptTargets("name", namedArgs, invocationMeta);
+  if (identifiers.length === 0 && names.length === 0) {
+    throw new Error("/setpromptentry requires identifier or name");
+  }
+
+  const state = normalizePromptEntryState(args[0] || namedArgs.state || pipe);
+  const entries = await Promise.resolve(ctx.listPromptEntries());
+  const matched = resolvePromptEntries(entries, identifiers, names);
+  if (matched.length === 0) {
+    return "";
+  }
+
+  const updates = matched.map((entry) => ({
+    identifier: entry.identifier,
+    enabled: state === "toggle"
+      ? !entry.enabled
+      : state === "on",
+  }));
+  await Promise.resolve(ctx.setPromptEntriesEnabled(updates));
+  return "";
 };
 
 /** /regex-preset [name] - 获取或切换当前 regex 预设 */
