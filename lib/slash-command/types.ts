@@ -95,6 +95,51 @@ export interface ButtonsCommandOptions {
   multiple?: boolean;
 }
 
+export type ImageGenerationProcessingMode = "standard" | "minimal";
+
+export interface ImageGenerationConfig {
+  source: string;
+  style: string;
+  comfyWorkflow: string;
+}
+
+export interface ImageGenerationOptions {
+  quiet?: boolean;
+  negative?: string;
+  extend?: boolean;
+  edit?: boolean;
+  multimodal?: boolean;
+  snap?: boolean;
+  processing?: ImageGenerationProcessingMode;
+  seed?: number;
+  width?: number;
+  height?: number;
+  steps?: number;
+  cfg?: number;
+  skip?: number;
+  model?: string;
+  sampler?: string;
+  scheduler?: string;
+  vae?: string;
+  upscaler?: string;
+  hires?: boolean;
+  scale?: number;
+  denoise?: number;
+  secondPassSteps?: number;
+  faces?: boolean;
+}
+
+export interface InstructModeState {
+  enabled: boolean;
+  preset: string | null;
+}
+
+export interface InstructModePatch {
+  enabled?: boolean;
+  preset?: string;
+  quiet?: boolean;
+}
+
 // ============================================================================
 //                              解析结果类型
 // ============================================================================
@@ -266,6 +311,18 @@ export interface ExecutionContext {
   ) => void | Promise<void>;
 
   // 扩展操作 - 生成
+  generateImage?: (
+    prompt: string,
+    options?: ImageGenerationOptions,
+  ) => string | Promise<string>;
+  getImageGenerationConfig?: () => ImageGenerationConfig | Promise<ImageGenerationConfig>;
+  setImageGenerationConfig?: (
+    patch: Partial<ImageGenerationConfig>,
+  ) => ImageGenerationConfig | Promise<ImageGenerationConfig>;
+  getInstructMode?: () => InstructModeState | Promise<InstructModeState>;
+  setInstructMode?: (
+    patch: InstructModePatch,
+  ) => InstructModeState | Promise<InstructModeState>;
   generate?: (prompt: string, options?: GenerateOptions) => Promise<string>;
   generateQuiet?: (prompt: string, options?: GenerateOptions) => Promise<string>;
   generateRaw?: (prompt: string, options?: GenerateRawOptions) => Promise<string>;

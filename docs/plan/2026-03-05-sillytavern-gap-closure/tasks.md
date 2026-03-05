@@ -114,3 +114,9 @@
 - [x] 补齐会话运维命令簇（`/closechat`、`/count`、`/member-count|/countmember|/membercount`、`/cut`），并补齐输入别名 `/input`。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `closeCurrentChat/getGroupMemberCount` 回调能力，并补齐 `closechat` 宿主默认实现。
 - [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
+
+## 20. P3 增量收敛（图像 + instruct）
+
+- [x] 补齐图像命令簇（`/imagine|/image|/img`、`/imagine-source|/img-source`、`/imagine-style|/img-style`、`/imagine-comfy-workflow|/icw`），统一宿主回调单路径与参数校验 fail-fast。
+- [x] 补齐 instruct 命令簇（`/instruct`、`/instruct-on`、`/instruct-off`、`/instruct-state|/instruct-toggle`），统一状态读写单路径与返回值契约校验。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 image/instruct 回调能力，并更新能力矩阵、回归测试与 handoff。

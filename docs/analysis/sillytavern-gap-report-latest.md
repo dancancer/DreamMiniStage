@@ -1,11 +1,11 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T10:58:18.178Z
+- generatedAt: 2026-03-05T11:26:33.506Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 266/426 (62.44%)
+- slash commands: 280/426 (65.73%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
@@ -21,29 +21,29 @@
 - [P3] /forcesave (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /freq (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /hide (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /icw (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /image (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /imagine (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /imagine-comfy-workflow (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /imagine-source (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /imagine-style (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /img (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /img-source (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /img-style (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /import (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /instruct (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /instruct-off (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /instruct-on (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /instruct-state (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /instruct-toggle (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /is-mobile (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /length (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /member-down (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /member-peek (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /member-remove (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /member-up (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /memberdown (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /memberpeek (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /memberremove (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /memberup (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /model (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /name (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /nar (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /narrate (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 
 
 ## Baseline Asset Coverage
 
-- [covered] test-baseline-assets/character-card/2.png (refs=2, tests=1, scenarios=0)
-- [covered] test-baseline-assets/character-card/3.png (refs=1, tests=1, scenarios=0)
+- [covered] test-baseline-assets/character-card/2.png (refs=3, tests=2, scenarios=0)
+- [covered] test-baseline-assets/character-card/3.png (refs=2, tests=2, scenarios=0)
 - [covered] test-baseline-assets/character-card/Sgw3.card.json (refs=8, tests=3, scenarios=1)
 - [covered] test-baseline-assets/character-card/Sgw3.png (refs=1, tests=1, scenarios=0)
 - [covered] test-baseline-assets/character-card/V2.0Beta.png (refs=1, tests=1, scenarios=0)

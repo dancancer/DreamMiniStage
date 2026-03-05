@@ -291,6 +291,11 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onCloseChat = ctx.onCloseChat ?? (typeof document !== "undefined" ? defaultCloseCurrentChat : undefined);
   const onGetChatName = ctx.onGetChatName;
   const onSetInput = ctx.onSetInput;
+  const onGenerateImage = ctx.onGenerateImage;
+  const onGetImageGenerationConfig = ctx.onGetImageGenerationConfig;
+  const onSetImageGenerationConfig = ctx.onSetImageGenerationConfig;
+  const onGetInstructMode = ctx.onGetInstructMode;
+  const onSetInstructMode = ctx.onSetInstructMode;
   const onGetGroupMember = ctx.onGetGroupMember;
   const onGetGroupMemberCount = ctx.onGetGroupMemberCount;
   const onAddGroupMember = ctx.onAddGroupMember;
@@ -815,6 +820,11 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     closeCurrentChat: onCloseChat,
     getCurrentChatName: onGetChatName,
     setInputText: onSetInput,
+    generateImage: onGenerateImage,
+    getImageGenerationConfig: onGetImageGenerationConfig,
+    setImageGenerationConfig: onSetImageGenerationConfig,
+    getInstructMode: onGetInstructMode,
+    setInstructMode: onSetInstructMode,
     getGroupMember: onGetGroupMember,
     getGroupMemberCount: onGetGroupMemberCount,
     addGroupMember: onAddGroupMember,

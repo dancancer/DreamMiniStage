@@ -7,6 +7,13 @@
  */
 
 import type { CommandHandler } from "../types";
+import type {
+  ImageGenerationConfig,
+  ImageGenerationOptions,
+  ImageGenerationProcessingMode,
+  InstructModePatch,
+  InstructModeState,
+} from "../../types";
 import { parseBoolean } from "../utils/helpers";
 
 type RegexToggleState = "on" | "off" | "toggle";
@@ -190,6 +197,177 @@ function parseContextQuiet(raw: string | undefined): boolean {
   return parsed;
 }
 
+function ensureHostCallback<T>(
+  callback: T | undefined,
+  commandName: string,
+): T {
+  if (!callback) {
+    throw new Error(`/${commandName} is not available in current context`);
+  }
+  return callback;
+}
+
+function parseStrictOptionalBoolean(
+  raw: string | undefined,
+  commandName: string,
+  fieldName: string,
+): boolean | undefined {
+  if (raw === undefined) {
+    return undefined;
+  }
+  const parsed = parseBoolean(raw, undefined);
+  if (parsed === undefined) {
+    throw new Error(`/${commandName} invalid ${fieldName} value: ${raw}`);
+  }
+  return parsed;
+}
+
+function parseStrictOptionalNumber(
+  raw: string | undefined,
+  commandName: string,
+  fieldName: string,
+): number | undefined {
+  if (raw === undefined || raw.trim().length === 0) {
+    return undefined;
+  }
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`/${commandName} invalid ${fieldName} value: ${raw}`);
+  }
+  return parsed;
+}
+
+function parseStrictOptionalInteger(
+  raw: string | undefined,
+  commandName: string,
+  fieldName: string,
+): number | undefined {
+  const parsed = parseStrictOptionalNumber(raw, commandName, fieldName);
+  if (parsed === undefined) {
+    return undefined;
+  }
+  if (!Number.isInteger(parsed)) {
+    throw new Error(`/${commandName} invalid ${fieldName} value: ${raw}`);
+  }
+  return parsed;
+}
+
+function parseImageProcessingMode(
+  raw: string | undefined,
+): ImageGenerationProcessingMode | undefined {
+  if (raw === undefined || raw.trim().length === 0) {
+    return undefined;
+  }
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === "standard" || normalized === "minimal") {
+    return normalized;
+  }
+  throw new Error(`/imagine invalid processing value: ${raw}`);
+}
+
+function resolveCommandText(
+  args: string[],
+  pipe: string,
+): string {
+  return (args.join(" ") || pipe || "").trim();
+}
+
+function normalizeImageConfig(
+  value: unknown,
+  commandName: string,
+): ImageGenerationConfig {
+  if (!value || typeof value !== "object") {
+    throw new Error(`/${commandName} host callback must return image config object`);
+  }
+
+  const record = value as Partial<ImageGenerationConfig>;
+  if (typeof record.source !== "string") {
+    throw new Error(`/${commandName} host callback must return image config source`);
+  }
+  if (typeof record.style !== "string") {
+    throw new Error(`/${commandName} host callback must return image config style`);
+  }
+  if (typeof record.comfyWorkflow !== "string") {
+    throw new Error(`/${commandName} host callback must return image config comfyWorkflow`);
+  }
+  return {
+    source: record.source,
+    style: record.style,
+    comfyWorkflow: record.comfyWorkflow,
+  };
+}
+
+async function readImageConfig(
+  ctx: Parameters<CommandHandler>[2],
+  commandName: string,
+): Promise<ImageGenerationConfig> {
+  const getter = ensureHostCallback(ctx.getImageGenerationConfig, commandName);
+  const snapshot = await Promise.resolve(getter());
+  return normalizeImageConfig(snapshot, commandName);
+}
+
+async function updateImageConfig(
+  ctx: Parameters<CommandHandler>[2],
+  commandName: string,
+  patch: Partial<ImageGenerationConfig>,
+): Promise<ImageGenerationConfig> {
+  const setter = ensureHostCallback(ctx.setImageGenerationConfig, commandName);
+  const result = await Promise.resolve(setter(patch));
+  if (result !== undefined) {
+    return normalizeImageConfig(result, commandName);
+  }
+  return await readImageConfig(ctx, commandName);
+}
+
+function normalizeInstructModeState(
+  value: unknown,
+  commandName: string,
+): InstructModeState {
+  if (!value || typeof value !== "object") {
+    throw new Error(`/${commandName} host callback must return instruct state object`);
+  }
+
+  const record = value as Partial<InstructModeState>;
+  if (typeof record.enabled !== "boolean") {
+    throw new Error(`/${commandName} host callback must return boolean enabled`);
+  }
+
+  if (
+    record.preset !== null &&
+    record.preset !== undefined &&
+    typeof record.preset !== "string"
+  ) {
+    throw new Error(`/${commandName} host callback must return string preset or null`);
+  }
+
+  return {
+    enabled: record.enabled,
+    preset: record.preset ?? null,
+  };
+}
+
+async function readInstructModeState(
+  ctx: Parameters<CommandHandler>[2],
+  commandName: string,
+): Promise<InstructModeState> {
+  const getter = ensureHostCallback(ctx.getInstructMode, commandName);
+  const result = await Promise.resolve(getter());
+  return normalizeInstructModeState(result, commandName);
+}
+
+async function updateInstructModeState(
+  ctx: Parameters<CommandHandler>[2],
+  commandName: string,
+  patch: InstructModePatch,
+): Promise<InstructModeState> {
+  const setter = ensureHostCallback(ctx.setInstructMode, commandName);
+  const result = await Promise.resolve(setter(patch));
+  if (result !== undefined) {
+    return normalizeInstructModeState(result, commandName);
+  }
+  return await readInstructModeState(ctx, commandName);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    WorldBook 命令
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -316,6 +494,82 @@ export const handleWorldBook: CommandHandler = async (args, _namedArgs, ctx, pip
    Preset / Regex / Audio 命令
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/** /imagine|/image|/img <prompt> - 调用宿主图像生成能力 */
+export const handleImagine: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const callback = ensureHostCallback(ctx.generateImage, "imagine");
+  const prompt = resolveCommandText(args, pipe);
+  if (!prompt) {
+    throw new Error("/imagine requires prompt");
+  }
+
+  const options: ImageGenerationOptions = {
+    quiet: parseStrictOptionalBoolean(namedArgs.quiet, "imagine", "quiet"),
+    negative: namedArgs.negative,
+    extend: parseStrictOptionalBoolean(namedArgs.extend, "imagine", "extend"),
+    edit: parseStrictOptionalBoolean(namedArgs.edit, "imagine", "edit"),
+    multimodal: parseStrictOptionalBoolean(namedArgs.multimodal, "imagine", "multimodal"),
+    snap: parseStrictOptionalBoolean(namedArgs.snap, "imagine", "snap"),
+    processing: parseImageProcessingMode(namedArgs.processing),
+    seed: parseStrictOptionalInteger(namedArgs.seed, "imagine", "seed"),
+    width: parseStrictOptionalInteger(namedArgs.width, "imagine", "width"),
+    height: parseStrictOptionalInteger(namedArgs.height, "imagine", "height"),
+    steps: parseStrictOptionalInteger(namedArgs.steps, "imagine", "steps"),
+    cfg: parseStrictOptionalNumber(namedArgs.cfg, "imagine", "cfg"),
+    skip: parseStrictOptionalInteger(namedArgs.skip, "imagine", "skip"),
+    model: namedArgs.model,
+    sampler: namedArgs.sampler,
+    scheduler: namedArgs.scheduler,
+    vae: namedArgs.vae,
+    upscaler: namedArgs.upscaler,
+    hires: parseStrictOptionalBoolean(namedArgs.hires, "imagine", "hires"),
+    scale: parseStrictOptionalNumber(namedArgs.scale, "imagine", "scale"),
+    denoise: parseStrictOptionalNumber(namedArgs.denoise, "imagine", "denoise"),
+    secondPassSteps: parseStrictOptionalInteger(namedArgs["2ndpass"], "imagine", "2ndpass"),
+    faces: parseStrictOptionalBoolean(namedArgs.faces, "imagine", "faces"),
+  };
+  const result = await Promise.resolve(callback(prompt, options));
+  if (typeof result !== "string") {
+    throw new Error("/imagine host callback must return a string");
+  }
+  return result;
+};
+
+/** /imagine-source|/img-source [source] - 获取或切换图像源 */
+export const handleImagineSource: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  const nextSource = resolveCommandText(args, pipe);
+  if (!nextSource) {
+    const current = await readImageConfig(ctx, "imagine-source");
+    return current.source;
+  }
+
+  const updated = await updateImageConfig(ctx, "imagine-source", { source: nextSource });
+  return updated.source;
+};
+
+/** /imagine-style|/img-style [style] - 获取或切换图像风格 */
+export const handleImagineStyle: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  const nextStyle = resolveCommandText(args, pipe);
+  if (!nextStyle) {
+    const current = await readImageConfig(ctx, "imagine-style");
+    return current.style;
+  }
+
+  const updated = await updateImageConfig(ctx, "imagine-style", { style: nextStyle });
+  return updated.style;
+};
+
+/** /imagine-comfy-workflow|/icw <name> - 设置 Comfy workflow */
+export const handleImagineComfyWorkflow: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  const workflow = resolveCommandText(args, pipe);
+  if (!workflow) {
+    throw new Error("/imagine-comfy-workflow requires workflow name");
+  }
+  const updated = await updateImageConfig(ctx, "imagine-comfy-workflow", {
+    comfyWorkflow: workflow,
+  });
+  return updated.comfyWorkflow;
+};
+
 /** /preset [name] - 切换或获取当前预设 */
 export const handlePreset: CommandHandler = async (args, namedArgs, ctx, pipe) => {
   if (!ctx.getPreset && !ctx.setPreset) return pipe;
@@ -332,6 +586,55 @@ export const handlePreset: CommandHandler = async (args, namedArgs, ctx, pipe) =
     await ctx.setPreset(presetName);
   }
   return pipe;
+};
+
+/** /instruct [name] - 获取或设置 instruct 模板 */
+export const handleInstruct: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const presetName = resolveCommandText(args, pipe);
+  const quiet = parseStrictOptionalBoolean(namedArgs.quiet, "instruct", "quiet") ?? false;
+  const forceGet = parseStrictOptionalBoolean(namedArgs.forceGet, "instruct", "forceGet") ?? false;
+
+  if (!presetName) {
+    const snapshot = await readInstructModeState(ctx, "instruct");
+    if (!snapshot.enabled && !forceGet) {
+      return "";
+    }
+    return snapshot.preset || "";
+  }
+
+  const updated = await updateInstructModeState(ctx, "instruct", {
+    preset: presetName,
+    enabled: true,
+    quiet,
+  });
+  return updated.preset || presetName;
+};
+
+/** /instruct-on - 开启 instruct 模式 */
+export const handleInstructOn: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  const updated = await updateInstructModeState(ctx, "instruct-on", { enabled: true });
+  return String(updated.enabled);
+};
+
+/** /instruct-off - 关闭 instruct 模式 */
+export const handleInstructOff: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  const updated = await updateInstructModeState(ctx, "instruct-off", { enabled: false });
+  return String(updated.enabled);
+};
+
+/** /instruct-state|/instruct-toggle [state] - 读取或设置 instruct 状态 */
+export const handleInstructState: CommandHandler = async (args, _namedArgs, ctx, _pipe) => {
+  if (args.length === 0) {
+    const snapshot = await readInstructModeState(ctx, "instruct-state");
+    return String(snapshot.enabled);
+  }
+
+  const nextState = parseStrictOptionalBoolean(args[0], "instruct-state", "state");
+  if (nextState === undefined) {
+    throw new Error("/instruct-state invalid state value");
+  }
+  const updated = await updateInstructModeState(ctx, "instruct-state", { enabled: nextState });
+  return String(updated.enabled);
 };
 
 /** /context [name] - 切换或获取当前 context 模板 */

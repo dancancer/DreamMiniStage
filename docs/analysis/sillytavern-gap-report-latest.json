@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-05T10:58:18.178Z",
+  "generatedAt": "2026-03-05T11:26:33.506Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 266,
-    "coverage": "62.44%",
+    "covered": 280,
+    "coverage": "65.73%",
     "missingTop": [
       {
         "command": "custom-stop-strings",
@@ -76,105 +76,7 @@
         "priority": "P3"
       },
       {
-        "command": "icw",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "image",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "imagine",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "imagine-comfy-workflow",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "imagine-source",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "imagine-style",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "img",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "img-source",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "img-style",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "import",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "instruct",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "instruct-off",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "instruct-on",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "instruct-state",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "instruct-toggle",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -1142,15 +1044,15 @@
     "coverage": [
       {
         "asset": "test-baseline-assets/character-card/2.png",
-        "referencedFiles": 2,
-        "testReferences": 1,
+        "referencedFiles": 3,
+        "testReferences": 2,
         "scenarioReferences": 0,
         "status": "covered"
       },
       {
         "asset": "test-baseline-assets/character-card/3.png",
-        "referencedFiles": 1,
-        "testReferences": 1,
+        "referencedFiles": 2,
+        "testReferences": 2,
         "scenarioReferences": 0,
         "status": "covered"
       },

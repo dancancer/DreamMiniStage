@@ -14,6 +14,10 @@ import type {
   ButtonsCommandOptions,
   CaptionCommandOptions,
   CharacterSwitchResult,
+  ImageGenerationConfig,
+  ImageGenerationOptions,
+  InstructModePatch,
+  InstructModeState,
   ExpressionClassifyOptions,
   ExpressionFolderOverrideOptions,
   ExpressionListOptions,
@@ -71,6 +75,18 @@ export interface ApiCallContext {
   onCloseChat?: () => void | Promise<void>;
   onGetChatName?: () => string | Promise<string>;
   onSetInput?: (text: string) => void | Promise<void>;
+  onGenerateImage?: (
+    prompt: string,
+    options?: ImageGenerationOptions,
+  ) => string | Promise<string>;
+  onGetImageGenerationConfig?: () => ImageGenerationConfig | Promise<ImageGenerationConfig>;
+  onSetImageGenerationConfig?: (
+    patch: Partial<ImageGenerationConfig>,
+  ) => ImageGenerationConfig | Promise<ImageGenerationConfig>;
+  onGetInstructMode?: () => InstructModeState | Promise<InstructModeState>;
+  onSetInstructMode?: (
+    patch: InstructModePatch,
+  ) => InstructModeState | Promise<InstructModeState>;
   onGetGroupMember?: (
     target: string,
     field: GroupMemberField,
