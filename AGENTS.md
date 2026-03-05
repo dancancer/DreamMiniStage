@@ -101,7 +101,7 @@ import { cn } from "@/lib/utils";
 
 ## Commit & Pull Request Guidelines
 - Follow conventional commits seen in history (`feat:`, `fix:`, `docs:`, `refactor:`). Keep messages concise and scoped.
-- `sillytavern-plugins/*` 目录视为外部子仓工作区：默认忽略其未跟踪/脏变更，不要纳入提交，除非当前会话用户明确要求处理子仓内容。
+- `sillytavern-plugins/*` 目录视为外部子仓工作区：**默认禁止修改其内容、禁止在主仓提交中更新子仓指针**。若仅涉及文档整理，请迁移到主仓 `docs/`（建议放 `docs/archive/.../upstream/`）后提交，保持子仓干净不变。
 - PRs should include a brief summary, linked issue/reference, testing notes, and screenshots/gifs for UI changes. Mention any required env vars or migration steps.
 - Ensure `pnpm lint` and `pnpm test` pass; update docs when behavior or setup changes.
 
