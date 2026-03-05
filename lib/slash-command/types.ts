@@ -205,12 +205,14 @@ export interface ExecutionContext {
     options?: { collapse?: boolean },
   ) => void | Promise<void>;
   deleteCurrentChat?: () => void | Promise<void>;
+  closeCurrentChat?: () => void | Promise<void>;
   deleteMessagesByName?: (name: string) => number | Promise<number>;
   deleteSwipe?: (swipeId?: number) => string | number | void | Promise<string | number | void>;
   getGroupMember?: (
     target: string,
     field: GroupMemberField,
   ) => string | number | undefined | Promise<string | number | undefined>;
+  getGroupMemberCount?: () => number | Promise<number>;
   addGroupMember?: (
     target: string,
   ) => string | number | void | Promise<string | number | void>;

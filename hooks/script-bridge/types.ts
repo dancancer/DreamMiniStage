@@ -68,12 +68,14 @@ export interface ApiCallContext {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
+  onCloseChat?: () => void | Promise<void>;
   onGetChatName?: () => string | Promise<string>;
   onSetInput?: (text: string) => void | Promise<void>;
   onGetGroupMember?: (
     target: string,
     field: GroupMemberField,
   ) => string | number | undefined | Promise<string | number | undefined>;
+  onGetGroupMemberCount?: () => number | Promise<number>;
   onAddGroupMember?: (
     target: string,
   ) => string | number | void | Promise<string | number | void>;

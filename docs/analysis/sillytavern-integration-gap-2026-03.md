@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`259/426 = 60.80%`（较上一轮 `58.45%` 提升 `+2.35`pp）。
+- Slash 命令覆盖面继续提升：`266/426 = 62.44%`（较上一轮 `60.80%` 提升 `+1.64`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -32,6 +32,7 @@
    - world/lore 语义别名：`/getcharbook`、`/getchatbook`、`/getglobalbooks`、`/getpersonabook`、`/getentryfield`、`/setentryfield`
    - regex/chat：`/regex-preset`、`/regex-toggle`、`/chat-jump`、`/chat-render`、`/chat-scrollto`
    - 会话运维：`/getchatname`、`/setinput`
+   - 会话运维长尾：`/closechat`、`/count`、`/input`、`/member-count`、`/countmember`、`/membercount`、`/cut`
    - 群聊编辑：`/member-get`、`/getmember`、`/member-add`、`/addmember`、`/member-disable`、`/disable`、`/member-enable`、`/enable`、`/addswipe`
    - 会话推理/注入运维：`/reasoning-get`、`/get-reasoning`、`/reasoning-set`、`/set-reasoning`、`/listinjects`
    - prompt/message 元数据：`/message-name`、`/message-role`、`/getpromptentry`、`/getpromptentries`、`/setpromptentry`、`/setpromptentries`
@@ -54,7 +55,7 @@
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已移除 `ask/context/clipboard-*`、`data-bank-*`、`closure-*`、`/bind`、`/disable`、`/enable`、`member-* enable/disable`、`expression-*`、`extension-*`、`caption`、`beep|ding`、`bgcol`、`bubble|bubbles`、`buttons`、`flat|default`、`flushinject|flushinjects` 命令簇；当前主要剩余为会话与图像相关 P3 长尾命令（如 `closechat`、`count`、`countmember`、`cut`、`image|img|imagine*`）。
+- Top25 已移除 `ask/context/clipboard-*`、`data-bank-*`、`closure-*`、`/bind`、`/disable`、`/enable`、`member-* enable/disable`、`expression-*`、`extension-*`、`caption`、`beep|ding`、`bgcol`、`bubble|bubbles`、`buttons`、`flat|default`、`flushinject|flushinjects`、`closechat`、`count`、`countmember`、`cut`、`input` 命令簇；当前主要剩余为图像与指令配置相关长尾（`image|img|imagine*`、`instruct*`、`custom-stop-strings*` 等）。
 
 ## 4. 基线素材与回归状态
 
@@ -75,6 +76,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 推进会话运维长尾（`/closechat`、`/count`、`/countmember`、`/cut`），优先选择宿主已有状态可读写的命令，保持单路径实现。
-2. 推进图像命令首批（`/image|/img` 与 `imagine*` 的最小可用子集），优先打通“命令可执行 + 返回值可断言”闭环。
+1. 推进图像命令首批（`/image|/img`、`/imagine`、`/imagine-source`、`/imagine-style`、`/imagine-comfy-workflow`），优先打通“命令可执行 + 返回值可断言”闭环。
+2. 推进 instruct 命令簇（`/instruct`、`/instruct-on`、`/instruct-off`、`/instruct-state`、`/instruct-toggle`），尽量复用 preset/context 现有单路径。
 3. 为 `member-*/addswipe`、`data-bank-search` 与 `vector-worldinfo-state` 增加端到端 UI/结果可见断言，继续收紧回归面。

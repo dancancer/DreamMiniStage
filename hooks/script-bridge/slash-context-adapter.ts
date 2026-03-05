@@ -202,6 +202,19 @@ async function defaultShowButtonsPopup(
   return labels[index - 1];
 }
 
+async function defaultCloseCurrentChat(): Promise<void> {
+  if (typeof document === "undefined") {
+    throw new Error("/closechat is not available in current context");
+  }
+
+  const closeButton = document.querySelector<HTMLElement>("#option_close_chat");
+  if (!closeButton) {
+    throw new Error("/closechat host close button is not available");
+  }
+
+  closeButton.click();
+}
+
 export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContext {
   const snapshot = ctx.getVariablesSnapshot();
   const globalVariables: Record<string, unknown> = { ...snapshot.global };
@@ -275,9 +288,11 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onImpersonate = ctx.onImpersonate;
   const onContinue = ctx.onContinue;
   const onSwipe = ctx.onSwipe;
+  const onCloseChat = ctx.onCloseChat ?? (typeof document !== "undefined" ? defaultCloseCurrentChat : undefined);
   const onGetChatName = ctx.onGetChatName;
   const onSetInput = ctx.onSetInput;
   const onGetGroupMember = ctx.onGetGroupMember;
+  const onGetGroupMemberCount = ctx.onGetGroupMemberCount;
   const onAddGroupMember = ctx.onAddGroupMember;
   const onSetGroupMemberEnabled = ctx.onSetGroupMemberEnabled;
   const onAddSwipe = ctx.onAddSwipe;
@@ -797,9 +812,11 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     onImpersonate,
     onContinue,
     onSwipe,
+    closeCurrentChat: onCloseChat,
     getCurrentChatName: onGetChatName,
     setInputText: onSetInput,
     getGroupMember: onGetGroupMember,
+    getGroupMemberCount: onGetGroupMemberCount,
     addGroupMember: onAddGroupMember,
     setGroupMemberEnabled: onSetGroupMemberEnabled,
     addSwipe: onAddSwipe,

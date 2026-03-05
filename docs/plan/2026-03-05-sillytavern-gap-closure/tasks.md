@@ -108,3 +108,9 @@
 - [x] 补齐注入清理命令（`/flushinject|/flushinjects`），并接入会话作用域注入存储清理闭环。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `setAverageBackgroundColor/setChatDisplayMode/showButtonsPopup/removePromptInjections`，并补齐宿主默认实现。
 - [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
+
+## 19. P3 增量收敛（会话运维长尾）
+
+- [x] 补齐会话运维命令簇（`/closechat`、`/count`、`/member-count|/countmember|/membercount`、`/cut`），并补齐输入别名 `/input`。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `closeCurrentChat/getGroupMemberCount` 回调能力，并补齐 `closechat` 宿主默认实现。
+- [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。

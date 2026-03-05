@@ -112,6 +112,14 @@ function trimByCharacterRatio(
     : text.slice(Math.max(0, text.length - keepChars));
 }
 
+function buildCountSourceText(messages: Parameters<CommandHandler>[2]["messages"]): string {
+  return messages
+    .filter((message) => message.role !== "system")
+    .map((message) => (message.content || "").trim())
+    .filter((content) => content.length > 0)
+    .join(" ");
+}
+
 function resolveClipboardText(args: string[], namedArgs: Record<string, string>, pipe: string): string {
   const fromArgs = args.join(" ");
   const fromNamed = namedArgs.text;
@@ -359,6 +367,20 @@ export const handleTrimTokens: CommandHandler = async (args, namedArgs, ctx, pip
   }
 
   return trimByCharacterRatio(text, limit, tokenCount, direction);
+};
+
+/** /count - 统计当前会话消息 token 数 */
+export const handleCount: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  const sourceText = buildCountSourceText(ctx.messages ?? []);
+  const tokenCount = ctx.countTokens
+    ? await Promise.resolve(ctx.countTokens(sourceText))
+    : estimateTokenCount(sourceText);
+
+  if (!Number.isInteger(tokenCount) || tokenCount < 0) {
+    throw new Error("/count tokenizer returned invalid token count");
+  }
+
+  return String(tokenCount);
 };
 
 /** /reload-page - 触发宿主页面刷新（宿主未实现时 fail-fast） */

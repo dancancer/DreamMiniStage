@@ -40,6 +40,72 @@ function parseDeleteCount(raw: string | undefined, commandName: string): number 
   return parsed;
 }
 
+function parseCutSelector(raw: string, commandName: string, maxIndex: number): number[] {
+  const normalized = raw.trim();
+  if (!normalized) {
+    return [];
+  }
+
+  const rangeMatch = /^(\d+)-(\d+)$/.exec(normalized);
+  if (rangeMatch) {
+    const start = Number.parseInt(rangeMatch[1], 10);
+    const end = Number.parseInt(rangeMatch[2], 10);
+    if (start > end) {
+      throw new Error(`/${commandName} invalid range: ${raw}`);
+    }
+    if (end > maxIndex) {
+      throw new Error(`/${commandName} message index out of range: ${end}`);
+    }
+
+    return Array.from({ length: end - start + 1 }, (_, offset) => start + offset);
+  }
+
+  const index = Number.parseInt(normalized, 10);
+  if (!Number.isInteger(index) || index < 0) {
+    throw new Error(`/${commandName} invalid message selector: ${raw}`);
+  }
+  if (index > maxIndex) {
+    throw new Error(`/${commandName} message index out of range: ${index}`);
+  }
+
+  return [index];
+}
+
+function resolveCutTargetIndexes(
+  args: string[],
+  namedArgs: Record<string, string>,
+  pipe: string,
+  commandName: string,
+  messageCount: number,
+): number[] {
+  if (messageCount <= 0) {
+    throw new Error(`/${commandName} requires at least one message`);
+  }
+
+  const fromArgs = args.join(" ");
+  const rawInput = (fromArgs || namedArgs.range || namedArgs.id || pipe || "").trim();
+  if (!rawInput) {
+    throw new Error(`/${commandName} requires at least one message index or range`);
+  }
+
+  const selectors = rawInput
+    .split(/[\s,]+/)
+    .map((chunk) => chunk.trim())
+    .filter((chunk) => chunk.length > 0);
+  if (selectors.length === 0) {
+    throw new Error(`/${commandName} requires at least one message index or range`);
+  }
+
+  const selected = new Set<number>();
+  for (const selector of selectors) {
+    for (const index of parseCutSelector(selector, commandName, messageCount - 1)) {
+      selected.add(index);
+    }
+  }
+
+  return Array.from(selected.values()).sort((a, b) => a - b);
+}
+
 function parseSwipeId(raw: string | undefined): number | undefined {
   if (!raw || raw.trim().length === 0) {
     return undefined;
@@ -165,6 +231,19 @@ export const handleChatReload: CommandHandler = async (_args, _namedArgs, ctx, _
 };
 
 /**
+ * /closechat - 关闭当前会话（不删除聊天记录）
+ * SillyTavern 语义：无返回值（空字符串）。
+ */
+export const handleCloseChat: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  if (!ctx.closeCurrentChat) {
+    throw new Error("/closechat is not available in current context");
+  }
+
+  await Promise.resolve(ctx.closeCurrentChat());
+  return "";
+};
+
+/**
  * /getchatname - 获取当前聊天名称
  * SillyTavern 语义：返回聊天名称字符串。
  */
@@ -234,6 +313,23 @@ export const handleAddMember: CommandHandler = async (args, namedArgs, ctx, pipe
   const target = resolveGroupMemberTarget(args, namedArgs, pipe, "addmember");
   const result = await Promise.resolve(ctx.addGroupMember(target));
   return normalizeGroupMemberMutationResult("addmember", result);
+};
+
+/**
+ * /member-count - 获取群成员数量
+ * 别名：/countmember /membercount
+ */
+export const handleCountMember: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  if (!ctx.getGroupMemberCount) {
+    throw new Error("/countmember is not available in current context");
+  }
+
+  const count = await Promise.resolve(ctx.getGroupMemberCount());
+  if (!Number.isInteger(count) || count < 0) {
+    throw new Error("/countmember host returned invalid member count");
+  }
+
+  return String(count);
 };
 
 /**
@@ -417,6 +513,26 @@ export const handleDelMode: CommandHandler = async (args, namedArgs, ctx, pipe) 
     const index = messages.length - 1 - offset;
     deletedTexts.push(messages[index]?.content || "");
     await ctx.deleteMessage(index);
+  }
+
+  return deletedTexts.join("\n");
+};
+
+/**
+ * /cut [index|range...] - 剪切消息并返回文本
+ * SillyTavern 语义：range 为闭区间，支持多个 index/range 组合。
+ */
+export const handleCut: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.deleteMessage) {
+    throw new Error("/cut is not available in current context");
+  }
+
+  const messages = ctx.messages ?? [];
+  const targetIndexes = resolveCutTargetIndexes(args, namedArgs, pipe, "cut", messages.length);
+  const deletedTexts = targetIndexes.map((index) => messages[index]?.content || "");
+
+  for (const index of [...targetIndexes].sort((a, b) => b - a)) {
+    await Promise.resolve(ctx.deleteMessage(index));
   }
 
   return deletedTexts.join("\n");

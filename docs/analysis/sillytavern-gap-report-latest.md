@@ -1,22 +1,18 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T09:02:39.055Z
+- generatedAt: 2026-03-05T10:58:18.178Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 259/426 (60.80%)
+- slash commands: 266/426 (62.44%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
 ## Priority Command Gaps (Top 25)
 
-- [P3] /closechat (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /count (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /countmember (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /custom-stop-strings (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /custom-stopping-strings (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /cut (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /depth (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /downmember (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /dupe (score=2, upstreamRefs=1, localRefs=0)
@@ -35,7 +31,11 @@
 - [P3] /img-source (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /img-style (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /import (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /input (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /instruct (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /instruct-off (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /instruct-on (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /instruct-state (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /instruct-toggle (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

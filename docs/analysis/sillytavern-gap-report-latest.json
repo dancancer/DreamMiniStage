@@ -1,31 +1,10 @@
 {
-  "generatedAt": "2026-03-05T09:02:39.055Z",
+  "generatedAt": "2026-03-05T10:58:18.178Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 259,
-    "coverage": "60.80%",
+    "covered": 266,
+    "coverage": "62.44%",
     "missingTop": [
-      {
-        "command": "closechat",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "count",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "countmember",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
       {
         "command": "custom-stop-strings",
         "upstreamRefs": 1,
@@ -35,13 +14,6 @@
       },
       {
         "command": "custom-stopping-strings",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "cut",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -174,13 +146,6 @@
         "priority": "P3"
       },
       {
-        "command": "input",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "instruct",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -230,13 +195,6 @@
         "priority": "P3"
       },
       {
-        "command": "member-count",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "member-down",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -259,13 +217,6 @@
       },
       {
         "command": "member-up",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "membercount",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
