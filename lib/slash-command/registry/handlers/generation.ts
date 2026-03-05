@@ -122,6 +122,63 @@ function resolvePromptEntries(
   return Array.from(selected.values());
 }
 
+function parseStrictBoolean(
+  raw: string | undefined,
+  commandName: string,
+  key: string,
+  defaultValue: boolean,
+): boolean {
+  if (raw === undefined) {
+    return defaultValue;
+  }
+
+  const parsed = parseBoolean(raw, undefined);
+  if (parsed === undefined) {
+    throw new Error(`/${commandName} invalid ${key} value: ${raw}`);
+  }
+  return parsed;
+}
+
+function parseGenerateRole(raw: string | undefined): "system" | "char" {
+  const normalized = (raw || "system").trim().toLowerCase();
+  if (normalized === "system" || normalized === "char") {
+    return normalized;
+  }
+  throw new Error(`/genraw invalid as value: ${raw || ""}`);
+}
+
+function parseGenerateLength(raw: string | undefined): number | undefined {
+  if (raw === undefined || raw.trim().length === 0) {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(raw.trim(), 10);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(`/genraw invalid length value: ${raw}`);
+  }
+  return parsed;
+}
+
+function parseStopSequences(raw: string | undefined): string[] {
+  if (raw === undefined || raw.trim().length === 0) {
+    return [];
+  }
+
+  const normalized = raw.trim();
+  try {
+    const parsed = JSON.parse(normalized);
+    if (!Array.isArray(parsed)) {
+      throw new Error("/genraw stop must be a JSON array");
+    }
+    return parsed.map((item) => String(item));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("JSON array")) {
+      throw error;
+    }
+    throw new Error(`/genraw invalid stop value: ${raw}`);
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    WorldBook 命令
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -508,6 +565,46 @@ export const handleGenQuiet: CommandHandler = async (args, namedArgs, ctx, pipe)
   };
   const generator = ctx.generateQuiet || ctx.generate;
   return await generator!(prompt, options);
+};
+
+/** /genraw <prompt> - 原始生成（不拼接聊天历史） */
+export const handleGenRaw: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.generateRaw) {
+    throw new Error("/genraw is not available in current context");
+  }
+
+  const prompt = (args.join(" ") || pipe || "").trim();
+  if (!prompt) {
+    throw new Error("/genraw requires prompt");
+  }
+
+  const result = await ctx.generateRaw(prompt, {
+    lock: parseStrictBoolean(namedArgs.lock, "genraw", "lock", false),
+    instruct: parseStrictBoolean(namedArgs.instruct, "genraw", "instruct", true),
+    as: parseGenerateRole(namedArgs.as),
+    systemPrompt: namedArgs.system || "",
+    prefillPrompt: namedArgs.prefill || "",
+    responseLength: parseGenerateLength(namedArgs.length),
+    trimNames: parseStrictBoolean(namedArgs.trim, "genraw", "trim", true),
+    stopSequences: parseStopSequences(namedArgs.stop),
+  });
+  if (typeof result !== "string") {
+    throw new Error("/genraw host returned non-string result");
+  }
+  return result;
+};
+
+/** /generate-stop - 中止当前生成 */
+export const handleGenerateStop: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  if (!ctx.stopGeneration) {
+    throw new Error("/generate-stop is not available in current context");
+  }
+
+  const stopped = await Promise.resolve(ctx.stopGeneration());
+  if (typeof stopped !== "boolean") {
+    throw new Error("/generate-stop host returned non-boolean result");
+  }
+  return String(stopped);
 };
 
 /** /inject <prompt> - 临时注入提示词到下一次生成 */

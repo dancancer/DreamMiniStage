@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`159/426 = 37.32%`（较上一轮 `35.68%` 提升 `+1.64`pp）。
+- Slash 命令覆盖面继续提升：`167/426 = 39.20%`（较上一轮 `37.32%` 提升 `+1.88`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -35,12 +35,11 @@
    - 群聊编辑：`/member-get`、`/getmember`、`/member-add`、`/addmember`、`/addswipe`
    - 会话推理/注入运维：`/reasoning-get`、`/get-reasoning`、`/reasoning-set`、`/set-reasoning`、`/listinjects`
    - prompt/message 元数据：`/message-name`、`/message-role`、`/getpromptentry`、`/getpromptentries`、`/setpromptentry`、`/setpromptentries`
-2. 仍待推进的 P2 长尾以高频编辑/会话运维命令为主：
-   - `/delay`、`/generate-stop`、`/genraw`、`/listchatvar`、`/list-gallery` 等脚本运维命令
-3. 聊天编辑命令簇已完成本轮收敛：
+   - 脚本运维：`/delay`、`/wait`、`/sleep`、`/generate-stop`、`/genraw`、`/list-gallery`、`/listchatvar`
+2. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
-4. API 层 P2 缺口已基本清空，后续以 Slash 命令可用性为主战场。
+3. Top25 优先命令缺口已不再包含 P2 项，当前主战场切换为 P3 长尾命令可用性。
 
 ### 3.3 P3（机会性补齐）
 
@@ -65,6 +64,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 推进脚本运维命令簇：`/delay`、`/generate-stop`、`/genraw`、`/listchatvar`、`/list-gallery`，补强自动化链路控制力。
+1. 以 P3 命令簇为单位推进机会性补齐（优先 `createlore/findlore/vector-worldinfo-state`），每轮只推进一簇并绑定回归。
 2. 为 `member-*/addswipe` 打通宿主 UI 可见回调（而不止命令层），确保“命令可执行”与“界面可见效果”一致。
 3. 把 `delchat/delswipe/message-*` 与 `reasoning-set` 统一接入端到端可见断言，持续收紧回归面。

@@ -55,6 +55,27 @@ function normalizeTrimDirection(raw: string | undefined): TrimDirection {
   throw new Error(`/trimtokens invalid direction: ${raw || ""}`);
 }
 
+function parseDelayMs(raw: string | undefined): number {
+  const parsed = parseNumber(raw);
+  if (parsed === undefined || !Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`/delay invalid milliseconds: ${raw || ""}`);
+  }
+  return Math.floor(parsed);
+}
+
+function normalizeGalleryList(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    throw new Error("/list-gallery host returned non-array result");
+  }
+
+  return value.map((item) => {
+    if (typeof item !== "string") {
+      throw new Error("/list-gallery host returned non-string item");
+    }
+    return item;
+  });
+}
+
 function estimateTokenCount(text: string): number {
   const normalized = text.trim();
   if (!normalized) {
@@ -145,4 +166,27 @@ export const handleReloadPage: CommandHandler = async (_args, _namedArgs, ctx, _
 
   await ctx.reloadPage();
   return "";
+};
+
+/** /delay <milliseconds> - 延迟后续命令执行 */
+export const handleDelay: CommandHandler = async (args, namedArgs, _ctx, pipe) => {
+  const rawAmount = namedArgs.ms ?? args[0] ?? pipe;
+  const milliseconds = parseDelayMs(rawAmount);
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+  return "";
+};
+
+/** /list-gallery - 列出角色/群组画廊内容 */
+export const handleListGallery: CommandHandler = async (_args, namedArgs, ctx, _pipe) => {
+  if (!ctx.listGallery) {
+    throw new Error("/list-gallery is not available in current context");
+  }
+
+  const list = await Promise.resolve(ctx.listGallery({
+    character: namedArgs.char,
+    group: namedArgs.group,
+  }));
+  return JSON.stringify(normalizeGalleryList(list));
 };

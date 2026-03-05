@@ -213,6 +213,8 @@ export interface ExecutionContext {
   // 扩展操作 - 生成
   generate?: (prompt: string, options?: GenerateOptions) => Promise<string>;
   generateQuiet?: (prompt: string, options?: GenerateOptions) => Promise<string>;
+  generateRaw?: (prompt: string, options?: GenerateRawOptions) => Promise<string>;
+  stopGeneration?: () => boolean | Promise<boolean>;
   injectPrompt?: (prompt: string, options?: InjectOptions) => void | Promise<void>;
   listPromptInjections?: () => PromptInjectionState[] | Promise<PromptInjectionState[]>;
 
@@ -265,6 +267,9 @@ export interface ExecutionContext {
     direction: "start" | "end",
   ) => string | Promise<string>;
   reloadPage?: () => void | Promise<void>;
+  listGallery?: (
+    options?: ListGalleryOptions,
+  ) => string[] | Promise<string[]>;
 
   // 扩展操作 - P2 高频缺口（branch / ui）
   togglePanels?: () => void | Promise<void>;
@@ -334,12 +339,29 @@ export interface GenerateOptions {
   stopSequences?: string[];
 }
 
+/** 原始生成选项（对应 /genraw） */
+export interface GenerateRawOptions {
+  lock?: boolean;
+  instruct?: boolean;
+  as?: "system" | "char";
+  systemPrompt?: string;
+  prefillPrompt?: string;
+  responseLength?: number;
+  trimNames?: boolean;
+  stopSequences?: string[];
+}
+
 /** 注入选项 */
 export interface InjectOptions {
   position?: "before" | "after" | "chat" | "in_chat" | "none";
   depth?: number;
   role?: "system" | "user" | "assistant";
   ephemeral?: boolean;
+}
+
+export interface ListGalleryOptions {
+  character?: string;
+  group?: string;
 }
 
 export type GroupMemberField = "name" | "index" | "id" | "avatar";

@@ -1,45 +1,10 @@
 {
-  "generatedAt": "2026-03-05T04:23:04.880Z",
+  "generatedAt": "2026-03-05T04:35:28.246Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 159,
-    "coverage": "37.32%",
+    "covered": 167,
+    "coverage": "39.20%",
     "missingTop": [
-      {
-        "command": "delay",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "generate-stop",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "genraw",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "list-gallery",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "listchatvar",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
       {
         "command": "createlore",
         "upstreamRefs": 1,
@@ -832,13 +797,6 @@
         "priority": "P3"
       },
       {
-        "command": "lg",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "lock",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -1497,13 +1455,6 @@
         "priority": "P3"
       },
       {
-        "command": "sleep",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "sort",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -1841,13 +1792,6 @@
       },
       {
         "command": "vector-threshold",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "wait",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

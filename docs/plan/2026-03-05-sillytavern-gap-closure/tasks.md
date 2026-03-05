@@ -41,3 +41,9 @@
 - [x] 补齐群聊编辑命令（`/member-get` `/getmember` `/member-add` `/addmember` `/addswipe`）并统一 fail-fast 语义。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）以支持 `getGroupMember`、`addGroupMember`、`addSwipe` 回调。
 - [x] 运行定向回归 + gap 分析并更新文档与 handoff。
+
+## 8. P2 增量收敛（脚本运维）
+
+- [x] 补齐脚本运维命令（`/delay` `/wait` `/sleep` `/generate-stop` `/genraw` `/list-gallery`）。
+- [x] 补齐变量别名命令（`/listchatvar`）并同步 Slash capability matrix。
+- [x] 运行定向回归 + gap 分析并更新文档与 handoff。

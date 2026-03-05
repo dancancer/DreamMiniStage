@@ -1,21 +1,16 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T04:23:04.880Z
+- generatedAt: 2026-03-05T04:35:28.246Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 159/426 (37.32%)
+- slash commands: 167/426 (39.20%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
 ## Priority Command Gaps (Top 25)
 
-- [P2] /delay (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /generate-stop (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /genraw (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /list-gallery (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /listchatvar (score=5, upstreamRefs=1, localRefs=0)
 - [P3] /createlore (score=3, upstreamRefs=1, localRefs=0)
 - [P3] /findlore (score=3, upstreamRefs=1, localRefs=0)
 - [P3] /vector-worldinfo-state (score=3, upstreamRefs=1, localRefs=0)
@@ -36,6 +31,11 @@
 - [P3] /clipboard-set (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /closechat (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /closure-deserialize (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /closure-serialize (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /context (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /costume (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /count (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /countmember (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 
