@@ -1,33 +1,12 @@
 {
-  "generatedAt": "2026-03-05T11:26:33.506Z",
+  "generatedAt": "2026-03-05T11:41:42.872Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 280,
-    "coverage": "65.73%",
+    "covered": 301,
+    "coverage": "70.66%",
     "missingTop": [
       {
-        "command": "custom-stop-strings",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "custom-stopping-strings",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "depth",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "downmember",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -97,90 +76,6 @@
         "priority": "P3"
       },
       {
-        "command": "member-down",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "member-peek",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "member-remove",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "member-up",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "memberdown",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "memberpeek",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "memberremove",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "memberup",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "model",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "name",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "nar",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "narrate",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "newchat",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -238,20 +133,6 @@
       },
       {
         "command": "parse-reasoning",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "peek",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "peekmember",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -573,13 +454,6 @@
         "priority": "P3"
       },
       {
-        "command": "removemember",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "rename-char",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -707,20 +581,6 @@
       },
       {
         "command": "start-reply-with",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "stop-strings",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "stopping-strings",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -959,13 +819,6 @@
       },
       {
         "command": "uploadsprite",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "upmember",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

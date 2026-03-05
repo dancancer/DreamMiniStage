@@ -197,6 +197,31 @@ function parseContextQuiet(raw: string | undefined): boolean {
   return parsed;
 }
 
+function normalizeStopStringsSnapshot(
+  value: unknown,
+  commandName: string,
+): string[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`/${commandName} host returned non-array stop strings`);
+  }
+  return value.map((item) => String(item));
+}
+
+function parseStopStringsPayload(raw: string, commandName: string): string[] {
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      throw new Error(`/${commandName} value must be a JSON array`);
+    }
+    return parsed.map((item) => String(item));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("JSON array")) {
+      throw error;
+    }
+    throw new Error(`/${commandName} invalid value: ${raw}`);
+  }
+}
+
 function ensureHostCallback<T>(
   callback: T | undefined,
   commandName: string,
@@ -586,6 +611,50 @@ export const handlePreset: CommandHandler = async (args, namedArgs, ctx, pipe) =
     await ctx.setPreset(presetName);
   }
   return pipe;
+};
+
+/**
+ * /stop-strings - 读取/设置自定义停止词
+ * 别名：/stopping-strings /custom-stopping-strings /custom-stop-strings
+ */
+export const handleStopStrings: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const force = parseStrictOptionalBoolean(namedArgs.force, "custom-stop-strings", "force") ?? false;
+  const rawInput = resolveCommandText(args, pipe);
+
+  if (!rawInput && !force) {
+    const getStopStrings = ensureHostCallback(ctx.getStopStrings, "custom-stop-strings");
+    const current = await Promise.resolve(getStopStrings());
+    return JSON.stringify(normalizeStopStringsSnapshot(current, "custom-stop-strings"));
+  }
+
+  const setStopStrings = ensureHostCallback(ctx.setStopStrings, "custom-stop-strings");
+  const nextStopStrings = rawInput
+    ? parseStopStringsPayload(rawInput, "custom-stop-strings")
+    : [];
+  const updated = await Promise.resolve(setStopStrings(nextStopStrings));
+  return JSON.stringify(normalizeStopStringsSnapshot(updated, "custom-stop-strings"));
+};
+
+/** /model [name] - 读取或设置当前模型 */
+export const handleModel: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const targetModel = resolveCommandText(args, pipe);
+  const quiet = parseStrictOptionalBoolean(namedArgs.quiet, "model", "quiet") ?? false;
+
+  if (!targetModel) {
+    const getModel = ensureHostCallback(ctx.getModel, "model");
+    const current = await Promise.resolve(getModel());
+    if (typeof current !== "string") {
+      throw new Error("/model host returned non-string model");
+    }
+    return current;
+  }
+
+  const setModel = ensureHostCallback(ctx.setModel, "model");
+  const updated = await Promise.resolve(setModel(targetModel, { quiet }));
+  if (typeof updated !== "string") {
+    throw new Error("/model host returned non-string model");
+  }
+  return updated;
 };
 
 /** /instruct [name] - 获取或设置 instruct 模板 */

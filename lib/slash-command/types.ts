@@ -140,6 +140,14 @@ export interface InstructModePatch {
   quiet?: boolean;
 }
 
+export interface SetModelOptions {
+  quiet?: boolean;
+}
+
+export interface NarrateOptions {
+  voice?: string;
+}
+
 // ============================================================================
 //                              解析结果类型
 // ============================================================================
@@ -261,6 +269,16 @@ export interface ExecutionContext {
   addGroupMember?: (
     target: string,
   ) => string | number | void | Promise<string | number | void>;
+  removeGroupMember?: (
+    target: string,
+  ) => string | number | void | Promise<string | number | void>;
+  moveGroupMember?: (
+    target: string,
+    direction: GroupMemberMoveDirection,
+  ) => string | number | void | Promise<string | number | void>;
+  peekGroupMember?: (
+    target: string,
+  ) => string | number | void | Promise<string | number | void>;
   setGroupMemberEnabled?: (
     target: string,
     enabled: boolean,
@@ -323,6 +341,19 @@ export interface ExecutionContext {
   setInstructMode?: (
     patch: InstructModePatch,
   ) => InstructModeState | Promise<InstructModeState>;
+  getStopStrings?: () => string[] | Promise<string[]>;
+  setStopStrings?: (
+    stopStrings: string[],
+  ) => string[] | Promise<string[]>;
+  getModel?: () => string | Promise<string>;
+  setModel?: (
+    model: string,
+    options?: SetModelOptions,
+  ) => string | Promise<string>;
+  narrateText?: (
+    text: string,
+    options?: NarrateOptions,
+  ) => void | Promise<void>;
   generate?: (prompt: string, options?: GenerateOptions) => Promise<string>;
   generateQuiet?: (prompt: string, options?: GenerateOptions) => Promise<string>;
   generateRaw?: (prompt: string, options?: GenerateRawOptions) => Promise<string>;
@@ -576,6 +607,7 @@ export interface ListGalleryOptions {
 }
 
 export type GroupMemberField = "name" | "index" | "id" | "avatar";
+export type GroupMemberMoveDirection = "up" | "down";
 
 /** 激活 Lore 选项 */
 export interface ActivateLoreOptions {

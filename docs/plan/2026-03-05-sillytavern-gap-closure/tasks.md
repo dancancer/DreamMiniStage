@@ -120,3 +120,9 @@
 - [x] 补齐图像命令簇（`/imagine|/image|/img`、`/imagine-source|/img-source`、`/imagine-style|/img-style`、`/imagine-comfy-workflow|/icw`），统一宿主回调单路径与参数校验 fail-fast。
 - [x] 补齐 instruct 命令簇（`/instruct`、`/instruct-on`、`/instruct-off`、`/instruct-state|/instruct-toggle`），统一状态读写单路径与返回值契约校验。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 image/instruct 回调能力，并更新能力矩阵、回归测试与 handoff。
+
+## 21. P3 增量收敛（stop/model + member 编排）
+
+- [x] 补齐 stop/model/narrator 长尾命令（`/stop-strings|/stopping-strings|/custom-stop-strings|/custom-stopping-strings`、`/model`、`/name`、`/nar`、`/narrate`），统一单路径与 fail-fast 语义。
+- [x] 补齐群聊成员编排命令（`/member-remove|/removemember|/memberremove`、`/member-up|/upmember|/memberup`、`/member-down|/downmember|/memberdown`、`/member-peek|/peek|/memberpeek|/peekmember`）。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 stop/model/narrate 与成员编排回调，补齐契约测试并更新 gap 分析与 handoff。

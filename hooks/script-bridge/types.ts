@@ -14,19 +14,22 @@ import type {
   ButtonsCommandOptions,
   CaptionCommandOptions,
   CharacterSwitchResult,
-  ImageGenerationConfig,
-  ImageGenerationOptions,
-  InstructModePatch,
-  InstructModeState,
+  DataBankEntrySnapshot,
+  DataBankSource,
   ExpressionClassifyOptions,
   ExpressionFolderOverrideOptions,
   ExpressionListOptions,
   ExpressionSetOptions,
-  DataBankEntrySnapshot,
-  DataBankSource,
   GroupMemberField,
+  GroupMemberMoveDirection,
+  ImageGenerationConfig,
+  ImageGenerationOptions,
+  InstructModePatch,
+  InstructModeState,
+  NarrateOptions,
   PersonaLockState,
   PersonaLockType,
+  SetModelOptions,
   SendOptions,
 } from "@/lib/slash-command/types";
 
@@ -87,12 +90,33 @@ export interface ApiCallContext {
   onSetInstructMode?: (
     patch: InstructModePatch,
   ) => InstructModeState | Promise<InstructModeState>;
+  onGetStopStrings?: () => string[] | Promise<string[]>;
+  onSetStopStrings?: (stopStrings: string[]) => string[] | Promise<string[]>;
+  onGetModel?: () => string | Promise<string>;
+  onSetModel?: (
+    model: string,
+    options?: SetModelOptions,
+  ) => string | Promise<string>;
+  onNarrateText?: (
+    text: string,
+    options?: NarrateOptions,
+  ) => void | Promise<void>;
   onGetGroupMember?: (
     target: string,
     field: GroupMemberField,
   ) => string | number | undefined | Promise<string | number | undefined>;
   onGetGroupMemberCount?: () => number | Promise<number>;
   onAddGroupMember?: (
+    target: string,
+  ) => string | number | void | Promise<string | number | void>;
+  onRemoveGroupMember?: (
+    target: string,
+  ) => string | number | void | Promise<string | number | void>;
+  onMoveGroupMember?: (
+    target: string,
+    direction: GroupMemberMoveDirection,
+  ) => string | number | void | Promise<string | number | void>;
+  onPeekGroupMember?: (
     target: string,
   ) => string | number | void | Promise<string | number | void>;
   onSetGroupMemberEnabled?: (

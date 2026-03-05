@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`280/426 = 65.73%`（较上一轮 `62.44%` 提升 `+3.29`pp）。
+- Slash 命令覆盖面继续提升：`301/426 = 70.66%`（较上一轮 `65.73%` 提升 `+4.93`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -49,15 +49,21 @@
    - P3 注入清理簇：`/flushinject`、`/flushinjects`
    - P3 图像生成簇：`/imagine`、`/image`、`/img`、`/imagine-source`、`/img-source`、`/imagine-style`、`/img-style`、`/imagine-comfy-workflow`、`/icw`
    - P3 instruct 模式簇：`/instruct`、`/instruct-on`、`/instruct-off`、`/instruct-state`、`/instruct-toggle`
+   - P3 stop/model + narrator 长尾：`/stop-strings`、`/stopping-strings`、`/custom-stopping-strings`、`/custom-stop-strings`、`/model`、`/name`、`/nar`、`/narrate`
 2. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
-3. Top25 优先命令缺口已不再包含 P1/P2 项，当前主战场切换为 P3 长尾命令可用性。
+3. 群聊成员编排长尾已收敛：
+   - `/member-remove`、`/removemember`、`/memberremove`
+   - `/member-up`、`/upmember`、`/memberup`
+   - `/member-down`、`/downmember`、`/memberdown`
+   - `/member-peek`、`/peek`、`/memberpeek`、`/peekmember`
+4. Top25 优先命令缺口已不再包含 P1/P2 项，当前主战场切换为 P3 长尾命令可用性。
 
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已移除 `ask/context/clipboard-*`、`data-bank-*`、`closure-*`、`/bind`、`/disable`、`/enable`、`member-* enable/disable`、`expression-*`、`extension-*`、`caption`、`beep|ding`、`bgcol`、`bubble|bubbles`、`buttons`、`flat|default`、`flushinject|flushinjects`、`closechat`、`count`、`countmember`、`cut`、`input`、`image|img|imagine*`、`instruct*` 命令簇；当前主要剩余转为会话成员运维别名与 stop/model 相关长尾（`custom-stop-strings*`、`member-(up|down|peek|remove)*`、`model/name/narrate` 等）。
+- Top25 已进一步移除 `custom-stop-strings*`、`member-(up|down|peek|remove)*`、`model`、`name`、`nar`、`narrate`；当前主要剩余转为低频工具类与 note/persona 相关长尾（`depth/length/freq`、`note-*`、`persona-*`、`popup/import` 等）。
 
 ## 4. 基线素材与回归状态
 
@@ -78,6 +84,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 推进 stop/model 长尾命令（`/custom-stop-strings|/custom-stopping-strings`、`/model`），优先复用现有 preset/生成上下文单路径。
-2. 推进群聊成员运维剩余别名（`/member-up|/member-down|/member-peek|/member-remove` 及其别名），复用现有 member 回调并补齐 fail-fast。
+1. 推进 `note-*` 命令簇（`/note`、`/note-depth`、`/note-frequency|/note-freq`、`/note-position|/note-pos`、`/note-role`），优先复用现有注入存储与 fail-fast 语义。
+2. 推进 persona 长尾命令簇（`/persona`、`/persona-lock`、`/persona-set`、`/persona-sync`），优先复用已落地 `/lock|/bind` 的单路径状态机。
 3. 为 `member-*/addswipe`、`data-bank-search` 与 `vector-worldinfo-state` 增加端到端 UI/结果可见断言，继续收紧回归面。

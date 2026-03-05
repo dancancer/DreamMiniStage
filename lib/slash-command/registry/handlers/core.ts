@@ -92,6 +92,19 @@ export const handleSys: CommandHandler = async (args, _namedArgs, ctx, pipe) => 
   return text;
 };
 
+/** /narrate [text] - 旁白播报（优先走宿主 narrate 回调） */
+export const handleNarrate: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const text = args.join(" ") || pipe;
+  if (!text) return pipe;
+
+  if (ctx.narrateText) {
+    await Promise.resolve(ctx.narrateText(text, { voice: namedArgs.voice }));
+    return "";
+  }
+
+  return handleSys(args, namedArgs, ctx, pipe);
+};
+
 /** /impersonate <text> - AI 扮演用户回复 */
 export const handleImpersonate: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
   const text = args.join(" ") || pipe;

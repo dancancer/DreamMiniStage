@@ -1,20 +1,17 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T11:26:33.506Z
+- generatedAt: 2026-03-05T11:41:42.872Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 280/426 (65.73%)
+- slash commands: 301/426 (70.66%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
 ## Priority Command Gaps (Top 25)
 
-- [P3] /custom-stop-strings (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /custom-stopping-strings (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /depth (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /downmember (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /dupe (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /expression-upload (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /floor-teleport (score=2, upstreamRefs=1, localRefs=0)
@@ -24,18 +21,21 @@
 - [P3] /import (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /is-mobile (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /length (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /member-down (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /member-peek (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /member-remove (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /member-up (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /memberdown (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /memberpeek (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /memberremove (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /memberup (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /model (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /name (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /nar (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /narrate (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /newchat (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /note (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /note-depth (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /note-freq (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /note-frequency (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /note-pos (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /note-position (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /note-role (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /parse-reasoning (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /persona (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /persona-lock (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /persona-set (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /persona-sync (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /pick-icon (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /popup (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

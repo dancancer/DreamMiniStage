@@ -215,6 +215,58 @@ async function defaultCloseCurrentChat(): Promise<void> {
   closeButton.click();
 }
 
+const CUSTOM_STOP_STRINGS_STORAGE_KEY = "dreamministage.custom-stop-strings";
+const MODEL_STORAGE_KEY = "dreamministage.current-model";
+
+function readStringArrayFromStorage(storageKey: string): string[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw || raw.trim().length === 0) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed.map((item) => String(item));
+  } catch {
+    return [];
+  }
+}
+
+function writeStringArrayToStorage(storageKey: string, values: string[]): string[] {
+  const normalized = values.map((item) => String(item));
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(storageKey, JSON.stringify(normalized));
+  }
+  return normalized;
+}
+
+function readStringFromStorage(storageKey: string): string {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  try {
+    return window.localStorage.getItem(storageKey) || "";
+  } catch {
+    return "";
+  }
+}
+
+function writeStringToStorage(storageKey: string, value: string): string {
+  const normalized = String(value);
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(storageKey, normalized);
+  }
+  return normalized;
+}
+
 export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContext {
   const snapshot = ctx.getVariablesSnapshot();
   const globalVariables: Record<string, unknown> = { ...snapshot.global };
@@ -296,9 +348,25 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onSetImageGenerationConfig = ctx.onSetImageGenerationConfig;
   const onGetInstructMode = ctx.onGetInstructMode;
   const onSetInstructMode = ctx.onSetInstructMode;
+  const defaultGetStopStrings = (): string[] => readStringArrayFromStorage(CUSTOM_STOP_STRINGS_STORAGE_KEY);
+  const defaultSetStopStrings = (stopStrings: string[]): string[] => {
+    return writeStringArrayToStorage(CUSTOM_STOP_STRINGS_STORAGE_KEY, stopStrings);
+  };
+  const defaultGetModel = (): string => readStringFromStorage(MODEL_STORAGE_KEY);
+  const defaultSetModel = (model: string): string => {
+    return writeStringToStorage(MODEL_STORAGE_KEY, model);
+  };
+  const onGetStopStrings = ctx.onGetStopStrings ?? defaultGetStopStrings;
+  const onSetStopStrings = ctx.onSetStopStrings ?? defaultSetStopStrings;
+  const onGetModel = ctx.onGetModel ?? defaultGetModel;
+  const onSetModel = ctx.onSetModel ?? defaultSetModel;
+  const onNarrateText = ctx.onNarrateText;
   const onGetGroupMember = ctx.onGetGroupMember;
   const onGetGroupMemberCount = ctx.onGetGroupMemberCount;
   const onAddGroupMember = ctx.onAddGroupMember;
+  const onRemoveGroupMember = ctx.onRemoveGroupMember;
+  const onMoveGroupMember = ctx.onMoveGroupMember;
+  const onPeekGroupMember = ctx.onPeekGroupMember;
   const onSetGroupMemberEnabled = ctx.onSetGroupMemberEnabled;
   const onAddSwipe = ctx.onAddSwipe;
   const onAskCharacter = ctx.onAskCharacter;
@@ -825,9 +893,17 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     setImageGenerationConfig: onSetImageGenerationConfig,
     getInstructMode: onGetInstructMode,
     setInstructMode: onSetInstructMode,
+    getStopStrings: onGetStopStrings,
+    setStopStrings: onSetStopStrings,
+    getModel: onGetModel,
+    setModel: onSetModel,
+    narrateText: onNarrateText,
     getGroupMember: onGetGroupMember,
     getGroupMemberCount: onGetGroupMemberCount,
     addGroupMember: onAddGroupMember,
+    removeGroupMember: onRemoveGroupMember,
+    moveGroupMember: onMoveGroupMember,
+    peekGroupMember: onPeekGroupMember,
     setGroupMemberEnabled: onSetGroupMemberEnabled,
     addSwipe: onAddSwipe,
     askCharacter: onAskCharacter,

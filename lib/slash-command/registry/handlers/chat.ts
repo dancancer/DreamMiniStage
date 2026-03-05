@@ -316,6 +316,62 @@ export const handleAddMember: CommandHandler = async (args, namedArgs, ctx, pipe
 };
 
 /**
+ * /member-remove [member] - 移除群聊成员
+ * 别名：/removemember /memberremove
+ */
+export const handleRemoveMember: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.removeGroupMember) {
+    throw new Error("/member-remove is not available in current context");
+  }
+
+  const target = resolveGroupMemberTarget(args, namedArgs, pipe, "member-remove");
+  const result = await Promise.resolve(ctx.removeGroupMember(target));
+  return normalizeGroupMemberMutationResult("member-remove", result);
+};
+
+/**
+ * /member-up [member] - 向上移动群聊成员
+ * 别名：/upmember /memberup
+ */
+export const handleMoveMemberUp: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.moveGroupMember) {
+    throw new Error("/member-up is not available in current context");
+  }
+
+  const target = resolveGroupMemberTarget(args, namedArgs, pipe, "member-up");
+  const result = await Promise.resolve(ctx.moveGroupMember(target, "up"));
+  return normalizeGroupMemberMutationResult("member-up", result);
+};
+
+/**
+ * /member-down [member] - 向下移动群聊成员
+ * 别名：/downmember /memberdown
+ */
+export const handleMoveMemberDown: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.moveGroupMember) {
+    throw new Error("/member-down is not available in current context");
+  }
+
+  const target = resolveGroupMemberTarget(args, namedArgs, pipe, "member-down");
+  const result = await Promise.resolve(ctx.moveGroupMember(target, "down"));
+  return normalizeGroupMemberMutationResult("member-down", result);
+};
+
+/**
+ * /member-peek [member] - 预览群聊成员
+ * 别名：/peek /memberpeek /peekmember
+ */
+export const handlePeekMember: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.peekGroupMember) {
+    throw new Error("/member-peek is not available in current context");
+  }
+
+  const target = resolveGroupMemberTarget(args, namedArgs, pipe, "member-peek");
+  const result = await Promise.resolve(ctx.peekGroupMember(target));
+  return normalizeGroupMemberMutationResult("member-peek", result);
+};
+
+/**
  * /member-count - 获取群成员数量
  * 别名：/countmember /membercount
  */
