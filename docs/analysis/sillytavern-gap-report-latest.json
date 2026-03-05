@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-05T11:56:12.214Z",
+  "generatedAt": "2026-03-05T12:56:35.954Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 316,
-    "coverage": "74.18%",
+    "covered": 324,
+    "coverage": "76.06%",
     "missingTop": [
       {
         "command": "dupe",
@@ -84,62 +84,6 @@
       },
       {
         "command": "popup",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "ppp",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "profile",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "profile-create",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "profile-get",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "profile-list",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "profile-update",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "prompt",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "prompt-post-processing",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

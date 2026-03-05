@@ -1,11 +1,11 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T11:56:12.214Z
+- generatedAt: 2026-03-05T12:56:35.954Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 316/426 (74.18%)
+- slash commands: 324/426 (76.06%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
@@ -23,19 +23,19 @@
 - [P3] /parse-reasoning (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /pick-icon (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /popup (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /ppp (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /profile (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /profile-create (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /profile-get (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /profile-list (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /profile-update (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /prompt (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /prompt-post-processing (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /proxy (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-arg (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-chat-set (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-chat-set-off (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-chat-set-on (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-contextadd (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-contextclear (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-contextdel (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-create (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-delete (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-get (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-list (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

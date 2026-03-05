@@ -15,6 +15,7 @@ import type {
   ButtonsCommandOptions,
   CaptionCommandOptions,
   CharacterSwitchResult,
+  ConnectionProfileState,
   DataBankEntrySnapshot,
   DataBankSource,
   ExpressionClassifyOptions,
@@ -143,6 +144,21 @@ export interface ApiCallContext {
     name: string,
     options?: { mode?: PersonaSetMode },
   ) => string | Promise<string>;
+  onGetCurrentProfileName?: () => string | null | Promise<string | null>;
+  onSetCurrentProfileName?: (
+    name: string | null,
+    options?: { await?: boolean; timeout?: number },
+  ) => string | null | Promise<string | null>;
+  onListConnectionProfiles?: () => ConnectionProfileState[] | Promise<ConnectionProfileState[]>;
+  onCreateConnectionProfile?: (
+    name: string,
+  ) => ConnectionProfileState | Promise<ConnectionProfileState>;
+  onUpdateConnectionProfile?: () => ConnectionProfileState | Promise<ConnectionProfileState>;
+  onGetConnectionProfile?: (
+    name?: string,
+  ) => ConnectionProfileState | null | undefined | Promise<ConnectionProfileState | null | undefined>;
+  onGetPromptPostProcessing?: () => string | Promise<string>;
+  onSetPromptPostProcessing?: (value: string) => string | Promise<string>;
   onSyncPersona?: () => void | Promise<void>;
   onSetPersonaLock?: (
     state: PersonaLockState,

@@ -132,3 +132,9 @@
 - [x] 补齐 note/persona 长尾命令簇（`/note`、`/note-depth|/depth`、`/note-frequency|/note-freq|/freq`、`/note-position|/note-pos|/pos`、`/note-role`、`/persona-set|/persona`、`/persona-lock`、`/persona-sync|/sync`），统一单路径与 fail-fast 语义。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `get/setAuthorNoteState`、`get/setPersonaName`、`getPersonaLockState`、`syncPersona`，并在宿主默认路径补齐 localStorage + 注入存储联动。
 - [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
+
+## 23. P3 增量收敛（profile + prompt）
+
+- [x] 补齐 profile/prompt 长尾命令簇（`/profile`、`/profile-create`、`/profile-get`、`/profile-list`、`/profile-update`、`/prompt`、`/prompt-post-processing|/ppp`），统一单路径与 fail-fast 语义。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 profile/prompt-post-processing 回调能力，并在宿主默认路径补齐 localStorage 存储（profiles/selected/ppp）。
+- [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。

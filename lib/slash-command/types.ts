@@ -70,6 +70,12 @@ export interface AuthorNoteState {
   role: AuthorNoteRole;
 }
 
+export interface ConnectionProfileState {
+  id: string;
+  name: string;
+  [key: string]: unknown;
+}
+
 export interface DataBankEntrySnapshot {
   name: string;
   url: string;
@@ -319,6 +325,21 @@ export interface ExecutionContext {
     name: string,
     options?: { mode?: PersonaSetMode },
   ) => string | Promise<string>;
+  getCurrentProfileName?: () => string | null | Promise<string | null>;
+  setCurrentProfileName?: (
+    name: string | null,
+    options?: { await?: boolean; timeout?: number },
+  ) => string | null | Promise<string | null>;
+  listConnectionProfiles?: () => ConnectionProfileState[] | Promise<ConnectionProfileState[]>;
+  createConnectionProfile?: (
+    name: string,
+  ) => ConnectionProfileState | Promise<ConnectionProfileState>;
+  updateConnectionProfile?: () => ConnectionProfileState | Promise<ConnectionProfileState>;
+  getConnectionProfile?: (
+    name?: string,
+  ) => ConnectionProfileState | null | undefined | Promise<ConnectionProfileState | null | undefined>;
+  getPromptPostProcessing?: () => string | Promise<string>;
+  setPromptPostProcessing?: (value: string) => string | Promise<string>;
   syncPersona?: () => void | Promise<void>;
   getPersonaLockState?: (
     options?: { type?: PersonaLockType },

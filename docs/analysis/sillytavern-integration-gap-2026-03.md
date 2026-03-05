@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`316/426 = 74.18%`（较上一轮 `70.66%` 提升 `+3.52`pp）。
+- Slash 命令覆盖面继续提升：`324/426 = 76.06%`（较上一轮 `74.18%` 提升 `+1.88`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -51,6 +51,7 @@
    - P3 instruct 模式簇：`/instruct`、`/instruct-on`、`/instruct-off`、`/instruct-state`、`/instruct-toggle`
    - P3 stop/model + narrator 长尾：`/stop-strings`、`/stopping-strings`、`/custom-stopping-strings`、`/custom-stop-strings`、`/model`、`/name`、`/nar`、`/narrate`
    - P3 note + persona 长尾：`/note`、`/note-depth|/depth`、`/note-frequency|/note-freq|/freq`、`/note-position|/note-pos|/pos`、`/note-role`、`/persona-set|/persona`、`/persona-lock`、`/persona-sync|/sync`
+   - P3 profile + prompt 长尾：`/profile`、`/profile-create`、`/profile-get`、`/profile-list`、`/profile-update`、`/prompt`、`/prompt-post-processing`、`/ppp`
 2. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
@@ -64,7 +65,7 @@
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已进一步移除 `note*`、`depth/freq/pos`、`persona*`；当前主要剩余转为 profile/prompt 与低频工具命令（`dupe`、`length`、`import`、`popup` 等）。
+- Top25 已进一步移除 `note*`、`depth/freq/pos`、`persona*`、`profile*`、`prompt*`、`ppp`；当前主要剩余转为低频工具与 QR 命令（`dupe`、`length`、`import`、`qr-*` 等）。
 
 ## 4. 基线素材与回归状态
 
@@ -85,6 +86,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 推进 profile 命令簇（`/profile`、`/profile-create`、`/profile-get`、`/profile-list`、`/profile-update`、`/ppp`），优先复用现有本地状态存储路径并补齐严格返回值契约。
-2. 推进 prompt 长尾命令（`/prompt`、`/prompt-post-processing`），复用 prompt entry 通道，避免新增并行状态源。
+1. 推进低耦合工具命令簇（`/dupe`、`/length`、`/is-mobile`、`/newchat`），优先复用已有 utility/chat 单路径回调并补齐契约测试。
+2. 推进导入/弹窗长尾（`/import`、`/popup`、`/pick-icon`），优先走宿主能力透传，宿主缺失保持 fail-fast。
 3. 为 `member-*/addswipe`、`data-bank-search` 与 `vector-worldinfo-state` 增加端到端 UI/结果可见断言，继续收紧回归面。

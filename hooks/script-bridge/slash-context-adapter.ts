@@ -15,6 +15,7 @@ import type {
   AudioChannelType,
   AudioChannelSnapshot,
   CharacterSummary,
+  ConnectionProfileState,
   PersonaLockType,
 } from "@/lib/slash-command/types";
 import { executeSlashCommandScript } from "@/lib/slash-command/executor";
@@ -222,6 +223,9 @@ const MODEL_STORAGE_KEY = "dreamministage.current-model";
 const AUTHOR_NOTE_STORAGE_KEY = "dreamministage.author-note";
 const PERSONA_NAME_STORAGE_KEY = "dreamministage.persona-name";
 const PERSONA_LOCK_STORAGE_KEY = "dreamministage.persona-lock";
+const CONNECTION_PROFILES_STORAGE_KEY = "dreamministage.connection-profiles";
+const CONNECTION_PROFILE_SELECTED_KEY = "dreamministage.connection-profile-selected";
+const PROMPT_POST_PROCESSING_STORAGE_KEY = "dreamministage.prompt-post-processing";
 const AUTHOR_NOTE_INJECTION_PREFIX = "note_injection";
 
 const DEFAULT_AUTHOR_NOTE_STATE: AuthorNoteState = {
@@ -285,6 +289,88 @@ function writeStringToStorage(storageKey: string, value: string): string {
     window.localStorage.setItem(storageKey, normalized);
   }
   return normalized;
+}
+
+function createConnectionProfileId(name: string): string {
+  const normalizedName = normalizeScopeToken(name.trim().toLowerCase() || "profile");
+  const randomSuffix = Math.random().toString(36).slice(2, 8);
+  return `${normalizedName}_${Date.now().toString(36)}_${randomSuffix}`;
+}
+
+function normalizeConnectionProfile(value: unknown): ConnectionProfileState | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.name !== "string" || raw.name.trim().length === 0) {
+    return null;
+  }
+
+  const profile: ConnectionProfileState = {
+    ...raw,
+    id: typeof raw.id === "string" && raw.id.trim().length > 0
+      ? raw.id
+      : createConnectionProfileId(raw.name),
+    name: raw.name.trim(),
+  };
+  return profile;
+}
+
+function normalizeConnectionProfiles(value: unknown): ConnectionProfileState[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seenIds = new Set<string>();
+  const profiles: ConnectionProfileState[] = [];
+  for (const item of value) {
+    const profile = normalizeConnectionProfile(item);
+    if (!profile || seenIds.has(profile.id)) {
+      continue;
+    }
+    seenIds.add(profile.id);
+    profiles.push(profile);
+  }
+  return profiles;
+}
+
+function readConnectionProfilesFromStorage(): ConnectionProfileState[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const raw = window.localStorage.getItem(CONNECTION_PROFILES_STORAGE_KEY);
+    if (!raw || raw.trim().length === 0) {
+      return [];
+    }
+
+    return normalizeConnectionProfiles(JSON.parse(raw));
+  } catch {
+    return [];
+  }
+}
+
+function writeConnectionProfilesToStorage(
+  profiles: ConnectionProfileState[],
+): ConnectionProfileState[] {
+  const normalized = normalizeConnectionProfiles(profiles);
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(
+      CONNECTION_PROFILES_STORAGE_KEY,
+      JSON.stringify(normalized),
+    );
+  }
+  return normalized;
+}
+
+function readSelectedProfileIdFromStorage(): string {
+  return readStringFromStorage(CONNECTION_PROFILE_SELECTED_KEY).trim();
+}
+
+function writeSelectedProfileIdToStorage(profileId: string): string {
+  return writeStringToStorage(CONNECTION_PROFILE_SELECTED_KEY, profileId.trim());
 }
 
 function isAuthorNotePosition(value: unknown): value is AuthorNoteState["position"] {
@@ -552,6 +638,89 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const defaultSetPersonaName = (name: string): string => {
     return writeStringToStorage(PERSONA_NAME_STORAGE_KEY, name.trim());
   };
+  const defaultListConnectionProfiles = (): ConnectionProfileState[] => {
+    return readConnectionProfilesFromStorage();
+  };
+  const defaultGetCurrentProfileName = (): string | null => {
+    const selectedId = readSelectedProfileIdFromStorage();
+    if (!selectedId) {
+      return null;
+    }
+
+    const profile = readConnectionProfilesFromStorage().find((item) => item.id === selectedId);
+    return profile?.name || null;
+  };
+  const defaultSetCurrentProfileName = (
+    name: string | null,
+    _options?: { await?: boolean; timeout?: number },
+  ): string | null => {
+    if (name === null) {
+      writeSelectedProfileIdToStorage("");
+      return null;
+    }
+
+    const target = name.trim();
+    const profiles = readConnectionProfilesFromStorage();
+    const matched = profiles.find((profile) => profile.name === target);
+    if (!matched) {
+      return "";
+    }
+
+    writeSelectedProfileIdToStorage(matched.id);
+    return matched.name;
+  };
+  const defaultCreateConnectionProfile = (name: string): ConnectionProfileState => {
+    const nextName = name.trim();
+    if (!nextName) {
+      throw new Error("/profile-create requires profile name");
+    }
+
+    const profiles = readConnectionProfilesFromStorage();
+    if (profiles.some((profile) => profile.name === nextName)) {
+      throw new Error(`/profile-create duplicate profile name: ${nextName}`);
+    }
+
+    const created: ConnectionProfileState = {
+      id: createConnectionProfileId(nextName),
+      name: nextName,
+    };
+    const nextProfiles = writeConnectionProfilesToStorage([...profiles, created]);
+    const selected = nextProfiles.find((profile) => profile.id === created.id);
+    if (!selected) {
+      throw new Error("/profile-create failed to persist profile");
+    }
+    writeSelectedProfileIdToStorage(selected.id);
+    return selected;
+  };
+  const defaultUpdateConnectionProfile = (): ConnectionProfileState => {
+    const selectedId = readSelectedProfileIdFromStorage();
+    const profiles = readConnectionProfilesFromStorage();
+    const selected = profiles.find((profile) => profile.id === selectedId);
+    if (!selected) {
+      throw new Error("/profile-update no profile selected");
+    }
+    return selected;
+  };
+  const defaultGetConnectionProfile = (
+    name?: string,
+  ): ConnectionProfileState | undefined => {
+    const profiles = readConnectionProfilesFromStorage();
+    if (name && name.trim().length > 0) {
+      return profiles.find((profile) => profile.name === name.trim());
+    }
+
+    const selectedId = readSelectedProfileIdFromStorage();
+    if (!selectedId) {
+      return undefined;
+    }
+    return profiles.find((profile) => profile.id === selectedId);
+  };
+  const defaultGetPromptPostProcessing = (): string => {
+    return readStringFromStorage(PROMPT_POST_PROCESSING_STORAGE_KEY);
+  };
+  const defaultSetPromptPostProcessing = (value: string): string => {
+    return writeStringToStorage(PROMPT_POST_PROCESSING_STORAGE_KEY, value.trim());
+  };
   const defaultGetPersonaLockState = (
     options?: { type?: PersonaLockType },
   ): boolean => {
@@ -574,6 +743,14 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onSetAuthorNoteState = ctx.onSetAuthorNoteState ?? defaultSetAuthorNoteState;
   const onGetPersonaName = ctx.onGetPersonaName ?? defaultGetPersonaName;
   const onSetPersonaName = ctx.onSetPersonaName ?? defaultSetPersonaName;
+  const onGetCurrentProfileName = ctx.onGetCurrentProfileName ?? defaultGetCurrentProfileName;
+  const onSetCurrentProfileName = ctx.onSetCurrentProfileName ?? defaultSetCurrentProfileName;
+  const onListConnectionProfiles = ctx.onListConnectionProfiles ?? defaultListConnectionProfiles;
+  const onCreateConnectionProfile = ctx.onCreateConnectionProfile ?? defaultCreateConnectionProfile;
+  const onUpdateConnectionProfile = ctx.onUpdateConnectionProfile ?? defaultUpdateConnectionProfile;
+  const onGetConnectionProfile = ctx.onGetConnectionProfile ?? defaultGetConnectionProfile;
+  const onGetPromptPostProcessing = ctx.onGetPromptPostProcessing ?? defaultGetPromptPostProcessing;
+  const onSetPromptPostProcessing = ctx.onSetPromptPostProcessing ?? defaultSetPromptPostProcessing;
   const onSyncPersona = ctx.onSyncPersona;
   const onNarrateText = ctx.onNarrateText;
   const onGetGroupMember = ctx.onGetGroupMember;
@@ -1144,6 +1321,14 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     setAuthorNoteState: onSetAuthorNoteState,
     getPersonaName: onGetPersonaName,
     setPersonaName: onSetPersonaName,
+    getCurrentProfileName: onGetCurrentProfileName,
+    setCurrentProfileName: onSetCurrentProfileName,
+    listConnectionProfiles: onListConnectionProfiles,
+    createConnectionProfile: onCreateConnectionProfile,
+    updateConnectionProfile: onUpdateConnectionProfile,
+    getConnectionProfile: onGetConnectionProfile,
+    getPromptPostProcessing: onGetPromptPostProcessing,
+    setPromptPostProcessing: onSetPromptPostProcessing,
     syncPersona: onSyncPersona,
     setPersonaLock: onSetPersonaLock,
     getPersonaLockState: onGetPersonaLockState,

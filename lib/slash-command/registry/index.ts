@@ -26,6 +26,7 @@ import * as DataBankHandlers from "./handlers/data-bank";
 import * as ExpressionHandlers from "./handlers/expression";
 import * as ExtensionHandlers from "./handlers/extensions";
 import * as NotePersonaHandlers from "./handlers/note-persona";
+import * as ProfilePromptHandlers from "./handlers/profile-prompt";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -102,6 +103,11 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["note-pos", NotePersonaHandlers.handleNotePosition],
   ["pos", NotePersonaHandlers.handleNotePosition],
   ["note-role", NotePersonaHandlers.handleNoteRole],
+  ["profile", ProfilePromptHandlers.handleProfile],
+  ["profile-list", ProfilePromptHandlers.handleProfileList],
+  ["profile-create", ProfilePromptHandlers.handleProfileCreate],
+  ["profile-update", ProfilePromptHandlers.handleProfileUpdate],
+  ["profile-get", ProfilePromptHandlers.handleProfileGet],
   ["trimtokens", UtilityHandlers.handleTrimTokens],
   ["count", UtilityHandlers.handleCount],
   ["reload-page", UtilityHandlers.handleReloadPage],
@@ -357,6 +363,9 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["getpromptentries", GenerationHandlers.handleGetPromptEntry],
   ["setpromptentry", GenerationHandlers.handleSetPromptEntry],
   ["setpromptentries", GenerationHandlers.handleSetPromptEntry],
+  ["prompt", ProfilePromptHandlers.handlePrompt],
+  ["prompt-post-processing", ProfilePromptHandlers.handlePromptPostProcessing],
+  ["ppp", ProfilePromptHandlers.handlePromptPostProcessing],
 
   // ─── Regex 命令 ───
   ["regex", GenerationHandlers.handleRegex],
