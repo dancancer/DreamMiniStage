@@ -82,4 +82,29 @@ describe("message handler compat gaps", () => {
       createMockContext(),
     )).toThrow("begin <= middle <= end");
   });
+
+  it("supports refreshOneMessage with message index/id and emits refresh event", () => {
+    const dispatchSpy = vi.spyOn(window, "dispatchEvent");
+    const ctx = createMockContext();
+
+    const byIndex = messageHandlers.refreshOneMessage([1], ctx) as boolean;
+    const byId = messageHandlers.refreshOneMessage(["m4"], ctx) as boolean;
+
+    expect(byIndex).toBe(true);
+    expect(byId).toBe(true);
+
+    const firstEvent = dispatchSpy.mock.calls.at(-2)?.[0] as CustomEvent;
+    const secondEvent = dispatchSpy.mock.calls.at(-1)?.[0] as CustomEvent;
+
+    expect(firstEvent.type).toBe("DreamMiniStage:refreshOneMessage");
+    expect(firstEvent.detail).toEqual(expect.objectContaining({
+      message_id: "m2",
+      index: 1,
+    }));
+    expect(secondEvent.type).toBe("DreamMiniStage:refreshOneMessage");
+    expect(secondEvent.detail).toEqual(expect.objectContaining({
+      message_id: "m4",
+      index: 3,
+    }));
+  });
 });

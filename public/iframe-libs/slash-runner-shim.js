@@ -1329,8 +1329,65 @@
     importRawChat: api("importRawChat"),
     importRawWorldbook: api("importRawWorldbook"),
     importRawTavernRegex: api("importRawTavernRegex"),
-    injectPrompts: unsupportedAsync("injectPrompts"),
-    uninjectPrompts: unsupportedAsync("uninjectPrompts"),
+    injectPrompts: function(prompts, options) {
+      if (!Array.isArray(prompts) || prompts.length === 0) {
+        throw new Error("[injectPrompts] prompts must be non-empty array");
+      }
+      if (options !== undefined && (!options || typeof options !== "object" || Array.isArray(options))) {
+        throw new Error("[injectPrompts] options must be object");
+      }
+
+      return callApi("injectPrompts", [prompts, options]).then(function(ids) {
+        var normalizedIds = Array.isArray(ids)
+          ? ids.filter(function(item) {
+            return typeof item === "string" && item.length > 0;
+          })
+          : [];
+
+        var deleted = false;
+        var clearListeners = function() {};
+
+        var uninject = function() {
+          if (deleted || normalizedIds.length === 0) {
+            return Promise.resolve(0);
+          }
+          deleted = true;
+          clearListeners();
+          return callApi("uninjectPrompts", [normalizedIds]);
+        };
+
+        if (options && options.once === true && normalizedIds.length > 0) {
+          var onceEvents = [
+            "DreamMiniStage:" + IFRAME_EVENTS.GENERATION_ENDED,
+            "DreamMiniStage:" + TAVERN_EVENTS.GENERATION_ENDED,
+            "DreamMiniStage:" + TAVERN_EVENTS.GENERATION_STOPPED,
+          ];
+          var onceHandler = function() {
+            uninject();
+          };
+
+          onceEvents.forEach(function(eventName) {
+            window.addEventListener(eventName, onceHandler, { once: true });
+          });
+          clearListeners = function() {
+            onceEvents.forEach(function(eventName) {
+              window.removeEventListener(eventName, onceHandler);
+            });
+          };
+        }
+
+        return {
+          ids: normalizedIds,
+          uninject: uninject,
+        };
+      });
+    },
+    uninjectPrompts: function(ids) {
+      if (!Array.isArray(ids) || ids.length === 0) {
+        throw new Error("[uninjectPrompts] ids must be non-empty array");
+      }
+      return callApi("uninjectPrompts", [ids]);
+    },
 
     // ──────────────────────────────────────────────────────────────────────
     //  tavern_regex API（长尾兼容最小子集）
@@ -1400,7 +1457,53 @@
     getCharacterNames: api("getCharacterNames"),
     getCharacter: api("getCharacter"),
     getCurrentCharacter: api("getCurrentCharacter"),
+    getCurrentCharacterName: api("getCurrentCharacterName"),
     getCharacterById: api("getCharacterById"),
+    createCharacter: api("createCharacter"),
+    createOrReplaceCharacter: function(characterName, character, options) {
+      if (typeof characterName !== "string" || characterName.trim().length === 0) {
+        throw new Error("[createOrReplaceCharacter] characterName must be non-empty string");
+      }
+
+      var normalizedName = characterName.trim();
+      return window.TavernHelper.getCharacter(normalizedName).then(function(currentCharacter) {
+        if (currentCharacter) {
+          return window.TavernHelper.replaceCharacter(normalizedName, character, options).then(function() {
+            return false;
+          });
+        }
+        return window.TavernHelper.createCharacter(normalizedName, character).then(function() {
+          return true;
+        });
+      });
+    },
+    deleteCharacter: api("deleteCharacter"),
+    replaceCharacter: api("replaceCharacter"),
+    updateCharacterWith: function(characterName, updater, options) {
+      if (typeof characterName !== "string" || characterName.trim().length === 0) {
+        throw new Error("[updateCharacterWith] characterName must be non-empty string");
+      }
+      if (typeof updater !== "function") {
+        throw new Error("[updateCharacterWith] updater must be function");
+      }
+
+      var normalizedName = characterName.trim();
+      return window.TavernHelper.getCharacter(normalizedName).then(function(currentCharacter) {
+        if (!currentCharacter) {
+          return false;
+        }
+
+        return Promise.resolve(updater(currentCharacter)).then(function(nextCharacter) {
+          if (!nextCharacter || typeof nextCharacter !== "object" || Array.isArray(nextCharacter)) {
+            throw new Error("[updateCharacterWith] updater must return plain object");
+          }
+          return window.TavernHelper.replaceCharacter(normalizedName, nextCharacter, options).then(function() {
+            return true;
+          });
+        });
+      });
+    },
+    refreshOneMessage: api("refreshOneMessage"),
     getAllEnabledScriptButtons: api("getAllEnabledScriptButtons"),
     Character: RawCharacter,
     RawCharacter: RawCharacter,

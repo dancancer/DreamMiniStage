@@ -18,6 +18,7 @@ import { characterHandlers } from "../character-handlers";
 import { audioHandlers } from "../audio-handlers";
 import { toolHandlers } from "../tool-handlers";
 import { compatHandlers } from "../compat-handlers";
+import { promptInjectionHandlers } from "../prompt-injection-handlers";
 import {
   SCRIPT_BRIDGE_API_MATRIX,
   SLASH_COMMAND_MATRIX,
@@ -59,6 +60,7 @@ function getRegisteredHandlerMethods(): Set<string> {
       ...audioHandlers,
       ...toolHandlers,
       ...compatHandlers,
+      ...promptInjectionHandlers,
     }),
   );
 }

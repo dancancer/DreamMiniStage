@@ -28,6 +28,7 @@ import { characterHandlers } from "./character-handlers";
 import { audioHandlers } from "./audio-handlers";
 import { toolHandlers } from "./tool-handlers";
 import { compatHandlers } from "./compat-handlers";
+import { promptInjectionHandlers } from "./prompt-injection-handlers";
 
 // ============================================================================
 //                              Handler 注册表
@@ -49,6 +50,7 @@ const API_HANDLERS: ApiHandlerMap = {
   ...audioHandlers,
   ...toolHandlers,
   ...compatHandlers,
+  ...promptInjectionHandlers,
 };
 
 // ============================================================================

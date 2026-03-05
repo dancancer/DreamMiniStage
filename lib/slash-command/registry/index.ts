@@ -114,6 +114,7 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["del", MessageHandlers.handleDelMessage],
   ["messages", MessageHandlers.handleMessages],
   ["mes", MessageHandlers.handleMessages],
+  ["message", MessageHandlers.handleMessages],
   ["messagecount", MessageHandlers.handleMessageCount],
   ["mescount", MessageHandlers.handleMessageCount],
   ["char", CharacterHandlers.handleCharacter],

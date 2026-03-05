@@ -1,0 +1,2367 @@
+{
+  "generatedAt": "2026-03-05T02:16:01.178Z",
+  "slash": {
+    "upstreamTotal": 426,
+    "covered": 108,
+    "coverage": "25.35%",
+    "missingTop": [
+      {
+        "command": "getcharlore",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 6,
+        "priority": "P2"
+      },
+      {
+        "command": "getchatlore",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 6,
+        "priority": "P2"
+      },
+      {
+        "command": "getgloballore",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 6,
+        "priority": "P2"
+      },
+      {
+        "command": "getlorefield",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 6,
+        "priority": "P2"
+      },
+      {
+        "command": "getpersonalore",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 6,
+        "priority": "P2"
+      },
+      {
+        "command": "regex-preset",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 6,
+        "priority": "P2"
+      },
+      {
+        "command": "regex-toggle",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 6,
+        "priority": "P2"
+      },
+      {
+        "command": "setlorefield",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 6,
+        "priority": "P2"
+      },
+      {
+        "command": "world",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 6,
+        "priority": "P2"
+      },
+      {
+        "command": "addmember",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "addswipe",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "chat-jump",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "chat-render",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "chat-scrollto",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "delay",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "delchat",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "delete",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "delmode",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "delname",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "delswipe",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "generate-stop",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "genraw",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "get-reasoning",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getcharbook",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getcharwi",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getchatbook",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getchatname",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getchatwi",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getentryfield",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getglobalbooks",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getglobalwi",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getmember",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getpersonabook",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getpersonawi",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getpromptentries",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getpromptentry",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "getwifield",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "list-gallery",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "listchatvar",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "listinjects",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "message-name",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "message-role",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "set-reasoning",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "setentryfield",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "setinput",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "setpromptentries",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "setpromptentry",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "setwifield",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 5,
+        "priority": "P2"
+      },
+      {
+        "command": "createlore",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 3,
+        "priority": "P3"
+      },
+      {
+        "command": "findlore",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 3,
+        "priority": "P3"
+      },
+      {
+        "command": "vector-worldinfo-state",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 3,
+        "priority": "P3"
+      },
+      {
+        "command": "ask",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "autobg",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "beep",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "bgauto",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "bgcol",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "bglock",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "bgunlock",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "bind",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "bubble",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "bubbles",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "buttons",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "cancel",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "caption",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "classify",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "clipboard-get",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "clipboard-set",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "closechat",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "closure-deserialize",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "closure-serialize",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "context",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "costume",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "count",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "countmember",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "createwi",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "custom-stop-strings",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "custom-stopping-strings",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "cut",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "data-bank",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "data-bank-add",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "data-bank-delete",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "data-bank-disable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "data-bank-enable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "data-bank-get",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "data-bank-ingest",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "data-bank-list",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "data-bank-purge",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "data-bank-search",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "data-bank-update",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "databank",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "databank-add",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "databank-delete",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "databank-disable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "databank-enable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "databank-get",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "databank-ingest",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "databank-list",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "databank-purge",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "databank-search",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "databank-update",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "db",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "db-add",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "db-delete",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "db-disable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "db-enable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "db-get",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "db-ingest",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "db-list",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "db-purge",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "db-search",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "db-update",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "default",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "depth",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "ding",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "disable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "disablemember",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "downmember",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "dupe",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "emote",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "enable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "enablemember",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "expression-classify",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "expression-folder-override",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "expression-last",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "expression-list",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "expression-set",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "expression-upload",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "expressions",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "extension-disable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "extension-enable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "extension-exists",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "extension-installed",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "extension-state",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "extension-toggle",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "findentry",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "findwi",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "flat",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "floor-teleport",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "flushinject",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "flushinjects",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "forcesave",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "freq",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "hide",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "icw",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "image",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "imagine",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "imagine-comfy-workflow",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "imagine-source",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "imagine-style",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "img",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "img-source",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "img-style",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "import",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "input",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "instruct",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "instruct-off",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "instruct-on",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "instruct-state",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "instruct-toggle",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "is-mobile",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "lastsprite",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "length",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "lg",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "lock",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "lockbg",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "member-add",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "member-count",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "member-disable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "member-down",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "member-enable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "member-get",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "member-peek",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "member-remove",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "member-up",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "memberadd",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "membercount",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "memberdisable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "memberdown",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "memberenable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "memberget",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "memberpeek",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "memberremove",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "memberup",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "model",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "name",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "nar",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "narrate",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "newchat",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "note",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "note-depth",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "note-freq",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "note-frequency",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "note-pos",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "note-position",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "note-role",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "parse-reasoning",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "peek",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "peekmember",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "persona",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "persona-lock",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "persona-set",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "persona-sync",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "pick-icon",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "popup",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "pos",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "ppp",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "profile",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "profile-create",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "profile-get",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "profile-list",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "profile-update",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "prompt",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "prompt-post-processing",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "proxy",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-arg",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-chat-set",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-chat-set-off",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-chat-set-on",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-contextadd",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-contextclear",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-contextdel",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-create",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-delete",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-get",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-list",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-presetadd",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-presetdelete",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-presetupdate",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-set",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-set-create",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-set-delete",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-set-list",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-set-off",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-set-on",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-set-update",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qr-update",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "qrset",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "random",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "reasoning-formatting",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "reasoning-get",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "reasoning-parse",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "reasoning-preset",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "reasoning-set",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "reasoning-template",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "removemember",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "rename-char",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "renamechat",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "reroll-pick",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sd",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sd-source",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sd-style",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "secret-delete",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "secret-find",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "secret-get",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "secret-id",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "secret-read",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "secret-rename",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "secret-rotate",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "secret-write",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sg",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "show-gallery",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "single",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sleep",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sort",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "speak",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sprite",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "spriteoverride",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "start-reply-with",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "stop-strings",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "stopping-strings",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "story",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "summarize",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "swipeadd",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "swipedel",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sync",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sysgen",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sysname",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sysprompt",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sysprompt-disable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sysprompt-enable",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sysprompt-off",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sysprompt-on",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sysprompt-state",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "sysprompt-toggle",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "system-prompt",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tag-add",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tag-exists",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tag-list",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tag-remove",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tempchat",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "test",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tokens",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tool-invoke",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tool-list",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tool-register",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tool-unregister",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tools-invoke",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tools-list",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tools-register",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tools-unregister",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "translate",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "trimend",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "trimstart",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "tts",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "unhide",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "unlockbg",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "uploadsprite",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "upmember",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "vector-chats-state",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "vector-files-state",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "vector-max-entries",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "vector-query",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "vector-threshold",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "wait",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "wi-get-timed-effect",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "wi-set-timed-effect",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      },
+      {
+        "command": "yt-script",
+        "upstreamRefs": 1,
+        "localRefs": 0,
+        "score": 2,
+        "priority": "P3"
+      }
+    ]
+  },
+  "apiMatrix": {
+    "upstreamShimTotal": 133,
+    "covered": 133,
+    "coverage": "100.00%"
+  },
+  "apiFacade": {
+    "upstreamTotal": 141,
+    "covered": 141,
+    "coverage": "100.00%",
+    "missingTop": []
+  },
+  "assets": {
+    "coverage": [
+      {
+        "asset": "test-baseline-assets/character-card/2.png",
+        "referencedFiles": 2,
+        "testReferences": 1,
+        "scenarioReferences": 0,
+        "status": "covered"
+      },
+      {
+        "asset": "test-baseline-assets/character-card/3.png",
+        "referencedFiles": 1,
+        "testReferences": 1,
+        "scenarioReferences": 0,
+        "status": "covered"
+      },
+      {
+        "asset": "test-baseline-assets/character-card/Sgw3.card.json",
+        "referencedFiles": 8,
+        "testReferences": 3,
+        "scenarioReferences": 1,
+        "status": "covered"
+      },
+      {
+        "asset": "test-baseline-assets/character-card/Sgw3.png",
+        "referencedFiles": 1,
+        "testReferences": 1,
+        "scenarioReferences": 0,
+        "status": "covered"
+      },
+      {
+        "asset": "test-baseline-assets/character-card/V2.0Beta.png",
+        "referencedFiles": 1,
+        "testReferences": 1,
+        "scenarioReferences": 0,
+        "status": "covered"
+      },
+      {
+        "asset": "test-baseline-assets/mvu-examples/variable-chain.json",
+        "referencedFiles": 2,
+        "testReferences": 1,
+        "scenarioReferences": 0,
+        "status": "covered"
+      },
+      {
+        "asset": "test-baseline-assets/preset/夏瑾 Pro - Beta 0.70.json",
+        "referencedFiles": 5,
+        "testReferences": 1,
+        "scenarioReferences": 1,
+        "status": "covered"
+      },
+      {
+        "asset": "test-baseline-assets/preset/明月秋青v3.94.json",
+        "referencedFiles": 10,
+        "testReferences": 4,
+        "scenarioReferences": 1,
+        "status": "covered"
+      },
+      {
+        "asset": "test-baseline-assets/regex-scripts/sgw3-sample.json",
+        "referencedFiles": 2,
+        "testReferences": 1,
+        "scenarioReferences": 0,
+        "status": "covered"
+      },
+      {
+        "asset": "test-baseline-assets/slash-scripts/control-flow-replay.json",
+        "referencedFiles": 2,
+        "testReferences": 1,
+        "scenarioReferences": 0,
+        "status": "covered"
+      },
+      {
+        "asset": "test-baseline-assets/worldbook/regex-1美化夜空多选追加收起.json",
+        "referencedFiles": 2,
+        "testReferences": 1,
+        "scenarioReferences": 0,
+        "status": "covered"
+      },
+      {
+        "asset": "test-baseline-assets/worldbook/服装随机化.json",
+        "referencedFiles": 6,
+        "testReferences": 2,
+        "scenarioReferences": 1,
+        "status": "covered"
+      }
+    ],
+    "directoryHealth": [
+      {
+        "dir": "character-card",
+        "status": "ready",
+        "fileCount": 5
+      },
+      {
+        "dir": "preset",
+        "status": "ready",
+        "fileCount": 2
+      },
+      {
+        "dir": "worldbook",
+        "status": "ready",
+        "fileCount": 2
+      },
+      {
+        "dir": "regex-scripts",
+        "status": "ready",
+        "fileCount": 1
+      },
+      {
+        "dir": "slash-scripts",
+        "status": "ready",
+        "fileCount": 1
+      },
+      {
+        "dir": "mvu-examples",
+        "status": "ready",
+        "fileCount": 1
+      }
+    ]
+  }
+}

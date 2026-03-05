@@ -14,6 +14,7 @@
  * ║  • createChatMessages(messages)   - 追加新消息 (Req 4.3)                    ║
  * ║  • deleteChatMessages(messageIds) - 删除指定消息 (Req 4.4)                  ║
  * ║  • rotateChatMessages()           - 旧版区间旋转接口 (Req 4.4 compat)       ║
+ * ║  • refreshOneMessage(messageId)   - 单条消息刷新事件 (compat)               ║
  * ║  • getCurrentMessageId()          - 获取最新消息 ID (Req 4.5)               ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
@@ -68,6 +69,32 @@ function getChatMessages(_args: unknown[], ctx: ApiCallContext): DialogueMessage
 function getCurrentMessageId(_args: unknown[], ctx: ApiCallContext): string | null {
   if (ctx.messages.length === 0) return null;
   return ctx.messages[ctx.messages.length - 1]?.id ?? null;
+}
+
+function resolveMessageIndex(rawMessageId: unknown, messages: DialogueMessage[]): number {
+  if (messages.length === 0) {
+    throw new Error("refreshOneMessage requires at least one message");
+  }
+
+  if (rawMessageId === undefined || rawMessageId === null || rawMessageId === "last") {
+    return messages.length - 1;
+  }
+
+  if (typeof rawMessageId === "number" && Number.isInteger(rawMessageId)) {
+    if (rawMessageId < 0 || rawMessageId >= messages.length) {
+      throw new Error(`refreshOneMessage message_id out of range: ${rawMessageId}`);
+    }
+    return rawMessageId;
+  }
+
+  if (typeof rawMessageId === "string") {
+    const byIdIndex = messages.findIndex((message) => message.id === rawMessageId);
+    if (byIdIndex >= 0) {
+      return byIdIndex;
+    }
+  }
+
+  throw new Error("refreshOneMessage requires message_id (index|id|'last')");
 }
 
 // ============================================================================
@@ -271,6 +298,28 @@ function rotateChatMessages(args: unknown[], ctx: ApiCallContext): string[] {
   return updates.map((item) => String(item.message_id));
 }
 
+function refreshOneMessage(args: unknown[], ctx: ApiCallContext): boolean {
+  const [rawMessageId] = args as [unknown];
+  const messageIndex = resolveMessageIndex(rawMessageId, ctx.messages);
+  const message = ctx.messages[messageIndex];
+  if (!message) {
+    return false;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent("DreamMiniStage:refreshOneMessage", {
+      detail: {
+        message_id: message.id,
+        index: messageIndex,
+        message,
+        characterId: ctx.characterId,
+      },
+    }),
+  );
+
+  return true;
+}
+
 // ============================================================================
 //                              事件发射
 // ============================================================================
@@ -304,6 +353,7 @@ export const messageHandlers: ApiHandlerMap = {
   "createChatMessages": createChatMessages,
   "deleteChatMessages": deleteChatMessages,
   "rotateChatMessages": rotateChatMessages,
+  "refreshOneMessage": refreshOneMessage,
 
   // 事件 API（兼容）
   "eventEmit": eventEmit,

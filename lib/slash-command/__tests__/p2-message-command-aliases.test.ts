@@ -36,22 +36,28 @@ describe("P2 message command aliases", () => {
     expect(ctx.editMessage).toHaveBeenNthCalledWith(2, 1, "changed");
   });
 
-  it("/messages 与 /mes 返回消息快照", async () => {
+  it("/messages /mes /message 返回消息快照", async () => {
     const ctx = createMessageContext();
 
     const full = await executeSlashCommandScript("/messages", ctx);
     const single = await executeSlashCommandScript("/mes 0", ctx);
+    const alias = await executeSlashCommandScript("/message 1", ctx);
 
     expect(full.isError).toBe(false);
     expect(single.isError).toBe(false);
+    expect(alias.isError).toBe(false);
 
     const fullList = JSON.parse(full.pipe) as Array<{ id: string; index: number; content: string }>;
     const singleList = JSON.parse(single.pipe) as Array<{ id: string; index: number; content: string }>;
+    const aliasList = JSON.parse(alias.pipe) as Array<{ id: string; index: number; content: string }>;
 
     expect(fullList).toHaveLength(2);
     expect(fullList[1].id).toBe("m2");
     expect(singleList).toEqual([
       { id: "m1", index: 0, role: "user", content: "hello" },
+    ]);
+    expect(aliasList).toEqual([
+      { id: "m2", index: 1, role: "assistant", content: "world", name: "bot" },
     ]);
   });
 
