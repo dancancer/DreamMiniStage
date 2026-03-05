@@ -2,7 +2,7 @@
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                    Character Command Handlers                             ║
  * ║                                                                           ║
- * ║  角色命令 - char / character / char-find                                  ║
+ * ║  角色命令 - char / character / char-find / ask                            ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -30,6 +30,14 @@ function isCharacterSwitchResult(value: unknown): value is CharacterSwitchResult
     typeof candidate.sessionId === "string" &&
     typeof candidate.sessionName === "string"
   );
+}
+
+function normalizeAskReturnType(raw: string | undefined): "pipe" | "none" {
+  const normalized = (raw || "pipe").trim().toLowerCase();
+  if (normalized === "pipe" || normalized === "none") {
+    return normalized;
+  }
+  throw new Error(`/ask invalid return value: ${raw || ""}`);
 }
 
 /** /char [name|id] - 读取当前角色，或切换角色 */
@@ -64,4 +72,31 @@ export const handleCharacterFind: CommandHandler = async (args, namedArgs, ctx, 
   const query = (args.join(" ") || namedArgs.query || pipe || "").trim();
   const characters = await ctx.listCharacters();
   return JSON.stringify(findCharacterMatches(characters, query));
+};
+
+/** /ask name=<character> [prompt] - 询问指定角色 */
+export const handleAsk: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.askCharacter) {
+    throw new Error("/ask is not available in current context");
+  }
+
+  const target = (namedArgs.name || "").trim();
+  if (!target) {
+    throw new Error("/ask requires name=<character>");
+  }
+
+  const prompt = args.join(" ") || pipe || "";
+  const returnType = normalizeAskReturnType(namedArgs.return);
+  const result = await Promise.resolve(ctx.askCharacter(target, prompt, { returnType }));
+
+  if (returnType === "none") {
+    return "";
+  }
+  if (result === undefined || result === null) {
+    return "";
+  }
+  if (typeof result !== "string") {
+    throw new Error("/ask host returned non-string result");
+  }
+  return result;
 };

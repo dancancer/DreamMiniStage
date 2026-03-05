@@ -179,6 +179,17 @@ function parseStopSequences(raw: string | undefined): string[] {
   }
 }
 
+function parseContextQuiet(raw: string | undefined): boolean {
+  if (raw === undefined) {
+    return false;
+  }
+  const parsed = parseBoolean(raw, undefined);
+  if (parsed === undefined) {
+    throw new Error(`/context invalid quiet value: ${raw}`);
+  }
+  return parsed;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    WorldBook 命令
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -321,6 +332,24 @@ export const handlePreset: CommandHandler = async (args, namedArgs, ctx, pipe) =
     await ctx.setPreset(presetName);
   }
   return pipe;
+};
+
+/** /context [name] - 切换或获取当前 context 模板 */
+export const handleContext: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.selectContextPreset) {
+    throw new Error("/context is not available in current context");
+  }
+
+  const contextName = (args.join(" ") || pipe || "").trim();
+  const quiet = parseContextQuiet(namedArgs.quiet);
+  const result = await Promise.resolve(
+    ctx.selectContextPreset(contextName || undefined, { quiet }),
+  );
+
+  if (typeof result !== "string") {
+    throw new Error("/context host callback must return a string");
+  }
+  return result;
 };
 
 /** /listpresets - 列出所有可用预设 */

@@ -109,7 +109,10 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onGetGroupMember = ctx.onGetGroupMember;
   const onAddGroupMember = ctx.onAddGroupMember;
   const onAddSwipe = ctx.onAddSwipe;
+  const onAskCharacter = ctx.onAskCharacter;
   const onReloadPage = ctx.onReloadPage;
+  const onGetClipboardText = ctx.onGetClipboardText;
+  const onSetClipboardText = ctx.onSetClipboardText;
   const onTogglePanels = ctx.onTogglePanels;
   const onResetPanels = ctx.onResetPanels;
   const onToggleVisualNovelMode = ctx.onToggleVisualNovelMode;
@@ -122,6 +125,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onSetCssVariable = ctx.onSetCssVariable;
   const onJumpToMessage = ctx.onJumpToMessage;
   const onRenderChatMessages = ctx.onRenderChatMessages;
+  const onSelectContextPreset = ctx.onSelectContextPreset;
   const onSwitchCharacter = ctx.onSwitchCharacter;
 
   const getWorldBookEntry = async (id: string): Promise<WorldBookEntryData | undefined> => {
@@ -497,7 +501,10 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     getGroupMember: onGetGroupMember,
     addGroupMember: onAddGroupMember,
     addSwipe: onAddSwipe,
+    askCharacter: onAskCharacter,
     reloadPage: onReloadPage,
+    getClipboardText: onGetClipboardText,
+    setClipboardText: onSetClipboardText,
     togglePanels: onTogglePanels,
     resetPanels: onResetPanels,
     toggleVisualNovelMode: onToggleVisualNovelMode,
@@ -510,6 +517,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     setCssVariable: onSetCssVariable,
     jumpToMessage: onJumpToMessage,
     renderChatMessages: onRenderChatMessages,
+    selectContextPreset: onSelectContextPreset,
     switchCharacter: onSwitchCharacter,
     getVectorWorldInfoState,
     setVectorWorldInfoState,

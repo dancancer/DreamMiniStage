@@ -71,7 +71,14 @@ export interface ApiCallContext {
     text: string,
     options?: { switch?: boolean },
   ) => string | number | void | Promise<string | number | void>;
+  onAskCharacter?: (
+    target: string,
+    prompt: string,
+    options?: { returnType?: "pipe" | "none" },
+  ) => string | void | Promise<string | void>;
   onReloadPage?: () => void | Promise<void>;
+  onGetClipboardText?: () => string | Promise<string>;
+  onSetClipboardText?: (text: string) => void | Promise<void>;
   onTogglePanels?: () => void | Promise<void>;
   onResetPanels?: () => void | Promise<void>;
   onToggleVisualNovelMode?: () => void | Promise<void>;
@@ -87,6 +94,10 @@ export interface ApiCallContext {
     count: number,
     options?: { scroll?: boolean },
   ) => void | Promise<void>;
+  onSelectContextPreset?: (
+    name?: string,
+    options?: { quiet?: boolean },
+  ) => string | Promise<string>;
   onSwitchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;

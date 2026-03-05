@@ -2,7 +2,7 @@
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                    Utility Command Handlers                              ║
  * ║                                                                           ║
- * ║  工具命令 - run / trimtokens / reload-page                                ║
+ * ║  工具命令 - run / trimtokens / reload-page / clipboard-*                  ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -105,6 +105,12 @@ function trimByCharacterRatio(
     : text.slice(Math.max(0, text.length - keepChars));
 }
 
+function resolveClipboardText(args: string[], namedArgs: Record<string, string>, pipe: string): string {
+  const fromArgs = args.join(" ");
+  const fromNamed = namedArgs.text;
+  return fromArgs || fromNamed || pipe || "";
+}
+
 /** /run <script|variable> - 执行闭包脚本最小子集（支持变量脚本 + {{arg::}} 注入） */
 export const handleRun: CommandHandler = async (args, namedArgs, ctx, pipe) => {
   if (!ctx.runSlashCommand) {
@@ -189,4 +195,32 @@ export const handleListGallery: CommandHandler = async (_args, namedArgs, ctx, _
     group: namedArgs.group,
   }));
   return JSON.stringify(normalizeGalleryList(list));
+};
+
+/** /clipboard-get - 读取系统剪贴板文本 */
+export const handleClipboardGet: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  if (!ctx.getClipboardText) {
+    throw new Error("/clipboard-get is not available in current context");
+  }
+
+  const text = await Promise.resolve(ctx.getClipboardText());
+  if (typeof text !== "string") {
+    throw new Error("/clipboard-get host returned non-string clipboard text");
+  }
+  return text;
+};
+
+/** /clipboard-set [text] - 写入系统剪贴板文本 */
+export const handleClipboardSet: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.setClipboardText) {
+    throw new Error("/clipboard-set is not available in current context");
+  }
+
+  const text = resolveClipboardText(args, namedArgs, pipe);
+  if (!text) {
+    throw new Error("/clipboard-set requires text");
+  }
+
+  await Promise.resolve(ctx.setClipboardText(text));
+  return "";
 };

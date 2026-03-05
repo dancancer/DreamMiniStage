@@ -184,6 +184,11 @@ export interface ExecutionContext {
   switchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
+  askCharacter?: (
+    target: string,
+    prompt: string,
+    options?: { returnType?: "pipe" | "none" },
+  ) => string | void | Promise<string | void>;
 
   // 扩展操作 - World Book
   getWorldBookEntry?: (id: string) => WorldBookEntryData | undefined | Promise<WorldBookEntryData | undefined>;
@@ -228,6 +233,10 @@ export interface ExecutionContext {
   getPreset?: () => PresetInfo | undefined | Promise<PresetInfo | undefined>;
   setPreset?: (name: string) => void | Promise<void>;
   listPresets?: () => PresetInfo[] | Promise<PresetInfo[]>;
+  selectContextPreset?: (
+    name?: string,
+    options?: { quiet?: boolean },
+  ) => string | Promise<string>;
   listPromptEntries?: () => PromptEntryState[] | Promise<PromptEntryState[]>;
   setPromptEntriesEnabled?: (
     updates: PromptEntryStateUpdate[],
@@ -269,6 +278,8 @@ export interface ExecutionContext {
     limit: number,
     direction: "start" | "end",
   ) => string | Promise<string>;
+  getClipboardText?: () => string | Promise<string>;
+  setClipboardText?: (text: string) => void | Promise<void>;
   reloadPage?: () => void | Promise<void>;
   listGallery?: (
     options?: ListGalleryOptions,

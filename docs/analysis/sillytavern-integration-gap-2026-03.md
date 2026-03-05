@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`179/426 = 42.02%`（较上一轮 `40.61%` 提升 `+1.41`pp）。
+- Slash 命令覆盖面继续提升：`183/426 = 42.96%`（较上一轮 `42.02%` 提升 `+0.94`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -38,6 +38,7 @@
    - 脚本运维：`/delay`、`/wait`、`/sleep`、`/generate-stop`、`/genraw`、`/list-gallery`、`/listchatvar`
    - worldinfo 长尾首簇：`/findentry`、`/findlore`、`/findwi`、`/createlore`、`/createwi`、`/vector-worldinfo-state`
    - UI 背景运维：`/lockbg`、`/bglock`、`/unlockbg`、`/bgunlock`、`/autobg`、`/bgauto`
+   - P3 脚本调试簇：`/ask`、`/context`、`/clipboard-get`、`/clipboard-set`
 2. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
@@ -46,6 +47,7 @@
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
+- Top25 已移除 `ask/context/clipboard-*`，当前优先候选转为 `data-bank-*` 与 `closure-*` 命令簇。
 
 ## 4. 基线素材与回归状态
 
@@ -66,6 +68,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 继续按 P3 命令簇机会性补齐（建议先做 `ask/context/clipboard-*`），每轮只推进一簇并绑定回归。
+1. 继续按 P3 命令簇机会性补齐（建议先做 `data-bank-*` 或 `closure-*`），每轮只推进一簇并绑定回归。
 2. 为 `member-*/addswipe` 打通宿主 UI 可见回调（而不止命令层），确保“命令可执行”与“界面可见效果”一致。
 3. 把 `vector-worldinfo-state` 与 `generate-stop/genraw` 统一接入端到端可见断言，持续收紧回归面。

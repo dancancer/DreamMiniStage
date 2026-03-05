@@ -73,6 +73,8 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["sleep", UtilityHandlers.handleDelay],
   ["list-gallery", UtilityHandlers.handleListGallery],
   ["lg", UtilityHandlers.handleListGallery],
+  ["clipboard-get", UtilityHandlers.handleClipboardGet],
+  ["clipboard-set", UtilityHandlers.handleClipboardSet],
   ["api", ApiHandlers.handleApi],
   ["api-url", ApiHandlers.handleApiUrl],
   ["server", ApiHandlers.handleApiUrl],
@@ -161,6 +163,7 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["go", CharacterHandlers.handleCharacter],
   ["char-find", CharacterHandlers.handleCharacterFind],
   ["findchar", CharacterHandlers.handleCharacterFind],
+  ["ask", CharacterHandlers.handleAsk],
 
   // ─── World Book 命令 ───
   ["getentry", GenerationHandlers.handleGetEntry],
@@ -211,6 +214,7 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
 
   // ─── Preset 命令 ───
   ["preset", GenerationHandlers.handlePreset],
+  ["context", GenerationHandlers.handleContext],
   ["listpresets", GenerationHandlers.handleListPresets],
   ["getpromptentry", GenerationHandlers.handleGetPromptEntry],
   ["getpromptentries", GenerationHandlers.handleGetPromptEntry],

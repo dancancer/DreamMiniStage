@@ -1,17 +1,10 @@
 {
-  "generatedAt": "2026-03-05T05:52:19.852Z",
+  "generatedAt": "2026-03-05T06:17:36.933Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 179,
-    "coverage": "42.02%",
+    "covered": 183,
+    "coverage": "42.96%",
     "missingTop": [
-      {
-        "command": "ask",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
       {
         "command": "beep",
         "upstreamRefs": 1,
@@ -69,20 +62,6 @@
         "priority": "P3"
       },
       {
-        "command": "clipboard-get",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "clipboard-set",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "closechat",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -98,13 +77,6 @@
       },
       {
         "command": "closure-serialize",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "context",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

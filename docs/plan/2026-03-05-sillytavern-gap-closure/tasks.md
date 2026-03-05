@@ -59,3 +59,9 @@
 - [x] 补齐背景运维命令簇（`/lockbg|/bglock`、`/unlockbg|/bgunlock`、`/autobg|/bgauto`），统一 fail-fast 语义。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）以支持背景锁定与自动切换回调透传。
 - [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
+
+## 11. P3 增量收敛（上下文/剪贴板）
+
+- [x] 补齐脚本调试命令簇（`/ask`、`/context`、`/clipboard-get`、`/clipboard-set`），统一宿主回调单路径与 fail-fast 语义。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `ask/context/clipboard` 回调能力。
+- [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
