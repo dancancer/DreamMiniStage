@@ -64,6 +64,9 @@ describe("P2 branch/ui command gaps", () => {
     const resetPanels = vi.fn().mockResolvedValue(undefined);
     const toggleVisualNovelMode = vi.fn().mockResolvedValue(undefined);
     const setBackground = vi.fn().mockImplementation(async (name?: string) => name || "bg-default.jpg");
+    const lockBackground = vi.fn().mockResolvedValue(undefined);
+    const unlockBackground = vi.fn().mockResolvedValue(undefined);
+    const autoBackground = vi.fn().mockResolvedValue(undefined);
     const setTheme = vi.fn().mockImplementation(async (name?: string) => name || "theme-default");
     const setMovingUiPreset = vi.fn().mockImplementation(async (name: string) => name);
     const setCssVariable = vi.fn().mockResolvedValue(undefined);
@@ -72,6 +75,9 @@ describe("P2 branch/ui command gaps", () => {
       resetPanels,
       toggleVisualNovelMode,
       setBackground,
+      lockBackground,
+      unlockBackground,
+      autoBackground,
       setTheme,
       setMovingUiPreset,
       setCssVariable,
@@ -82,6 +88,12 @@ describe("P2 branch/ui command gaps", () => {
     const vn = await executeSlashCommandScript("/vn", ctx);
     const bgSet = await executeSlashCommandScript("/bg beach.jpg", ctx);
     const bgGet = await executeSlashCommandScript("/bg", ctx);
+    const lockBg = await executeSlashCommandScript("/lockbg", ctx);
+    const lockBgAlias = await executeSlashCommandScript("/bglock", ctx);
+    const unlockBg = await executeSlashCommandScript("/unlockbg", ctx);
+    const unlockBgAlias = await executeSlashCommandScript("/bgunlock", ctx);
+    const autoBg = await executeSlashCommandScript("/autobg", ctx);
+    const autoBgAlias = await executeSlashCommandScript("/bgauto", ctx);
     const themeSet = await executeSlashCommandScript("/theme Cappuccino", ctx);
     const movingUi = await executeSlashCommandScript("/movingui compact", ctx);
     const cssVar = await executeSlashCommandScript(
@@ -94,6 +106,12 @@ describe("P2 branch/ui command gaps", () => {
     expect(vn.isError).toBe(false);
     expect(bgSet.isError).toBe(false);
     expect(bgGet.isError).toBe(false);
+    expect(lockBg.isError).toBe(false);
+    expect(lockBgAlias.isError).toBe(false);
+    expect(unlockBg.isError).toBe(false);
+    expect(unlockBgAlias.isError).toBe(false);
+    expect(autoBg.isError).toBe(false);
+    expect(autoBgAlias.isError).toBe(false);
     expect(themeSet.isError).toBe(false);
     expect(movingUi.isError).toBe(false);
     expect(cssVar.isError).toBe(false);
@@ -108,6 +126,9 @@ describe("P2 branch/ui command gaps", () => {
     expect(toggleVisualNovelMode).toHaveBeenCalledTimes(1);
     expect(setBackground).toHaveBeenNthCalledWith(1, "beach.jpg");
     expect(setBackground).toHaveBeenNthCalledWith(2, undefined);
+    expect(lockBackground).toHaveBeenCalledTimes(2);
+    expect(unlockBackground).toHaveBeenCalledTimes(2);
+    expect(autoBackground).toHaveBeenCalledTimes(2);
     expect(setTheme).toHaveBeenCalledWith("Cappuccino");
     expect(setMovingUiPreset).toHaveBeenCalledWith("compact");
     expect(setCssVariable).toHaveBeenCalledWith({
@@ -122,6 +143,9 @@ describe("P2 branch/ui command gaps", () => {
 
     const panels = await executeSlashCommandScript("/panels", ctx);
     const bg = await executeSlashCommandScript("/bg beach.jpg", ctx);
+    const lockBg = await executeSlashCommandScript("/lockbg", ctx);
+    const unlockBg = await executeSlashCommandScript("/unlockbg", ctx);
+    const autoBg = await executeSlashCommandScript("/autobg", ctx);
     const theme = await executeSlashCommandScript("/theme dark", ctx);
     const movingUi = await executeSlashCommandScript("/movingui compact", ctx);
     const cssVar = await executeSlashCommandScript("/css-var varname=--foo bar", ctx);
@@ -130,6 +154,9 @@ describe("P2 branch/ui command gaps", () => {
 
     expect(panels.isError).toBe(true);
     expect(bg.isError).toBe(true);
+    expect(lockBg.isError).toBe(true);
+    expect(unlockBg.isError).toBe(true);
+    expect(autoBg.isError).toBe(true);
     expect(theme.isError).toBe(true);
     expect(movingUi.isError).toBe(true);
     expect(cssVar.isError).toBe(true);
@@ -138,6 +165,9 @@ describe("P2 branch/ui command gaps", () => {
 
     expect(panels.errorMessage).toContain("not available");
     expect(bg.errorMessage).toContain("not available");
+    expect(lockBg.errorMessage).toContain("not available");
+    expect(unlockBg.errorMessage).toContain("not available");
+    expect(autoBg.errorMessage).toContain("not available");
     expect(theme.errorMessage).toContain("not available");
     expect(movingUi.errorMessage).toContain("not available");
     expect(cssVar.errorMessage).toContain("not available");

@@ -54,6 +54,27 @@ export const handleBg: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
   return result;
 };
 
+/** /lockbg - 锁定当前聊天背景（别名 /bglock） */
+export const handleLockBg: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  const callback = ensureHostCallback(ctx.lockBackground, "lockbg");
+  await callback();
+  return "";
+};
+
+/** /unlockbg - 解除当前聊天背景锁定（别名 /bgunlock） */
+export const handleUnlockBg: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  const callback = ensureHostCallback(ctx.unlockBackground, "unlockbg");
+  await callback();
+  return "";
+};
+
+/** /autobg - 根据上下文自动切换背景（别名 /bgauto） */
+export const handleAutoBg: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  const callback = ensureHostCallback(ctx.autoBackground, "autobg");
+  await callback();
+  return "";
+};
+
 /** /theme [name] - 读取或设置主题 */
 export const handleTheme: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
   const callback = ensureHostCallback(ctx.setTheme, "theme");

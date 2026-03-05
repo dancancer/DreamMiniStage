@@ -114,6 +114,9 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onResetPanels = ctx.onResetPanels;
   const onToggleVisualNovelMode = ctx.onToggleVisualNovelMode;
   const onSetBackground = ctx.onSetBackground;
+  const onLockBackground = ctx.onLockBackground;
+  const onUnlockBackground = ctx.onUnlockBackground;
+  const onAutoBackground = ctx.onAutoBackground;
   const onSetTheme = ctx.onSetTheme;
   const onSetMovingUiPreset = ctx.onSetMovingUiPreset;
   const onSetCssVariable = ctx.onSetCssVariable;
@@ -499,6 +502,9 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     resetPanels: onResetPanels,
     toggleVisualNovelMode: onToggleVisualNovelMode,
     setBackground: onSetBackground,
+    lockBackground: onLockBackground,
+    unlockBackground: onUnlockBackground,
+    autoBackground: onAutoBackground,
     setTheme: onSetTheme,
     setMovingUiPreset: onSetMovingUiPreset,
     setCssVariable: onSetCssVariable,

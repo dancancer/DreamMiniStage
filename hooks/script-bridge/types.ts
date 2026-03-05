@@ -76,6 +76,9 @@ export interface ApiCallContext {
   onResetPanels?: () => void | Promise<void>;
   onToggleVisualNovelMode?: () => void | Promise<void>;
   onSetBackground?: (background?: string) => string | Promise<string>;
+  onLockBackground?: () => void | Promise<void>;
+  onUnlockBackground?: () => void | Promise<void>;
+  onAutoBackground?: () => void | Promise<void>;
   onSetTheme?: (theme?: string) => string | Promise<string>;
   onSetMovingUiPreset?: (presetName: string) => string | Promise<string>;
   onSetCssVariable?: (args: { varName: string; value: string; target?: string }) => void | Promise<void>;

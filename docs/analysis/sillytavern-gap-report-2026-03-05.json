@@ -1,19 +1,12 @@
 {
-  "generatedAt": "2026-03-05T04:58:12.302Z",
+  "generatedAt": "2026-03-05T05:52:19.852Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 173,
-    "coverage": "40.61%",
+    "covered": 179,
+    "coverage": "42.02%",
     "missingTop": [
       {
         "command": "ask",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "autobg",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -27,28 +20,7 @@
         "priority": "P3"
       },
       {
-        "command": "bgauto",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "bgcol",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "bglock",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "bgunlock",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -756,13 +728,6 @@
       },
       {
         "command": "lock",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "lockbg",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -1694,13 +1659,6 @@
       },
       {
         "command": "unhide",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "unlockbg",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

@@ -53,3 +53,9 @@
 - [x] 补齐 worldinfo 长尾命令簇（`/findentry|/findlore|/findwi`、`/createlore|/createwi`、`/vector-worldinfo-state`）。
 - [x] 为 `createWorldBookEntry(file)` 与 vector-worldinfo 状态补齐 Slash 上下文适配，确保命令可在宿主路径执行。
 - [x] 运行定向回归 + gap 分析并更新报告与 handoff。
+
+## 10. P3 增量收敛（背景运维）
+
+- [x] 补齐背景运维命令簇（`/lockbg|/bglock`、`/unlockbg|/bgunlock`、`/autobg|/bgauto`），统一 fail-fast 语义。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）以支持背景锁定与自动切换回调透传。
+- [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。

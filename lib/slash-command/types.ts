@@ -283,6 +283,9 @@ export interface ExecutionContext {
   resetPanels?: () => void | Promise<void>;
   toggleVisualNovelMode?: () => void | Promise<void>;
   setBackground?: (background?: string) => string | Promise<string>;
+  lockBackground?: () => void | Promise<void>;
+  unlockBackground?: () => void | Promise<void>;
+  autoBackground?: () => void | Promise<void>;
   setTheme?: (theme?: string) => string | Promise<string>;
   setMovingUiPreset?: (presetName: string) => string | Promise<string>;
   setCssVariable?: (args: { varName: string; value: string; target?: string }) => void | Promise<void>;
