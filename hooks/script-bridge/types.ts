@@ -71,6 +71,10 @@ export interface ApiCallContext {
   onAddGroupMember?: (
     target: string,
   ) => string | number | void | Promise<string | number | void>;
+  onSetGroupMemberEnabled?: (
+    target: string,
+    enabled: boolean,
+  ) => string | number | void | Promise<string | number | void>;
   onAddSwipe?: (
     text: string,
     options?: { switch?: boolean },

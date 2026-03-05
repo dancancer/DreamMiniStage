@@ -59,6 +59,10 @@ interface UseScriptBridgeOptions {
   onAddGroupMember?: (
     target: string,
   ) => string | number | void | Promise<string | number | void>;
+  onSetGroupMemberEnabled?: (
+    target: string,
+    enabled: boolean,
+  ) => string | number | void | Promise<string | number | void>;
   onAddSwipe?: (
     text: string,
     options?: { switch?: boolean },
@@ -118,6 +122,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onSetInput,
     onGetGroupMember,
     onAddGroupMember,
+    onSetGroupMemberEnabled,
     onAddSwipe,
     onJumpToMessage,
     onRenderChatMessages,
@@ -234,6 +239,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onSetInput,
           onGetGroupMember,
           onAddGroupMember,
+          onSetGroupMemberEnabled,
           onAddSwipe,
           onJumpToMessage,
           onRenderChatMessages,
@@ -284,6 +290,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onSetInput,
       onGetGroupMember,
       onAddGroupMember,
+      onSetGroupMemberEnabled,
       onAddSwipe,
       onJumpToMessage,
       onRenderChatMessages,

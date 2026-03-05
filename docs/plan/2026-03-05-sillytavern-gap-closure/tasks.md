@@ -77,3 +77,9 @@
 - [x] 补齐闭包与 Persona Lock 命令簇（`/closure-serialize`、`/closure-deserialize`、`/lock`、`/bind`），统一单路径序列化与 fail-fast 语义。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `setPersonaLock` 回调能力，确保 `/lock|/bind` 可由宿主接管。
 - [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
+
+## 14. P2 收敛收口（member enable/disable）
+
+- [x] 补齐群聊成员启停命令簇（`/member-disable|/disable|/disablemember`、`/member-enable|/enable|/enablemember`）并统一 fail-fast 语义。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `setGroupMemberEnabled` 回调能力，确保成员启停命令可由宿主接管。
+- [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。

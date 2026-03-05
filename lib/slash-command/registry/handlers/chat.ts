@@ -64,6 +64,29 @@ function parseGroupMemberField(raw: string | undefined): "name" | "index" | "id"
   throw new Error(`/getmember invalid field: ${raw}`);
 }
 
+function resolveGroupMemberTarget(
+  args: string[],
+  namedArgs: Record<string, string>,
+  pipe: string,
+  commandName: string,
+): string {
+  const target = (args.join(" ") || namedArgs.member || namedArgs.name || pipe || "").trim();
+  if (!target) {
+    throw new Error(`/${commandName} requires a member target`);
+  }
+  return target;
+}
+
+function normalizeGroupMemberMutationResult(commandName: string, result: unknown): string {
+  if (result === undefined || result === null) {
+    return "";
+  }
+  if (typeof result !== "string" && typeof result !== "number") {
+    throw new Error(`/${commandName} host returned invalid value`);
+  }
+  return String(result);
+}
+
 function resolveReasoningMessageIndex(
   raw: string | undefined,
   messages: Array<{ content: string }>,
@@ -208,20 +231,37 @@ export const handleAddMember: CommandHandler = async (args, namedArgs, ctx, pipe
     throw new Error("/addmember is not available in current context");
   }
 
-  const target = (args.join(" ") || namedArgs.name || pipe || "").trim();
-  if (!target) {
-    throw new Error("/addmember requires a member target");
-  }
-
+  const target = resolveGroupMemberTarget(args, namedArgs, pipe, "addmember");
   const result = await Promise.resolve(ctx.addGroupMember(target));
-  if (result === undefined || result === null) {
-    return "";
-  }
-  if (typeof result !== "string" && typeof result !== "number") {
-    throw new Error("/addmember host returned invalid value");
+  return normalizeGroupMemberMutationResult("addmember", result);
+};
+
+/**
+ * /member-disable [member] - 禁用群聊成员
+ * 别名：/disable /disablemember /memberdisable
+ */
+export const handleDisableMember: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.setGroupMemberEnabled) {
+    throw new Error("/disable is not available in current context");
   }
 
-  return String(result);
+  const target = resolveGroupMemberTarget(args, namedArgs, pipe, "disable");
+  const result = await Promise.resolve(ctx.setGroupMemberEnabled(target, false));
+  return normalizeGroupMemberMutationResult("disable", result);
+};
+
+/**
+ * /member-enable [member] - 启用群聊成员
+ * 别名：/enable /enablemember /memberenable
+ */
+export const handleEnableMember: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.setGroupMemberEnabled) {
+    throw new Error("/enable is not available in current context");
+  }
+
+  const target = resolveGroupMemberTarget(args, namedArgs, pipe, "enable");
+  const result = await Promise.resolve(ctx.setGroupMemberEnabled(target, true));
+  return normalizeGroupMemberMutationResult("enable", result);
 };
 
 /**

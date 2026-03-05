@@ -131,6 +131,51 @@ describe("P2 chat command gaps", () => {
     expect(addGroupMember).toHaveBeenNthCalledWith(2, "Bob");
   });
 
+  it("/member-disable 与 /member-enable 及别名支持透传启用状态", async () => {
+    const setGroupMemberEnabled = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce("ok")
+      .mockResolvedValueOnce(2)
+      .mockResolvedValueOnce(undefined);
+    const ctx = createContext({ setGroupMemberEnabled });
+
+    const disableMain = await executeSlashCommandScript("/member-disable Alice", ctx);
+    const disableAlias = await executeSlashCommandScript("/disablemember Bob", ctx);
+    const enableMain = await executeSlashCommandScript("/enable Carol", ctx);
+    const enableAlias = await executeSlashCommandScript("/memberenable Dave", ctx);
+
+    expect(disableMain.isError).toBe(false);
+    expect(disableAlias.isError).toBe(false);
+    expect(enableMain.isError).toBe(false);
+    expect(enableAlias.isError).toBe(false);
+    expect(disableMain.pipe).toBe("");
+    expect(disableAlias.pipe).toBe("ok");
+    expect(enableMain.pipe).toBe("2");
+    expect(enableAlias.pipe).toBe("");
+    expect(setGroupMemberEnabled).toHaveBeenNthCalledWith(1, "Alice", false);
+    expect(setGroupMemberEnabled).toHaveBeenNthCalledWith(2, "Bob", false);
+    expect(setGroupMemberEnabled).toHaveBeenNthCalledWith(3, "Carol", true);
+    expect(setGroupMemberEnabled).toHaveBeenNthCalledWith(4, "Dave", true);
+  });
+
+  it("/disable 与 /enable 对缺参和返回类型异常显式 fail-fast", async () => {
+    const emptyTargetCtx = createContext({
+      setGroupMemberEnabled: vi.fn().mockResolvedValue(undefined),
+    });
+    const invalidReturnCtx = createContext({
+      setGroupMemberEnabled: vi.fn().mockResolvedValue({ ok: true }),
+    });
+
+    const emptyTarget = await executeSlashCommandScript("/disable", emptyTargetCtx);
+    const invalidReturn = await executeSlashCommandScript("/enable Alice", invalidReturnCtx);
+
+    expect(emptyTarget.isError).toBe(true);
+    expect(invalidReturn.isError).toBe(true);
+    expect(emptyTarget.errorMessage).toContain("requires a member target");
+    expect(invalidReturn.errorMessage).toContain("invalid value");
+  });
+
   it("/addswipe 支持文本与 switch 参数", async () => {
     const addSwipe = vi
       .fn()
@@ -393,6 +438,8 @@ describe("P2 chat command gaps", () => {
     const setInputResult = await executeSlashCommandScript("/setinput test", ctx);
     const getMemberResult = await executeSlashCommandScript("/getmember Alice", ctx);
     const addMemberResult = await executeSlashCommandScript("/addmember Alice", ctx);
+    const disableMemberResult = await executeSlashCommandScript("/disable Alice", ctx);
+    const enableMemberResult = await executeSlashCommandScript("/enable Alice", ctx);
     const addSwipeResult = await executeSlashCommandScript("/addswipe hi", ctx);
     const jumpResult = await executeSlashCommandScript("/chat-jump 1", ctx);
     const renderResult = await executeSlashCommandScript("/chat-render 1", ctx);
@@ -408,6 +455,8 @@ describe("P2 chat command gaps", () => {
     expect(setInputResult.isError).toBe(true);
     expect(getMemberResult.isError).toBe(true);
     expect(addMemberResult.isError).toBe(true);
+    expect(disableMemberResult.isError).toBe(true);
+    expect(enableMemberResult.isError).toBe(true);
     expect(addSwipeResult.isError).toBe(true);
     expect(jumpResult.isError).toBe(true);
     expect(renderResult.isError).toBe(true);
@@ -422,6 +471,8 @@ describe("P2 chat command gaps", () => {
     expect(setInputResult.errorMessage).toContain("not available");
     expect(getMemberResult.errorMessage).toContain("not available");
     expect(addMemberResult.errorMessage).toContain("not available");
+    expect(disableMemberResult.errorMessage).toContain("not available");
+    expect(enableMemberResult.errorMessage).toContain("not available");
     expect(addSwipeResult.errorMessage).toContain("not available");
     expect(jumpResult.errorMessage).toContain("not available");
     expect(renderResult.errorMessage).toContain("not available");

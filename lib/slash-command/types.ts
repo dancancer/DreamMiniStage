@@ -184,6 +184,10 @@ export interface ExecutionContext {
   addGroupMember?: (
     target: string,
   ) => string | number | void | Promise<string | number | void>;
+  setGroupMemberEnabled?: (
+    target: string,
+    enabled: boolean,
+  ) => string | number | void | Promise<string | number | void>;
   addSwipe?: (
     text: string,
     options?: { switch?: boolean },

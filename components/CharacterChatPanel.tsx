@@ -93,6 +93,10 @@ interface Props {
   onAddGroupMember?: (
     target: string,
   ) => string | number | void | Promise<string | number | void>;
+  onSetGroupMemberEnabled?: (
+    target: string,
+    enabled: boolean,
+  ) => string | number | void | Promise<string | number | void>;
   onAddSwipe?: (
     text: string,
     options?: { switch?: boolean },
@@ -140,6 +144,7 @@ export default function CharacterChatPanel({
   onSwipe,
   onGetGroupMember,
   onAddGroupMember,
+  onSetGroupMemberEnabled,
   onAddSwipe,
   onSwitchCharacter,
   onExportJsonl,
@@ -200,6 +205,7 @@ export default function CharacterChatPanel({
     onSetInput: (text) => setUserInput(text),
     onGetGroupMember,
     onAddGroupMember,
+    onSetGroupMemberEnabled,
     onAddSwipe,
     onSwitchCharacter,
   });

@@ -1,17 +1,10 @@
 {
-  "generatedAt": "2026-03-05T07:22:56.453Z",
+  "generatedAt": "2026-03-05T07:46:28.501Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 220,
-    "coverage": "51.64%",
+    "covered": 228,
+    "coverage": "53.52%",
     "missingTop": [
-      {
-        "command": "disable",
-        "upstreamRefs": 1,
-        "localRefs": 1,
-        "score": 7,
-        "priority": "P2"
-      },
       {
         "command": "beep",
         "upstreamRefs": 1,
@@ -132,13 +125,6 @@
         "priority": "P3"
       },
       {
-        "command": "disablemember",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "downmember",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -154,20 +140,6 @@
       },
       {
         "command": "emote",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "enable",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "enablemember",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -454,21 +426,7 @@
         "priority": "P3"
       },
       {
-        "command": "member-disable",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "member-down",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "member-enable",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -503,21 +461,7 @@
         "priority": "P3"
       },
       {
-        "command": "memberdisable",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "memberdown",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "memberenable",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
