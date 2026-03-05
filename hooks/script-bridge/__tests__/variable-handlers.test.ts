@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { scopedVariables } from "../scoped-variables";
@@ -14,6 +16,27 @@ function createEmptySnapshot() {
     script: {},
   };
 }
+
+interface VariableChainFixture {
+  scope: {
+    type: "chat";
+  };
+  initial: Record<string, unknown>;
+  update: Record<string, unknown>;
+  insert: Record<string, unknown>;
+  expect: Record<string, unknown>;
+}
+
+const VARIABLE_CHAIN_FIXTURE_PATH = path.join(
+  process.cwd(),
+  "test-baseline-assets",
+  "mvu-examples",
+  "variable-chain.json",
+);
+
+const variableChainFixture = JSON.parse(
+  fs.readFileSync(VARIABLE_CHAIN_FIXTURE_PATH, "utf8"),
+) as VariableChainFixture;
 
 function createMockContext(overrides: Partial<ApiCallContext> = {}): ApiCallContext {
   return {
@@ -124,6 +147,33 @@ describe("variable handlers option semantics", () => {
       nested: { level: 2, bonus: 3 },
       fresh: true,
     });
+  });
+
+  it("replays mvu variable-chain baseline asset", () => {
+    const ctx = createMockContext();
+    const scope = variableChainFixture.scope;
+
+    const registered = variableHandlers.registerVariableSchema(
+      [{ type: "object", properties: { hp: { type: "number" } } }, scope],
+      ctx,
+    );
+
+    const replaced = variableHandlers.replaceVariables([variableChainFixture.initial, scope], ctx);
+    const updated = variableHandlers.updateVariablesWith(
+      [variableChainFixture.update, scope],
+      ctx,
+    ) as Record<string, unknown>;
+    const inserted = variableHandlers.insertVariables(
+      [variableChainFixture.insert, scope],
+      ctx,
+    ) as Record<string, unknown>;
+    const current = variableHandlers.getVariables([scope], ctx) as Record<string, unknown>;
+
+    expect(registered).toBe(true);
+    expect(replaced).toBe(true);
+    expect(updated).toEqual(variableChainFixture.update);
+    expect(inserted).toEqual(variableChainFixture.expect);
+    expect(current).toEqual(variableChainFixture.expect);
   });
 
   it("fails fast on invalid registerVariableSchema/updateVariablesWith inputs", () => {

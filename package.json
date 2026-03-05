@@ -14,6 +14,7 @@
     "p4:preflight": "bash scripts/p4-playwright-preflight.sh",
     "p4:session-dev": "bash scripts/p4-playwright-preflight.sh && pnpm dev",
     "p4:session-replay": "bash scripts/p4-playwright-preflight.sh && node scripts/p4-session-replay-e2e.mjs",
+    "analyze:sillytavern-gap": "node scripts/analyze-sillytavern-gap.mjs",
     "build": "next build",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",

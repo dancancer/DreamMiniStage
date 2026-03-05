@@ -12,6 +12,7 @@ import path from "node:path";
 import extract from "png-chunks-extract";
 import PNGtext from "png-chunk-text";
 import { describe, expect, it } from "vitest";
+import { importRegexScripts } from "@/lib/adapters/import/regex-import";
 import { RegexPlacement, shouldExecuteScript } from "@/lib/core/regex-processor";
 import { normalizeRegexScript, type RegexScript } from "@/lib/models/regex-script-model";
 
@@ -24,6 +25,18 @@ interface CardPayload {
 }
 
 const CARD_ASSET_DIR = path.join(process.cwd(), "test-baseline-assets", "character-card");
+const REGEX_SAMPLE_PATH = path.join(
+  process.cwd(),
+  "test-baseline-assets",
+  "regex-scripts",
+  "sgw3-sample.json",
+);
+const WORLDBOOK_REGEX_PATH = path.join(
+  process.cwd(),
+  "test-baseline-assets",
+  "worldbook",
+  "regex-1美化夜空多选追加收起.json",
+);
 
 function readJsonCard(filePath: string): CardPayload {
   return JSON.parse(fs.readFileSync(filePath, "utf8")) as CardPayload;
@@ -139,5 +152,68 @@ describe("素材驱动 Regex 回归", () => {
     expect(summary.substituteDefined).toBe(summary.total);
     expect(summary.minDepthDefined).toBe(0);
     expect(summary.maxDepthDefined).toBe(0);
+  });
+
+  it("sgw3-sample 素材应复现 scripts-wrapper 导入与深度标志位行为", () => {
+    const raw = JSON.parse(fs.readFileSync(REGEX_SAMPLE_PATH, "utf8")) as unknown;
+    const scripts = importRegexScripts(raw);
+    const depthLimited = scripts.find((script) => script.maxDepth === 1);
+    const promptOnly = scripts.find((script) => script.promptOnly === true);
+
+    expect(scripts.length).toBe(3);
+    expect(scripts.every((script) => script.runOnEdit === true)).toBe(true);
+    expect(depthLimited?.markdownOnly).toBe(true);
+    expect(promptOnly?.scriptName).toBe("歌曲隐藏");
+
+    expect(shouldExecuteScript(depthLimited!, {
+      ownerId: "regex-sample",
+      placement: RegexPlacement.AI_OUTPUT,
+      isMarkdown: true,
+      isPrompt: true,
+      depth: 1,
+    })).toBe(true);
+
+    expect(shouldExecuteScript(depthLimited!, {
+      ownerId: "regex-sample",
+      placement: RegexPlacement.AI_OUTPUT,
+      isMarkdown: true,
+      isPrompt: true,
+      depth: 2,
+    })).toBe(false);
+  });
+
+  it("worldbook 单脚本素材应复现 disabled + markdownOnly + depth 过滤语义", () => {
+    const raw = JSON.parse(fs.readFileSync(WORLDBOOK_REGEX_PATH, "utf8")) as unknown;
+    const [script] = importRegexScripts(raw);
+    const enabledScript = { ...script, disabled: false };
+
+    expect(script.scriptName).toBe("1美化夜空多选追加收起");
+    expect(script.disabled).toBe(true);
+    expect(script.maxDepth).toBe(2);
+    expect(script.markdownOnly).toBe(true);
+
+    expect(shouldExecuteScript(script, {
+      ownerId: "worldbook-regex",
+      placement: RegexPlacement.AI_OUTPUT,
+      isMarkdown: true,
+      isPrompt: false,
+      depth: 1,
+    })).toBe(false);
+
+    expect(shouldExecuteScript(enabledScript, {
+      ownerId: "worldbook-regex",
+      placement: RegexPlacement.AI_OUTPUT,
+      isMarkdown: true,
+      isPrompt: false,
+      depth: 2,
+    })).toBe(true);
+
+    expect(shouldExecuteScript(enabledScript, {
+      ownerId: "worldbook-regex",
+      placement: RegexPlacement.AI_OUTPUT,
+      isMarkdown: true,
+      isPrompt: false,
+      depth: 3,
+    })).toBe(false);
   });
 });
