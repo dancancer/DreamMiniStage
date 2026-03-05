@@ -46,6 +46,11 @@ interface UseScriptBridgeOptions {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
+  onJumpToMessage?: (index: number) => void | Promise<void>;
+  onRenderChatMessages?: (
+    count: number,
+    options?: { scroll?: boolean },
+  ) => void | Promise<void>;
   onSwitchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
@@ -92,6 +97,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onImpersonate,
     onContinue,
     onSwipe,
+    onJumpToMessage,
+    onRenderChatMessages,
     onSwitchCharacter,
   } = options;
   const [scriptStatuses, setScriptStatuses] = useState<ScriptStatus[]>([]);
@@ -201,6 +208,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onImpersonate,
           onContinue,
           onSwipe,
+          onJumpToMessage,
+          onRenderChatMessages,
           onSwitchCharacter: onSwitchCharacter ? handleCharacterSwitch : undefined,
         });
         console.log("[useScriptBridge] API_CALL 返回:", method, "result:", result);
@@ -244,6 +253,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onImpersonate,
       onContinue,
       onSwipe,
+      onJumpToMessage,
+      onRenderChatMessages,
       onSwitchCharacter,
       handleCharacterSwitch,
     ],

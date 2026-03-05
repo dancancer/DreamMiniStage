@@ -62,6 +62,11 @@ export interface ApiCallContext {
   onSetTheme?: (theme?: string) => string | Promise<string>;
   onSetMovingUiPreset?: (presetName: string) => string | Promise<string>;
   onSetCssVariable?: (args: { varName: string; value: string; target?: string }) => void | Promise<void>;
+  onJumpToMessage?: (index: number) => void | Promise<void>;
+  onRenderChatMessages?: (
+    count: number,
+    options?: { scroll?: boolean },
+  ) => void | Promise<void>;
   onSwitchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;

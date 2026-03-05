@@ -28,6 +28,8 @@
 | `prompt-injection-handlers.ts` | 处理器 | 注入提示词处理（inject/uninject） |
 | `quickreply-handlers.ts` | 处理器 | 快速回复处理 |
 | `scoped-variables.ts` | 处理器 | 作用域变量处理 |
+| `slash-context-adapter.ts` | 子模块 | Slash 执行上下文总适配（变量/音频/角色/preset） |
+| `slash-context-lore-regex.ts` | 子模块 | Slash 执行上下文 world/lore/regex 适配 |
 | `slash-command-bridge.ts` | 子模块 | Slash 命令回调桥接与生命周期清理 |
 | `slash-handlers.ts` | 处理器 | 斜杠命令处理 |
 | `tool-handlers.ts` | 处理器 | 工具调用处理 |
@@ -42,7 +44,7 @@
 - `variable-handlers.ts` 的集合操作默认作用域为 `chat`，并支持上游常用参数形态 `{ type, message_id }`（含 `latest` 与负索引）。
 - `mvu-handlers.ts` 的 `mvu.getVariable/mvu.getVariables` 已支持 `{ type, message_id }` 与 `messageId`，并统一 `chatId > dialogueId > characterId` 的会话键优先级。
 - `capability-matrix.ts` 已作为能力单源，`api-surface-contract.test.ts` 会同步校验 shim 暴露面、handler 注册面与 slash 注册面。
-- `slash-handlers.ts` 现在会在上下文内注入 `runSlashCommand` 递归执行入口，供 `/run` 命令走单一路径闭环；`reload-page` 通过 `ApiCallContext.onReloadPage` 显式注入，未注入时 fail-fast。
+- `slash-handlers.ts` 已收敛为薄桥接层；Slash 上下文注入逻辑迁移到 `slash-context-adapter.ts`，其中继续提供 `runSlashCommand` 递归执行入口与 `reload-page` 的显式注入 fail-fast 行为。
 - `registerFunctionTool` 已收敛为单一注册表路径：`extension-handlers` 统一负责注册、调度、回调落地；`tool-handlers` 仅保留适配导出，避免双状态源漂移。
 - `extension-handlers.ts` 现为门面层：具体实现拆分到 `function-tool-bridge.ts` 与 `slash-command-bridge.ts`，通过 `iframe-dispatcher-registry.ts` 共享派发能力。
 - `slash-command-bridge.ts` 已收敛 `registerSlashCommand` 执行期参数约束：当定义了 `namedArgumentList/unnamedArgumentList` 时，缺失必填参数、未知命名参数、位置参数溢出均显式 fail-fast，并向 callback 上下文注入结构化参数列表（`namedArgumentList/unnamedArgumentList`）。
@@ -58,4 +60,4 @@
 - 群聊相关 `getGroupMembers` / `isGroupChat` 目前为显式未支持（fail-fast），不再返回静默默认值。
 - 新增 `hooks/script-bridge/__tests__/extension-lifecycle.test.ts`，覆盖 `registerFunctionTool/registerSlashCommand` 的注册→调用→清理→再注册回归链路。
 - 新增 `hooks/script-bridge/__tests__/material-replay-round34.test.ts` + `hooks/script-bridge/__tests__/fixtures/round34-migration-material.json`，用于真实迁移素材回放守卫（`rotateChatMessages` + script tree helper）。
-- `ApiCallContext` 已增加 UI 注入位（`onTogglePanels/onResetPanels/onToggleVisualNovelMode/onSetBackground/onSetTheme/onSetMovingUiPreset/onSetCssVariable`），`slash-handlers.ts` 会透传到 Slash 执行上下文，未注入时对应命令显式 fail-fast。
+- `ApiCallContext` UI 注入位已扩展为 `onTogglePanels/onResetPanels/onToggleVisualNovelMode/onSetBackground/onSetTheme/onSetMovingUiPreset/onSetCssVariable/onJumpToMessage/onRenderChatMessages`，并由 `slash-context-adapter.ts` 透传到 Slash 执行上下文，未注入时对应命令显式 fail-fast。

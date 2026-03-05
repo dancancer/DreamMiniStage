@@ -28,6 +28,11 @@ export interface CharacterSwitchResult {
   sessionName: string;
 }
 
+export interface LorebookBindings {
+  primary: string | null;
+  additional: string[];
+}
+
 // ============================================================================
 //                              解析结果类型
 // ============================================================================
@@ -143,6 +148,22 @@ export interface ExecutionContext {
   deleteWorldBookEntry?: (id: string) => void | Promise<void>;
   activateWorldBookEntry?: (id: string) => void | Promise<void>;
   listWorldBookEntries?: (bookName?: string) => WorldBookEntryData[] | Promise<WorldBookEntryData[]>;
+  getGlobalLorebooks?: () => string[] | Promise<string[]>;
+  setGlobalLorebooks?: (bookNames: string[]) => void | Promise<void>;
+  getCharLorebooks?: (target?: string) => LorebookBindings | Promise<LorebookBindings>;
+  getChatLorebook?: () => string | null | Promise<string | null>;
+  getPersonaLorebook?: () => string | null | Promise<string | null>;
+  getLoreField?: (
+    file: string,
+    uid: string,
+    field: string,
+  ) => unknown | Promise<unknown>;
+  setLoreField?: (
+    file: string,
+    uid: string,
+    field: string,
+    value: string,
+  ) => void | Promise<void>;
 
   // 扩展操作 - 生成
   generate?: (prompt: string, options?: GenerateOptions) => Promise<string>;
@@ -158,10 +179,12 @@ export interface ExecutionContext {
   listPresets?: () => PresetInfo[] | Promise<PresetInfo[]>;
 
   // 扩展操作 - Regex
-  listRegexScripts?: () => RegexScriptInfo[];
-  getRegexScript?: (name: string) => RegexScriptInfo | undefined;
+  listRegexScripts?: () => RegexScriptInfo[] | Promise<RegexScriptInfo[]>;
+  getRegexScript?: (name: string) => RegexScriptInfo | undefined | Promise<RegexScriptInfo | undefined>;
   setRegexScriptEnabled?: (name: string, enabled: boolean) => void | Promise<void>;
   runRegexScript?: (name: string, input: string) => string | Promise<string>;
+  getRegexPreset?: () => string | null | Promise<string | null>;
+  setRegexPreset?: (nameOrId: string) => string | null | Promise<string | null>;
 
   // 扩展操作 - Audio
   playAudio?: (url: string, options?: AudioOptions) => void | Promise<void>;
@@ -201,6 +224,11 @@ export interface ExecutionContext {
   setTheme?: (theme?: string) => string | Promise<string>;
   setMovingUiPreset?: (presetName: string) => string | Promise<string>;
   setCssVariable?: (args: { varName: string; value: string; target?: string }) => void | Promise<void>;
+  jumpToMessage?: (index: number) => void | Promise<void>;
+  renderChatMessages?: (
+    count: number,
+    options?: { scroll?: boolean },
+  ) => void | Promise<void>;
 }
 
 /** Preset 信息 */

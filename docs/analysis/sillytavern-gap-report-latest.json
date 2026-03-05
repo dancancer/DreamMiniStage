@@ -1,73 +1,10 @@
 {
-  "generatedAt": "2026-03-05T02:16:01.178Z",
+  "generatedAt": "2026-03-05T02:55:57.273Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 108,
-    "coverage": "25.35%",
+    "covered": 126,
+    "coverage": "29.58%",
     "missingTop": [
-      {
-        "command": "getcharlore",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 6,
-        "priority": "P2"
-      },
-      {
-        "command": "getchatlore",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 6,
-        "priority": "P2"
-      },
-      {
-        "command": "getgloballore",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 6,
-        "priority": "P2"
-      },
-      {
-        "command": "getlorefield",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 6,
-        "priority": "P2"
-      },
-      {
-        "command": "getpersonalore",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 6,
-        "priority": "P2"
-      },
-      {
-        "command": "regex-preset",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 6,
-        "priority": "P2"
-      },
-      {
-        "command": "regex-toggle",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 6,
-        "priority": "P2"
-      },
-      {
-        "command": "setlorefield",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 6,
-        "priority": "P2"
-      },
-      {
-        "command": "world",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 6,
-        "priority": "P2"
-      },
       {
         "command": "addmember",
         "upstreamRefs": 1,
@@ -77,27 +14,6 @@
       },
       {
         "command": "addswipe",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "chat-jump",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "chat-render",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "chat-scrollto",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 5,
@@ -174,13 +90,6 @@
         "priority": "P2"
       },
       {
-        "command": "getcharwi",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
         "command": "getchatbook",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -189,13 +98,6 @@
       },
       {
         "command": "getchatname",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "getchatwi",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 5,
@@ -216,13 +118,6 @@
         "priority": "P2"
       },
       {
-        "command": "getglobalwi",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
         "command": "getmember",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -237,13 +132,6 @@
         "priority": "P2"
       },
       {
-        "command": "getpersonawi",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
         "command": "getpromptentries",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -252,13 +140,6 @@
       },
       {
         "command": "getpromptentry",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "getwifield",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 5,
@@ -329,13 +210,6 @@
       },
       {
         "command": "setpromptentry",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "setwifield",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 5,

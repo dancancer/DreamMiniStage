@@ -2,35 +2,43 @@
 
 ## 本轮完成
 
-- 完成 P1-1：补齐 `/message` 命令别名，复用 `messages` 处理器；新增别名测试覆盖 `/messages` `/mes` `/message` 三条路径。
-- 完成 P1-2：补齐 `injectPrompts/uninjectPrompts` 闭环。
-  - shim 侧改为真实 API 调用，返回可复用 `uninject` 句柄，支持 `once` 自动解绑。
-  - handler 侧新增 `prompt-injection-handlers.ts`，负责参数校验、注入记录与事件广播。
-- 完成 P1-3：同步能力矩阵并校验 API facade 变化。
-  - 新增 API matrix 项：`injectPrompts/uninjectPrompts`、角色 CRUD 相关 API、`refreshOneMessage`。
-  - `pnpm analyze:sillytavern-gap` 结果：API facade 覆盖率提升至 `100.00%`。
-- 推进 P2-3：补齐 TavernHelper 角色能力与消息刷新能力。
-  - shim 新增：`getCurrentCharacterName/createCharacter/createOrReplaceCharacter/deleteCharacter/replaceCharacter/updateCharacterWith/refreshOneMessage`。
-  - handler 新增/补齐：`getCurrentCharacterName/createCharacter/deleteCharacter/replaceCharacter/refreshOneMessage`。
+- 完成 P2-1：补齐 world/lore 命令簇第一批。
+  - 新增命令：`/world`、`/getcharlore`、`/getchatlore`、`/getgloballore`、`/getpersonalore`、`/getlorefield`、`/setlorefield`。
+  - 对齐别名：`getcharwi/getchatwi/getglobalwi/getpersonawi/getwifield/setwifield`。
+  - `slash-handlers` 新增 world/lore 上下文适配能力（全局绑定、角色绑定、聊天绑定、字段读写）。
+- 完成 P2-2：补齐 regex/chat 命令簇第二批。
+  - 新增命令：`/regex-preset`、`/regex-toggle`、`/chat-jump`、`/chat-render`、`/chat-scrollto`。
+  - `useScriptBridge`/`ApiCallContext` 新增聊天跳转与渲染回调注入位。
+- 为控制文件复杂度，重构 Slash 适配层拆分：
+  - `slash-handlers.ts` 收敛为薄桥接；
+  - 新增 `slash-context-adapter.ts`（核心上下文适配）；
+  - 新增 `slash-context-lore-regex.ts`（world/lore/regex 专项适配）。
+- 同步能力单源与文档状态。
+  - 更新 `hooks/script-bridge/capability-matrix.ts`，补齐本轮新增 Slash 命令声明。
+  - 更新 `docs/analysis/sillytavern-integration-gap-2026-03.md` 差距分层与短周期目标。
+  - 更新执行清单：`tasks.md` 中 P2 待办全部打勾。
 
 ## 回归结果
 
 - `pnpm analyze:sillytavern-gap`
-  - slash coverage: `25.35%`（上一轮 `25.12%`）
+  - slash coverage: `29.58%`（上一轮 `25.35%`）
   - api matrix coverage: `100.00%`
-  - api facade coverage: `100.00%`（上一轮 `95.04%`）
+  - api facade coverage: `100.00%`
+- `pnpm vitest run lib/slash-command/__tests__/p2-chat-command-gaps.test.ts lib/slash-command/__tests__/p2-world-lore-command-gaps.test.ts lib/slash-command/__tests__/p2-regex-command-gaps.test.ts`：`3 files / 17 tests` 全通过。
 - `pnpm vitest run lib/core/__tests__/st-baseline-*.test.ts`：`10 files / 284 tests` 全通过。
-- `pnpm vitest run lib/slash-command/__tests__/material-replay-control-flow.test.ts`：通过。
-- `pnpm vitest run hooks/script-bridge/__tests__/variable-handlers.test.ts`：通过。
-- 本轮新增/更新定向测试：
-  - `hooks/script-bridge/__tests__/prompt-injection-handlers.test.ts`
-  - `hooks/script-bridge/__tests__/character-handlers-gaps.test.ts`
-  - `hooks/script-bridge/__tests__/message-handlers-compat.test.ts`
-  - `lib/slash-command/__tests__/p2-message-command-aliases.test.ts`
-  - `lib/script-runner/__tests__/slash-runner-shim-contract.test.ts`
+- `pnpm vitest run lib/slash-command/__tests__/material-replay-control-flow.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts`：`2 files / 8 tests` 全通过。
+- `pnpm vitest run hooks/script-bridge/__tests__/api-surface-contract.test.ts`：`1 file / 3 tests` 全通过。
+- `pnpm vitest run hooks/script-bridge/__tests__/slash-handlers.integration.test.ts`：`1 file / 18 tests` 全通过。
+- `pnpm lint` 与 `pnpm exec tsc --noEmit`：均通过。
+
+## 本轮新增/更新测试
+
+- 新增 `lib/slash-command/__tests__/p2-world-lore-command-gaps.test.ts`
+- 新增 `lib/slash-command/__tests__/p2-regex-command-gaps.test.ts`
+- 更新 `lib/slash-command/__tests__/p2-chat-command-gaps.test.ts`（补 `/chat-jump` `/chat-render` `/chat-scrollto`）
 
 ## 下一步建议
 
-1. 继续推进 P2-1：补齐 `/world` + `get/set lore*` 命令簇，并为每个命令补契约测试。
-2. 推进 P2-2：补齐 `/regex-preset` `/regex-toggle` `/chat-jump` `/chat-render` `/chat-scrollto`，优先实现 fail-fast + 可回放路径。
-3. 更新 `docs/analysis/sillytavern-integration-gap-2026-03.md` 的差距分层与短周期目标，使文档与最新 gap report 对齐。
+1. 推进聊天编辑类高频缺口：`/delchat` `/delete` `/delmode` `/delname` `/delswipe`，优先保持 fail-fast 与无静默回退。
+2. 收敛 world/lore 语义别名：补齐 `/getcharbook` `/getchatbook` `/getglobalbooks` `/getpersonabook` 到统一数据路径。
+3. 继续用真实素材驱动回归：每个新命令簇绑定至少一个契约测试或 material replay 场景。

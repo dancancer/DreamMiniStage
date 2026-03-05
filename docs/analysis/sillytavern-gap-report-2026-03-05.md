@@ -1,30 +1,18 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T02:16:01.178Z
+- generatedAt: 2026-03-05T02:55:57.273Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 108/426 (25.35%)
+- slash commands: 126/426 (29.58%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
 ## Priority Command Gaps (Top 25)
 
-- [P2] /getcharlore (score=6, upstreamRefs=1, localRefs=0)
-- [P2] /getchatlore (score=6, upstreamRefs=1, localRefs=0)
-- [P2] /getgloballore (score=6, upstreamRefs=1, localRefs=0)
-- [P2] /getlorefield (score=6, upstreamRefs=1, localRefs=0)
-- [P2] /getpersonalore (score=6, upstreamRefs=1, localRefs=0)
-- [P2] /regex-preset (score=6, upstreamRefs=1, localRefs=0)
-- [P2] /regex-toggle (score=6, upstreamRefs=1, localRefs=0)
-- [P2] /setlorefield (score=6, upstreamRefs=1, localRefs=0)
-- [P2] /world (score=6, upstreamRefs=1, localRefs=0)
 - [P2] /addmember (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /addswipe (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /chat-jump (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /chat-render (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /chat-scrollto (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /delay (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /delchat (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /delete (score=5, upstreamRefs=1, localRefs=0)
@@ -35,7 +23,19 @@
 - [P2] /genraw (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /get-reasoning (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /getcharbook (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /getcharwi (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /getchatbook (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /getchatname (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /getentryfield (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /getglobalbooks (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /getmember (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /getpersonabook (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /getpromptentries (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /getpromptentry (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /list-gallery (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /listchatvar (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /listinjects (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /message-name (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /message-role (score=5, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

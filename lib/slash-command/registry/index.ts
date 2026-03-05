@@ -21,6 +21,7 @@ import * as FuzzyHandlers from "./handlers/fuzzy";
 import * as ChatHandlers from "./handlers/chat";
 import * as UtilityHandlers from "./handlers/utility";
 import * as UiHandlers from "./handlers/ui";
+import * as LoreHandlers from "./handlers/lore";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -69,6 +70,9 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["chat-history", ChatHandlers.handleChatManager],
   ["manage-chats", ChatHandlers.handleChatManager],
   ["chat-reload", ChatHandlers.handleChatReload],
+  ["chat-jump", ChatHandlers.handleChatJump],
+  ["chat-scrollto", ChatHandlers.handleChatJump],
+  ["chat-render", ChatHandlers.handleChatRender],
 
   // ─── 工具命令 ───
   ["?", CoreHandlers.handleHelp],
@@ -134,6 +138,19 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["listentries", GenerationHandlers.handleListEntries],
   ["worldbook", GenerationHandlers.handleWorldBook],
   ["wb", GenerationHandlers.handleWorldBook],
+  ["world", LoreHandlers.handleWorld],
+  ["getcharlore", LoreHandlers.handleGetCharLore],
+  ["getcharwi", LoreHandlers.handleGetCharLore],
+  ["getchatlore", LoreHandlers.handleGetChatLore],
+  ["getchatwi", LoreHandlers.handleGetChatLore],
+  ["getgloballore", LoreHandlers.handleGetGlobalLore],
+  ["getglobalwi", LoreHandlers.handleGetGlobalLore],
+  ["getpersonalore", LoreHandlers.handleGetPersonaLore],
+  ["getpersonawi", LoreHandlers.handleGetPersonaLore],
+  ["getlorefield", LoreHandlers.handleGetLoreField],
+  ["getwifield", LoreHandlers.handleGetLoreField],
+  ["setlorefield", LoreHandlers.handleSetLoreField],
+  ["setwifield", LoreHandlers.handleSetLoreField],
 
   // ─── 生成命令 ───
   ["gen", GenerationHandlers.handleGen],
@@ -149,6 +166,8 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
 
   // ─── Regex 命令 ───
   ["regex", GenerationHandlers.handleRegex],
+  ["regex-preset", GenerationHandlers.handleRegexPreset],
+  ["regex-toggle", GenerationHandlers.handleRegexToggle],
 
   // ─── Audio 命令 ───
   ["audio", GenerationHandlers.handleAudio],

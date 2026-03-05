@@ -6,8 +6,8 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- 当前主缺口不在“接口联通”，而在“Slash 命令覆盖面”：`107/426 = 25.12%`。
-- TavernHelper facade 仍有少量关键缺口：`134/141 = 95.04%`，当前缺口以 `injectPrompts/uninjectPrompts` 为 P1。
+- Slash 命令覆盖面继续提升：`126/426 = 29.58%`（较上一轮 `25.35%` 明显提升）。
+- TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
 ## 2. 上游同步状态（本地快照）
@@ -23,31 +23,18 @@
 
 ### 3.1 P1（必须优先处理）
 
-1. Slash `/message` 命令缺失（在差距评分中唯一 P1 命令项）。
-2. TavernHelper 缺失：
-   - `injectPrompts`
-   - `uninjectPrompts`
+- P1 项已清零：`/message` 与 `injectPrompts/uninjectPrompts` 均已完成并进入回归守卫。
 
 ### 3.2 P2（主流程体验缺口）
 
-1. World/Lore 相关命令簇：
-   - `/world`
-   - `/getcharlore` `/getchatlore` `/getgloballore` `/getpersonalore`
-   - `/getlorefield` `/setlorefield`
-2. Regex 运维命令：
-   - `/regex-preset`
-   - `/regex-toggle`
-3. 消息/聊天操作长尾：
-   - `/chat-jump` `/chat-render` `/chat-scrollto`
-   - `/delchat` `/delete` `/delmode` `/delname` `/delswipe` 等
-4. TavernHelper 角色/消息相关缺口：
-   - `createCharacter`
-   - `createOrReplaceCharacter`
-   - `deleteCharacter`
-   - `replaceCharacter`
-   - `updateCharacterWith`
-   - `getCurrentCharacterName`
-   - `refreshOneMessage`
+1. 已完成本轮高价值命令簇收敛：
+   - world/lore：`/world`、`/getcharlore`、`/getchatlore`、`/getgloballore`、`/getpersonalore`、`/getlorefield`、`/setlorefield`
+   - regex/chat：`/regex-preset`、`/regex-toggle`、`/chat-jump`、`/chat-render`、`/chat-scrollto`
+2. 仍待推进的 P2 长尾以高频编辑/会话运维命令为主：
+   - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
+   - `/getcharbook` `/getchatbook` `/getglobalbooks` `/getpersonabook`
+   - `/message-name` `/message-role` `/getpromptentry` 等
+3. API 层 P2 缺口已基本清空，后续以 Slash 命令可用性为主战场。
 
 ### 3.3 P3（机会性补齐）
 
@@ -72,6 +59,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 先补 `/message` + world/lore/regex 命令簇，优先提升可用主流程。
-2. 落地 `injectPrompts/uninjectPrompts`，补齐脚本提示词注入能力。
-3. 补齐 TavernHelper 角色 CRUD 与 `refreshOneMessage`，收敛 JS-Slash-Runner 兼容断点。
+1. 聚焦 `/delchat` `/delete` `/delmode` `/delname` `/delswipe` 命令簇，补齐聊天编辑闭环。
+2. 推进 `get*book` 语义别名（`/getcharbook` `/getchatbook` `/getglobalbooks` `/getpersonabook`），减少 world/lore 语义裂缝。
+3. 继续以素材回放驱动收敛：每补一个命令簇，绑定回放或契约测试，保持 fail-fast 与单路径实现。

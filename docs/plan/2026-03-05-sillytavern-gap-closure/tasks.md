@@ -8,8 +8,8 @@
 
 ## 2. P2（主流程）
 
-- [ ] 补齐 world/lore 命令簇第一批（`/world` + `get/set lore*`）。
-- [ ] 补齐 regex/chat 命令簇第二批（`/regex-*` + `/chat-*`）。
+- [x] 补齐 world/lore 命令簇第一批（`/world` + `get/set lore*`）。
+- [x] 补齐 regex/chat 命令簇第二批（`/regex-*` + `/chat-*`）。
 - [x] 补齐 TavernHelper 角色 CRUD 与 `refreshOneMessage`。
 
 ## 3. 回归与文档

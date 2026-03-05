@@ -9,6 +9,24 @@
 import type { CommandHandler } from "../types";
 import { parseBoolean } from "../utils/helpers";
 
+type RegexToggleState = "on" | "off" | "toggle";
+
+function normalizeRegexToggleState(raw?: string): RegexToggleState {
+  const normalized = (raw || "toggle").trim().toLowerCase();
+  if (normalized === "on" || normalized === "off" || normalized === "toggle") {
+    return normalized;
+  }
+  throw new Error(`/regex-toggle invalid state: ${raw || ""}`);
+}
+
+function normalizeRegexScriptName(raw: string, commandName: string): string {
+  const normalized = (raw || "").trim();
+  if (!normalized) {
+    throw new Error(`/${commandName} requires a script name`);
+  }
+  return normalized;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    WorldBook 命令
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -160,6 +178,27 @@ export const handleListPresets: CommandHandler = async (_args, _namedArgs, ctx, 
   return JSON.stringify(presets);
 };
 
+/** /regex-preset [name] - 获取或切换当前 regex 预设 */
+export const handleRegexPreset: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  const target = (args.join(" ") || pipe || "").trim();
+  if (!target) {
+    if (!ctx.getRegexPreset) {
+      throw new Error("/regex-preset is not available in current context");
+    }
+    const current = await Promise.resolve(ctx.getRegexPreset());
+    return current || "";
+  }
+
+  if (!ctx.setRegexPreset) {
+    throw new Error("/regex-preset set is not available in current context");
+  }
+  const selected = await Promise.resolve(ctx.setRegexPreset(target));
+  if (!selected) {
+    throw new Error(`/regex-preset not found: ${target}`);
+  }
+  return selected;
+};
+
 /** /regex <action> [args] - 正则脚本管理 */
 export const handleRegex: CommandHandler = async (args, namedArgs, ctx, pipe) => {
   if (args.length === 0) return pipe;
@@ -168,11 +207,12 @@ export const handleRegex: CommandHandler = async (args, namedArgs, ctx, pipe) =>
 
   if (action === "list") {
     if (!ctx.listRegexScripts) return pipe;
-    return JSON.stringify(ctx.listRegexScripts());
+    const scripts = await Promise.resolve(ctx.listRegexScripts());
+    return JSON.stringify(scripts);
   }
   if (action === "get") {
     if (!ctx.getRegexScript || rest.length === 0) return pipe;
-    const script = ctx.getRegexScript(rest[0]);
+    const script = await Promise.resolve(ctx.getRegexScript(rest[0]));
     return script ? JSON.stringify(script) : "";
   }
   if (action === "enable") {
@@ -192,6 +232,28 @@ export const handleRegex: CommandHandler = async (args, namedArgs, ctx, pipe) =>
     return await ctx.runRegexScript(scriptName, input);
   }
   return pipe;
+};
+
+/** /regex-toggle [state=on|off|toggle] <scriptName> - 切换 regex 脚本启用状态 */
+export const handleRegexToggle: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.getRegexScript || !ctx.setRegexScriptEnabled) {
+    throw new Error("/regex-toggle is not available in current context");
+  }
+
+  const state = normalizeRegexToggleState(namedArgs.state);
+  const rawName = args.join(" ") || pipe;
+  const scriptName = normalizeRegexScriptName(rawName, "regex-toggle");
+  const script = await Promise.resolve(ctx.getRegexScript(scriptName));
+  if (!script) {
+    throw new Error(`/regex-toggle script not found: ${scriptName}`);
+  }
+
+  const currentEnabled = script.enabled !== false;
+  const nextEnabled = state === "toggle"
+    ? !currentEnabled
+    : state === "on";
+  await Promise.resolve(ctx.setRegexScriptEnabled(script.name, nextEnabled));
+  return script.name;
 };
 
 /** /audio <action> [args] - 音频播放控制 */
