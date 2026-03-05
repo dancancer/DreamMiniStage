@@ -1,41 +1,41 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T11:41:42.872Z
+- generatedAt: 2026-03-05T11:56:12.214Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 301/426 (70.66%)
+- slash commands: 316/426 (74.18%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
 ## Priority Command Gaps (Top 25)
 
-- [P3] /depth (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /dupe (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /expression-upload (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /floor-teleport (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /forcesave (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /freq (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /hide (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /import (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /is-mobile (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /length (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /newchat (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /note (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /note-depth (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /note-freq (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /note-frequency (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /note-pos (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /note-position (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /note-role (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /parse-reasoning (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /persona (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /persona-lock (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /persona-set (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /persona-sync (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /pick-icon (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /popup (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /ppp (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /profile (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /profile-create (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /profile-get (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /profile-list (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /profile-update (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /prompt (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /prompt-post-processing (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /proxy (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-arg (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-chat-set (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-chat-set-off (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

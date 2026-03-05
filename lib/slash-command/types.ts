@@ -57,7 +57,18 @@ export interface PromptInjectionState {
 export type DataBankSource = "global" | "character" | "chat";
 export type PersonaLockType = "chat" | "character" | "default";
 export type PersonaLockState = "on" | "off" | "toggle";
+export type PersonaSetMode = "lookup" | "temp" | "all";
 export type ExpressionSetType = "expression" | "sprite";
+export type AuthorNotePosition = "before" | "after" | "chat";
+export type AuthorNoteRole = "system" | "user" | "assistant";
+
+export interface AuthorNoteState {
+  text: string;
+  depth: number;
+  frequency: number;
+  position: AuthorNotePosition;
+  role: AuthorNoteRole;
+}
 
 export interface DataBankEntrySnapshot {
   name: string;
@@ -299,6 +310,19 @@ export interface ExecutionContext {
     prompt: string,
     options?: { returnType?: "pipe" | "none" },
   ) => string | void | Promise<string | void>;
+  getAuthorNoteState?: () => AuthorNoteState | Promise<AuthorNoteState>;
+  setAuthorNoteState?: (
+    patch: Partial<AuthorNoteState>,
+  ) => AuthorNoteState | Promise<AuthorNoteState>;
+  getPersonaName?: () => string | Promise<string>;
+  setPersonaName?: (
+    name: string,
+    options?: { mode?: PersonaSetMode },
+  ) => string | Promise<string>;
+  syncPersona?: () => void | Promise<void>;
+  getPersonaLockState?: (
+    options?: { type?: PersonaLockType },
+  ) => boolean | Promise<boolean>;
 
   // 扩展操作 - World Book
   getWorldBookEntry?: (id: string) => WorldBookEntryData | undefined | Promise<WorldBookEntryData | undefined>;

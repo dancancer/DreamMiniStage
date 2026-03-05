@@ -11,6 +11,7 @@
 
 import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
+  AuthorNoteState,
   ButtonsCommandOptions,
   CaptionCommandOptions,
   CharacterSwitchResult,
@@ -28,6 +29,7 @@ import type {
   InstructModeState,
   NarrateOptions,
   PersonaLockState,
+  PersonaSetMode,
   PersonaLockType,
   SetModelOptions,
   SendOptions,
@@ -132,8 +134,21 @@ export interface ApiCallContext {
     prompt: string,
     options?: { returnType?: "pipe" | "none" },
   ) => string | void | Promise<string | void>;
+  onGetAuthorNoteState?: () => AuthorNoteState | Promise<AuthorNoteState>;
+  onSetAuthorNoteState?: (
+    patch: Partial<AuthorNoteState>,
+  ) => AuthorNoteState | Promise<AuthorNoteState>;
+  onGetPersonaName?: () => string | Promise<string>;
+  onSetPersonaName?: (
+    name: string,
+    options?: { mode?: PersonaSetMode },
+  ) => string | Promise<string>;
+  onSyncPersona?: () => void | Promise<void>;
   onSetPersonaLock?: (
     state: PersonaLockState,
+    options?: { type?: PersonaLockType },
+  ) => boolean | Promise<boolean>;
+  onGetPersonaLockState?: (
     options?: { type?: PersonaLockType },
   ) => boolean | Promise<boolean>;
   onReloadPage?: () => void | Promise<void>;

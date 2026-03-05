@@ -126,3 +126,9 @@
 - [x] 补齐 stop/model/narrator 长尾命令（`/stop-strings|/stopping-strings|/custom-stop-strings|/custom-stopping-strings`、`/model`、`/name`、`/nar`、`/narrate`），统一单路径与 fail-fast 语义。
 - [x] 补齐群聊成员编排命令（`/member-remove|/removemember|/memberremove`、`/member-up|/upmember|/memberup`、`/member-down|/downmember|/memberdown`、`/member-peek|/peek|/memberpeek|/peekmember`）。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 stop/model/narrate 与成员编排回调，补齐契约测试并更新 gap 分析与 handoff。
+
+## 22. P3 增量收敛（note + persona）
+
+- [x] 补齐 note/persona 长尾命令簇（`/note`、`/note-depth|/depth`、`/note-frequency|/note-freq|/freq`、`/note-position|/note-pos|/pos`、`/note-role`、`/persona-set|/persona`、`/persona-lock`、`/persona-sync|/sync`），统一单路径与 fail-fast 语义。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `get/setAuthorNoteState`、`get/setPersonaName`、`getPersonaLockState`、`syncPersona`，并在宿主默认路径补齐 localStorage + 注入存储联动。
+- [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。

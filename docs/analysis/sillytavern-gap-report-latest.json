@@ -1,17 +1,10 @@
 {
-  "generatedAt": "2026-03-05T11:41:42.872Z",
+  "generatedAt": "2026-03-05T11:56:12.214Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 301,
-    "coverage": "70.66%",
+    "covered": 316,
+    "coverage": "74.18%",
     "missingTop": [
-      {
-        "command": "depth",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
       {
         "command": "dupe",
         "upstreamRefs": 1,
@@ -35,13 +28,6 @@
       },
       {
         "command": "forcesave",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "freq",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -83,84 +69,7 @@
         "priority": "P3"
       },
       {
-        "command": "note",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "note-depth",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "note-freq",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "note-frequency",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "note-pos",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "note-position",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "note-role",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "parse-reasoning",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "persona",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "persona-lock",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "persona-set",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "persona-sync",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -175,13 +84,6 @@
       },
       {
         "command": "popup",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "pos",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -595,13 +497,6 @@
       },
       {
         "command": "swipeadd",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sync",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

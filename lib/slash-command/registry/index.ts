@@ -25,6 +25,7 @@ import * as LoreHandlers from "./handlers/lore";
 import * as DataBankHandlers from "./handlers/data-bank";
 import * as ExpressionHandlers from "./handlers/expression";
 import * as ExtensionHandlers from "./handlers/extensions";
+import * as NotePersonaHandlers from "./handlers/note-persona";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -86,6 +87,21 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["closure-deserialize", UtilityHandlers.handleClosureDeserialize],
   ["lock", UtilityHandlers.handleLock],
   ["bind", UtilityHandlers.handleLock],
+  ["persona-lock", NotePersonaHandlers.handlePersonaLock],
+  ["persona-set", NotePersonaHandlers.handlePersonaSet],
+  ["persona", NotePersonaHandlers.handlePersonaSet],
+  ["persona-sync", NotePersonaHandlers.handlePersonaSync],
+  ["sync", NotePersonaHandlers.handlePersonaSync],
+  ["note", NotePersonaHandlers.handleNote],
+  ["note-depth", NotePersonaHandlers.handleNoteDepth],
+  ["depth", NotePersonaHandlers.handleNoteDepth],
+  ["note-frequency", NotePersonaHandlers.handleNoteFrequency],
+  ["note-freq", NotePersonaHandlers.handleNoteFrequency],
+  ["freq", NotePersonaHandlers.handleNoteFrequency],
+  ["note-position", NotePersonaHandlers.handleNotePosition],
+  ["note-pos", NotePersonaHandlers.handleNotePosition],
+  ["pos", NotePersonaHandlers.handleNotePosition],
+  ["note-role", NotePersonaHandlers.handleNoteRole],
   ["trimtokens", UtilityHandlers.handleTrimTokens],
   ["count", UtilityHandlers.handleCount],
   ["reload-page", UtilityHandlers.handleReloadPage],

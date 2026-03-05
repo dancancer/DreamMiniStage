@@ -7,6 +7,7 @@
 
 import type { ApiCallContext } from "./types";
 import type {
+  AuthorNoteState,
   ExecutionContext,
   SendOptions,
   WorldBookEntryData,
@@ -14,6 +15,7 @@ import type {
   AudioChannelType,
   AudioChannelSnapshot,
   CharacterSummary,
+  PersonaLockType,
 } from "@/lib/slash-command/types";
 import { executeSlashCommandScript } from "@/lib/slash-command/executor";
 import { getAudioManager } from "@/lib/audio/store";
@@ -217,6 +219,24 @@ async function defaultCloseCurrentChat(): Promise<void> {
 
 const CUSTOM_STOP_STRINGS_STORAGE_KEY = "dreamministage.custom-stop-strings";
 const MODEL_STORAGE_KEY = "dreamministage.current-model";
+const AUTHOR_NOTE_STORAGE_KEY = "dreamministage.author-note";
+const PERSONA_NAME_STORAGE_KEY = "dreamministage.persona-name";
+const PERSONA_LOCK_STORAGE_KEY = "dreamministage.persona-lock";
+const AUTHOR_NOTE_INJECTION_PREFIX = "note_injection";
+
+const DEFAULT_AUTHOR_NOTE_STATE: AuthorNoteState = {
+  text: "",
+  depth: 4,
+  frequency: 1,
+  position: "chat",
+  role: "system",
+};
+
+const DEFAULT_PERSONA_LOCK_STATE: Record<PersonaLockType, boolean> = {
+  chat: false,
+  character: false,
+  default: false,
+};
 
 function readStringArrayFromStorage(storageKey: string): string[] {
   if (typeof window === "undefined") {
@@ -265,6 +285,173 @@ function writeStringToStorage(storageKey: string, value: string): string {
     window.localStorage.setItem(storageKey, normalized);
   }
   return normalized;
+}
+
+function isAuthorNotePosition(value: unknown): value is AuthorNoteState["position"] {
+  return value === "before" || value === "after" || value === "chat";
+}
+
+function isAuthorNoteRole(value: unknown): value is AuthorNoteState["role"] {
+  return value === "system" || value === "user" || value === "assistant";
+}
+
+function normalizeAuthorNoteState(value: unknown): AuthorNoteState {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return { ...DEFAULT_AUTHOR_NOTE_STATE };
+  }
+
+  const raw = value as Record<string, unknown>;
+  const text = typeof raw.text === "string" ? raw.text : DEFAULT_AUTHOR_NOTE_STATE.text;
+  const depth = Number.isInteger(raw.depth) && Number(raw.depth) >= 0
+    ? Number(raw.depth)
+    : DEFAULT_AUTHOR_NOTE_STATE.depth;
+  const frequency = Number.isInteger(raw.frequency) && Number(raw.frequency) >= 0
+    ? Number(raw.frequency)
+    : DEFAULT_AUTHOR_NOTE_STATE.frequency;
+  const position = isAuthorNotePosition(raw.position)
+    ? raw.position
+    : DEFAULT_AUTHOR_NOTE_STATE.position;
+  const role = isAuthorNoteRole(raw.role)
+    ? raw.role
+    : DEFAULT_AUTHOR_NOTE_STATE.role;
+
+  return {
+    text,
+    depth,
+    frequency,
+    position,
+    role,
+  };
+}
+
+function readAuthorNoteStateFromStorage(): AuthorNoteState {
+  if (typeof window === "undefined") {
+    return { ...DEFAULT_AUTHOR_NOTE_STATE };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(AUTHOR_NOTE_STORAGE_KEY);
+    if (!raw || raw.trim().length === 0) {
+      return { ...DEFAULT_AUTHOR_NOTE_STATE };
+    }
+    return normalizeAuthorNoteState(JSON.parse(raw));
+  } catch {
+    return { ...DEFAULT_AUTHOR_NOTE_STATE };
+  }
+}
+
+function writeAuthorNoteStateToStorage(state: AuthorNoteState): AuthorNoteState {
+  const normalized = normalizeAuthorNoteState(state);
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(AUTHOR_NOTE_STORAGE_KEY, JSON.stringify(normalized));
+  }
+  return normalized;
+}
+
+function normalizePersonaLockState(value: unknown): Record<PersonaLockType, boolean> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return { ...DEFAULT_PERSONA_LOCK_STATE };
+  }
+
+  const raw = value as Record<string, unknown>;
+  return {
+    chat: raw.chat === true,
+    character: raw.character === true,
+    default: raw.default === true,
+  };
+}
+
+function readPersonaLockStateFromStorage(): Record<PersonaLockType, boolean> {
+  if (typeof window === "undefined") {
+    return { ...DEFAULT_PERSONA_LOCK_STATE };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(PERSONA_LOCK_STORAGE_KEY);
+    if (!raw || raw.trim().length === 0) {
+      return { ...DEFAULT_PERSONA_LOCK_STATE };
+    }
+    return normalizePersonaLockState(JSON.parse(raw));
+  } catch {
+    return { ...DEFAULT_PERSONA_LOCK_STATE };
+  }
+}
+
+function writePersonaLockStateToStorage(
+  state: Record<PersonaLockType, boolean>,
+): Record<PersonaLockType, boolean> {
+  const normalized = normalizePersonaLockState(state);
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(PERSONA_LOCK_STORAGE_KEY, JSON.stringify(normalized));
+  }
+  return normalized;
+}
+
+function normalizeScopeToken(value: string): string {
+  return value.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+function getAuthorNoteInjectionId(ctx: ApiCallContext): string {
+  const scopeToken = [ctx.dialogueId, ctx.characterId, ctx.iframeId]
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    .join("_");
+  return `${AUTHOR_NOTE_INJECTION_PREFIX}_${normalizeScopeToken(scopeToken || "global")}`;
+}
+
+function syncAuthorNoteInjection(
+  ctx: ApiCallContext,
+  state: AuthorNoteState,
+): void {
+  const injectionId = getAuthorNoteInjectionId(ctx);
+  const normalizedText = state.text.trim();
+
+  if (normalizedText.length === 0) {
+    const removed = removePromptInjections([injectionId]);
+    if (removed > 0 && typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("DreamMiniStage:uninjectPrompts", {
+          detail: {
+            ids: [injectionId],
+            removed,
+            characterId: ctx.characterId,
+            dialogueId: ctx.dialogueId,
+            iframeId: ctx.iframeId,
+          },
+        }),
+      );
+    }
+    return;
+  }
+
+  const injection = upsertPromptInjection(
+    {
+      id: injectionId,
+      content: normalizedText,
+      role: state.role,
+      position: state.position === "chat" ? "in_chat" : state.position,
+      depth: state.depth,
+      should_scan: false,
+    },
+    {
+      characterId: ctx.characterId,
+      dialogueId: ctx.dialogueId,
+      iframeId: ctx.iframeId,
+    },
+  );
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("DreamMiniStage:injectPrompts", {
+        detail: {
+          prompts: [injection],
+          once: false,
+          characterId: ctx.characterId,
+          dialogueId: ctx.dialogueId,
+          iframeId: ctx.iframeId,
+        },
+      }),
+    );
+  }
 }
 
 export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContext {
@@ -348,6 +535,29 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onSetImageGenerationConfig = ctx.onSetImageGenerationConfig;
   const onGetInstructMode = ctx.onGetInstructMode;
   const onSetInstructMode = ctx.onSetInstructMode;
+  const defaultGetAuthorNoteState = (): AuthorNoteState => readAuthorNoteStateFromStorage();
+  const defaultSetAuthorNoteState = (
+    patch: Partial<AuthorNoteState>,
+  ): AuthorNoteState => {
+    const current = readAuthorNoteStateFromStorage();
+    const next = normalizeAuthorNoteState({
+      ...current,
+      ...patch,
+    });
+    const saved = writeAuthorNoteStateToStorage(next);
+    syncAuthorNoteInjection(ctx, saved);
+    return saved;
+  };
+  const defaultGetPersonaName = (): string => readStringFromStorage(PERSONA_NAME_STORAGE_KEY);
+  const defaultSetPersonaName = (name: string): string => {
+    return writeStringToStorage(PERSONA_NAME_STORAGE_KEY, name.trim());
+  };
+  const defaultGetPersonaLockState = (
+    options?: { type?: PersonaLockType },
+  ): boolean => {
+    const type = options?.type || "chat";
+    return readPersonaLockStateFromStorage()[type];
+  };
   const defaultGetStopStrings = (): string[] => readStringArrayFromStorage(CUSTOM_STOP_STRINGS_STORAGE_KEY);
   const defaultSetStopStrings = (stopStrings: string[]): string[] => {
     return writeStringArrayToStorage(CUSTOM_STOP_STRINGS_STORAGE_KEY, stopStrings);
@@ -360,6 +570,11 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onSetStopStrings = ctx.onSetStopStrings ?? defaultSetStopStrings;
   const onGetModel = ctx.onGetModel ?? defaultGetModel;
   const onSetModel = ctx.onSetModel ?? defaultSetModel;
+  const onGetAuthorNoteState = ctx.onGetAuthorNoteState ?? defaultGetAuthorNoteState;
+  const onSetAuthorNoteState = ctx.onSetAuthorNoteState ?? defaultSetAuthorNoteState;
+  const onGetPersonaName = ctx.onGetPersonaName ?? defaultGetPersonaName;
+  const onSetPersonaName = ctx.onSetPersonaName ?? defaultSetPersonaName;
+  const onSyncPersona = ctx.onSyncPersona;
   const onNarrateText = ctx.onNarrateText;
   const onGetGroupMember = ctx.onGetGroupMember;
   const onGetGroupMemberCount = ctx.onGetGroupMemberCount;
@@ -370,7 +585,25 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onSetGroupMemberEnabled = ctx.onSetGroupMemberEnabled;
   const onAddSwipe = ctx.onAddSwipe;
   const onAskCharacter = ctx.onAskCharacter;
-  const onSetPersonaLock = ctx.onSetPersonaLock;
+  const onSetPersonaLock = ctx.onSetPersonaLock
+    ? async (
+      state: "on" | "off" | "toggle",
+      options?: { type?: PersonaLockType },
+    ): Promise<boolean> => {
+      const result = await Promise.resolve(ctx.onSetPersonaLock?.(state, options));
+      if (typeof result === "boolean") {
+        const lockType = options?.type || "chat";
+        const snapshot = readPersonaLockStateFromStorage();
+        snapshot[lockType] = result;
+        writePersonaLockStateToStorage(snapshot);
+      }
+      return result as boolean;
+    }
+    : undefined;
+  const onGetPersonaLockState = ctx.onGetPersonaLockState ?? defaultGetPersonaLockState;
+  if (!ctx.onGetAuthorNoteState && !ctx.onSetAuthorNoteState) {
+    syncAuthorNoteInjection(ctx, defaultGetAuthorNoteState());
+  }
   const onReloadPage = ctx.onReloadPage;
   const onGetClipboardText = ctx.onGetClipboardText;
   const onSetClipboardText = ctx.onSetClipboardText;
@@ -907,7 +1140,13 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     setGroupMemberEnabled: onSetGroupMemberEnabled,
     addSwipe: onAddSwipe,
     askCharacter: onAskCharacter,
+    getAuthorNoteState: onGetAuthorNoteState,
+    setAuthorNoteState: onSetAuthorNoteState,
+    getPersonaName: onGetPersonaName,
+    setPersonaName: onSetPersonaName,
+    syncPersona: onSyncPersona,
     setPersonaLock: onSetPersonaLock,
+    getPersonaLockState: onGetPersonaLockState,
     reloadPage: onReloadPage,
     getClipboardText: onGetClipboardText,
     setClipboardText: onSetClipboardText,

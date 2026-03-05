@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`301/426 = 70.66%`（较上一轮 `65.73%` 提升 `+4.93`pp）。
+- Slash 命令覆盖面继续提升：`316/426 = 74.18%`（较上一轮 `70.66%` 提升 `+3.52`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -50,6 +50,7 @@
    - P3 图像生成簇：`/imagine`、`/image`、`/img`、`/imagine-source`、`/img-source`、`/imagine-style`、`/img-style`、`/imagine-comfy-workflow`、`/icw`
    - P3 instruct 模式簇：`/instruct`、`/instruct-on`、`/instruct-off`、`/instruct-state`、`/instruct-toggle`
    - P3 stop/model + narrator 长尾：`/stop-strings`、`/stopping-strings`、`/custom-stopping-strings`、`/custom-stop-strings`、`/model`、`/name`、`/nar`、`/narrate`
+   - P3 note + persona 长尾：`/note`、`/note-depth|/depth`、`/note-frequency|/note-freq|/freq`、`/note-position|/note-pos|/pos`、`/note-role`、`/persona-set|/persona`、`/persona-lock`、`/persona-sync|/sync`
 2. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
@@ -63,7 +64,7 @@
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已进一步移除 `custom-stop-strings*`、`member-(up|down|peek|remove)*`、`model`、`name`、`nar`、`narrate`；当前主要剩余转为低频工具类与 note/persona 相关长尾（`depth/length/freq`、`note-*`、`persona-*`、`popup/import` 等）。
+- Top25 已进一步移除 `note*`、`depth/freq/pos`、`persona*`；当前主要剩余转为 profile/prompt 与低频工具命令（`dupe`、`length`、`import`、`popup` 等）。
 
 ## 4. 基线素材与回归状态
 
@@ -84,6 +85,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 推进 `note-*` 命令簇（`/note`、`/note-depth`、`/note-frequency|/note-freq`、`/note-position|/note-pos`、`/note-role`），优先复用现有注入存储与 fail-fast 语义。
-2. 推进 persona 长尾命令簇（`/persona`、`/persona-lock`、`/persona-set`、`/persona-sync`），优先复用已落地 `/lock|/bind` 的单路径状态机。
+1. 推进 profile 命令簇（`/profile`、`/profile-create`、`/profile-get`、`/profile-list`、`/profile-update`、`/ppp`），优先复用现有本地状态存储路径并补齐严格返回值契约。
+2. 推进 prompt 长尾命令（`/prompt`、`/prompt-post-processing`），复用 prompt entry 通道，避免新增并行状态源。
 3. 为 `member-*/addswipe`、`data-bank-search` 与 `vector-worldinfo-state` 增加端到端 UI/结果可见断言，继续收紧回归面。
