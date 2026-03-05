@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-05T02:55:57.273Z",
+  "generatedAt": "2026-03-05T03:18:13.210Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 126,
-    "coverage": "29.58%",
+    "covered": 133,
+    "coverage": "31.22%",
     "missingTop": [
       {
         "command": "addmember",
@@ -21,41 +21,6 @@
       },
       {
         "command": "delay",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "delchat",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "delete",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "delmode",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "delname",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 5,
-        "priority": "P2"
-      },
-      {
-        "command": "delswipe",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 5,
@@ -308,13 +273,6 @@
       },
       {
         "command": "buttons",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "cancel",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -1792,13 +1750,6 @@
       },
       {
         "command": "swipeadd",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "swipedel",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

@@ -1,11 +1,11 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T02:55:57.273Z
+- generatedAt: 2026-03-05T03:18:13.210Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 126/426 (29.58%)
+- slash commands: 133/426 (31.22%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
@@ -14,11 +14,6 @@
 - [P2] /addmember (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /addswipe (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /delay (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /delchat (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /delete (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /delmode (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /delname (score=5, upstreamRefs=1, localRefs=0)
-- [P2] /delswipe (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /generate-stop (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /genraw (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /get-reasoning (score=5, upstreamRefs=1, localRefs=0)
@@ -36,6 +31,11 @@
 - [P2] /listinjects (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /message-name (score=5, upstreamRefs=1, localRefs=0)
 - [P2] /message-role (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /set-reasoning (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /setentryfield (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /setinput (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /setpromptentries (score=5, upstreamRefs=1, localRefs=0)
+- [P2] /setpromptentry (score=5, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

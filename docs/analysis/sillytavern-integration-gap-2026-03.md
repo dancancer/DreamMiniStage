@@ -31,10 +31,12 @@
    - world/lore：`/world`、`/getcharlore`、`/getchatlore`、`/getgloballore`、`/getpersonalore`、`/getlorefield`、`/setlorefield`
    - regex/chat：`/regex-preset`、`/regex-toggle`、`/chat-jump`、`/chat-render`、`/chat-scrollto`
 2. 仍待推进的 P2 长尾以高频编辑/会话运维命令为主：
-   - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - `/getcharbook` `/getchatbook` `/getglobalbooks` `/getpersonabook`
    - `/message-name` `/message-role` `/getpromptentry` 等
-3. API 层 P2 缺口已基本清空，后续以 Slash 命令可用性为主战场。
+3. 聊天编辑命令簇已完成本轮收敛：
+   - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
+   - 并补齐别名 `/cancel` `/swipedel`
+4. API 层 P2 缺口已基本清空，后续以 Slash 命令可用性为主战场。
 
 ### 3.3 P3（机会性补齐）
 
@@ -59,6 +61,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 聚焦 `/delchat` `/delete` `/delmode` `/delname` `/delswipe` 命令簇，补齐聊天编辑闭环。
-2. 推进 `get*book` 语义别名（`/getcharbook` `/getchatbook` `/getglobalbooks` `/getpersonabook`），减少 world/lore 语义裂缝。
-3. 继续以素材回放驱动收敛：每补一个命令簇，绑定回放或契约测试，保持 fail-fast 与单路径实现。
+1. 推进 `get*book` 语义别名（`/getcharbook` `/getchatbook` `/getglobalbooks` `/getpersonabook`），减少 world/lore 语义裂缝。
+2. 补齐消息元数据命令（`/message-name` `/message-role` `/getpromptentry`），完善脚本侧消息运维能力。
+3. 把 `delchat/delswipe` 接入宿主真实 UI 回调，确保“命令可执行”与“界面可见效果”一致。

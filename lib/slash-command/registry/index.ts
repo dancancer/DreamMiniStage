@@ -73,6 +73,13 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["chat-jump", ChatHandlers.handleChatJump],
   ["chat-scrollto", ChatHandlers.handleChatJump],
   ["chat-render", ChatHandlers.handleChatRender],
+  ["delchat", ChatHandlers.handleDelChat],
+  ["delmode", ChatHandlers.handleDelMode],
+  ["delete", ChatHandlers.handleDelete],
+  ["delname", ChatHandlers.handleDelName],
+  ["cancel", ChatHandlers.handleDelName],
+  ["delswipe", ChatHandlers.handleDelSwipe],
+  ["swipedel", ChatHandlers.handleDelSwipe],
 
   // ─── 工具命令 ───
   ["?", CoreHandlers.handleHelp],

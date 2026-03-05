@@ -134,6 +134,9 @@ export interface ExecutionContext {
   editMessage?: (index: number, content: string) => void | Promise<void>;
   deleteMessage?: (index: number) => void | Promise<void>;
   getMessageCount?: () => number;
+  deleteCurrentChat?: () => void | Promise<void>;
+  deleteMessagesByName?: (name: string) => number | Promise<number>;
+  deleteSwipe?: (swipeId?: number) => string | number | void | Promise<string | number | void>;
   getCurrentCharacter?: () => CharacterSummary | undefined | Promise<CharacterSummary | undefined>;
   listCharacters?: () => CharacterSummary[] | Promise<CharacterSummary[]>;
   switchCharacter?: (
