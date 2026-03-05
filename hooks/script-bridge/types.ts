@@ -15,6 +15,8 @@ import type {
   DataBankEntrySnapshot,
   DataBankSource,
   GroupMemberField,
+  PersonaLockState,
+  PersonaLockType,
   SendOptions,
 } from "@/lib/slash-command/types";
 
@@ -78,6 +80,10 @@ export interface ApiCallContext {
     prompt: string,
     options?: { returnType?: "pipe" | "none" },
   ) => string | void | Promise<string | void>;
+  onSetPersonaLock?: (
+    state: PersonaLockState,
+    options?: { type?: PersonaLockType },
+  ) => boolean | Promise<boolean>;
   onReloadPage?: () => void | Promise<void>;
   onGetClipboardText?: () => string | Promise<string>;
   onSetClipboardText?: (text: string) => void | Promise<void>;

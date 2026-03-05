@@ -71,3 +71,9 @@
 - [x] 补齐 Data Bank 命令簇（`/data-bank`、`/data-bank-list`、`/data-bank-get`、`/data-bank-add`、`/data-bank-update`、`/data-bank-delete`、`/data-bank-disable`、`/data-bank-enable`、`/data-bank-ingest`、`/data-bank-purge`、`/data-bank-search`）并统一 fail-fast 语义。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 Data Bank 运维回调能力。
 - [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
+
+## 13. P3 增量收敛（闭包/Persona Lock）
+
+- [x] 补齐闭包与 Persona Lock 命令簇（`/closure-serialize`、`/closure-deserialize`、`/lock`、`/bind`），统一单路径序列化与 fail-fast 语义。
+- [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 `setPersonaLock` 回调能力，确保 `/lock|/bind` 可由宿主接管。
+- [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。

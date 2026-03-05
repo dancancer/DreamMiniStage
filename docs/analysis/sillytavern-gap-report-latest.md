@@ -1,11 +1,11 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-05T06:43:36.723Z
+- generatedAt: 2026-03-05T07:22:56.453Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-05.json`
 
 ## Coverage Snapshot
 
-- slash commands: 216/426 (50.70%)
+- slash commands: 220/426 (51.64%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
@@ -14,15 +14,12 @@
 - [P2] /disable (score=7, upstreamRefs=1, localRefs=1)
 - [P3] /beep (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /bgcol (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /bind (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /bubble (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /bubbles (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /buttons (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /caption (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /classify (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /closechat (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /closure-deserialize (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /closure-serialize (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /costume (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /count (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /countmember (score=2, upstreamRefs=1, localRefs=0)
@@ -36,6 +33,9 @@
 - [P3] /downmember (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /dupe (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /emote (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /enable (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /enablemember (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /expression-classify (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

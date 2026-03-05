@@ -110,6 +110,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onAddGroupMember = ctx.onAddGroupMember;
   const onAddSwipe = ctx.onAddSwipe;
   const onAskCharacter = ctx.onAskCharacter;
+  const onSetPersonaLock = ctx.onSetPersonaLock;
   const onReloadPage = ctx.onReloadPage;
   const onGetClipboardText = ctx.onGetClipboardText;
   const onSetClipboardText = ctx.onSetClipboardText;
@@ -512,6 +513,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     addGroupMember: onAddGroupMember,
     addSwipe: onAddSwipe,
     askCharacter: onAskCharacter,
+    setPersonaLock: onSetPersonaLock,
     reloadPage: onReloadPage,
     getClipboardText: onGetClipboardText,
     setClipboardText: onSetClipboardText,

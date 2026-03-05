@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`216/426 = 50.70%`（较上一轮 `42.96%` 提升 `+7.74`pp）。
+- Slash 命令覆盖面继续提升：`220/426 = 51.64%`（较上一轮 `50.70%` 提升 `+0.94`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -40,6 +40,7 @@
    - UI 背景运维：`/lockbg`、`/bglock`、`/unlockbg`、`/bgunlock`、`/autobg`、`/bgauto`
    - P3 脚本调试簇：`/ask`、`/context`、`/clipboard-get`、`/clipboard-set`
    - P3 Data Bank 运维簇：`/data-bank`、`/data-bank-list`、`/data-bank-get`、`/data-bank-add`、`/data-bank-update`、`/data-bank-delete`、`/data-bank-disable`、`/data-bank-enable`、`/data-bank-ingest`、`/data-bank-purge`、`/data-bank-search`
+   - P3 闭包/Persona Lock 簇：`/closure-serialize`、`/closure-deserialize`、`/lock`、`/bind`
 2. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
@@ -48,7 +49,7 @@
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已移除 `ask/context/clipboard-*` 与 `data-bank-*`，当前优先候选转为 `closure-*` 与 `/bind` 等命令簇。
+- Top25 已移除 `ask/context/clipboard-*`、`data-bank-*`、`closure-*` 与 `/bind`；当前主要剩余为 `disable`（P2）与 UI/多媒体类长尾命令。
 
 ## 4. 基线素材与回归状态
 
@@ -69,6 +70,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 继续按 P3 命令簇机会性补齐（建议先做 `closure-*` + `/bind`），每轮只推进一簇并绑定回归。
+1. 优先清理 Top25 中唯一 P2 项 `/disable` 的语义差距，补齐命令行为与宿主状态一致性断言。
 2. 为 `member-*/addswipe` 打通宿主 UI 可见回调（而不止命令层），确保“命令可执行”与“界面可见效果”一致。
 3. 把 `data-bank-search` 与 `vector-worldinfo-state` 统一接入端到端可见断言，持续收紧回归面。

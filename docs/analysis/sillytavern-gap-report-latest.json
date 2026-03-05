@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-05T06:43:36.723Z",
+  "generatedAt": "2026-03-05T07:22:56.453Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 216,
-    "coverage": "50.70%",
+    "covered": 220,
+    "coverage": "51.64%",
     "missingTop": [
       {
         "command": "disable",
@@ -21,13 +21,6 @@
       },
       {
         "command": "bgcol",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "bind",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -70,20 +63,6 @@
       },
       {
         "command": "closechat",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "closure-deserialize",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "closure-serialize",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -462,13 +441,6 @@
       },
       {
         "command": "length",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "lock",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

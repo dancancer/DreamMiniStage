@@ -2,7 +2,7 @@
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                    Utility Command Handlers                              ║
  * ║                                                                           ║
- * ║  工具命令 - run / trimtokens / reload-page / clipboard-*                  ║
+ * ║  工具命令 - run / trimtokens / closure-* / lock/bind / clipboard-*        ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -10,8 +10,15 @@ import type { CommandHandler } from "../types";
 import { parseNumber } from "../utils/helpers";
 
 const RUN_NAMED_ARG_PATTERN = /\{\{arg::([a-zA-Z0-9_-]+)\}\}/g;
+const CLOSURE_PAYLOAD_FORMAT = "dreammini-closure-v1";
+const PERSONA_LOCK_TYPES = new Set(["chat", "character", "default"]);
+const PERSONA_LOCK_TRUE_VALUES = new Set(["true", "1", "on"]);
+const PERSONA_LOCK_FALSE_VALUES = new Set(["false", "0", "off"]);
+const PERSONA_LOCK_TOGGLE_VALUES = new Set(["toggle", "t"]);
 
 type TrimDirection = "start" | "end";
+type PersonaLockType = "chat" | "character" | "default";
+type PersonaLockState = "on" | "off" | "toggle";
 
 function resolveRunScript(
   target: string,
@@ -111,6 +118,138 @@ function resolveClipboardText(args: string[], namedArgs: Record<string, string>,
   return fromArgs || fromNamed || pipe || "";
 }
 
+function isEscapedCharacter(input: string, index: number): boolean {
+  let slashCount = 0;
+  for (let i = index - 1; i >= 0 && input[i] === "\\"; i -= 1) {
+    slashCount += 1;
+  }
+  return slashCount % 2 === 1;
+}
+
+function extractFirstClosureBlock(raw: string): string | undefined {
+  const input = raw.trim();
+  let inQuote = false;
+  let quoteChar = "";
+  let depth = 0;
+  let start = -1;
+
+  for (let i = 0; i < input.length; i += 1) {
+    const twoChars = input.slice(i, i + 2);
+    const ch = input[i];
+
+    if (!inQuote && twoChars === "{:") {
+      if (depth === 0) {
+        start = i;
+      }
+      depth += 1;
+      i += 1;
+      continue;
+    }
+
+    if (!inQuote && twoChars === ":}" && depth > 0) {
+      depth -= 1;
+      if (depth === 0 && start >= 0) {
+        return input.slice(start, i + 2);
+      }
+      i += 1;
+      continue;
+    }
+
+    if (!inQuote && (ch === "\"" || ch === "'") && !isEscapedCharacter(input, i)) {
+      inQuote = true;
+      quoteChar = ch;
+      continue;
+    }
+
+    if (inQuote && ch === quoteChar && !isEscapedCharacter(input, i)) {
+      inQuote = false;
+      quoteChar = "";
+    }
+  }
+
+  return undefined;
+}
+
+function extractClosureBody(payload: string): string | null {
+  const trimmed = payload.trim();
+  const block = extractFirstClosureBlock(trimmed);
+  if (!block || block !== trimmed) {
+    return null;
+  }
+
+  const body = block.slice(2, -2).trim();
+  return body || null;
+}
+
+function resolveClosurePayload(
+  args: string[],
+  namedArgs: Record<string, string>,
+  pipe: string,
+  rawBlock?: string,
+): string {
+  const fromNamed = namedArgs.payload ?? namedArgs.value ?? namedArgs.text;
+  const fromArgs = args.join(" ").trim();
+  const fromRaw = rawBlock?.trim();
+  const fromPipe = pipe.trim();
+  return (fromNamed || fromArgs || fromRaw || fromPipe || "").trim();
+}
+
+function parseSerializedClosurePayload(payload: string): string {
+  const trimmed = payload.trim();
+  if (!trimmed) {
+    throw new Error("/closure-deserialize requires serialized payload");
+  }
+
+  const blockBody = extractClosureBody(trimmed);
+  if (blockBody !== null) {
+    return blockBody;
+  }
+
+  if (trimmed.startsWith("{")) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(trimmed);
+    } catch {
+      throw new Error("/closure-deserialize invalid serialized payload");
+    }
+
+    const normalized = parsed as { format?: unknown; script?: unknown };
+    if (normalized.format !== CLOSURE_PAYLOAD_FORMAT || typeof normalized.script !== "string") {
+      throw new Error("/closure-deserialize invalid serialized payload");
+    }
+
+    const script = normalized.script.trim();
+    if (!script) {
+      throw new Error("/closure-deserialize serialized payload has empty script");
+    }
+    return script;
+  }
+
+  return trimmed;
+}
+
+function parsePersonaLockType(raw: string | undefined): PersonaLockType {
+  const normalized = (raw || "chat").trim().toLowerCase();
+  if (PERSONA_LOCK_TYPES.has(normalized)) {
+    return normalized as PersonaLockType;
+  }
+  throw new Error(`/lock invalid type: ${raw || ""}`);
+}
+
+function parsePersonaLockState(raw: string | undefined): PersonaLockState {
+  const normalized = (raw || "toggle").trim().toLowerCase();
+  if (PERSONA_LOCK_TOGGLE_VALUES.has(normalized)) {
+    return "toggle";
+  }
+  if (PERSONA_LOCK_TRUE_VALUES.has(normalized)) {
+    return "on";
+  }
+  if (PERSONA_LOCK_FALSE_VALUES.has(normalized)) {
+    return "off";
+  }
+  throw new Error(`/lock invalid state: ${raw || ""}`);
+}
+
 /** /run <script|variable> - 执行闭包脚本最小子集（支持变量脚本 + {{arg::}} 注入） */
 export const handleRun: CommandHandler = async (args, namedArgs, ctx, pipe) => {
   if (!ctx.runSlashCommand) {
@@ -125,6 +264,64 @@ export const handleRun: CommandHandler = async (args, namedArgs, ctx, pipe) => {
   const script = resolveRunScript(target, ctx);
   const hydratedScript = applyRunNamedArgs(script, namedArgs);
   return ctx.runSlashCommand(hydratedScript);
+};
+
+/** /closure-serialize - 将闭包脚本文本序列化为可持久化字符串 */
+export const handleClosureSerialize: CommandHandler = async (
+  args,
+  namedArgs,
+  _ctx,
+  pipe,
+  invocationMeta,
+) => {
+  const rawBlock = invocationMeta?.raw ? extractFirstClosureBlock(invocationMeta.raw) : undefined;
+  const payload = resolveClosurePayload(args, namedArgs, pipe, rawBlock);
+  if (!payload) {
+    throw new Error("/closure-serialize requires closure script");
+  }
+
+  const script = (extractClosureBody(payload) || payload).trim();
+  if (!script) {
+    throw new Error("/closure-serialize requires non-empty closure script");
+  }
+
+  return JSON.stringify({
+    format: CLOSURE_PAYLOAD_FORMAT,
+    script,
+  });
+};
+
+/** /closure-deserialize - 反序列化闭包脚本文本（输出可直接继续管道执行） */
+export const handleClosureDeserialize: CommandHandler = async (
+  args,
+  namedArgs,
+  _ctx,
+  pipe,
+  invocationMeta,
+) => {
+  const rawBlock = invocationMeta?.raw ? extractFirstClosureBlock(invocationMeta.raw) : undefined;
+  const payload = resolveClosurePayload(args, namedArgs, pipe, rawBlock);
+  if (!payload) {
+    throw new Error("/closure-deserialize requires serialized payload");
+  }
+
+  return parseSerializedClosurePayload(payload);
+};
+
+/** /lock|/bind - 切换 persona 绑定锁状态（chat/character/default） */
+export const handleLock: CommandHandler = async (args, namedArgs, ctx, _pipe) => {
+  if (!ctx.setPersonaLock) {
+    throw new Error("/lock is not available in current context");
+  }
+
+  const type = parsePersonaLockType(namedArgs.type);
+  const state = parsePersonaLockState(namedArgs.state ?? args[0]);
+  const result = await Promise.resolve(ctx.setPersonaLock(state, { type }));
+
+  if (typeof result !== "boolean") {
+    throw new Error("/lock host returned non-boolean lock state");
+  }
+  return String(result);
 };
 
 /** /trimtokens [limit] <text> - 裁剪 token（优先宿主 tokenizer，缺失时按比例降级） */

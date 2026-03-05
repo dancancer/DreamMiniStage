@@ -55,6 +55,8 @@ export interface PromptInjectionState {
 }
 
 export type DataBankSource = "global" | "character" | "chat";
+export type PersonaLockType = "chat" | "character" | "default";
+export type PersonaLockState = "on" | "off" | "toggle";
 
 export interface DataBankEntrySnapshot {
   name: string;
@@ -287,6 +289,10 @@ export interface ExecutionContext {
     limit: number,
     direction: "start" | "end",
   ) => string | Promise<string>;
+  setPersonaLock?: (
+    state: PersonaLockState,
+    options?: { type?: PersonaLockType },
+  ) => boolean | Promise<boolean>;
   getClipboardText?: () => string | Promise<string>;
   setClipboardText?: (text: string) => void | Promise<void>;
   reloadPage?: () => void | Promise<void>;
