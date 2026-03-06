@@ -90,6 +90,10 @@ interface Props {
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
+  onRenameChat?: (name: string) => string | Promise<string>;
+  onForceSaveChat?: () => void | Promise<void>;
+  onHideMessages?: (startIndex: number) => void | Promise<void>;
+  onUnhideMessages?: () => void | Promise<void>;
   onGetGroupMember?: (
     target: string,
     field: GroupMemberField,
@@ -124,6 +128,10 @@ interface Props {
   onSwitchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
+  onRenameCurrentCharacter?: (
+    name: string,
+    options?: { silent?: boolean; chats?: boolean },
+  ) => string | Promise<string>;
   onExportJsonl?: () => void | Promise<void>;
   onImportJsonl?: (file: File) => void | Promise<void>;
 }
@@ -162,6 +170,10 @@ export default function CharacterChatPanel({
   onImpersonate,
   onContinue,
   onSwipe,
+  onRenameChat,
+  onForceSaveChat,
+  onHideMessages,
+  onUnhideMessages,
   onGetGroupMember,
   onAddGroupMember,
   onSetGroupMemberEnabled,
@@ -172,6 +184,7 @@ export default function CharacterChatPanel({
   onListExpressions,
   onClassifyExpression,
   onSwitchCharacter,
+  onRenameCurrentCharacter,
   onExportJsonl,
   onImportJsonl,
 }: Props) {
@@ -227,7 +240,11 @@ export default function CharacterChatPanel({
     onContinue: handleContinue,
     onSwipe: handleSwipe,
     onGetChatName: () => chatName || dialogueKey || character.name || "",
+    onRenameChat,
     onSetInput: (text) => setUserInput(text),
+    onForceSaveChat,
+    onHideMessages,
+    onUnhideMessages,
     onGetGroupMember,
     onAddGroupMember,
     onSetGroupMemberEnabled,
@@ -238,6 +255,7 @@ export default function CharacterChatPanel({
     onListExpressions,
     onClassifyExpression,
     onSwitchCharacter,
+    onRenameCurrentCharacter,
   });
 
   // ═══════════════════════════════════════════════════════════════

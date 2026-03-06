@@ -34,10 +34,14 @@ import { useUIStore } from "@/lib/store/ui-store";
 import { useUserStore } from "@/lib/store/user-store";
 import { useSessionStore } from "@/lib/store/session-store";
 import { useScriptVariables } from "@/lib/store/script-variables";
+import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
+import { DialogueNode, DialogueTree } from "@/lib/models/node-model";
 import { buildSwitchedSessionName } from "@/app/session/session-switch";
 import { executeSlashCommandScript } from "@/lib/slash-command";
+import type { DialogueMessage } from "@/types/character-dialogue";
 import type { CharacterSwitchResult, ExecutionContext } from "@/lib/slash-command/types";
+import { extractNodeIdFromMessageId } from "@/utils/message-id";
 import {
   upsertPromptInjection,
   listPromptInjections,
@@ -47,6 +51,82 @@ import DialogueTreeModal from "@/components/DialogueTreeModal";
 // ============================================================================
 //                              主组件
 // ============================================================================
+
+function buildDialogueTreeSnapshot(
+  dialogueId: string,
+  characterId: string,
+  messages: DialogueMessage[],
+  existingTree: DialogueTree | null,
+): DialogueTree {
+  if (messages.length === 0) {
+    return existingTree || new DialogueTree(dialogueId, characterId, [], "root");
+  }
+
+  const existingById = new Map((existingTree?.nodes || []).map((node) => [node.nodeId, node]));
+  const orderedNodeIds: string[] = [];
+  const grouped = new Map<string, {
+    userInput: string;
+    assistantResponse: string;
+    thinkingContent: string;
+    hidden: boolean;
+  }>();
+
+  for (const message of messages) {
+    const nodeId = extractNodeIdFromMessageId(message.id);
+    if (!grouped.has(nodeId)) {
+      grouped.set(nodeId, {
+        userInput: "",
+        assistantResponse: "",
+        thinkingContent: "",
+        hidden: false,
+      });
+      orderedNodeIds.push(nodeId);
+    }
+
+    const entry = grouped.get(nodeId)!;
+    if (message.role === "user") {
+      entry.userInput = message.content;
+    }
+    if (message.role === "assistant") {
+      entry.assistantResponse = message.content;
+      entry.thinkingContent = message.thinkingContent || entry.thinkingContent;
+    }
+    entry.hidden = entry.hidden || Boolean(message.hidden);
+  }
+
+  const pathNodes = orderedNodeIds.map((nodeId, index) => {
+    const snapshot = grouped.get(nodeId)!;
+    const existingNode = existingById.get(nodeId);
+    const extra = { ...(existingNode?.extra || {}) };
+
+    if (snapshot.hidden) {
+      extra.hidden = true;
+    } else {
+      delete extra.hidden;
+    }
+
+    return new DialogueNode(
+      nodeId,
+      index === 0 ? "root" : orderedNodeIds[index - 1],
+      snapshot.userInput || existingNode?.userInput || "",
+      snapshot.assistantResponse || existingNode?.assistantResponse || "",
+      snapshot.assistantResponse || existingNode?.fullResponse || "",
+      snapshot.thinkingContent || existingNode?.thinkingContent,
+      existingNode?.parsedContent,
+      Object.keys(extra).length > 0 ? extra : undefined,
+    );
+  });
+
+  const pathSet = new Set(orderedNodeIds);
+  const otherNodes = (existingTree?.nodes || []).filter((node) => !pathSet.has(node.nodeId));
+
+  return new DialogueTree(
+    dialogueId,
+    characterId,
+    [...otherNodes, ...pathNodes],
+    orderedNodeIds[orderedNodeIds.length - 1] || "root",
+  );
+}
 
 function SessionPageContent() {
   const searchParams = useSearchParams();
@@ -58,6 +138,7 @@ function SessionPageContent() {
   const getSessionById = useSessionStore((state) => state.getSessionById);
   const fetchAllSessions = useSessionStore((state) => state.fetchAllSessions);
   const createSession = useSessionStore((state) => state.createSession);
+  const updateSessionName = useSessionStore((state) => state.updateSessionName);
   const sessions = useSessionStore((state) => state.sessions);
   const [characterId, setCharacterId] = useState<string | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
@@ -148,24 +229,30 @@ function SessionPageContent() {
     "scene-setting": false,
   });
   const [isBranchOpen, setIsBranchOpen] = useState(false);
+  const [characterNameOverride, setCharacterNameOverride] = useState<string | null>(null);
   const { setHeaderContent } = useHeaderContent();
-  const currentCharacterName = loader.character?.name;
+  const currentCharacterName = characterNameOverride || loader.character?.name || "";
   const currentSessionName = sessionId ? getSessionById(sessionId)?.name || "" : "";
+  const currentCharacter = loader.character ? { ...loader.character, name: currentCharacterName } : null;
 
   useEffect(() => {
-    if (!loader.character) {
+    setCharacterNameOverride(null);
+  }, [characterId]);
+
+  useEffect(() => {
+    if (!currentCharacter) {
       setHeaderContent(null);
       return;
     }
     setHeaderContent(
       <ChatTopBarContent
-        character={loader.character}
+        character={currentCharacter}
         activeView={characterView}
         onOpenBranches={() => setIsBranchOpen(true)}
       />,
     );
     return () => setHeaderContent(null);
-  }, [loader.character, characterView, setHeaderContent]);
+  }, [currentCharacter, characterView, setHeaderContent]);
 
   // ═══════════════════════════════════════════════════════════════
   // 同步加载数据到对话状态
@@ -255,6 +342,68 @@ function SessionPageContent() {
     };
   }, [createSession, currentCharacterName, resolveCharacterSwitchTarget, router]);
 
+  const handleRenameChat = useCallback(async (nextName: string): Promise<string> => {
+    const normalized = nextName.trim();
+    if (!sessionId) {
+      throw new Error("Session ID is required to rename chat");
+    }
+    if (!normalized) {
+      throw new Error("Chat name is required");
+    }
+
+    const updated = await updateSessionName(sessionId, normalized);
+    if (!updated) {
+      throw new Error(`Failed to rename chat: ${sessionId}`);
+    }
+    return normalized;
+  }, [sessionId, updateSessionName]);
+
+  const handleRenameCurrentCharacter = useCallback(async (nextName: string): Promise<string> => {
+    const normalized = nextName.trim();
+    if (!characterId) {
+      throw new Error("Character ID is required to rename character");
+    }
+    if (!normalized) {
+      throw new Error("Character name is required");
+    }
+
+    const updated = await LocalCharacterRecordOperations.updateCharacter(characterId, { name: normalized });
+    if (!updated) {
+      throw new Error(`Failed to rename character: ${characterId}`);
+    }
+
+    setCharacterNameOverride(normalized);
+    return normalized;
+  }, [characterId]);
+
+  const handleHideMessages = useCallback(async (startIndex: number): Promise<void> => {
+    if (startIndex < 0 || startIndex >= dialogue.messages.length) {
+      throw new Error(`/hide message index out of range: ${startIndex}`);
+    }
+
+    const nextMessages = dialogue.messages.map((message, index) => index >= startIndex
+      ? { ...message, hidden: true }
+      : message);
+    dialogue.setMessages(nextMessages);
+  }, [dialogue]);
+
+  const handleUnhideMessages = useCallback(async (): Promise<void> => {
+    const nextMessages = dialogue.messages.map((message) => message.hidden
+      ? { ...message, hidden: false }
+      : message);
+    dialogue.setMessages(nextMessages);
+  }, [dialogue]);
+
+  const handleForceSaveChat = useCallback(async (): Promise<void> => {
+    if (!sessionId || !characterId) {
+      throw new Error("Session and character are required to save chat");
+    }
+
+    const existingTree = await LocalCharacterDialogueOperations.getDialogueTreeById(sessionId);
+    const nextTree = buildDialogueTreeSnapshot(sessionId, characterId, dialogue.messages, existingTree);
+    await LocalCharacterDialogueOperations.updateDialogueTree(sessionId, nextTree);
+  }, [sessionId, characterId, dialogue.messages]);
+
   const executeSessionSlashInput = useCallback(async (script: string) => {
     const snapshot = useScriptVariables.getState().variables;
     const globalVariables: Record<string, unknown> = { ...snapshot.global };
@@ -305,7 +454,12 @@ function SessionPageContent() {
       onContinue: async () => dialogue.triggerGeneration(),
       onSwipe: dialogue.handleSwipe,
       getCurrentChatName: () => currentSessionName || sessionId || "",
+      renameCurrentChat: handleRenameChat,
       setInputText: async (text) => setUserInput(text),
+      forceSaveChat: handleForceSaveChat,
+      hideMessages: handleHideMessages,
+      unhideMessages: handleUnhideMessages,
+      renameCurrentCharacter: handleRenameCurrentCharacter,
       getMessageReasoning: async (index) => {
         const message = dialogue.messages[index];
         if (!message) {
@@ -418,6 +572,11 @@ function SessionPageContent() {
     currentSessionName,
     sessionId,
     handleSwitchCharacter,
+    handleRenameChat,
+    handleForceSaveChat,
+    handleHideMessages,
+    handleUnhideMessages,
+    handleRenameCurrentCharacter,
     setScriptVariable,
     deleteScriptVariable,
   ]);
@@ -553,7 +712,7 @@ function SessionPageContent() {
       <div className="flex-1 h-full flex flex-col min-w-0">
         {characterView === "chat" ? (
           <CharacterChatPanel
-            character={loader.character}
+            character={currentCharacter!}
             messages={dialogue.messages}
             openingMessages={dialogue.openingMessages}
             openingIndex={dialogue.openingIndex}
@@ -582,26 +741,31 @@ function SessionPageContent() {
             onImpersonate={(text) => dialogue.addRoleMessage("assistant", text)}
             onContinue={dialogue.triggerGeneration}
             onSwipe={dialogue.handleSwipe}
+            onRenameChat={handleRenameChat}
+            onForceSaveChat={handleForceSaveChat}
+            onHideMessages={handleHideMessages}
+            onUnhideMessages={handleUnhideMessages}
             onSwitchCharacter={handleSwitchCharacter}
+            onRenameCurrentCharacter={handleRenameCurrentCharacter}
             onExportJsonl={dialogue.exportJsonl}
             onImportJsonl={dialogue.importJsonl}
           />
         ) : characterView === "worldbook" ? (
           <WorldBookEditor
             onClose={() => setCharacterView("chat")}
-            characterName={loader.character?.name || ""}
+            characterName={currentCharacterName}
             characterId={characterId || ""}
           />
         ) : characterView === "preset" ? (
           <PresetEditor
             onClose={() => setCharacterView("chat")}
-            characterName={loader.character?.name || ""}
+            characterName={currentCharacterName}
             characterId={characterId || ""}
           />
         ) : (
           <RegexScriptEditor
             onClose={() => setCharacterView("chat")}
-            characterName={loader.character?.name || ""}
+            characterName={currentCharacterName}
             characterId={characterId || ""}
           />
         )}

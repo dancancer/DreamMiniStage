@@ -18,6 +18,7 @@ export const formatMessages = (rawMessages: any[]): DialogueMessage[] => {
     role: msg.role === "system" ? "assistant" : msg.role,
     thinkingContent: msg.thinkingContent ?? "",
     content: msg.content,
+    hidden: Boolean(msg.hidden),
     swipe: msg.swipe,
   }));
 };

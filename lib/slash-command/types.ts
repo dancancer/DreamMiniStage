@@ -457,8 +457,16 @@ export interface ExecutionContext {
   ) => void | Promise<void>;
   deleteQuickReplySet?: (name: string) => void | Promise<void>;
   getCurrentChatName?: () => string | Promise<string>;
+  renameCurrentChat?: (name: string) => string | Promise<string>;
   setInputText?: (text: string) => void | Promise<void>;
+  forceSaveChat?: () => void | Promise<void>;
+  hideMessages?: (startIndex: number) => void | Promise<void>;
+  unhideMessages?: () => void | Promise<void>;
   getCurrentCharacter?: () => CharacterSummary | undefined | Promise<CharacterSummary | undefined>;
+  renameCurrentCharacter?: (
+    name: string,
+    options?: { silent?: boolean; chats?: boolean },
+  ) => string | Promise<string>;
   listCharacters?: () => CharacterSummary[] | Promise<CharacterSummary[]>;
   switchCharacter?: (
     target: string

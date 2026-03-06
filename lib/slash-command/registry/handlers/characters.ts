@@ -8,6 +8,7 @@
 
 import type { CommandHandler } from "../types";
 import type { CharacterSummary, CharacterSwitchResult } from "../../types";
+import { parseBoolean } from "../utils/helpers";
 
 function findCharacterMatches(characters: CharacterSummary[], keyword: string): CharacterSummary[] {
   const normalized = keyword.trim().toLowerCase();
@@ -38,6 +39,22 @@ function normalizeAskReturnType(raw: string | undefined): "pipe" | "none" {
     return normalized;
   }
   throw new Error(`/ask invalid return value: ${raw || ""}`);
+}
+
+function parseStrictOptionalBoolean(
+  raw: string | undefined,
+  commandName: string,
+  fieldName: string,
+): boolean | undefined {
+  if (raw === undefined) {
+    return undefined;
+  }
+
+  const parsed = parseBoolean(raw, undefined);
+  if (parsed === undefined) {
+    throw new Error(`/${commandName} invalid ${fieldName} value: ${raw}`);
+  }
+  return parsed;
 }
 
 function normalizeDupeResult(value: unknown): string {
@@ -119,4 +136,24 @@ export const handleDupe: CommandHandler = async (_args, _namedArgs, ctx, _pipe) 
 
   const result = await Promise.resolve(ctx.duplicateCharacter());
   return normalizeDupeResult(result);
+};
+
+/** /rename-char <name> - 重命名当前角色 */
+export const handleRenameCharacter: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.renameCurrentCharacter) {
+    throw new Error("/rename-char is not available in current context");
+  }
+
+  const nextName = (args.join(" ") || namedArgs.name || pipe || "").trim();
+  if (!nextName) {
+    throw new Error("/rename-char requires a character name");
+  }
+
+  const silent = parseStrictOptionalBoolean(namedArgs.silent, "rename-char", "silent");
+  const chats = parseStrictOptionalBoolean(namedArgs.chats, "rename-char", "chats");
+  const result = await Promise.resolve(ctx.renameCurrentCharacter(nextName, { silent, chats }));
+  if (typeof result !== "string") {
+    throw new Error("/rename-char host returned non-string result");
+  }
+  return result;
 };

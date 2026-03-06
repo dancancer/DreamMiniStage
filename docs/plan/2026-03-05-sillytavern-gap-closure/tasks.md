@@ -156,3 +156,10 @@
 - [x] 补齐 Quick Reply 第二/三批命令（`/qr-set`、`/qr-set-on`、`/qr-set-off`、`/qr-chat-set`、`/qr-chat-set-on`、`/qr-chat-set-off`、`/qr-set-list`、`/qr-update`、`/qr-contextadd`、`/qr-contextdel`、`/qr-contextclear`），统一宿主透传与参数 fail-fast。
 - [x] 补齐 Quick Reply set/preset 运维命令（`/qr-set-create|/qr-presetadd`、`/qr-set-update|/qr-presetupdate`、`/qr-set-delete|/qr-presetdelete`），并扩展 Slash 执行上下文 / Script Bridge 透传位。
 - [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
+
+## 27. P3 增量收敛（会话配置 + 推理模板）
+
+- [x] 补齐会话配置命令（`/renamechat`、`/forcesave`、`/hide`、`/unhide`），并在 Session 宿主路径接通重命名、隐藏与强制保存能力。
+- [x] 补齐角色/推理配置命令（`/rename-char`、`/reasoning-template|/reasoning-preset|/reasoning-formatting`），统一单路径与 fail-fast 语义。
+- [x] 运行 typecheck + 定向回归 + gap 分析，并更新报告、tasks 与 handoff。
+

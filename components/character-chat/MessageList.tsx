@@ -108,12 +108,14 @@ export default function MessageList({
     return () => clearTimeout(id);
   }, [messages, scrollToBottom]);
 
+  const visibleMessages = messages.filter((message) => !message.hidden && message.role !== "sample");
+
   // 显示开场白导航条件（未锁定且仅有开场消息时）
   const showOpeningNav =
     !openingLocked &&
     openingMessages.length > 1 &&
-    messages.length === 1 &&
-    messages[0]?.role === "assistant";
+    visibleMessages.length === 1 &&
+    visibleMessages[0]?.role === "assistant";
 
   return (
     <div
@@ -121,27 +123,25 @@ export default function MessageList({
       ref={scrollRef}
     >
       <div className="max-w-4xl mx-auto">
-        {messages.length === 0 ? (
+        {visibleMessages.length === 0 ? (
           <EmptyState serifFontClass={serifFontClass} t={t} />
         ) : (
           <div className="space-y-8">
             {/* 消息列表 - 使用 message.id 作为 key 实现增量更新 */}
-            {messages.map((message, index) => {
-              if (message.role === "sample") return null;
-
+            {visibleMessages.map((message, index) => {
               return (
                 <MemoizedMessageItem
                   key={message.id}
                   message={message}
                   index={index}
                   character={character}
-                  isLastMessage={index === messages.length - 1}
+                  isLastMessage={index === visibleMessages.length - 1}
                   isSending={isSending}
                   enableStreaming={enableStreaming}
                   streamingTarget={streamingTarget}
                   onTruncate={onTruncate}
                   onRegenerate={onRegenerate}
-                  onContentChange={index === messages.length - 1 ? maybeScrollToBottom : undefined}
+                  onContentChange={index === visibleMessages.length - 1 ? maybeScrollToBottom : undefined}
                   fontClass={fontClass}
                   serifFontClass={serifFontClass}
                   t={t}

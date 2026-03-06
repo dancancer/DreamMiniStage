@@ -197,6 +197,35 @@ function parseContextQuiet(raw: string | undefined): boolean {
   return parsed;
 }
 
+const REASONING_TEMPLATE_STORAGE_KEY = "dreamministage.reasoning-template";
+
+function readStringFromStorage(storageKey: string): string {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  try {
+    return window.localStorage.getItem(storageKey) || "";
+  } catch {
+    return "";
+  }
+}
+
+function writeStringToStorage(storageKey: string, value: string): string {
+  const normalized = value.trim();
+  if (typeof window === "undefined") {
+    return normalized;
+  }
+
+  try {
+    window.localStorage.setItem(storageKey, normalized);
+  } catch {
+    // 忽略存储失败，调用方仍返回规范化结果
+  }
+
+  return normalized;
+}
+
 function normalizeStopStringsSnapshot(
   value: unknown,
   commandName: string,
@@ -655,6 +684,16 @@ export const handleModel: CommandHandler = async (args, namedArgs, ctx, pipe) =>
     throw new Error("/model host returned non-string model");
   }
   return updated;
+};
+
+/** /reasoning-template [name] - 读取或设置当前推理模板 */
+export const handleReasoningTemplate: CommandHandler = async (args, namedArgs, _ctx, pipe) => {
+  const nextTemplate = (args.join(" ") || namedArgs.name || pipe || "").trim();
+  if (!nextTemplate) {
+    return readStringFromStorage(REASONING_TEMPLATE_STORAGE_KEY);
+  }
+
+  return writeStringToStorage(REASONING_TEMPLATE_STORAGE_KEY, nextTemplate);
 };
 
 /** /instruct [name] - 获取或设置 instruct 模板 */

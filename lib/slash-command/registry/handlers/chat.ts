@@ -62,6 +62,32 @@ function parseNewChatDelete(raw: string | undefined): boolean {
   return parsed;
 }
 
+function resolveHideStartIndex(
+  raw: string | undefined,
+  messages: Parameters<CommandHandler>[2]["messages"],
+  commandName: string,
+): number {
+  if (messages.length === 0) {
+    throw new Error(`/${commandName} requires at least one message`);
+  }
+
+  if (raw !== undefined) {
+    const index = parseMessageIndex(raw, commandName);
+    if (index >= messages.length) {
+      throw new Error(`/${commandName} message index out of range: ${index}`);
+    }
+    return index;
+  }
+
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index]?.role === "user") {
+      return index;
+    }
+  }
+
+  return messages.length - 1;
+}
+
 function parseCutSelector(raw: string, commandName: string, maxIndex: number): number[] {
   const normalized = raw.trim();
   if (!normalized) {
@@ -379,6 +405,24 @@ export const handleGetChatName: CommandHandler = async (_args, _namedArgs, ctx, 
   return chatName;
 };
 
+/** /renamechat <name> - 重命名当前聊天 */
+export const handleRenameChat: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.renameCurrentChat) {
+    throw new Error("/renamechat is not available in current context");
+  }
+
+  const nextName = (args.join(" ") || namedArgs.name || pipe || "").trim();
+  if (!nextName) {
+    throw new Error("/renamechat requires a chat name");
+  }
+
+  const result = await Promise.resolve(ctx.renameCurrentChat(nextName));
+  if (typeof result !== "string") {
+    throw new Error("/renamechat host returned non-string result");
+  }
+  return result;
+};
+
 /**
  * /setinput [text] - 设置聊天输入框内容
  * SillyTavern 语义：支持位置参数、namedArgs.text、pipe 作为写入来源。
@@ -393,6 +437,37 @@ export const handleSetInput: CommandHandler = async (args, namedArgs, ctx, pipe)
   const nextInput = fromArgs || fromNamed || pipe;
   await Promise.resolve(ctx.setInputText(nextInput));
   return nextInput;
+};
+
+/** /forcesave - 强制保存当前聊天 */
+export const handleForceSave: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  if (!ctx.forceSaveChat) {
+    throw new Error("/forcesave is not available in current context");
+  }
+
+  await Promise.resolve(ctx.forceSaveChat());
+  return "";
+};
+
+/** /hide [at=<index>] - 隐藏目标消息及其后续消息 */
+export const handleHide: CommandHandler = async (_args, namedArgs, ctx, _pipe) => {
+  if (!ctx.hideMessages) {
+    throw new Error("/hide is not available in current context");
+  }
+
+  const startIndex = resolveHideStartIndex(namedArgs.at, ctx.messages, "hide");
+  await Promise.resolve(ctx.hideMessages(startIndex));
+  return "";
+};
+
+/** /unhide - 重新显示当前分支中的隐藏消息 */
+export const handleUnhide: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  if (!ctx.unhideMessages) {
+    throw new Error("/unhide is not available in current context");
+  }
+
+  await Promise.resolve(ctx.unhideMessages());
+  return "";
 };
 
 /**

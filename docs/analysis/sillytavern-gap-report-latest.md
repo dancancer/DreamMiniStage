@@ -1,11 +1,11 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-06T02:43:20.355Z
+- generatedAt: 2026-03-06T03:14:08.432Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-06.json`
 
 ## Coverage Snapshot
 
-- slash commands: 355/426 (83.33%)
+- slash commands: 363/426 (85.21%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
@@ -13,17 +13,10 @@
 
 - [P3] /expression-upload (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /floor-teleport (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /forcesave (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /hide (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /proxy (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-arg (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qrset (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /random (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /reasoning-formatting (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /reasoning-preset (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /reasoning-template (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /rename-char (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /renamechat (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /reroll-pick (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /sd (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /sd-source (score=2, upstreamRefs=1, localRefs=0)
@@ -36,6 +29,13 @@
 - [P3] /secret-rename (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /secret-rotate (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /secret-write (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /sg (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /show-gallery (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /sort (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /speak (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /start-reply-with (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /summarize (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /swipeadd (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

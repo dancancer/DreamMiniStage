@@ -61,6 +61,7 @@ const formatMessages = (rawMessages: any[]): DialogueMessage[] => {
     role: msg.role,
     thinkingContent: msg.thinkingContent ?? "",
     content: msg.content,
+    hidden: Boolean(msg.hidden),
   }));
 };
 

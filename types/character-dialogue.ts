@@ -16,6 +16,7 @@ export interface DialogueMessage {
   thinkingContent?: string;
   content: string;
   name?: string;
+  hidden?: boolean;
   compact?: boolean;
   swipe?: { activeIndex: number; total: number };
 }

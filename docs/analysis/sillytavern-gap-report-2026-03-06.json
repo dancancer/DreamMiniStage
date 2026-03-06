@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-06T02:43:20.355Z",
+  "generatedAt": "2026-03-06T03:14:08.432Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 355,
-    "coverage": "83.33%",
+    "covered": 363,
+    "coverage": "85.21%",
     "missingTop": [
       {
         "command": "expression-upload",
@@ -14,20 +14,6 @@
       },
       {
         "command": "floor-teleport",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "forcesave",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "hide",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -56,41 +42,6 @@
       },
       {
         "command": "random",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "reasoning-formatting",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "reasoning-preset",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "reasoning-template",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "rename-char",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "renamechat",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -427,13 +378,6 @@
       },
       {
         "command": "tts",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "unhide",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

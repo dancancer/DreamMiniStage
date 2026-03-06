@@ -34,6 +34,7 @@ export interface Message {
   role: string;
   thinkingContent?: string;
   content: string;
+  hidden?: boolean;
   timestamp?: string;
   isUser?: boolean;
   swipe?: { activeIndex: number; total: number };

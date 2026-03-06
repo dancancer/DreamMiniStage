@@ -669,7 +669,11 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onSwipe = ctx.onSwipe;
   const onCloseChat = ctx.onCloseChat ?? (typeof document !== "undefined" ? defaultCloseCurrentChat : undefined);
   const onGetChatName = ctx.onGetChatName;
+  const onRenameChat = ctx.onRenameChat;
   const onSetInput = ctx.onSetInput;
+  const onForceSaveChat = ctx.onForceSaveChat;
+  const onHideMessages = ctx.onHideMessages;
+  const onUnhideMessages = ctx.onUnhideMessages;
   const onDuplicateCharacter = ctx.onDuplicateCharacter;
   const onNewChat = ctx.onNewChat;
   const onGenerateImage = ctx.onGenerateImage;
@@ -973,6 +977,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onRenderChatMessages = ctx.onRenderChatMessages;
   const onSelectContextPreset = ctx.onSelectContextPreset;
   const onSwitchCharacter = ctx.onSwitchCharacter;
+  const onRenameCurrentCharacter = ctx.onRenameCurrentCharacter;
   const onParseReasoningBlock = ctx.onParseReasoningBlock;
   const onApplyReasoningRegex = ctx.onApplyReasoningRegex;
   const onRemovePromptInjections = ctx.onRemovePromptInjections;
@@ -1385,7 +1390,11 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     onSwipe,
     closeCurrentChat: onCloseChat,
     getCurrentChatName: onGetChatName,
+    renameCurrentChat: onRenameChat,
     setInputText: onSetInput,
+    forceSaveChat: onForceSaveChat,
+    hideMessages: onHideMessages,
+    unhideMessages: onUnhideMessages,
     duplicateCharacter: onDuplicateCharacter,
     createNewChat: onNewChat,
     generateImage: onGenerateImage,
@@ -1485,6 +1494,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     renderChatMessages: onRenderChatMessages,
     selectContextPreset: onSelectContextPreset,
     switchCharacter: onSwitchCharacter,
+    renameCurrentCharacter: onRenameCurrentCharacter,
     getVectorWorldInfoState,
     setVectorWorldInfoState,
     getVariable: getLocalVariable,

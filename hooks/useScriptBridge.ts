@@ -68,7 +68,11 @@ interface UseScriptBridgeOptions {
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
   onGetChatName?: () => string | Promise<string>;
+  onRenameChat?: (name: string) => string | Promise<string>;
   onSetInput?: (text: string) => void | Promise<void>;
+  onForceSaveChat?: () => void | Promise<void>;
+  onHideMessages?: (startIndex: number) => void | Promise<void>;
+  onUnhideMessages?: () => void | Promise<void>;
   onDuplicateCharacter?: () => string | void | Promise<string | void>;
   onNewChat?: (options?: { deleteCurrentChat?: boolean }) => void | Promise<void>;
   onGetGroupMember?: (
@@ -190,6 +194,10 @@ interface UseScriptBridgeOptions {
   onSwitchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
+  onRenameCurrentCharacter?: (
+    name: string,
+    options?: { silent?: boolean; chats?: boolean },
+  ) => string | Promise<string>;
   onParseReasoningBlock?: (
     input: string,
     options?: ReasoningParseOptions,
@@ -239,7 +247,11 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onContinue,
     onSwipe,
     onGetChatName,
+    onRenameChat,
     onSetInput,
+    onForceSaveChat,
+    onHideMessages,
+    onUnhideMessages,
     onDuplicateCharacter,
     onNewChat,
     onGetGroupMember,
@@ -277,6 +289,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onJumpToMessage,
     onRenderChatMessages,
     onSwitchCharacter,
+    onRenameCurrentCharacter,
     onParseReasoningBlock,
     onApplyReasoningRegex,
   } = options;
@@ -388,7 +401,11 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onContinue,
           onSwipe,
           onGetChatName,
+          onRenameChat,
           onSetInput,
+          onForceSaveChat,
+          onHideMessages,
+          onUnhideMessages,
           onDuplicateCharacter,
           onNewChat,
           onGetGroupMember,
@@ -426,6 +443,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onJumpToMessage,
           onRenderChatMessages,
           onSwitchCharacter: onSwitchCharacter ? handleCharacterSwitch : undefined,
+          onRenameCurrentCharacter,
           onParseReasoningBlock,
           onApplyReasoningRegex,
         });
@@ -471,7 +489,11 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onContinue,
       onSwipe,
       onGetChatName,
+      onRenameChat,
       onSetInput,
+      onForceSaveChat,
+      onHideMessages,
+      onUnhideMessages,
       onDuplicateCharacter,
       onNewChat,
       onGetGroupMember,
@@ -509,6 +531,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onJumpToMessage,
       onRenderChatMessages,
       onSwitchCharacter,
+      onRenameCurrentCharacter,
       onParseReasoningBlock,
       onApplyReasoningRegex,
       handleCharacterSwitch,

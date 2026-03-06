@@ -15,6 +15,7 @@ export interface ProcessedDialogueMessage {
   role: "user" | "assistant";
   thinkingContent: string;
   content: string;
+  hidden?: boolean;
   parsedContent: ParsedResponse | null;
   swipe?: { activeIndex: number; total: number };
 }
@@ -38,12 +39,14 @@ export function buildProcessedDialogue(dialogueTree: DialogueTree): ProcessedDia
 
   const messages: ProcessedDialogueMessage[] = [];
   for (const node of currentPath) {
+    const hidden = Boolean(node.extra?.hidden);
     if (node.userInput) {
       messages.push({
         id: generateMessageId({ nodeId: node.nodeId, role: "user" }),
         role: "user",
         thinkingContent: node.thinkingContent || "",
         content: node.userInput,
+        hidden,
         parsedContent: null,
       });
     }
@@ -55,6 +58,7 @@ export function buildProcessedDialogue(dialogueTree: DialogueTree): ProcessedDia
         role: "assistant",
         thinkingContent: node.thinkingContent || "",
         content: node.parsedContent?.regexResult || node.assistantResponse,
+        hidden,
         parsedContent: node.parsedContent || null,
         ...(swipe ? { swipe } : {}),
       });
@@ -86,4 +90,3 @@ function getDialoguePathToNode(dialogueTree: DialogueTree, nodeId: string): Dial
 
   return path;
 }
-
