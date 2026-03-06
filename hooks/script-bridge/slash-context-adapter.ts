@@ -818,10 +818,24 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onSetGroupMemberEnabled = ctx.onSetGroupMemberEnabled;
   const onAddSwipe = ctx.onAddSwipe;
   const onExecuteQuickReplyByIndex = ctx.onExecuteQuickReplyByIndex;
+  const onToggleGlobalQuickReplySet = ctx.onToggleGlobalQuickReplySet;
+  const onAddGlobalQuickReplySet = ctx.onAddGlobalQuickReplySet;
+  const onRemoveGlobalQuickReplySet = ctx.onRemoveGlobalQuickReplySet;
+  const onToggleChatQuickReplySet = ctx.onToggleChatQuickReplySet;
+  const onAddChatQuickReplySet = ctx.onAddChatQuickReplySet;
+  const onRemoveChatQuickReplySet = ctx.onRemoveChatQuickReplySet;
+  const onListQuickReplySets = ctx.onListQuickReplySets;
   const onListQuickReplies = ctx.onListQuickReplies;
   const onGetQuickReply = ctx.onGetQuickReply;
   const onCreateQuickReply = ctx.onCreateQuickReply;
+  const onUpdateQuickReply = ctx.onUpdateQuickReply;
   const onDeleteQuickReply = ctx.onDeleteQuickReply;
+  const onAddQuickReplyContextSet = ctx.onAddQuickReplyContextSet;
+  const onRemoveQuickReplyContextSet = ctx.onRemoveQuickReplyContextSet;
+  const onClearQuickReplyContextSets = ctx.onClearQuickReplyContextSets;
+  const onCreateQuickReplySet = ctx.onCreateQuickReplySet;
+  const onUpdateQuickReplySet = ctx.onUpdateQuickReplySet;
+  const onDeleteQuickReplySet = ctx.onDeleteQuickReplySet;
   const onAskCharacter = ctx.onAskCharacter;
   const onSetPersonaLock = ctx.onSetPersonaLock
     ? async (
@@ -1393,10 +1407,24 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     setGroupMemberEnabled: onSetGroupMemberEnabled,
     addSwipe: onAddSwipe,
     executeQuickReplyByIndex: onExecuteQuickReplyByIndex,
+    toggleGlobalQuickReplySet: onToggleGlobalQuickReplySet,
+    addGlobalQuickReplySet: onAddGlobalQuickReplySet,
+    removeGlobalQuickReplySet: onRemoveGlobalQuickReplySet,
+    toggleChatQuickReplySet: onToggleChatQuickReplySet,
+    addChatQuickReplySet: onAddChatQuickReplySet,
+    removeChatQuickReplySet: onRemoveChatQuickReplySet,
+    listQuickReplySets: onListQuickReplySets,
     listQuickReplies: onListQuickReplies,
     getQuickReply: onGetQuickReply,
     createQuickReply: onCreateQuickReply,
+    updateQuickReply: onUpdateQuickReply,
     deleteQuickReply: onDeleteQuickReply,
+    addQuickReplyContextSet: onAddQuickReplyContextSet,
+    removeQuickReplyContextSet: onRemoveQuickReplyContextSet,
+    clearQuickReplyContextSets: onClearQuickReplyContextSets,
+    createQuickReplySet: onCreateQuickReplySet,
+    updateQuickReplySet: onUpdateQuickReplySet,
+    deleteQuickReplySet: onDeleteQuickReplySet,
     askCharacter: onAskCharacter,
     getAuthorNoteState: onGetAuthorNoteState,
     setAuthorNoteState: onSetAuthorNoteState,

@@ -27,9 +27,15 @@ import type {
   GroupMemberField,
   ImportVariableMapping,
   PopupCommandOptions,
+  QuickReplyContextOptions,
   QuickReplyCreateOptions,
   QuickReplyLookup,
+  QuickReplySetOptions,
+  QuickReplySetScope,
+  QuickReplySetSnapshot,
+  QuickReplySetVisibilityOptions,
   QuickReplySnapshot,
+  QuickReplyUpdateOptions,
   ReasoningParseOptions,
   ReasoningParseResult,
   SendOptions,
@@ -83,6 +89,27 @@ interface UseScriptBridgeOptions {
   onExecuteQuickReplyByIndex?: (
     index: number,
   ) => string | number | void | Promise<string | number | void>;
+  onToggleGlobalQuickReplySet?: (
+    setName: string,
+    options?: QuickReplySetVisibilityOptions,
+  ) => void | Promise<void>;
+  onAddGlobalQuickReplySet?: (
+    setName: string,
+    options?: QuickReplySetVisibilityOptions,
+  ) => void | Promise<void>;
+  onRemoveGlobalQuickReplySet?: (setName: string) => void | Promise<void>;
+  onToggleChatQuickReplySet?: (
+    setName: string,
+    options?: QuickReplySetVisibilityOptions,
+  ) => void | Promise<void>;
+  onAddChatQuickReplySet?: (
+    setName: string,
+    options?: QuickReplySetVisibilityOptions,
+  ) => void | Promise<void>;
+  onRemoveChatQuickReplySet?: (setName: string) => void | Promise<void>;
+  onListQuickReplySets?: (
+    scope?: QuickReplySetScope,
+  ) => string[] | QuickReplySetSnapshot[] | Promise<string[] | QuickReplySetSnapshot[]>;
   onListQuickReplies?: (
     setName: string,
   ) => string[] | QuickReplySnapshot[] | Promise<string[] | QuickReplySnapshot[]>;
@@ -96,10 +123,39 @@ interface UseScriptBridgeOptions {
     message: string,
     options?: QuickReplyCreateOptions,
   ) => void | Promise<void>;
+  onUpdateQuickReply?: (
+    setName: string,
+    target: QuickReplyLookup,
+    options?: QuickReplyUpdateOptions,
+  ) => void | Promise<void>;
   onDeleteQuickReply?: (
     setName: string,
     target: QuickReplyLookup,
   ) => void | Promise<void>;
+  onAddQuickReplyContextSet?: (
+    setName: string,
+    target: QuickReplyLookup,
+    contextSetName: string,
+    options?: QuickReplyContextOptions,
+  ) => void | Promise<void>;
+  onRemoveQuickReplyContextSet?: (
+    setName: string,
+    target: QuickReplyLookup,
+    contextSetName: string,
+  ) => void | Promise<void>;
+  onClearQuickReplyContextSets?: (
+    setName: string,
+    target: QuickReplyLookup,
+  ) => void | Promise<void>;
+  onCreateQuickReplySet?: (
+    name: string,
+    options?: QuickReplySetOptions,
+  ) => void | Promise<void>;
+  onUpdateQuickReplySet?: (
+    name: string,
+    options?: QuickReplySetOptions,
+  ) => void | Promise<void>;
+  onDeleteQuickReplySet?: (name: string) => void | Promise<void>;
   onSetExpression?: (
     label: string,
     options?: ExpressionSetOptions,
@@ -191,10 +247,24 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onSetGroupMemberEnabled,
     onAddSwipe,
     onExecuteQuickReplyByIndex,
+    onToggleGlobalQuickReplySet,
+    onAddGlobalQuickReplySet,
+    onRemoveGlobalQuickReplySet,
+    onToggleChatQuickReplySet,
+    onAddChatQuickReplySet,
+    onRemoveChatQuickReplySet,
+    onListQuickReplySets,
     onListQuickReplies,
     onGetQuickReply,
     onCreateQuickReply,
+    onUpdateQuickReply,
     onDeleteQuickReply,
+    onAddQuickReplyContextSet,
+    onRemoveQuickReplyContextSet,
+    onClearQuickReplyContextSets,
+    onCreateQuickReplySet,
+    onUpdateQuickReplySet,
+    onDeleteQuickReplySet,
     onSetExpression,
     onSetExpressionFolderOverride,
     onGetLastExpression,
@@ -326,10 +396,24 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onSetGroupMemberEnabled,
           onAddSwipe,
           onExecuteQuickReplyByIndex,
+          onToggleGlobalQuickReplySet,
+          onAddGlobalQuickReplySet,
+          onRemoveGlobalQuickReplySet,
+          onToggleChatQuickReplySet,
+          onAddChatQuickReplySet,
+          onRemoveChatQuickReplySet,
+          onListQuickReplySets,
           onListQuickReplies,
           onGetQuickReply,
           onCreateQuickReply,
+          onUpdateQuickReply,
           onDeleteQuickReply,
+          onAddQuickReplyContextSet,
+          onRemoveQuickReplyContextSet,
+          onClearQuickReplyContextSets,
+          onCreateQuickReplySet,
+          onUpdateQuickReplySet,
+          onDeleteQuickReplySet,
           onSetExpression,
           onSetExpressionFolderOverride,
           onGetLastExpression,
@@ -395,10 +479,24 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onSetGroupMemberEnabled,
       onAddSwipe,
       onExecuteQuickReplyByIndex,
+      onToggleGlobalQuickReplySet,
+      onAddGlobalQuickReplySet,
+      onRemoveGlobalQuickReplySet,
+      onToggleChatQuickReplySet,
+      onAddChatQuickReplySet,
+      onRemoveChatQuickReplySet,
+      onListQuickReplySets,
       onListQuickReplies,
       onGetQuickReply,
       onCreateQuickReply,
+      onUpdateQuickReply,
       onDeleteQuickReply,
+      onAddQuickReplyContextSet,
+      onRemoveQuickReplyContextSet,
+      onClearQuickReplyContextSets,
+      onCreateQuickReplySet,
+      onUpdateQuickReplySet,
+      onDeleteQuickReplySet,
       onSetExpression,
       onSetExpressionFolderOverride,
       onGetLastExpression,

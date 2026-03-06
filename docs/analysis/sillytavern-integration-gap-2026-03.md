@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`338/426 = 79.34%`（较上一轮 `77.70%` 提升 `+1.64`pp）。
+- Slash 命令覆盖面继续提升：`355/426 = 83.33%`（较上一轮 `79.34%` 提升 `+3.99`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -55,6 +55,7 @@
    - P3 低耦合工具簇：`/dupe`、`/length`、`/is-mobile`、`/newchat`
    - P3 导入/弹窗簇：`/import`、`/popup`、`/pick-icon`
    - P3 推理解析 + Quick Reply 第一批：`/reasoning-parse|/parse-reasoning`、`/qr`、`/qr-list`、`/qr-get`、`/qr-create`、`/qr-delete`
+   - P3 Quick Reply 第二/三批 + set/preset：`/qr-set`、`/qr-set-on`、`/qr-set-off`、`/qr-chat-set`、`/qr-chat-set-on`、`/qr-chat-set-off`、`/qr-set-list`、`/qr-update`、`/qr-contextadd`、`/qr-contextdel`、`/qr-contextclear`、`/qr-set-create|/qr-presetadd`、`/qr-set-update|/qr-presetupdate`、`/qr-set-delete|/qr-presetdelete`
 2. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
@@ -68,7 +69,7 @@
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已进一步移除 `note*`、`depth/freq/pos`、`persona*`、`profile*`、`prompt*`、`ppp`，并在本轮继续移除 `parse-reasoning`、`qr`、`qr-list`、`qr-get`、`qr-create`、`qr-delete`；当前主缺口收敛到 Quick Reply 第二批（`qr-set*`、`qr-chat-set*`、`qr-context*`、`qr-update`）及少量低频运维命令。
+- Top25 已进一步移除 `note*`、`depth/freq/pos`、`persona*`、`profile*`、`prompt*`、`ppp`，并在本轮继续移除 `qr-set*`、`qr-chat-set*`、`qr-context*`、`qr-update`、`qr-preset*`；当前主缺口收敛到 `qr-arg`、少量低频运维命令，以及若干轻量配置命令（`reasoning-*`、`rename*`）。
 
 ## 4. 基线素材与回归状态
 
@@ -89,6 +90,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 推进 Quick Reply 命令簇第二批（`/qr-set`、`/qr-set-on`、`/qr-set-off`、`/qr-chat-set`、`/qr-chat-set-on`、`/qr-chat-set-off`、`/qr-set-list`），继续沿用宿主透传 + fail-fast。
-2. 推进 Quick Reply 命令簇第三批（`/qr-update`、`/qr-contextadd`、`/qr-contextdel`、`/qr-contextclear`、`/qr-arg`），补齐 id/label 双定位与参数契约。
-3. 收敛低耦合剩余长尾（`/forcesave`、`/hide`、`/expression-upload`、`/proxy`），并补齐最小可见结果断言。
+1. 推进 `/qr-arg`，但直接补到 `{{arg::...}}` 宏解析与 `*` wildcard 语义，避免只停留在命令壳层。
+2. 收敛低耦合剩余长尾（`/forcesave`、`/hide`、`/expression-upload`、`/proxy`），并补齐最小可见结果断言。
+3. 继续推进轻量配置命令（`/reasoning-formatting`、`/reasoning-preset`、`/reasoning-template`、`/rename-char`、`/renamechat`）；`/qrset` 属于废弃语法，继续遵守仓库兼容性约束，除非当前会话得到明确批准。

@@ -34,9 +34,15 @@ import type {
   PersonaSetMode,
   PersonaLockType,
   PopupCommandOptions,
+  QuickReplyContextOptions,
   QuickReplyCreateOptions,
   QuickReplyLookup,
+  QuickReplySetOptions,
+  QuickReplySetScope,
+  QuickReplySetSnapshot,
+  QuickReplySetVisibilityOptions,
   QuickReplySnapshot,
+  QuickReplyUpdateOptions,
   ReasoningParseOptions,
   ReasoningParseResult,
   SetModelOptions,
@@ -142,6 +148,27 @@ export interface ApiCallContext {
   onExecuteQuickReplyByIndex?: (
     index: number,
   ) => string | number | void | Promise<string | number | void>;
+  onToggleGlobalQuickReplySet?: (
+    setName: string,
+    options?: QuickReplySetVisibilityOptions,
+  ) => void | Promise<void>;
+  onAddGlobalQuickReplySet?: (
+    setName: string,
+    options?: QuickReplySetVisibilityOptions,
+  ) => void | Promise<void>;
+  onRemoveGlobalQuickReplySet?: (setName: string) => void | Promise<void>;
+  onToggleChatQuickReplySet?: (
+    setName: string,
+    options?: QuickReplySetVisibilityOptions,
+  ) => void | Promise<void>;
+  onAddChatQuickReplySet?: (
+    setName: string,
+    options?: QuickReplySetVisibilityOptions,
+  ) => void | Promise<void>;
+  onRemoveChatQuickReplySet?: (setName: string) => void | Promise<void>;
+  onListQuickReplySets?: (
+    scope?: QuickReplySetScope,
+  ) => string[] | QuickReplySetSnapshot[] | Promise<string[] | QuickReplySetSnapshot[]>;
   onListQuickReplies?: (
     setName: string,
   ) => string[] | QuickReplySnapshot[] | Promise<string[] | QuickReplySnapshot[]>;
@@ -155,10 +182,39 @@ export interface ApiCallContext {
     message: string,
     options?: QuickReplyCreateOptions,
   ) => void | Promise<void>;
+  onUpdateQuickReply?: (
+    setName: string,
+    target: QuickReplyLookup,
+    options?: QuickReplyUpdateOptions,
+  ) => void | Promise<void>;
   onDeleteQuickReply?: (
     setName: string,
     target: QuickReplyLookup,
   ) => void | Promise<void>;
+  onAddQuickReplyContextSet?: (
+    setName: string,
+    target: QuickReplyLookup,
+    contextSetName: string,
+    options?: QuickReplyContextOptions,
+  ) => void | Promise<void>;
+  onRemoveQuickReplyContextSet?: (
+    setName: string,
+    target: QuickReplyLookup,
+    contextSetName: string,
+  ) => void | Promise<void>;
+  onClearQuickReplyContextSets?: (
+    setName: string,
+    target: QuickReplyLookup,
+  ) => void | Promise<void>;
+  onCreateQuickReplySet?: (
+    name: string,
+    options?: QuickReplySetOptions,
+  ) => void | Promise<void>;
+  onUpdateQuickReplySet?: (
+    name: string,
+    options?: QuickReplySetOptions,
+  ) => void | Promise<void>;
+  onDeleteQuickReplySet?: (name: string) => void | Promise<void>;
   onAskCharacter?: (
     target: string,
     prompt: string,

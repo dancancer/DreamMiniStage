@@ -1,11 +1,11 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-06T02:17:31.573Z
+- generatedAt: 2026-03-06T02:43:20.355Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-06.json`
 
 ## Coverage Snapshot
 
-- slash commands: 338/426 (79.34%)
+- slash commands: 355/426 (83.33%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
@@ -17,25 +17,25 @@
 - [P3] /hide (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /proxy (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-arg (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-chat-set (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-chat-set-off (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-chat-set-on (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-contextadd (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-contextclear (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-contextdel (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-presetadd (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-presetdelete (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-presetupdate (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-set (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-set-create (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-set-delete (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-set-list (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-set-off (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-set-on (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-set-update (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-update (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qrset (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /random (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /reasoning-formatting (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /reasoning-preset (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /reasoning-template (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /rename-char (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /renamechat (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /reroll-pick (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /sd (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /sd-source (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /sd-style (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /secret-delete (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /secret-find (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /secret-get (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /secret-id (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /secret-read (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /secret-rename (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /secret-rotate (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /secret-write (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

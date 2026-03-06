@@ -158,8 +158,34 @@ export interface QuickReplyCreateOptions {
   automationId?: string;
 }
 
+export interface QuickReplyUpdateOptions extends QuickReplyCreateOptions {
+  newLabel?: string;
+  message?: string;
+}
+
+export interface QuickReplyContextOptions {
+  chain?: boolean;
+}
+
+export interface QuickReplySetOptions {
+  nosend?: boolean;
+  before?: boolean;
+  inject?: boolean;
+}
+
+export interface QuickReplySetVisibilityOptions {
+  visible?: boolean;
+}
+
+export type QuickReplySetScope = "all" | "global" | "chat";
+
 export interface QuickReplySnapshot {
   label: string;
+  [key: string]: unknown;
+}
+
+export interface QuickReplySetSnapshot {
+  name: string;
   [key: string]: unknown;
 }
 
@@ -363,6 +389,27 @@ export interface ExecutionContext {
   executeQuickReplyByIndex?: (
     index: number,
   ) => string | number | void | Promise<string | number | void>;
+  toggleGlobalQuickReplySet?: (
+    setName: string,
+    options?: QuickReplySetVisibilityOptions,
+  ) => void | Promise<void>;
+  addGlobalQuickReplySet?: (
+    setName: string,
+    options?: QuickReplySetVisibilityOptions,
+  ) => void | Promise<void>;
+  removeGlobalQuickReplySet?: (setName: string) => void | Promise<void>;
+  toggleChatQuickReplySet?: (
+    setName: string,
+    options?: QuickReplySetVisibilityOptions,
+  ) => void | Promise<void>;
+  addChatQuickReplySet?: (
+    setName: string,
+    options?: QuickReplySetVisibilityOptions,
+  ) => void | Promise<void>;
+  removeChatQuickReplySet?: (setName: string) => void | Promise<void>;
+  listQuickReplySets?: (
+    scope?: QuickReplySetScope,
+  ) => string[] | QuickReplySetSnapshot[] | Promise<string[] | QuickReplySetSnapshot[]>;
   listQuickReplies?: (
     setName: string,
   ) => string[] | QuickReplySnapshot[] | Promise<string[] | QuickReplySnapshot[]>;
@@ -376,10 +423,39 @@ export interface ExecutionContext {
     message: string,
     options?: QuickReplyCreateOptions,
   ) => void | Promise<void>;
+  updateQuickReply?: (
+    setName: string,
+    target: QuickReplyLookup,
+    options?: QuickReplyUpdateOptions,
+  ) => void | Promise<void>;
   deleteQuickReply?: (
     setName: string,
     target: QuickReplyLookup,
   ) => void | Promise<void>;
+  addQuickReplyContextSet?: (
+    setName: string,
+    target: QuickReplyLookup,
+    contextSetName: string,
+    options?: QuickReplyContextOptions,
+  ) => void | Promise<void>;
+  removeQuickReplyContextSet?: (
+    setName: string,
+    target: QuickReplyLookup,
+    contextSetName: string,
+  ) => void | Promise<void>;
+  clearQuickReplyContextSets?: (
+    setName: string,
+    target: QuickReplyLookup,
+  ) => void | Promise<void>;
+  createQuickReplySet?: (
+    name: string,
+    options?: QuickReplySetOptions,
+  ) => void | Promise<void>;
+  updateQuickReplySet?: (
+    name: string,
+    options?: QuickReplySetOptions,
+  ) => void | Promise<void>;
+  deleteQuickReplySet?: (name: string) => void | Promise<void>;
   getCurrentChatName?: () => string | Promise<string>;
   setInputText?: (text: string) => void | Promise<void>;
   getCurrentCharacter?: () => CharacterSummary | undefined | Promise<CharacterSummary | undefined>;
