@@ -124,6 +124,24 @@ export interface PopupCommandOptions {
   result?: boolean;
 }
 
+export interface SlashToolDefinition {
+  name: string;
+  description: string;
+  parameters: {
+    type: "object";
+    properties?: Record<string, {
+      type: string;
+      description?: string;
+      enum?: string[];
+    }>;
+    required?: string[];
+  };
+}
+
+export interface CharacterTagCommandOptions {
+  name?: string;
+}
+
 export interface ImportVariableMapping {
   source: string;
   target: string;
@@ -632,6 +650,26 @@ export interface ExecutionContext {
     mappings: ImportVariableMapping[],
   ) => number | void | Promise<number | void>;
   reloadPage?: () => void | Promise<void>;
+  listTools?: () => SlashToolDefinition[] | Promise<SlashToolDefinition[]>;
+  invokeTool?: (
+    name: string,
+    parameters: Record<string, unknown>,
+  ) => unknown | Promise<unknown>;
+  addCharacterTag?: (
+    tagName: string,
+    options?: CharacterTagCommandOptions,
+  ) => boolean | Promise<boolean>;
+  removeCharacterTag?: (
+    tagName: string,
+    options?: CharacterTagCommandOptions,
+  ) => boolean | Promise<boolean>;
+  hasCharacterTag?: (
+    tagName: string,
+    options?: CharacterTagCommandOptions,
+  ) => boolean | Promise<boolean>;
+  listCharacterTags?: (
+    options?: CharacterTagCommandOptions,
+  ) => string[] | Promise<string[]>;
   listGallery?: (
     options?: ListGalleryOptions,
   ) => string[] | Promise<string[]>;

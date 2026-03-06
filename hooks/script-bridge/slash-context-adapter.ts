@@ -34,6 +34,7 @@ import {
 } from "@/lib/slash-command/prompt-injection-store";
 import type { WorldBookEntry } from "@/lib/models/world-book-model";
 import { createLoreRegexAdapters } from "./slash-context-lore-regex";
+import { getRegisteredScriptTools, invokeScriptTool } from "./tool-handlers";
 
 interface HostPluginRegistryEntry {
   manifest?: {
@@ -1279,6 +1280,125 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     return records.map(toCharacterSummary);
   };
 
+  const resolveCharacterTagRecord = async (name?: string) => {
+    const target = (name || "").trim();
+    if (!target || target === "current") {
+      if (!ctx.characterId) {
+        return null;
+      }
+      return LocalCharacterRecordOperations.getCharacterById(ctx.characterId);
+    }
+
+    const records = await LocalCharacterRecordOperations.getAllCharacters();
+    return records.find((record) => {
+      const currentName = record.data?.data?.name || record.data?.name || "";
+      return record.id === target || currentName === target;
+    }) || null;
+  };
+
+  const readCharacterTags = (record: Awaited<ReturnType<typeof resolveCharacterTagRecord>>): string[] => {
+    const rawTags = Array.isArray(record?.data?.data?.tags) ? record.data.data.tags : [];
+    return Array.from(new Set(
+      rawTags
+        .map((item) => String(item || "").trim())
+        .filter((item) => item.length > 0),
+    ));
+  };
+
+  const writeCharacterTags = async (
+    record: NonNullable<Awaited<ReturnType<typeof resolveCharacterTagRecord>>>,
+    tags: string[],
+  ): Promise<boolean> => {
+    const updated = await LocalCharacterRecordOperations.updateCharacter(record.id, {
+      data: {
+        ...record.data.data,
+        tags,
+      },
+    });
+    return Boolean(updated);
+  };
+
+  const addCharacterTag = async (
+    tagName: string,
+    options?: { name?: string },
+  ): Promise<boolean> => {
+    const tag = tagName.trim();
+    if (!tag) {
+      return false;
+    }
+
+    const record = await resolveCharacterTagRecord(options?.name);
+    if (!record) {
+      return false;
+    }
+
+    const tags = readCharacterTags(record);
+    if (tags.includes(tag)) {
+      return false;
+    }
+
+    return writeCharacterTags(record, [...tags, tag]);
+  };
+
+  const removeCharacterTag = async (
+    tagName: string,
+    options?: { name?: string },
+  ): Promise<boolean> => {
+    const tag = tagName.trim();
+    if (!tag) {
+      return false;
+    }
+
+    const record = await resolveCharacterTagRecord(options?.name);
+    if (!record) {
+      return false;
+    }
+
+    const tags = readCharacterTags(record);
+    if (!tags.includes(tag)) {
+      return false;
+    }
+
+    return writeCharacterTags(record, tags.filter((item) => item !== tag));
+  };
+
+  const hasCharacterTag = async (
+    tagName: string,
+    options?: { name?: string },
+  ): Promise<boolean> => {
+    const tag = tagName.trim();
+    if (!tag) {
+      return false;
+    }
+
+    const record = await resolveCharacterTagRecord(options?.name);
+    if (!record) {
+      return false;
+    }
+
+    return readCharacterTags(record).includes(tag);
+  };
+
+  const listCharacterTags = async (options?: { name?: string }): Promise<string[]> => {
+    const record = await resolveCharacterTagRecord(options?.name);
+    if (!record) {
+      return [];
+    }
+    return readCharacterTags(record);
+  };
+
+  const listTools = async () => {
+    return getRegisteredScriptTools().map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.parameters,
+    }));
+  };
+
+  const invokeTool = async (name: string, parameters: Record<string, unknown>) => {
+    return invokeScriptTool(name, parameters);
+  };
+
   const getMessageReasoning = async (index: number): Promise<string | undefined> => {
     const message = ctx.messages[index];
     if (!message) {
@@ -1451,6 +1571,12 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     setPersonaLock: onSetPersonaLock,
     getPersonaLockState: onGetPersonaLockState,
     reloadPage: onReloadPage,
+    listTools,
+    invokeTool,
+    addCharacterTag,
+    removeCharacterTag,
+    hasCharacterTag,
+    listCharacterTags,
     getClipboardText: onGetClipboardText,
     setClipboardText: onSetClipboardText,
     importVariables: onImportVariables,

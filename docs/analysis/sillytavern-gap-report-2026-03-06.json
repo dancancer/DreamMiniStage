@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-06T04:27:15.425Z",
+  "generatedAt": "2026-03-06T05:10:36.833Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 382,
-    "coverage": "89.67%",
+    "covered": 390,
+    "coverage": "91.55%",
     "missingTop": [
       {
         "command": "expression-upload",
@@ -118,34 +118,6 @@
         "priority": "P3"
       },
       {
-        "command": "tag-add",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "tag-exists",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "tag-list",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "tag-remove",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "tempchat",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -167,20 +139,6 @@
         "priority": "P3"
       },
       {
-        "command": "tool-invoke",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "tool-list",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "tool-register",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -189,20 +147,6 @@
       },
       {
         "command": "tool-unregister",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "tools-invoke",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "tools-list",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

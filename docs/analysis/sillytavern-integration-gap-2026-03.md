@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`372/426 = 87.32%`（较上一轮 `85.21%` 提升 `+2.11`pp）。
+- Slash 命令覆盖面继续提升：`390/426 = 91.55%`（较上一轮 `89.67%` 提升 `+1.88`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -54,6 +54,7 @@
    - P3 profile + prompt 长尾：`/profile`、`/profile-create`、`/profile-get`、`/profile-list`、`/profile-update`、`/prompt`、`/prompt-post-processing`、`/ppp`
    - P3 低耦合工具簇：`/dupe`、`/length`、`/is-mobile`、`/newchat`
    - P3 导入/弹窗簇：`/import`、`/popup`、`/pick-icon`
+   - P3 工具/标签簇：`/tools-list|/tool-list`、`/tools-invoke|/tool-invoke`、`/tag-add`、`/tag-remove`、`/tag-exists`、`/tag-list`
    - P3 推理解析 + Quick Reply 第一批：`/reasoning-parse|/parse-reasoning`、`/qr`、`/qr-list`、`/qr-get`、`/qr-create`、`/qr-delete`
    - P3 Quick Reply 第二/三批 + set/preset：`/qr-set`、`/qr-set-on`、`/qr-set-off`、`/qr-chat-set`、`/qr-chat-set-on`、`/qr-chat-set-off`、`/qr-set-list`、`/qr-update`、`/qr-contextadd`、`/qr-contextdel`、`/qr-contextclear`、`/qr-set-create|/qr-presetadd`、`/qr-set-update|/qr-presetupdate`、`/qr-set-delete|/qr-presetdelete`
    - P3 Secret Store 簇：`/secret-id|/secret-rotate`、`/secret-delete`、`/secret-write`、`/secret-rename`、`/secret-read|/secret-find|/secret-get`
@@ -70,7 +71,7 @@
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已进一步移除 `note*`、`depth/freq/pos`、`persona*`、`profile*`、`prompt*`、`ppp`、`secret-*`、`/swipeadd`，并在本轮继续移除整组 `sysprompt*`、`/sysname`、`/sysgen`；当前主缺口收敛到 `qr-arg`、`show-gallery`、`expression-upload`，以及 `tool-*` / `tag-*` 一类低耦合长尾命令。
+- Top25 已进一步移除 `sysprompt*`、`/sysname`、`/sysgen`、`/tool-list`、`/tool-invoke`、`/tag-add`、`/tag-remove`、`/tag-exists`、`/tag-list`；当前主缺口进一步收敛到 `qr-arg`、`show-gallery`、`expression-upload`，以及 `tool-register/unregister` 一类宿主注册长尾命令。
 
 ## 4. 基线素材与回归状态
 
@@ -91,6 +92,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 优先推进低耦合媒体/画廊长尾（`/show-gallery|/sg`、`/expression-upload`），直接复用现有 `list-gallery` / expression 宿主能力，避免在 Slash 层做假 UI。
-2. `/qr-arg` 仍值得做，但应直接补到 `{{arg::...}}` 宏解析与 `*` wildcard 语义；`/qrset` 属于废弃语法，继续遵守仓库兼容性约束，除非当前会话得到明确批准。
-3. 收敛工具与标签长尾（`/tool-list`、`/tool-invoke`、`/tag-add`、`/tag-remove`、`/tag-list`、`/tag-exists`），优先复用既有工具注册表与角色元数据单路径。
+1. 优先推进低耦合媒体/画廊长尾（`/show-gallery|/sg`、`/expression-upload`），直接把现有 `list-gallery` / expression 能力接成显式宿主回调，不在 Slash 层伪造 UI。
+2. `/qr-arg` 仍值得做，但必须和 `{{arg::...}}` 宏解析、`*` wildcard 一起落地；只补命令壳会把复杂度推迟到下一层。
+3. 继续收口工具注册运维（`/tools-register|/tool-register`、`/tools-unregister|/tool-unregister`），沿用本轮 Script Tool Registry 单路径，不再引入第二套注册表。

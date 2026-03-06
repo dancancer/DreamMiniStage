@@ -30,6 +30,7 @@ import * as ProfilePromptHandlers from "./handlers/profile-prompt";
 import * as QuickReplyHandlers from "./handlers/quick-reply";
 import * as SecretHandlers from "./handlers/secrets";
 import * as SystemPromptHandlers from "./handlers/system-prompt";
+import * as ToolingHandlers from "./handlers/tooling";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -131,6 +132,10 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["secret-get", SecretHandlers.handleSecretRead],
   ["is-mobile", UtilityHandlers.handleIsMobile],
   ["import", UtilityHandlers.handleImport],
+  ["tools-list", ToolingHandlers.handleToolList],
+  ["tool-list", ToolingHandlers.handleToolList],
+  ["tools-invoke", ToolingHandlers.handleToolInvoke],
+  ["tool-invoke", ToolingHandlers.handleToolInvoke],
   ["list-gallery", UtilityHandlers.handleListGallery],
   ["lg", UtilityHandlers.handleListGallery],
   ["clipboard-get", UtilityHandlers.handleClipboardGet],
@@ -340,6 +345,10 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["rename-char", CharacterHandlers.handleRenameCharacter],
   ["dupe", CharacterHandlers.handleDupe],
   ["ask", CharacterHandlers.handleAsk],
+  ["tag-add", ToolingHandlers.handleTagAdd],
+  ["tag-remove", ToolingHandlers.handleTagRemove],
+  ["tag-exists", ToolingHandlers.handleTagExists],
+  ["tag-list", ToolingHandlers.handleTagList],
 
   // ─── World Book 命令 ───
   ["getentry", GenerationHandlers.handleGetEntry],

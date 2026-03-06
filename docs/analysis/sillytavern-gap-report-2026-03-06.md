@@ -1,11 +1,11 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-06T04:27:15.425Z
+- generatedAt: 2026-03-06T05:10:36.833Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-06.json`
 
 ## Coverage Snapshot
 
-- slash commands: 382/426 (89.67%)
+- slash commands: 390/426 (91.55%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
@@ -27,15 +27,15 @@
 - [P3] /speak (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /start-reply-with (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /summarize (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /tag-add (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /tag-exists (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /tag-list (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /tag-remove (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /tempchat (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /test (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /tokens (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /tool-invoke (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /tool-list (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /tool-register (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /tool-unregister (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /tools-register (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /tools-unregister (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /translate (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /trimend (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

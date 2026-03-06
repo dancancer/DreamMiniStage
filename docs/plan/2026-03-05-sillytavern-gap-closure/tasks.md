@@ -175,3 +175,9 @@
 - [x] 补齐 sysprompt 命令簇（`/sysprompt|/system-prompt`、`/sysprompt-on|/sysprompt-enable`、`/sysprompt-off|/sysprompt-disable`、`/sysprompt-state|/sysprompt-toggle`），统一到 shared localStorage 单路径与 fail-fast 校验。
 - [x] 补齐 `sysname/sysgen`，并让 `/sys` 复用系统旁白显示名与消息插入选项（`at/name/compact`）单路径。
 - [x] 运行 typecheck + 定向回归 + gap 分析，并更新报告、分析文档与 handoff。
+
+## 30. P3 增量收敛（Tool Registry + Character Tags）
+
+- [x] 补齐工具命令簇（`/tools-list|/tool-list`、`/tools-invoke|/tool-invoke`），统一复用 Script Tool Registry 单路径与 JSON 参数校验。
+- [x] 补齐角色标签命令簇（`/tag-add`、`/tag-remove`、`/tag-exists`、`/tag-list`），统一复用角色元数据存储单路径。
+- [x] 运行 typecheck + 定向回归 + gap 分析，并更新报告、分析文档与 handoff。
