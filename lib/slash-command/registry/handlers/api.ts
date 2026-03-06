@@ -133,7 +133,6 @@ export const handleApiUrl: CommandHandler = async (args, namedArgs, ctx, pipe) =
   return resolveApiUrl(ctx, source, "/api-url");
 };
 
-
 /** /proxy [name] - 查询或切换当前 proxy preset */
 export const handleProxy: CommandHandler = async (args, namedArgs, ctx, pipe) => {
   if (!ctx.selectProxyPreset) {
