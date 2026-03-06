@@ -693,6 +693,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onNewChat = ctx.onNewChat;
   const onGenerateImage = ctx.onGenerateImage;
   const onTranslateText = ctx.onTranslateText;
+  const onGetYouTubeTranscript = ctx.onGetYouTubeTranscript;
   const onGetImageGenerationConfig = ctx.onGetImageGenerationConfig;
   const onSetImageGenerationConfig = ctx.onSetImageGenerationConfig;
   const onGetInstructMode = ctx.onGetInstructMode;
@@ -814,6 +815,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onGetStopStrings = ctx.onGetStopStrings ?? defaultGetStopStrings;
   const onSetStopStrings = ctx.onSetStopStrings ?? defaultSetStopStrings;
   const onGetModel = ctx.onGetModel ?? defaultGetModel;
+  const onSelectProxyPreset = ctx.onSelectProxyPreset;
   const onSetModel = ctx.onSetModel ?? defaultSetModel;
   const onGetAuthorNoteState = ctx.onGetAuthorNoteState ?? defaultGetAuthorNoteState;
   const onSetAuthorNoteState = ctx.onSetAuthorNoteState ?? defaultSetAuthorNoteState;
@@ -1661,6 +1663,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     createNewChat: onNewChat,
     generateImage: onGenerateImage,
     translateText: onTranslateText,
+    getYouTubeTranscript: onGetYouTubeTranscript,
     getImageGenerationConfig: onGetImageGenerationConfig,
     setImageGenerationConfig: onSetImageGenerationConfig,
     getInstructMode: onGetInstructMode,
@@ -1669,6 +1672,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     setStopStrings: onSetStopStrings,
     getModel: onGetModel,
     setModel: onSetModel,
+    selectProxyPreset: onSelectProxyPreset,
     narrateText: onNarrateText,
     getGroupMember: onGetGroupMember,
     getGroupMemberCount: onGetGroupMemberCount,

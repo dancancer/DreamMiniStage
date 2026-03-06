@@ -49,6 +49,7 @@ import type {
   SetModelOptions,
   SendOptions,
   TranslateTextOptions,
+  YouTubeTranscriptOptions,
   WorldInfoTimedEffectFormat,
   WorldInfoTimedEffectName,
   WorldInfoTimedEffectState,
@@ -114,6 +115,10 @@ export interface ApiCallContext {
     text: string,
     options?: TranslateTextOptions,
   ) => string | Promise<string>;
+  onGetYouTubeTranscript?: (
+    urlOrId: string,
+    options?: YouTubeTranscriptOptions,
+  ) => string | Promise<string>;
   onGetImageGenerationConfig?: () => ImageGenerationConfig | Promise<ImageGenerationConfig>;
   onSetImageGenerationConfig?: (
     patch: Partial<ImageGenerationConfig>,
@@ -129,6 +134,7 @@ export interface ApiCallContext {
     model: string,
     options?: SetModelOptions,
   ) => string | Promise<string>;
+  onSelectProxyPreset?: (name?: string) => string | Promise<string>;
   onNarrateText?: (
     text: string,
     options?: NarrateOptions,

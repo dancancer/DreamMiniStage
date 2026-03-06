@@ -101,4 +101,37 @@ describe("P2 api command gaps", () => {
     expect(invalidResult.isError).toBe(true);
     expect(invalidResult.errorMessage).toContain("unsupported api source");
   });
+
+  it("/proxy 在读写路径透传 proxy preset", async () => {
+    const selectProxyPreset = vi
+      .fn()
+      .mockResolvedValueOnce("Default")
+      .mockResolvedValueOnce("Claude Reverse");
+    const ctx = createApiContext({ selectProxyPreset });
+
+    const current = await executeSlashCommandScript("/proxy", ctx);
+    const switched = await executeSlashCommandScript("/proxy Claude Reverse", ctx);
+
+    expect(current.isError).toBe(false);
+    expect(switched.isError).toBe(false);
+    expect(current.pipe).toBe("Default");
+    expect(switched.pipe).toBe("Claude Reverse");
+    expect(selectProxyPreset).toHaveBeenNthCalledWith(1, undefined);
+    expect(selectProxyPreset).toHaveBeenNthCalledWith(2, "Claude Reverse");
+  });
+
+  it("/proxy 在宿主缺失或返回异常时显式 fail-fast", async () => {
+    const missingHost = await executeSlashCommandScript("/proxy", createApiContext());
+    const invalidResult = await executeSlashCommandScript(
+      "/proxy Default",
+      createApiContext({
+        selectProxyPreset: vi.fn().mockResolvedValue(true as unknown as string),
+      }),
+    );
+
+    expect(missingHost.isError).toBe(true);
+    expect(invalidResult.isError).toBe(true);
+    expect(missingHost.errorMessage).toContain("not available");
+    expect(invalidResult.errorMessage).toContain("non-string");
+  });
 });

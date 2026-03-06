@@ -284,6 +284,10 @@ export interface TranslateTextOptions {
   provider?: string;
 }
 
+export interface YouTubeTranscriptOptions {
+  lang?: string;
+}
+
 export type WorldInfoTimedEffectName = "sticky" | "cooldown" | "delay";
 export type WorldInfoTimedEffectFormat = "boolean" | "number";
 export type WorldInfoTimedEffectState = "on" | "off" | "toggle";
@@ -618,6 +622,7 @@ export interface ExecutionContext {
     model: string,
     options?: SetModelOptions,
   ) => string | Promise<string>;
+  selectProxyPreset?: (name?: string) => string | Promise<string>;
   narrateText?: (
     text: string,
     options?: NarrateOptions,
@@ -625,6 +630,10 @@ export interface ExecutionContext {
   translateText?: (
     text: string,
     options?: TranslateTextOptions,
+  ) => string | Promise<string>;
+  getYouTubeTranscript?: (
+    urlOrId: string,
+    options?: YouTubeTranscriptOptions,
   ) => string | Promise<string>;
   generate?: (prompt: string, options?: GenerateOptions) => Promise<string>;
   generateQuiet?: (prompt: string, options?: GenerateOptions) => Promise<string>;

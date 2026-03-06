@@ -298,19 +298,23 @@ describe("P2 chat command gaps", () => {
     expect(deleteCurrentChat).toHaveBeenCalledTimes(1);
   });
 
-  it("/chat-jump 与 /chat-scrollto 可跳转消息索引并返回空字符串", async () => {
+  it("/chat-jump、/chat-scrollto 与 /floor-teleport 可跳转消息索引并返回空字符串", async () => {
     const jumpToMessage = vi.fn().mockResolvedValue(undefined);
     const ctx = createContext({ jumpToMessage });
 
     const jump = await executeSlashCommandScript("/chat-jump 1", ctx);
     const scroll = await executeSlashCommandScript("/chat-scrollto 2", ctx);
+    const teleport = await executeSlashCommandScript("/floor-teleport 0", ctx);
 
     expect(jump.isError).toBe(false);
     expect(scroll.isError).toBe(false);
+    expect(teleport.isError).toBe(false);
     expect(jump.pipe).toBe("");
     expect(scroll.pipe).toBe("");
+    expect(teleport.pipe).toBe("");
     expect(jumpToMessage).toHaveBeenNthCalledWith(1, 1);
     expect(jumpToMessage).toHaveBeenNthCalledWith(2, 2);
+    expect(jumpToMessage).toHaveBeenNthCalledWith(3, 0);
   });
 
   it("/chat-jump 对非法索引显式 fail-fast", async () => {

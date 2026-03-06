@@ -2,7 +2,7 @@
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                 Extension Command Handlers                              ║
  * ║                                                                          ║
- * ║  extension-* 命令：enable/disable/toggle/state/exists                    ║
+ * ║  extension-* 命令：enable/disable/toggle/state/exists + translate/yt    ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -119,11 +119,23 @@ function resolveTranslateInput(
   return input;
 }
 
-function normalizeTranslateResult(value: unknown): string {
+function normalizeStringResult(commandName: string, value: unknown): string {
   if (typeof value !== "string") {
-    throw new Error("/translate host returned non-string result");
+    throw new Error(`/${commandName} host returned non-string result`);
   }
   return value;
+}
+
+function resolveYouTubeTarget(
+  args: string[],
+  namedArgs: Record<string, string>,
+  pipe: string,
+): string {
+  const input = (args.join(" ") || namedArgs.url || pipe || "").trim();
+  if (!input) {
+    throw new Error("/yt-script requires YouTube URL or video ID");
+  }
+  return input;
 }
 
 async function applyExtensionState(
@@ -226,5 +238,15 @@ export const handleTranslate: CommandHandler = async (args, namedArgs, ctx, pipe
     target: namedArgs.target?.trim() || undefined,
     provider: namedArgs.provider?.trim() || undefined,
   }));
-  return normalizeTranslateResult(translated);
+  return normalizeStringResult("translate", translated);
+};
+
+/** /yt-script [lang=<iso6391>] <url|id> - 调用宿主抓取 YouTube transcript */
+export const handleYouTubeScript: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const getYouTubeTranscript = ensureHostCallback(ctx.getYouTubeTranscript, "yt-script");
+  const target = resolveYouTubeTarget(args, namedArgs, pipe);
+  const transcript = await Promise.resolve(getYouTubeTranscript(target, {
+    lang: namedArgs.lang?.trim() || undefined,
+  }));
+  return normalizeStringResult("yt-script", transcript);
 };

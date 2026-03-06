@@ -2,7 +2,7 @@
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                      API Command Handlers                                 ║
  * ║                                                                           ║
- * ║  API 命令 - api / api-url / server                                        ║
+ * ║  API 命令 - api / api-url / server / proxy                                ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -93,6 +93,22 @@ async function resolveApiUrl(
   return API_URL_FALLBACKS[source];
 }
 
+function resolveProxyTarget(
+  args: string[],
+  namedArgs: Record<string, string>,
+  pipe: string,
+): string | undefined {
+  const normalized = (args.join(" ") || namedArgs.name || pipe || "").trim();
+  return normalized || undefined;
+}
+
+function normalizeProxyResult(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new Error("/proxy host returned non-string preset name");
+  }
+  return value;
+}
+
 /** /api - 获取当前 API 类型（当前宿主仅支持只读） */
 export const handleApi: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
   const requested = (args.join(" ") || pipe || "").trim();
@@ -115,4 +131,15 @@ export const handleApiUrl: CommandHandler = async (args, namedArgs, ctx, pipe) =
     : await resolveCurrentApiSource(ctx, "/api-url");
 
   return resolveApiUrl(ctx, source, "/api-url");
+};
+
+
+/** /proxy [name] - 查询或切换当前 proxy preset */
+export const handleProxy: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.selectProxyPreset) {
+    throw new Error("/proxy is not available in current context");
+  }
+
+  const result = await Promise.resolve(ctx.selectProxyPreset(resolveProxyTarget(args, namedArgs, pipe)));
+  return normalizeProxyResult(result);
 };

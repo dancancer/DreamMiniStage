@@ -40,6 +40,11 @@ import type {
   ReasoningParseOptions,
   ReasoningParseResult,
   SendOptions,
+  TranslateTextOptions,
+  WorldInfoTimedEffectFormat,
+  WorldInfoTimedEffectName,
+  WorldInfoTimedEffectState,
+  YouTubeTranscriptOptions,
 } from "@/lib/slash-command/types";
 import type { ScriptMessageData } from "@/types/script-message";
 
@@ -71,11 +76,33 @@ interface UseScriptBridgeOptions {
   onGetChatName?: () => string | Promise<string>;
   onRenameChat?: (name: string) => string | Promise<string>;
   onSetInput?: (text: string) => void | Promise<void>;
+  onOpenTemporaryChat?: () => void | Promise<void>;
   onForceSaveChat?: () => void | Promise<void>;
   onHideMessages?: (startIndex: number) => void | Promise<void>;
   onUnhideMessages?: () => void | Promise<void>;
   onDuplicateCharacter?: () => string | void | Promise<string | void>;
   onNewChat?: (options?: { deleteCurrentChat?: boolean }) => void | Promise<void>;
+  onTranslateText?: (
+    text: string,
+    options?: TranslateTextOptions,
+  ) => string | Promise<string>;
+  onGetYouTubeTranscript?: (
+    urlOrId: string,
+    options?: YouTubeTranscriptOptions,
+  ) => string | Promise<string>;
+  onSelectProxyPreset?: (name?: string) => string | Promise<string>;
+  onGetWorldInfoTimedEffect?: (
+    file: string,
+    uid: string,
+    effect: WorldInfoTimedEffectName,
+    options?: { format?: WorldInfoTimedEffectFormat },
+  ) => boolean | number | Promise<boolean | number>;
+  onSetWorldInfoTimedEffect?: (
+    file: string,
+    uid: string,
+    effect: WorldInfoTimedEffectName,
+    state: WorldInfoTimedEffectState,
+  ) => void | Promise<void>;
   onGetGroupMember?: (
     target: string,
     field: GroupMemberField,
@@ -257,11 +284,17 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onGetChatName,
     onRenameChat,
     onSetInput,
+    onOpenTemporaryChat,
     onForceSaveChat,
     onHideMessages,
     onUnhideMessages,
     onDuplicateCharacter,
     onNewChat,
+    onTranslateText,
+    onGetYouTubeTranscript,
+    onSelectProxyPreset,
+    onGetWorldInfoTimedEffect,
+    onSetWorldInfoTimedEffect,
     onGetGroupMember,
     onAddGroupMember,
     onSetGroupMemberEnabled,
@@ -413,11 +446,17 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onGetChatName,
           onRenameChat,
           onSetInput,
+          onOpenTemporaryChat,
           onForceSaveChat,
           onHideMessages,
           onUnhideMessages,
           onDuplicateCharacter,
           onNewChat,
+          onTranslateText,
+          onGetYouTubeTranscript,
+          onSelectProxyPreset,
+          onGetWorldInfoTimedEffect,
+          onSetWorldInfoTimedEffect,
           onGetGroupMember,
           onAddGroupMember,
           onSetGroupMemberEnabled,
@@ -503,11 +542,17 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onGetChatName,
       onRenameChat,
       onSetInput,
+      onOpenTemporaryChat,
       onForceSaveChat,
       onHideMessages,
       onUnhideMessages,
       onDuplicateCharacter,
       onNewChat,
+      onTranslateText,
+      onGetYouTubeTranscript,
+      onSelectProxyPreset,
+      onGetWorldInfoTimedEffect,
+      onSetWorldInfoTimedEffect,
       onGetGroupMember,
       onAddGroupMember,
       onSetGroupMemberEnabled,

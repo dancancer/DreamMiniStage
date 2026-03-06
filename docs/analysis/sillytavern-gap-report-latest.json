@@ -1,32 +1,10 @@
 {
-  "generatedAt": "2026-03-06T09:13:08.222Z",
+  "generatedAt": "2026-03-06T12:00:13.318Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 423,
-    "coverage": "99.30%",
-    "missingTop": [
-      {
-        "command": "floor-teleport",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "proxy",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "yt-script",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      }
-    ]
+    "covered": 426,
+    "coverage": "100.00%",
+    "missingTop": []
   },
   "apiMatrix": {
     "upstreamShimTotal": 133,

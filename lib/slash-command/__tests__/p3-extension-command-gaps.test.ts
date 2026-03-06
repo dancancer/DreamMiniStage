@@ -136,6 +136,54 @@ describe("P3 extension command gaps", () => {
     expect(invalidResult.errorMessage).toContain("non-string");
   });
 
+  it("/yt-script 透传 lang 与 URL/ID 并返回 transcript", async () => {
+    const getYouTubeTranscript = vi.fn().mockResolvedValue("line-1\nline-2");
+    const ctx = createContext({ getYouTubeTranscript });
+
+    const result = await executeSlashCommandScript(
+      "/yt-script lang=ja https://youtu.be/dQw4w9WgXcQ",
+      ctx,
+    );
+
+    expect(result).toMatchObject({ isError: false, pipe: "line-1\nline-2" });
+    expect(getYouTubeTranscript).toHaveBeenCalledWith("https://youtu.be/dQw4w9WgXcQ", {
+      lang: "ja",
+    });
+  });
+
+  it("/yt-script 支持 pipe 输入并对缺参/返回异常显式 fail-fast", async () => {
+    const pipeCtx = createContext({
+      setInputText: vi.fn().mockResolvedValue(undefined),
+      getYouTubeTranscript: vi.fn().mockResolvedValue("transcript"),
+    });
+    const fromPipe = await executeSlashCommandScript(
+      "/setinput https://youtu.be/dQw4w9WgXcQ | /yt-script",
+      pipeCtx,
+    );
+    const missingHost = await executeSlashCommandScript(
+      "/yt-script https://youtu.be/dQw4w9WgXcQ",
+      createContext(),
+    );
+    const missingTarget = await executeSlashCommandScript(
+      "/yt-script lang=en",
+      createContext({ getYouTubeTranscript: vi.fn().mockResolvedValue("transcript") }),
+    );
+    const invalidResult = await executeSlashCommandScript(
+      "/yt-script dQw4w9WgXcQ",
+      createContext({
+        getYouTubeTranscript: vi.fn().mockResolvedValue(1 as unknown as string),
+      }),
+    );
+
+    expect(fromPipe).toMatchObject({ isError: false, pipe: "transcript" });
+    expect(missingHost.isError).toBe(true);
+    expect(missingTarget.isError).toBe(true);
+    expect(invalidResult.isError).toBe(true);
+    expect(missingHost.errorMessage).toContain("not available");
+    expect(missingTarget.errorMessage).toContain("requires YouTube URL or video ID");
+    expect(invalidResult.errorMessage).toContain("non-string");
+  });
+
   it("extension 命令在宿主缺失、扩展缺失、参数非法时显式 fail-fast", async () => {
     const noHost = createContext();
     const noHostResult = await executeSlashCommandScript("/extension-state Summarize", noHost);

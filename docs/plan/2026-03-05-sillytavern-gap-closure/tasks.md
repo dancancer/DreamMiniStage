@@ -207,3 +207,9 @@
 - [x] 补齐 `tempchat` 与 `translate`，统一宿主回调单路径，Slash 层只负责参数校验与结果串接。
 - [x] 补齐 `wi-get-timed-effect` 与 `wi-set-timed-effect`，保持 active chat fail-fast 与 `boolean|number` 输出语义。
 - [x] 运行 `pnpm typecheck`、定向回归、baseline 回归与 `pnpm analyze:sillytavern-gap`，并更新报告、分析文档与 handoff。
+
+## 35. P3 收口（proxy / yt-script / floor-teleport）
+
+- [x] 补齐最后 3 个 slash 命令缺口（`/proxy`、`/yt-script`、`/floor-teleport`），统一到宿主显式回调 / 既有别名单路径，保持 fail-fast 语义。
+- [x] 扩展 Slash 执行上下文 / Script Bridge 注入位：新增 `selectProxyPreset`、`getYouTubeTranscript`，并修补 `useScriptBridge` 对 `tempchat/translate/wi-get-timed-effect/wi-set-timed-effect` 的透传缺口。
+- [x] 运行 `pnpm typecheck`、定向回归、baseline 回归与 `pnpm analyze:sillytavern-gap`，并更新报告、分析文档与 handoff。
