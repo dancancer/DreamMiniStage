@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`355/426 = 83.33%`（较上一轮 `79.34%` 提升 `+3.99`pp）。
+- Slash 命令覆盖面继续提升：`372/426 = 87.32%`（较上一轮 `85.21%` 提升 `+2.11`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -33,7 +33,7 @@
    - regex/chat：`/regex-preset`、`/regex-toggle`、`/chat-jump`、`/chat-render`、`/chat-scrollto`
    - 会话运维：`/getchatname`、`/setinput`
    - 会话运维长尾：`/closechat`、`/count`、`/input`、`/member-count`、`/countmember`、`/membercount`、`/cut`
-   - 群聊编辑：`/member-get`、`/getmember`、`/member-add`、`/addmember`、`/member-disable`、`/disable`、`/member-enable`、`/enable`、`/addswipe`
+   - 群聊编辑：`/member-get`、`/getmember`、`/member-add`、`/addmember`、`/member-disable`、`/disable`、`/member-enable`、`/enable`、`/addswipe`、`/swipeadd`
    - 会话推理/注入运维：`/reasoning-get`、`/get-reasoning`、`/reasoning-set`、`/set-reasoning`、`/listinjects`
    - prompt/message 元数据：`/message-name`、`/message-role`、`/getpromptentry`、`/getpromptentries`、`/setpromptentry`、`/setpromptentries`
    - 脚本运维：`/delay`、`/wait`、`/sleep`、`/generate-stop`、`/genraw`、`/list-gallery`、`/listchatvar`
@@ -56,6 +56,7 @@
    - P3 导入/弹窗簇：`/import`、`/popup`、`/pick-icon`
    - P3 推理解析 + Quick Reply 第一批：`/reasoning-parse|/parse-reasoning`、`/qr`、`/qr-list`、`/qr-get`、`/qr-create`、`/qr-delete`
    - P3 Quick Reply 第二/三批 + set/preset：`/qr-set`、`/qr-set-on`、`/qr-set-off`、`/qr-chat-set`、`/qr-chat-set-on`、`/qr-chat-set-off`、`/qr-set-list`、`/qr-update`、`/qr-contextadd`、`/qr-contextdel`、`/qr-contextclear`、`/qr-set-create|/qr-presetadd`、`/qr-set-update|/qr-presetupdate`、`/qr-set-delete|/qr-presetdelete`
+   - P3 Secret Store 簇：`/secret-id|/secret-rotate`、`/secret-delete`、`/secret-write`、`/secret-rename`、`/secret-read|/secret-find|/secret-get`
 2. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
@@ -69,7 +70,7 @@
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已进一步移除 `note*`、`depth/freq/pos`、`persona*`、`profile*`、`prompt*`、`ppp`，并在本轮继续移除 `qr-set*`、`qr-chat-set*`、`qr-context*`、`qr-update`、`qr-preset*`；当前主缺口收敛到 `qr-arg`、少量低频运维命令，以及若干轻量配置命令（`reasoning-*`、`rename*`）。
+- Top25 已进一步移除 `note*`、`depth/freq/pos`、`persona*`、`profile*`、`prompt*`、`ppp`，并在本轮继续移除整组 `secret-*` 与 `/swipeadd`；当前主缺口收敛到 `qr-arg`、`show-gallery`、`expression-upload`，以及一整簇共享存储型 `sysprompt*` 命令。
 
 ## 4. 基线素材与回归状态
 
@@ -90,6 +91,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 推进 `/qr-arg`，但直接补到 `{{arg::...}}` 宏解析与 `*` wildcard 语义，避免只停留在命令壳层。
-2. 收敛低耦合剩余长尾（`/forcesave`、`/hide`、`/expression-upload`、`/proxy`），并补齐最小可见结果断言。
-3. 继续推进轻量配置命令（`/reasoning-formatting`、`/reasoning-preset`、`/reasoning-template`、`/rename-char`、`/renamechat`）；`/qrset` 属于废弃语法，继续遵守仓库兼容性约束，除非当前会话得到明确批准。
+1. 优先推进 `sysprompt*` 命令簇（`/sysprompt`、`/sysprompt-on/off/state/toggle`、`/sysname`、`/sysgen`），复用本轮 Secret Store 的共享存储思路，一次性打掉一串 Top25。
+2. 收敛低耦合媒体/画廊长尾（`/show-gallery|/sg`、`/expression-upload`），优先走宿主回调或事件桥接单路径，避免再引入 UI 分叉。
+3. `/qr-arg` 仍值得做，但应直接补到 `{{arg::...}}` 宏解析与 `*` wildcard 语义；`/qrset` 属于废弃语法，继续遵守仓库兼容性约束，除非当前会话得到明确批准。

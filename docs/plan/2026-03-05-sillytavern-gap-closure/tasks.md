@@ -163,3 +163,9 @@
 - [x] 补齐角色/推理配置命令（`/rename-char`、`/reasoning-template|/reasoning-preset|/reasoning-formatting`），统一单路径与 fail-fast 语义。
 - [x] 运行 typecheck + 定向回归 + gap 分析，并更新报告、tasks 与 handoff。
 
+
+## 28. P3 增量收敛（Secret Store + Swipe Alias）
+
+- [x] 补齐 Secret 命令簇（`/secret-id|/secret-rotate`、`/secret-delete`、`/secret-write`、`/secret-rename`、`/secret-read|/secret-find|/secret-get`），统一单路径 localStorage secret store 与 fail-fast 语义。
+- [x] 将 Secret 激活项同步回 provider API key（`openaiApiKey` / `geminiApiKey` / `apiKey`）与当前激活模型配置，并补齐 `/swipeadd` 到现有 `/addswipe` 单路径实现。
+- [x] 运行 typecheck + 定向回归 + gap 分析，并更新报告、分析文档与 handoff。

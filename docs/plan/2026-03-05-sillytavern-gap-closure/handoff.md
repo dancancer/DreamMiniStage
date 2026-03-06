@@ -2,35 +2,30 @@
 
 ## 本轮完成
 
-- 补齐会话维护命令簇：`/renamechat`、`/forcesave`、`/hide`、`/unhide`，统一 fail-fast 语义。
-- 补齐角色重命名命令：`/rename-char`，支持 `silent` / `chats` 布尔参数校验并透传到宿主。
-- 补齐推理模板配置命令：`/reasoning-template`、`/reasoning-preset`、`/reasoning-formatting`，统一到单一路径 localStorage 存储。
-- 扩展 Slash 执行上下文 / Script Bridge 透传位：
-  - `renameCurrentChat`
-  - `forceSaveChat`
-  - `hideMessages`
-  - `unhideMessages`
-  - `renameCurrentCharacter`
-- Session 宿主路径接通上述能力：
-  - 当前会话支持直接重命名并同步 Zustand session store。
-  - 当前角色支持直接重命名，并在页面头部与聊天面板即时反映。
-  - 当前分支支持隐藏/恢复显示消息；消息 `hidden` 状态已进入前端消息模型与渲染过滤路径。
-  - `/forcesave` 会把当前分支消息快照回写到 `DialogueTree`，并保留 `node.extra.hidden` 标记。
-- 新增契约测试：`lib/slash-command/__tests__/p3-chat-config-command-gaps.test.ts`（6 tests），覆盖新命令的主路径、别名共享存储、参数校验与 fail-fast 场景。
+- 补齐 Secret 命令簇：`/secret-id`、`/secret-rotate`、`/secret-delete`、`/secret-write`、`/secret-rename`、`/secret-read`、`/secret-find`、`/secret-get`，统一到单一路径 `localStorage` secret store。
+- Secret 激活项会同步回当前 provider API key：
+  - `openaiApiKey`
+  - `geminiApiKey`
+  - 通用 `apiKey`
+- 当前激活模型配置（Zustand `useModelStore` active config）会随 Secret 切换同步更新，避免“Slash 已切 key，但运行时仍拿旧 key”的分叉状态。
+- 为现有群聊 swipe 实现补齐别名：`/swipeadd` 现在与 `/addswipe` 共享同一路径实现。
+- Secret store 支持从现有 provider key 启动：若用户本地已经有 `openaiApiKey` / `geminiApiKey`，首次执行 `/secret-read` 等命令时会自动引导成一条激活 secret，而不是要求先手工迁移。
+- 新增契约测试：`lib/slash-command/__tests__/p3-secret-command-gaps.test.ts`（4 tests），覆盖 bootstrap、读写/切换、重命名/删除、active config 同步与 fail-fast。
+- 更新既有别名回归：`lib/slash-command/__tests__/p2-chat-command-gaps.test.ts` 现在直接断言 `/swipeadd` 走通现有 `/addswipe` 逻辑。
 
 ## 回归结果
 
 - `pnpm typecheck`：通过。
-- `pnpm vitest run lib/slash-command/__tests__/p3-chat-config-command-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts lib/slash-command/__tests__/p3-session-maintenance-command-gaps.test.ts`：`3 files / 20 tests` 全通过。
-- `pnpm vitest run lib/core/__tests__/st-baseline-*.test.ts lib/slash-command/__tests__/material-replay-control-flow.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts lib/slash-command/__tests__/p3-chat-config-command-gaps.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`：`14 files / 301 tests` 全通过。
+- `pnpm vitest run lib/slash-command/__tests__/p3-secret-command-gaps.test.ts lib/slash-command/__tests__/p2-chat-command-gaps.test.ts`：`2 files / 30 tests` 全通过。
+- `pnpm vitest run lib/core/__tests__/st-baseline-*.test.ts lib/slash-command/__tests__/material-replay-control-flow.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts lib/slash-command/__tests__/p3-secret-command-gaps.test.ts lib/slash-command/__tests__/p2-chat-command-gaps.test.ts`：`14 files / 322 tests` 全通过。
 - `pnpm analyze:sillytavern-gap`：
-  - slash coverage：`85.21%`（上一轮 `83.33%`，+`1.88`pp）
+  - slash coverage：`87.32%`（上一轮 `85.21%`，+`2.11`pp）
   - api matrix coverage：`100.00%`
   - api facade coverage：`100.00%`
-  - Top25 已移除：`forcesave`、`hide`、`reasoning-formatting`、`reasoning-preset`、`reasoning-template`、`rename-char`、`renamechat`
+  - Top25 已移除：`secret-delete`、`secret-find`、`secret-get`、`secret-id`、`secret-read`、`secret-rename`、`secret-rotate`、`secret-write`、`swipeadd`
 
 ## 下一步建议
 
-1. 继续做“低耦合别名/媒体”簇：优先补 `/show-gallery`、`/swipeadd`、`/expression-upload`；其中 `show-gallery` 与现有 `list-gallery`、`swipeadd` 与现有 `addswipe` 语义接近，性价比最高。
-2. 收敛共享存储型命令簇：`/secret-*` 当前在 Top25 中占了整整 8 个名额，适合用单一 secret store + fail-fast 设计一次性打掉一串缺口。
-3. `/proxy` 在当前上游资料里语义边界不够稳定，本轮先没硬补；下一轮动手前先重新核对最新上游基线，避免补进过期命令语义。
+1. 直接做 `sysprompt*` 命令簇：`/sysprompt`、`/sysprompt-on`、`/sysprompt-off`、`/sysprompt-state`、`/sysprompt-toggle`、`/sysname`、`/sysgen`。这簇和本轮 Secret Store 一样，适合走共享存储单路径，一次性拉高覆盖率。
+2. 做低耦合媒体/画廊簇：`/show-gallery|/sg`、`/expression-upload`。这两个剩余命令都更适合宿主回调/事件桥接，不该塞进 Slash 层做假 UI。
+3. `/qr-arg` 依旧是高价值项，但不要只补命令壳；下一轮应该直接落 `{{arg::...}}` 宏解析与 `*` wildcard 语义，否则只是把复杂度往后拖。

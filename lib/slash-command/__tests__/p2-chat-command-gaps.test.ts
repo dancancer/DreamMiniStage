@@ -184,7 +184,7 @@ describe("P2 chat command gaps", () => {
     const ctx = createContext({ addSwipe });
 
     const first = await executeSlashCommandScript("/addswipe switch=true new answer", ctx);
-    const second = await executeSlashCommandScript("/echo piped answer|/addswipe", ctx);
+    const second = await executeSlashCommandScript("/echo piped answer|/swipeadd", ctx);
 
     expect(first.isError).toBe(false);
     expect(second.isError).toBe(false);

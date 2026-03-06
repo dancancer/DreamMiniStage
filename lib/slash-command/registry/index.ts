@@ -28,6 +28,7 @@ import * as ExtensionHandlers from "./handlers/extensions";
 import * as NotePersonaHandlers from "./handlers/note-persona";
 import * as ProfilePromptHandlers from "./handlers/profile-prompt";
 import * as QuickReplyHandlers from "./handlers/quick-reply";
+import * as SecretHandlers from "./handlers/secrets";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -117,6 +118,14 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["delay", UtilityHandlers.handleDelay],
   ["wait", UtilityHandlers.handleDelay],
   ["sleep", UtilityHandlers.handleDelay],
+  ["secret-id", SecretHandlers.handleSecretId],
+  ["secret-rotate", SecretHandlers.handleSecretId],
+  ["secret-delete", SecretHandlers.handleSecretDelete],
+  ["secret-write", SecretHandlers.handleSecretWrite],
+  ["secret-rename", SecretHandlers.handleSecretRename],
+  ["secret-read", SecretHandlers.handleSecretRead],
+  ["secret-find", SecretHandlers.handleSecretRead],
+  ["secret-get", SecretHandlers.handleSecretRead],
   ["is-mobile", UtilityHandlers.handleIsMobile],
   ["import", UtilityHandlers.handleImport],
   ["list-gallery", UtilityHandlers.handleListGallery],
@@ -204,6 +213,7 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["enablemember", ChatHandlers.handleEnableMember],
   ["memberenable", ChatHandlers.handleEnableMember],
   ["addswipe", ChatHandlers.handleAddSwipe],
+  ["swipeadd", ChatHandlers.handleAddSwipe],
   ["reasoning-get", ChatHandlers.handleGetReasoning],
   ["get-reasoning", ChatHandlers.handleGetReasoning],
   ["reasoning-set", ChatHandlers.handleSetReasoning],

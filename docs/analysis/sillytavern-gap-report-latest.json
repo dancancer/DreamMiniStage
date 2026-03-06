@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-06T03:14:08.432Z",
+  "generatedAt": "2026-03-06T03:36:31.214Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 363,
-    "coverage": "85.21%",
+    "covered": 372,
+    "coverage": "87.32%",
     "missingTop": [
       {
         "command": "expression-upload",
@@ -76,62 +76,6 @@
         "priority": "P3"
       },
       {
-        "command": "secret-delete",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "secret-find",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "secret-get",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "secret-id",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "secret-read",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "secret-rename",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "secret-rotate",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "secret-write",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "sg",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -168,13 +112,6 @@
       },
       {
         "command": "summarize",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "swipeadd",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
