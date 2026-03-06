@@ -93,6 +93,49 @@ describe("P3 extension command gaps", () => {
     expect(reloadPage).toHaveBeenCalledTimes(1);
   });
 
+  it("/translate 透传 target/provider 并返回宿主结果", async () => {
+    const translateText = vi.fn().mockResolvedValue("你好，世界");
+    const ctx = createContext({ translateText });
+
+    const result = await executeSlashCommandScript(
+      "/translate target=zh provider=deepl hello world",
+      ctx,
+    );
+
+    expect(result).toMatchObject({ isError: false, pipe: "你好，世界" });
+    expect(translateText).toHaveBeenCalledWith("hello world", {
+      target: "zh",
+      provider: "deepl",
+    });
+  });
+
+  it("/translate 支持 pipe 输入并对缺参/返回异常显式 fail-fast", async () => {
+    const pipeCtx = createContext({
+      setInputText: vi.fn().mockResolvedValue(undefined),
+      translateText: vi.fn().mockResolvedValue("bonjour"),
+    });
+    const fromPipe = await executeSlashCommandScript("/setinput hello | /translate target=fr", pipeCtx);
+    const missingHost = await executeSlashCommandScript("/translate hello", createContext());
+    const missingText = await executeSlashCommandScript(
+      "/translate target=fr",
+      createContext({ translateText: vi.fn().mockResolvedValue("bonjour") }),
+    );
+    const invalidResult = await executeSlashCommandScript(
+      "/translate hello",
+      createContext({
+        translateText: vi.fn().mockResolvedValue(1 as unknown as string),
+      }),
+    );
+
+    expect(fromPipe).toMatchObject({ isError: false, pipe: "bonjour" });
+    expect(missingHost.isError).toBe(true);
+    expect(missingText.isError).toBe(true);
+    expect(invalidResult.isError).toBe(true);
+    expect(missingHost.errorMessage).toContain("not available");
+    expect(missingText.errorMessage).toContain("requires text");
+    expect(invalidResult.errorMessage).toContain("non-string");
+  });
+
   it("extension 命令在宿主缺失、扩展缺失、参数非法时显式 fail-fast", async () => {
     const noHost = createContext();
     const noHostResult = await executeSlashCommandScript("/extension-state Summarize", noHost);

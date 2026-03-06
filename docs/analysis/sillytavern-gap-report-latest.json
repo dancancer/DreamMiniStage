@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-06T08:30:14.586Z",
+  "generatedAt": "2026-03-06T09:13:08.222Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 419,
-    "coverage": "98.36%",
+    "covered": 423,
+    "coverage": "99.30%",
     "missingTop": [
       {
         "command": "floor-teleport",
@@ -14,34 +14,6 @@
       },
       {
         "command": "proxy",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "tempchat",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "translate",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "wi-get-timed-effect",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "wi-set-timed-effect",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

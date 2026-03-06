@@ -1,11 +1,11 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-06T08:30:14.586Z
+- generatedAt: 2026-03-06T09:13:08.222Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-06.json`
 
 ## Coverage Snapshot
 
-- slash commands: 419/426 (98.36%)
+- slash commands: 423/426 (99.30%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
@@ -13,10 +13,6 @@
 
 - [P3] /floor-teleport (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /proxy (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /tempchat (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /translate (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /wi-get-timed-effect (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /wi-set-timed-effect (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /yt-script (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)

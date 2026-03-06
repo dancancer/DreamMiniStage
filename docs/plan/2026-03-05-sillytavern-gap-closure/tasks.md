@@ -201,3 +201,9 @@
 - [x] 补齐媒体/语义别名命令（`/sd|/sd-source|/sd-style`、`/speak|/tts`、`/qrset`），统一复用既有 `imagine` / `narrate` / `qr-set` 单路径实现。
 - [x] 补齐低耦合长尾命令（`/summarize`、`/start-reply-with`、`/reroll-pick`、`/test`），其中 `/summarize` 复用 `generateRaw`，其余命令复用 localStorage/regex 单路径并保持 fail-fast。
 - [x] 运行 `pnpm typecheck`、定向回归、baseline 回归与 `pnpm analyze:sillytavern-gap`，并更新报告、分析文档与 handoff。
+
+## 34. P3 增量收敛（临时会话/翻译/Timed Effect）
+
+- [x] 补齐 `tempchat` 与 `translate`，统一宿主回调单路径，Slash 层只负责参数校验与结果串接。
+- [x] 补齐 `wi-get-timed-effect` 与 `wi-set-timed-effect`，保持 active chat fail-fast 与 `boolean|number` 输出语义。
+- [x] 运行 `pnpm typecheck`、定向回归、baseline 回归与 `pnpm analyze:sillytavern-gap`，并更新报告、分析文档与 handoff。

@@ -48,6 +48,10 @@ import type {
   ReasoningParseResult,
   SetModelOptions,
   SendOptions,
+  TranslateTextOptions,
+  WorldInfoTimedEffectFormat,
+  WorldInfoTimedEffectName,
+  WorldInfoTimedEffectState,
 } from "@/lib/slash-command/types";
 
 // ============================================================================
@@ -96,6 +100,7 @@ export interface ApiCallContext {
   onGetChatName?: () => string | Promise<string>;
   onRenameChat?: (name: string) => string | Promise<string>;
   onSetInput?: (text: string) => void | Promise<void>;
+  onOpenTemporaryChat?: () => void | Promise<void>;
   onForceSaveChat?: () => void | Promise<void>;
   onHideMessages?: (startIndex: number) => void | Promise<void>;
   onUnhideMessages?: () => void | Promise<void>;
@@ -104,6 +109,10 @@ export interface ApiCallContext {
   onGenerateImage?: (
     prompt: string,
     options?: ImageGenerationOptions,
+  ) => string | Promise<string>;
+  onTranslateText?: (
+    text: string,
+    options?: TranslateTextOptions,
   ) => string | Promise<string>;
   onGetImageGenerationConfig?: () => ImageGenerationConfig | Promise<ImageGenerationConfig>;
   onSetImageGenerationConfig?: (
@@ -391,6 +400,18 @@ export interface ApiCallContext {
     options?: ReasoningParseOptions,
   ) => ReasoningParseResult | null | undefined | Promise<ReasoningParseResult | null | undefined>;
   onApplyReasoningRegex?: (reasoning: string) => string | Promise<string>;
+  onGetWorldInfoTimedEffect?: (
+    file: string,
+    uid: string,
+    effect: WorldInfoTimedEffectName,
+    options?: { format?: WorldInfoTimedEffectFormat },
+  ) => boolean | number | Promise<boolean | number>;
+  onSetWorldInfoTimedEffect?: (
+    file: string,
+    uid: string,
+    effect: WorldInfoTimedEffectName,
+    state: WorldInfoTimedEffectState,
+  ) => void | Promise<void>;
   onRemovePromptInjections?: (id?: string) => number | Promise<number>;
 }
 

@@ -119,6 +119,103 @@ describe("P2 world/lore command gaps", () => {
     expect(setLoreField).toHaveBeenNthCalledWith(3, "book-1", "uid-1", "keys", "alpha,beta,gamma");
   });
 
+  it("/wi-get-timed-effect 支持 boolean/number 输出格式", async () => {
+    const getWorldInfoTimedEffect = vi
+      .fn()
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(3);
+    const ctx = createContext({
+      dialogueId: "dialogue-1",
+      getWorldInfoTimedEffect,
+    });
+
+    const boolResult = await executeSlashCommandScript(
+      "/wi-get-timed-effect file=book-1 effect=sticky uid-1",
+      ctx,
+    );
+    const numberResult = await executeSlashCommandScript(
+      "/wi-get-timed-effect file=book-1 effect=sticky format=number uid-1",
+      ctx,
+    );
+
+    expect(boolResult.isError).toBe(false);
+    expect(numberResult.isError).toBe(false);
+    expect(boolResult.pipe).toBe("true");
+    expect(numberResult.pipe).toBe("3");
+    expect(getWorldInfoTimedEffect).toHaveBeenNthCalledWith(1, "book-1", "uid-1", "sticky", {
+      format: "boolean",
+    });
+    expect(getWorldInfoTimedEffect).toHaveBeenNthCalledWith(2, "book-1", "uid-1", "sticky", {
+      format: "number",
+    });
+  });
+
+  it("/wi-set-timed-effect 支持 on|off|toggle 并显式校验上下文", async () => {
+    const setWorldInfoTimedEffect = vi.fn().mockResolvedValue(undefined);
+    const ctx = createContext({
+      dialogueId: "dialogue-1",
+      setWorldInfoTimedEffect,
+    });
+
+    const applied = await executeSlashCommandScript(
+      "/wi-set-timed-effect file=book-1 uid=uid-1 effect=delay toggle",
+      ctx,
+    );
+    const missingChat = await executeSlashCommandScript(
+      "/wi-set-timed-effect file=book-1 uid=uid-1 effect=delay toggle",
+      createContext({ setWorldInfoTimedEffect }),
+    );
+    const invalidState = await executeSlashCommandScript(
+      "/wi-set-timed-effect file=book-1 uid=uid-1 effect=delay maybe",
+      ctx,
+    );
+
+    expect(applied.isError).toBe(false);
+    expect(applied.pipe).toBe("");
+    expect(missingChat.isError).toBe(true);
+    expect(invalidState.isError).toBe(true);
+    expect(setWorldInfoTimedEffect).toHaveBeenCalledWith("book-1", "uid-1", "delay", "toggle");
+    expect(missingChat.errorMessage).toContain("active chat context");
+    expect(invalidState.errorMessage).toContain("invalid state");
+  });
+
+  it("wi timed effect 命令在宿主缺失或返回非法类型时显式 fail-fast", async () => {
+    const missingGet = await executeSlashCommandScript(
+      "/wi-get-timed-effect file=book-1 effect=sticky uid-1",
+      createContext({ dialogueId: "dialogue-1" }),
+    );
+    const invalidBool = await executeSlashCommandScript(
+      "/wi-get-timed-effect file=book-1 effect=sticky uid-1",
+      createContext({
+        dialogueId: "dialogue-1",
+        getWorldInfoTimedEffect: vi.fn().mockResolvedValue("yes" as unknown as boolean),
+      }),
+    );
+    const invalidNumber = await executeSlashCommandScript(
+      "/wi-get-timed-effect file=book-1 effect=sticky format=number uid-1",
+      createContext({
+        dialogueId: "dialogue-1",
+        getWorldInfoTimedEffect: vi.fn().mockResolvedValue(-1),
+      }),
+    );
+    const invalidFormat = await executeSlashCommandScript(
+      "/wi-get-timed-effect file=book-1 effect=sticky format=seconds uid-1",
+      createContext({
+        dialogueId: "dialogue-1",
+        getWorldInfoTimedEffect: vi.fn().mockResolvedValue(true),
+      }),
+    );
+
+    expect(missingGet.isError).toBe(true);
+    expect(invalidBool.isError).toBe(true);
+    expect(invalidNumber.isError).toBe(true);
+    expect(invalidFormat.isError).toBe(true);
+    expect(missingGet.errorMessage).toContain("not available");
+    expect(invalidBool.errorMessage).toContain("non-boolean");
+    expect(invalidNumber.errorMessage).toContain("invalid numeric");
+    expect(invalidFormat.errorMessage).toContain("invalid format");
+  });
+
   it("/findentry|/findlore 支持按 file+field 模糊定位条目 uid", async () => {
     const listWorldBookEntries = vi.fn(async (bookName?: string) => {
       if (bookName !== "book-1") {

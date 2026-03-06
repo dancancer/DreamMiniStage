@@ -107,6 +107,25 @@ function normalizeSetResult(commandName: string, value: unknown): string | undef
   return normalized.length > 0 ? normalized : undefined;
 }
 
+function resolveTranslateInput(
+  args: string[],
+  namedArgs: Record<string, string>,
+  pipe: string,
+): string {
+  const input = (args.join(" ") || namedArgs.text || pipe || "").trim();
+  if (!input) {
+    throw new Error("/translate requires text");
+  }
+  return input;
+}
+
+function normalizeTranslateResult(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new Error("/translate host returned non-string result");
+  }
+  return value;
+}
+
 async function applyExtensionState(
   commandName: string,
   extensionName: string,
@@ -197,4 +216,15 @@ export const handleExtensionExists: CommandHandler = async (args, namedArgs, ctx
     "installed state",
   );
   return String(installed);
+};
+
+/** /translate [target=<lang>] [provider=<name>] <text> - 调用宿主翻译文本 */
+export const handleTranslate: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const translateText = ensureHostCallback(ctx.translateText, "translate");
+  const text = resolveTranslateInput(args, namedArgs, pipe);
+  const translated = await Promise.resolve(translateText(text, {
+    target: namedArgs.target?.trim() || undefined,
+    provider: namedArgs.provider?.trim() || undefined,
+  }));
+  return normalizeTranslateResult(translated);
 };

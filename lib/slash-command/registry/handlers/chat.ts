@@ -390,6 +390,19 @@ export const handleNewChat: CommandHandler = async (args, namedArgs, ctx, _pipe)
 };
 
 /**
+ * /tempchat - 打开临时会话
+ * SillyTavern 语义：创建 Assistant 临时会话并返回空字符串。
+ */
+export const handleTempChat: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  if (!ctx.openTemporaryChat) {
+    throw new Error("/tempchat is not available in current context");
+  }
+
+  await Promise.resolve(ctx.openTemporaryChat());
+  return "";
+};
+
+/**
  * /getchatname - 获取当前聊天名称
  * SillyTavern 语义：返回聊天名称字符串。
  */

@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`419/426 = 98.36%`（较上一轮 `96.01%` 提升 `+2.35`pp）。
+- Slash 命令覆盖面继续提升：`423/426 = 99.30%`（较上一轮 `98.36%` 提升 `+0.94`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -44,6 +44,7 @@
    - P3 闭包/Persona Lock 簇：`/closure-serialize`、`/closure-deserialize`、`/lock`、`/bind`
    - P3 expression 簇：`/expression-set`、`/sprite`、`/emote`、`/expression-folder-override`、`/spriteoverride`、`/costume`、`/expression-last`、`/lastsprite`、`/expression-list`、`/expressions`、`/expression-classify`、`/classify`
    - P3 extension 运维簇：`/extension-enable`、`/extension-disable`、`/extension-toggle`、`/extension-state`、`/extension-exists`、`/extension-installed`
+   - P3 临时会话/翻译/Timed Effect：`/tempchat`、`/translate`、`/wi-get-timed-effect`、`/wi-set-timed-effect`
    - P3 UI 反馈簇：`/caption`、`/beep`、`/ding`
    - P3 UI 样式/交互簇：`/bgcol`、`/bubble`、`/bubbles`、`/flat`、`/default`、`/single`、`/story`、`/buttons`
    - P3 注入清理簇：`/flushinject`、`/flushinjects`
@@ -68,13 +69,13 @@
    - `/member-up`、`/upmember`、`/memberup`
    - `/member-down`、`/downmember`、`/memberdown`
    - `/member-peek`、`/peek`、`/memberpeek`、`/peekmember`
-4. Top25 优先命令缺口已不再包含 P1/P2 项，当前主战场切换为 P3 长尾命令可用性；本轮继续从 Top25 中移除 `sd`、`sd-source`、`sd-style`、`speak`、`tts`、`qrset`、`summarize`、`start-reply-with`、`reroll-pick`、`test`。
+4. Top25 优先命令缺口已不再包含 P1/P2 项，当前主战场切换为 P3 长尾命令可用性；本轮继续从 Top25 中移除 `tempchat`、`translate`、`wi-get-timed-effect`、`wi-set-timed-effect`。
 5. 本轮新增的轻量存储/执行语义已经对齐单路径：`/summarize` 走 `generateRaw`，`/start-reply-with` 与 `/reroll-pick` 走 scoped localStorage，避免为低耦合命令再引入宿主分叉。
 
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已进一步收敛到最后 7 个命令：`floor-teleport`、`proxy`、`tempchat`、`translate`、`wi-get-timed-effect`、`wi-set-timed-effect`、`yt-script`。
+- Top25 已进一步收敛到最后 3 个命令：`floor-teleport`、`proxy`、`yt-script`。
 
 ## 4. 基线素材与回归状态
 
@@ -95,6 +96,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 优先推进 timed effect 收口（`/wi-get-timed-effect`、`/wi-set-timed-effect`），尽量直接复用现有 worldbook advanced runtime，而不是再造第二套状态机。
-2. 将剩余低耦合宿主回调命令一次性收口：`/tempchat`、`/proxy`、`/yt-script`、`/translate`，保持 Slash 层只做参数校验与结果串接。
-3. 如果要继续快速抬 coverage，就先拿掉 `tempchat/proxy/yt-script` 三个薄命令，再回头啃 timed effect；这样更符合“先消灭特殊情况，再处理深水区”的节奏。
+1. 一次性收掉最后 3 个薄命令：`/proxy`、`/yt-script`、`/floor-teleport`，继续保持“宿主显式回调 + Slash 参数校验”的单路径实现。
+2. 优先核实 `proxy` 的上游来源；如果它并非主仓内建 slash 命令，应同步修正 gap 数据源，避免把不存在的命令继续计入缺口。
+3. 如果下一轮目标是把 slash coverage 顶到 `100%`，就沿用本轮模板：先拿 `proxy/yt-script`，再处理 `floor-teleport`，避免在 Slash 层引入任何新的运行时状态。

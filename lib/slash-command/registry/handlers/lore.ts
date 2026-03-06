@@ -11,6 +11,9 @@ import { parseBoolean, parseNumber } from "../utils/helpers";
 
 type WorldState = "on" | "off" | "toggle";
 type LoreType = "primary" | "additional" | "all";
+type TimedEffectName = "sticky" | "cooldown" | "delay";
+type TimedEffectFormat = "boolean" | "number";
+type TimedEffectState = "on" | "off" | "toggle";
 
 const LORE_FIELD_ALIASES: Record<string, string> = {
   key: "keys",
@@ -42,6 +45,33 @@ function normalizeLoreFieldName(raw: string | undefined): string {
     throw new Error("/getlorefield requires a field name");
   }
   return LORE_FIELD_ALIASES[field.toLowerCase()] || field;
+}
+
+function normalizeTimedEffectName(raw: string | undefined, commandName: string): TimedEffectName {
+  const normalized = (raw || "").trim().toLowerCase();
+  if (normalized === "sticky" || normalized === "cooldown" || normalized === "delay") {
+    return normalized;
+  }
+  throw new Error(`/${commandName} invalid effect: ${raw || ""}`);
+}
+
+function normalizeTimedEffectFormat(raw: string | undefined): TimedEffectFormat {
+  const normalized = (raw || "boolean").trim().toLowerCase();
+  if (normalized === "boolean" || normalized === "bool") {
+    return "boolean";
+  }
+  if (normalized === "number") {
+    return "number";
+  }
+  throw new Error(`/wi-get-timed-effect invalid format: ${raw || ""}`);
+}
+
+function normalizeTimedEffectState(raw: string | undefined): TimedEffectState {
+  const normalized = (raw || "").trim().toLowerCase();
+  if (normalized === "on" || normalized === "off" || normalized === "toggle") {
+    return normalized;
+  }
+  throw new Error(`/wi-set-timed-effect invalid state: ${raw || ""}`);
 }
 
 function stringifyLoreField(value: unknown): string {
@@ -102,6 +132,52 @@ function resolveLoreSearchInput(
   }
 
   return { file, query };
+}
+
+function resolveTimedEffectTarget(
+  args: string[],
+  namedArgs: Record<string, string>,
+  commandName: "wi-get-timed-effect" | "wi-set-timed-effect",
+): { file: string; uid: string; valueIndex: number } {
+  let cursor = 0;
+  let file = (namedArgs.file || "").trim();
+  let uid = (namedArgs.uid || "").trim();
+
+  if (!uid && commandName === "wi-get-timed-effect") {
+    uid = (args[cursor] || "").trim();
+    cursor += 1;
+  }
+
+  if (!file) {
+    throw new Error(`/${commandName} requires file=<name>`);
+  }
+
+  if (!uid) {
+    uid = (args[cursor] || "").trim();
+    if (uid) {
+      cursor += 1;
+    }
+  }
+
+  if (!uid) {
+    throw new Error(`/${commandName} requires uid`);
+  }
+
+  return { file, uid, valueIndex: cursor };
+}
+
+function normalizeTimedEffectBooleanResult(value: unknown): string {
+  if (typeof value !== "boolean") {
+    throw new Error("/wi-get-timed-effect host returned non-boolean result");
+  }
+  return String(value);
+}
+
+function normalizeTimedEffectNumberResult(value: unknown): string {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    throw new Error("/wi-get-timed-effect host returned invalid numeric result");
+  }
+  return String(value);
 }
 
 function normalizeCreateLoreInput(
@@ -351,6 +427,46 @@ export const handleSetLoreField: CommandHandler = async (args, namedArgs, ctx, p
   const field = normalizeLoreFieldName(namedArgs.field);
   const nextValue = valueFromArgs || pipe;
   await Promise.resolve(ctx.setLoreField(file, uid, field, nextValue));
+  return "";
+};
+
+/** /wi-get-timed-effect file=<book> effect=<sticky|cooldown|delay> [format=bool|number] <uid> */
+export const handleGetWorldInfoTimedEffect: CommandHandler = async (args, namedArgs, ctx, _pipe) => {
+  if (!ctx.getWorldInfoTimedEffect) {
+    throw new Error("/wi-get-timed-effect is not available in current context");
+  }
+  if (!ctx.dialogueId) {
+    throw new Error("/wi-get-timed-effect requires active chat context");
+  }
+
+  const { file, uid } = resolveTimedEffectTarget(args, namedArgs, "wi-get-timed-effect");
+  const effect = normalizeTimedEffectName(namedArgs.effect, "wi-get-timed-effect");
+  const format = normalizeTimedEffectFormat(namedArgs.format);
+  const result = await Promise.resolve(ctx.getWorldInfoTimedEffect(file, uid, effect, { format }));
+
+  return format === "number"
+    ? normalizeTimedEffectNumberResult(result)
+    : normalizeTimedEffectBooleanResult(result);
+};
+
+/** /wi-set-timed-effect file=<book> uid=<uid> effect=<sticky|cooldown|delay> <on|off|toggle> */
+export const handleSetWorldInfoTimedEffect: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.setWorldInfoTimedEffect) {
+    throw new Error("/wi-set-timed-effect is not available in current context");
+  }
+  if (!ctx.dialogueId) {
+    throw new Error("/wi-set-timed-effect requires active chat context");
+  }
+
+  const { file, uid, valueIndex } = resolveTimedEffectTarget(args, namedArgs, "wi-set-timed-effect");
+  const effect = normalizeTimedEffectName(namedArgs.effect, "wi-set-timed-effect");
+  const rawState = (args.slice(valueIndex).join(" ") || pipe || "").trim();
+  if (!rawState) {
+    throw new Error("/wi-set-timed-effect requires state value");
+  }
+
+  const state = normalizeTimedEffectState(rawState);
+  await Promise.resolve(ctx.setWorldInfoTimedEffect(file, uid, effect, state));
   return "";
 };
 

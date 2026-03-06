@@ -79,6 +79,24 @@ describe("P3 session maintenance command gaps", () => {
     expect(result.errorMessage).toContain("not available");
   });
 
+  it("/tempchat 可打开临时会话并返回空字符串", async () => {
+    const openTemporaryChat = vi.fn().mockResolvedValue(undefined);
+    const ctx = createContext({ openTemporaryChat });
+
+    const result = await executeSlashCommandScript("/tempchat", ctx);
+
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("");
+    expect(openTemporaryChat).toHaveBeenCalledTimes(1);
+  });
+
+  it("/tempchat 在宿主缺失时显式 fail-fast", async () => {
+    const result = await executeSlashCommandScript("/tempchat", createContext());
+
+    expect(result.isError).toBe(true);
+    expect(result.errorMessage).toContain("not available");
+  });
+
   it("/member-count 与别名可返回群成员数量", async () => {
     const getGroupMemberCount = vi
       .fn()

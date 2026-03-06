@@ -279,6 +279,15 @@ export interface NarrateOptions {
   voice?: string;
 }
 
+export interface TranslateTextOptions {
+  target?: string;
+  provider?: string;
+}
+
+export type WorldInfoTimedEffectName = "sticky" | "cooldown" | "delay";
+export type WorldInfoTimedEffectFormat = "boolean" | "number";
+export type WorldInfoTimedEffectState = "on" | "off" | "toggle";
+
 // ============================================================================
 //                              解析结果类型
 // ============================================================================
@@ -498,6 +507,7 @@ export interface ExecutionContext {
   getCurrentChatName?: () => string | Promise<string>;
   renameCurrentChat?: (name: string) => string | Promise<string>;
   setInputText?: (text: string) => void | Promise<void>;
+  openTemporaryChat?: () => void | Promise<void>;
   forceSaveChat?: () => void | Promise<void>;
   hideMessages?: (startIndex: number) => void | Promise<void>;
   unhideMessages?: () => void | Promise<void>;
@@ -573,6 +583,18 @@ export interface ExecutionContext {
     field: string,
     value: string,
   ) => void | Promise<void>;
+  getWorldInfoTimedEffect?: (
+    file: string,
+    uid: string,
+    effect: WorldInfoTimedEffectName,
+    options?: { format?: WorldInfoTimedEffectFormat },
+  ) => boolean | number | Promise<boolean | number>;
+  setWorldInfoTimedEffect?: (
+    file: string,
+    uid: string,
+    effect: WorldInfoTimedEffectName,
+    state: WorldInfoTimedEffectState,
+  ) => void | Promise<void>;
 
   // 扩展操作 - 生成
   generateImage?: (
@@ -600,6 +622,10 @@ export interface ExecutionContext {
     text: string,
     options?: NarrateOptions,
   ) => void | Promise<void>;
+  translateText?: (
+    text: string,
+    options?: TranslateTextOptions,
+  ) => string | Promise<string>;
   generate?: (prompt: string, options?: GenerateOptions) => Promise<string>;
   generateQuiet?: (prompt: string, options?: GenerateOptions) => Promise<string>;
   generateRaw?: (prompt: string, options?: GenerateRawOptions) => Promise<string>;

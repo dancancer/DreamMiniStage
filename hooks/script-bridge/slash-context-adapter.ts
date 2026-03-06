@@ -685,12 +685,14 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onGetChatName = ctx.onGetChatName;
   const onRenameChat = ctx.onRenameChat;
   const onSetInput = ctx.onSetInput;
+  const onOpenTemporaryChat = ctx.onOpenTemporaryChat;
   const onForceSaveChat = ctx.onForceSaveChat;
   const onHideMessages = ctx.onHideMessages;
   const onUnhideMessages = ctx.onUnhideMessages;
   const onDuplicateCharacter = ctx.onDuplicateCharacter;
   const onNewChat = ctx.onNewChat;
   const onGenerateImage = ctx.onGenerateImage;
+  const onTranslateText = ctx.onTranslateText;
   const onGetImageGenerationConfig = ctx.onGetImageGenerationConfig;
   const onSetImageGenerationConfig = ctx.onSetImageGenerationConfig;
   const onGetInstructMode = ctx.onGetInstructMode;
@@ -996,6 +998,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onRenameCurrentCharacter = ctx.onRenameCurrentCharacter;
   const onParseReasoningBlock = ctx.onParseReasoningBlock;
   const onApplyReasoningRegex = ctx.onApplyReasoningRegex;
+  const onGetWorldInfoTimedEffect = ctx.onGetWorldInfoTimedEffect;
+  const onSetWorldInfoTimedEffect = ctx.onSetWorldInfoTimedEffect;
   const onRemovePromptInjections = ctx.onRemovePromptInjections;
 
   const getWorldBookEntry = async (id: string): Promise<WorldBookEntryData | undefined> => {
@@ -1649,12 +1653,14 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     getCurrentChatName: onGetChatName,
     renameCurrentChat: onRenameChat,
     setInputText: onSetInput,
+    openTemporaryChat: onOpenTemporaryChat,
     forceSaveChat: onForceSaveChat,
     hideMessages: onHideMessages,
     unhideMessages: onUnhideMessages,
     duplicateCharacter: onDuplicateCharacter,
     createNewChat: onNewChat,
     generateImage: onGenerateImage,
+    translateText: onTranslateText,
     getImageGenerationConfig: onGetImageGenerationConfig,
     setImageGenerationConfig: onSetImageGenerationConfig,
     getInstructMode: onGetInstructMode,
@@ -1846,6 +1852,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     getAudioStateByType,
     getCurrentCharacter,
     listCharacters,
+    getWorldInfoTimedEffect: onGetWorldInfoTimedEffect,
+    setWorldInfoTimedEffect: onSetWorldInfoTimedEffect,
     ...loreRegexAdapters,
   };
 
