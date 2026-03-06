@@ -3,45 +3,90 @@ import { createRoot, type Root } from "react-dom/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import SessionPage from "../page";
 
-const mocks = vi.hoisted(() => ({
-  routerPush: vi.fn(),
-  routerReplace: vi.fn(),
-  createSession: vi.fn().mockResolvedValue("temp-session-2"),
-  fetchAllSessions: vi.fn().mockResolvedValue(undefined),
-  updateSessionName: vi.fn().mockResolvedValue(true),
-  setHeaderContent: vi.fn(),
-  toastError: vi.fn(),
-  setScriptVariable: vi.fn(),
-  deleteScriptVariable: vi.fn(),
-  latestChatInputProps: undefined as undefined | {
-    setUserInput: (value: string) => void;
-    onSubmit: (event: React.FormEvent) => void;
-  },
-  dialogue: {
-    messages: [
-      { id: "m0", role: "assistant", content: "hello" },
-      { id: "m1", role: "assistant", content: "world" },
-    ],
-    openingMessages: [],
-    openingIndex: 0,
-    openingLocked: true,
-    isSending: false,
-    suggestedInputs: [],
-    addUserMessage: vi.fn().mockResolvedValue(undefined),
-    triggerGeneration: vi.fn().mockResolvedValue(undefined),
-    addRoleMessage: vi.fn().mockResolvedValue(undefined),
-    handleSwipe: vi.fn().mockResolvedValue(undefined),
-    truncateMessagesAfter: vi.fn(),
-    handleRegenerate: vi.fn(),
-    handleOpeningNavigate: vi.fn(),
-    exportJsonl: vi.fn(),
-    importJsonl: vi.fn(),
-    initializeNewDialogue: vi.fn(),
-    setMessages: vi.fn(),
-    setSuggestedInputs: vi.fn(),
-    fetchLatestDialogue: vi.fn().mockResolvedValue(undefined),
-  },
-}));
+type ModelStoreState = {
+  configs: Array<{
+    id: string;
+    name: string;
+    type: "openai" | "ollama" | "gemini";
+    baseUrl: string;
+    model: string;
+    apiKey?: string;
+  }>;
+  activeConfigId: string;
+  setActiveConfig: ReturnType<typeof vi.fn<[string], void>>;
+};
+
+function buildModelConfigs(): ModelStoreState["configs"] {
+  return [
+    {
+      id: "cfg-default",
+      name: "Default Proxy",
+      type: "openai",
+      baseUrl: "https://api.openai.com/v1",
+      model: "gpt-4o-mini",
+      apiKey: "sk-default",
+    },
+    {
+      id: "cfg-reverse",
+      name: "Claude Reverse",
+      type: "openai",
+      baseUrl: "https://api.openai.com/v1",
+      model: "gpt-4.1-mini",
+      apiKey: "sk-reverse",
+    },
+  ];
+}
+
+const mocks = vi.hoisted(() => {
+  const modelStoreState: ModelStoreState = {
+    configs: buildModelConfigs(),
+    activeConfigId: "cfg-default",
+    setActiveConfig: vi.fn((id: string) => {
+      modelStoreState.activeConfigId = id;
+    }),
+  };
+
+  return {
+    routerPush: vi.fn(),
+    routerReplace: vi.fn(),
+    createSession: vi.fn().mockResolvedValue("temp-session-2"),
+    fetchAllSessions: vi.fn().mockResolvedValue(undefined),
+    updateSessionName: vi.fn().mockResolvedValue(true),
+    setHeaderContent: vi.fn(),
+    toastError: vi.fn(),
+    setScriptVariable: vi.fn(),
+    deleteScriptVariable: vi.fn(),
+    latestChatInputProps: undefined as undefined | {
+      setUserInput: (value: string) => void;
+      onSubmit: (event: React.FormEvent) => void;
+    },
+    modelStoreState,
+    dialogue: {
+      messages: [
+        { id: "m0", role: "assistant", content: "hello" },
+        { id: "m1", role: "assistant", content: "world" },
+      ],
+      openingMessages: [],
+      openingIndex: 0,
+      openingLocked: true,
+      isSending: false,
+      suggestedInputs: [],
+      addUserMessage: vi.fn().mockResolvedValue(undefined),
+      triggerGeneration: vi.fn().mockResolvedValue(undefined),
+      addRoleMessage: vi.fn().mockResolvedValue(undefined),
+      handleSwipe: vi.fn().mockResolvedValue(undefined),
+      truncateMessagesAfter: vi.fn(),
+      handleRegenerate: vi.fn(),
+      handleOpeningNavigate: vi.fn(),
+      exportJsonl: vi.fn(),
+      importJsonl: vi.fn(),
+      initializeNewDialogue: vi.fn(),
+      setMessages: vi.fn(),
+      setSuggestedInputs: vi.fn(),
+      fetchLatestDialogue: vi.fn().mockResolvedValue(undefined),
+    },
+  };
+});
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams("id=session-1"),
@@ -148,6 +193,17 @@ vi.mock("@/lib/store/script-variables", () => {
   });
 
   return { useScriptVariables };
+});
+
+vi.mock("@/lib/store/model-store", () => {
+  const useModelStore = ((selector?: (state: ModelStoreState) => unknown) =>
+    typeof selector === "function" ? selector(mocks.modelStoreState) : mocks.modelStoreState) as {
+      (selector?: (state: ModelStoreState) => unknown): unknown;
+      getState: () => ModelStoreState;
+    };
+
+  useModelStore.getState = () => mocks.modelStoreState;
+  return { useModelStore };
 });
 
 vi.mock("@/lib/store/toast-store", () => ({
@@ -303,6 +359,10 @@ describe("Session page slash integration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.createSession.mockResolvedValue("temp-session-2");
+    mocks.modelStoreState.configs = buildModelConfigs();
+    mocks.modelStoreState.activeConfigId = "cfg-default";
+    window.localStorage.clear();
+    delete (window as Window & { __DREAMMINISTAGE_SESSION_HOST__?: unknown }).__DREAMMINISTAGE_SESSION_HOST__;
   });
 
   it("executes /tempchat through page host wiring and navigates to the new temp session", async () => {
@@ -344,14 +404,63 @@ describe("Session page slash integration", () => {
     unmountPage(rendered);
   });
 
-  it("surfaces explicit fail-fast host errors for unwired slash commands", async () => {
+  it("executes /proxy through model-store host wiring", async () => {
     const rendered = renderPage();
     await flushEffects();
 
-    await submitSlash("/proxy");
+    await submitSlash("/proxy Claude Reverse");
+
+    expect(mocks.modelStoreState.setActiveConfig).toHaveBeenCalledWith("cfg-reverse");
+    expect(mocks.modelStoreState.activeConfigId).toBe("cfg-reverse");
+    expect(window.localStorage.getItem("llmType")).toBe("openai");
+    expect(window.localStorage.getItem("openaiModel")).toBe("gpt-4.1-mini");
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("surfaces explicit fail-fast errors for unknown /proxy preset", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/proxy missing-profile");
 
     expect(mocks.toastError).toHaveBeenCalledWith(
-      expect.stringContaining("/proxy is not wired in /session host yet"),
+      expect.stringContaining("/proxy preset not found: missing-profile"),
+    );
+
+    unmountPage(rendered);
+  });
+
+  it("executes /yt-script through injected session host bridge", async () => {
+    const getYouTubeTranscript = vi.fn().mockResolvedValue("line-1\nline-2");
+    (window as Window & {
+      __DREAMMINISTAGE_SESSION_HOST__?: { getYouTubeTranscript?: typeof getYouTubeTranscript };
+    }).__DREAMMINISTAGE_SESSION_HOST__ = {
+      getYouTubeTranscript,
+    };
+
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/yt-script lang=ja https://youtu.be/dQw4w9WgXcQ");
+
+    expect(getYouTubeTranscript).toHaveBeenCalledWith("https://youtu.be/dQw4w9WgXcQ", {
+      lang: "ja",
+    });
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("surfaces explicit fail-fast host errors for unwired /yt-script", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/yt-script https://youtu.be/dQw4w9WgXcQ");
+
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      expect.stringContaining("/yt-script is not wired in /session host yet"),
     );
 
     unmountPage(rendered);

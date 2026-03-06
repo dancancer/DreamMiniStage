@@ -30,3 +30,9 @@
 - [x] 每轮结束更新 `docs/plan/2026-03-06-sillytavern-integration-hardening/handoff.md`。
 - [x] 若真实宿主行为发生变化，同步更新 `docs/analysis/sillytavern-integration-gap-2026-03.md`。
 - [x] 保持 `docs/plan/README.md` 指向当前计划。
+
+## 5. 追加加固（2026-03-06 当前轮）
+
+- [x] `/session` 将 `/proxy` 从 fail-fast 升级为真实宿主路径（`model-store` 读取/切换 + localStorage 同步）。
+- [x] `/session` 为 `/translate`、`/yt-script` 接入 `window.__DREAMMINISTAGE_SESSION_HOST__` provider 通道，并保留未注入 fail-fast。
+- [x] 页面级集成测试补齐“成功 + 失败”成对守卫：`/proxy` 与 `/yt-script`。

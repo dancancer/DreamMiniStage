@@ -73,13 +73,17 @@
 4. Top25 优先命令缺口现已清零，slash 命令面对齐阶段可以从“补命令”切换到“守回归 + 补宿主落地”。
 5. 本轮新增的收口策略继续保持单路径：`/proxy` 与 `/yt-script` 走显式宿主回调，`/floor-teleport` 复用 `/chat-jump` 现有实现，不为长尾命令再复制状态机。
 6. 顺手修补了 Script Bridge Hook 注入漂移：`useScriptBridge` 现在会实际透传 `tempchat/translate/timed-effect` 相关回调，以及新增的 `proxy/yt-script` 注入位。
-7. `/session` 宿主第一轮已落地：`/tempchat` 现可创建当前角色的 `[temp]` 会话并跳转，`/floor-teleport` 复用 `/chat-jump` 的页面锚点滚动；`/translate`、`/proxy`、`/yt-script`、`/wi-get-timed-effect`、`/wi-set-timed-effect` 仍保持显式 fail-fast，避免桥接层“看起来支持”但页面层静默空转。
+7. `/session` 宿主接通继续推进：
+   - 已接通：`/tempchat`、`/floor-teleport`、`/proxy`（接 `model-store` 读取/切换 preset，并同步 LLM storage）。
+   - Provider 模式接通：`/translate`、`/yt-script`（走 `window.__DREAMMINISTAGE_SESSION_HOST__`，宿主注入可成功；未注入保持显式 fail-fast）。
+   - 继续 fail-fast：`/wi-get-timed-effect`、`/wi-set-timed-effect`。
 8. 新增 bridge 注入完整性契约测试，直接守护 `CharacterChatPanel -> useScriptBridge -> ApiCallContext -> ExecutionContext` 的高价值注入位，避免再出现组件边界漏传。
 9. `/session` 页面级最小集成用例已补齐：新增 refresh-remount 场景，验证同一会话在刷新后仍可稳定执行 `/floor-teleport` 并命中消息锚点。
 10. 缺失宿主能力已按策略分组：
-   - 待接通：`/translate`（`onTranslateText`）、`/proxy`（`onSelectProxyPreset`）、`/yt-script`（`onGetYouTubeTranscript`）。
+   - 待提供真实 provider：`/translate`（`onTranslateText`）、`/yt-script`（`onGetYouTubeTranscript`）。
+   - 已接通并可回归：`/proxy`（`onSelectProxyPreset` 走页面 `model-store`）。
    - 故意 fail-fast：`/wi-get-timed-effect`、`/wi-set-timed-effect`（缺少稳定的 chat timed effect metadata 设计，暂不引入兼容分支）。
-11. M3 回放已落地并进入可复验状态：`p4-session-replay-e2e.mjs` 新增 round9，覆盖 `/floor-teleport` 宿主锚点滚动与 `/proxy` fail-fast 错误链路；最新通过 run 为 `p4r11-1772804943599`。
+11. M3 回放已落地并进入可复验状态：`p4-session-replay-e2e.mjs` round9 目前仍覆盖 `/proxy` fail-fast 分支；下一轮应补 provider/配置注入后的成功分支，避免守卫陈旧预期。
 12. 回放稳定性修补：`app/session/page.tsx` 将 `currentCharacter` 改为 `useMemo`，消除 header effect 的高频触发，避免 replay 中 `Maximum update depth exceeded` 噪声漂移。
 
 ### 3.3 P3（机会性补齐）
@@ -106,6 +110,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 进入“宿主能力真接通”阶段：优先实现 `selectProxyPreset` 与 `getYouTubeTranscript` 的页面宿主成功路径。
-2. 为 `proxy / yt-script` 补页面级成功路径断言，并与现有 fail-fast 断言成对维护。
+1. 为 `/translate` 与 `/yt-script` 选定并落地默认 provider（或正式宿主注入协议），将当前“可注入成功”推进为“默认可用成功”。
+2. 将 P4 round9 从 `/proxy` fail-fast 断言升级为 `/proxy` 成功切换断言，并补充 `/yt-script` provider 成功回放。
 3. `wi-* timed effect` 继续保持显式 fail-fast，直到 chat metadata 设计冻结后再接通，避免回退到多分支兼容路径。

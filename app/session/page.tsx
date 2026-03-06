@@ -34,8 +34,10 @@ import { useUIStore } from "@/lib/store/ui-store";
 import { useUserStore } from "@/lib/store/user-store";
 import { useSessionStore } from "@/lib/store/session-store";
 import { useScriptVariables } from "@/lib/store/script-variables";
+import { useModelStore, type APIConfig } from "@/lib/store/model-store";
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
+import { setString } from "@/lib/storage/client-storage";
 import { DialogueNode, DialogueTree } from "@/lib/models/node-model";
 import { buildSwitchedSessionName, buildTemporarySessionName } from "@/app/session/session-switch";
 import { executeSlashCommandScript } from "@/lib/slash-command";
@@ -138,6 +140,59 @@ function buildDialogueTreeSnapshot(
 
 function buildSessionSlashHostError(commandName: string, detail: string): Error {
   return new Error(`${commandName} is not wired in /session host yet: ${detail}`);
+}
+
+type SessionSlashHostBridge = {
+  translateText?: (
+    text: string,
+    options?: TranslateTextOptions,
+  ) => string | Promise<string>;
+  getYouTubeTranscript?: (
+    urlOrId: string,
+    options?: YouTubeTranscriptOptions,
+  ) => string | Promise<string>;
+};
+
+const MODEL_STORAGE_KEYS: Record<APIConfig["type"], {
+  model: string;
+  baseUrl: string;
+  apiKey?: string;
+}> = {
+  openai: { model: "openaiModel", baseUrl: "openaiBaseUrl", apiKey: "openaiApiKey" },
+  ollama: { model: "ollamaModel", baseUrl: "ollamaBaseUrl" },
+  gemini: { model: "geminiModel", baseUrl: "geminiBaseUrl", apiKey: "geminiApiKey" },
+};
+
+function syncModelConfigToStorage(config: APIConfig): void {
+  const keys = MODEL_STORAGE_KEYS[config.type];
+  setString("llmType", config.type);
+  setString("modelName", config.model);
+  setString("modelBaseUrl", config.baseUrl);
+  setString(keys.model, config.model);
+  setString(keys.baseUrl, config.baseUrl);
+
+  if (keys.apiKey && typeof config.apiKey === "string") {
+    setString(keys.apiKey, config.apiKey);
+    if (config.apiKey.trim().length > 0) {
+      setString("apiKey", config.apiKey);
+    }
+  }
+}
+
+function resolveSessionSlashHostBridge(): SessionSlashHostBridge | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const candidate = (
+    window as Window & { __DREAMMINISTAGE_SESSION_HOST__?: SessionSlashHostBridge }
+  ).__DREAMMINISTAGE_SESSION_HOST__;
+
+  if (!candidate || typeof candidate !== "object") {
+    return null;
+  }
+
+  return candidate;
 }
 
 function getSessionMessageSelector(index: number): string {
@@ -454,21 +509,60 @@ function SessionPageContent() {
   }, [dialogue.messages.length]);
 
   const handleTranslateText = useCallback(async (
-    _text: string,
-    _options?: TranslateTextOptions,
+    text: string,
+    options?: TranslateTextOptions,
   ): Promise<string> => {
-    throw buildSessionSlashHostError("/translate", "translation backend");
+    const hostBridge = resolveSessionSlashHostBridge();
+    if (!hostBridge?.translateText) {
+      throw buildSessionSlashHostError("/translate", "window.__DREAMMINISTAGE_SESSION_HOST__.translateText");
+    }
+
+    const translated = await Promise.resolve(hostBridge.translateText(text, options));
+    if (typeof translated !== "string") {
+      throw new Error("/translate host returned non-string result");
+    }
+    return translated;
   }, []);
 
   const handleGetYouTubeTranscript = useCallback(async (
-    _urlOrId: string,
-    _options?: YouTubeTranscriptOptions,
+    urlOrId: string,
+    options?: YouTubeTranscriptOptions,
   ): Promise<string> => {
-    throw buildSessionSlashHostError("/yt-script", "YouTube transcript backend");
+    const hostBridge = resolveSessionSlashHostBridge();
+    if (!hostBridge?.getYouTubeTranscript) {
+      throw buildSessionSlashHostError("/yt-script", "window.__DREAMMINISTAGE_SESSION_HOST__.getYouTubeTranscript");
+    }
+
+    const transcript = await Promise.resolve(hostBridge.getYouTubeTranscript(urlOrId, options));
+    if (typeof transcript !== "string") {
+      throw new Error("/yt-script host returned non-string result");
+    }
+    return transcript;
   }, []);
 
-  const handleSelectProxyPreset = useCallback(async (_name?: string): Promise<string> => {
-    throw buildSessionSlashHostError("/proxy", "proxy preset host callback");
+  const handleSelectProxyPreset = useCallback(async (name?: string): Promise<string> => {
+    const { configs, activeConfigId, setActiveConfig } = useModelStore.getState();
+    if (configs.length === 0) {
+      throw buildSessionSlashHostError("/proxy", "model-store config presets");
+    }
+
+    const normalized = (name || "").trim();
+    if (normalized.length === 0) {
+      const active = configs.find((config) => config.id === activeConfigId) || configs[0];
+      if (!active) {
+        throw buildSessionSlashHostError("/proxy", "active proxy preset");
+      }
+      return active.name;
+    }
+
+    const target = configs.find((config) => config.name === normalized || config.id === normalized);
+    if (!target) {
+      throw new Error(`/proxy preset not found: ${normalized}`);
+    }
+
+    setActiveConfig(target.id);
+    syncModelConfigToStorage(target);
+    return target.name;
   }, []);
 
   const handleGetWorldInfoTimedEffect = useCallback(async (
