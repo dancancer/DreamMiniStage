@@ -7,7 +7,17 @@
  */
 
 import type { CommandHandler } from "../types";
+import type { ReasoningParseResult } from "../../types";
 import { parseBoolean } from "../utils/helpers";
+
+const REASONING_TAG_PAIRS = [
+  { open: "<thinking>", close: "</thinking>" },
+  { open: "<think>", close: "</think>" },
+  { open: "<reasoning>", close: "</reasoning>" },
+  { open: "<thought>", close: "</thought>" },
+  { open: "<内心>", close: "</内心>" },
+  { open: "<思考>", close: "</思考>" },
+];
 
 function parseMessageIndex(raw: string | undefined, commandName: string): number {
   const parsed = Number.parseInt((raw || "").trim(), 10);
@@ -186,6 +196,89 @@ function resolveReasoningMessageIndex(
     throw new Error(`/${commandName} message index out of range: ${parsed}`);
   }
   return parsed;
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function parseReasoningReturnType(raw: string | undefined): "reasoning" | "content" {
+  const normalized = (raw || "reasoning").trim().toLowerCase();
+  if (normalized === "reasoning" || normalized === "content") {
+    return normalized;
+  }
+  throw new Error(`/parse-reasoning invalid return value: ${raw || ""}`);
+}
+
+function parseReasoningBooleanOption(
+  raw: string | undefined,
+  optionName: "strict" | "regex",
+): boolean {
+  if (raw === undefined) {
+    return true;
+  }
+
+  const parsed = parseBoolean(raw, undefined);
+  if (parsed === undefined) {
+    throw new Error(`/parse-reasoning invalid ${optionName} value: ${raw}`);
+  }
+  return parsed;
+}
+
+function normalizeReasoningParseResult(commandName: string, value: unknown): ReasoningParseResult | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`/${commandName} host returned invalid reasoning parse result`);
+  }
+
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.reasoning !== "string" || typeof raw.content !== "string") {
+    throw new Error(`/${commandName} host returned invalid reasoning parse payload`);
+  }
+
+  return {
+    reasoning: raw.reasoning,
+    content: raw.content,
+  };
+}
+
+function parseReasoningBlockFromText(
+  input: string,
+  options: { strict: boolean },
+): ReasoningParseResult | null {
+  let matchStart = Number.MAX_SAFE_INTEGER;
+  let matchEnd = -1;
+  let reasoning = "";
+
+  for (const pair of REASONING_TAG_PAIRS) {
+    const pattern = options.strict
+      ? `^\\s*${escapeRegex(pair.open)}([\\s\\S]*?)${escapeRegex(pair.close)}`
+      : `${escapeRegex(pair.open)}([\\s\\S]*?)${escapeRegex(pair.close)}`;
+    const matcher = new RegExp(pattern);
+    const match = matcher.exec(input);
+    if (!match) {
+      continue;
+    }
+
+    if (match.index < matchStart) {
+      matchStart = match.index;
+      matchEnd = match.index + match[0].length;
+      reasoning = (match[1] || "").trim();
+      if (options.strict && match.index === 0) {
+        break;
+      }
+    }
+  }
+
+  if (matchEnd <= matchStart) {
+    return null;
+  }
+
+  const content = `${input.slice(0, matchStart)}${input.slice(matchEnd)}`.trim();
+  return { reasoning, content };
 }
 
 function normalizeInjectionRecord(record: unknown): Record<string, unknown> {
@@ -520,6 +613,46 @@ export const handleSetReasoning: CommandHandler = async (args, namedArgs, ctx, p
     throw new Error(`/set-reasoning message index out of range: ${index}`);
   }
   message.thinkingContent = reasoning;
+  return reasoning;
+};
+
+/**
+ * /reasoning-parse [text] - 解析文本中的 reasoning block
+ * 别名：/parse-reasoning
+ */
+export const handleReasoningParse: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const source = args.join(" ") || namedArgs.text || namedArgs.value || pipe || "";
+  if (!source) {
+    return "";
+  }
+
+  const strict = parseReasoningBooleanOption(namedArgs.strict, "strict");
+  const applyRegex = parseReasoningBooleanOption(namedArgs.regex, "regex");
+  const returnType = parseReasoningReturnType(namedArgs.return);
+  const parsed = ctx.parseReasoningBlock
+    ? normalizeReasoningParseResult(
+      "parse-reasoning",
+      await Promise.resolve(ctx.parseReasoningBlock(source, { strict })),
+    )
+    : parseReasoningBlockFromText(source, { strict });
+
+  if (!parsed) {
+    return returnType === "content" ? source : "";
+  }
+
+  if (returnType === "content") {
+    return parsed.content;
+  }
+
+  let reasoning = parsed.reasoning;
+  if (applyRegex && ctx.applyReasoningRegex) {
+    const regexed = await Promise.resolve(ctx.applyReasoningRegex(reasoning));
+    if (typeof regexed !== "string") {
+      throw new Error("/parse-reasoning host returned non-string regex result");
+    }
+    reasoning = regexed;
+  }
+
   return reasoning;
 };
 

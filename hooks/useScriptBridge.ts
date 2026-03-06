@@ -27,6 +27,11 @@ import type {
   GroupMemberField,
   ImportVariableMapping,
   PopupCommandOptions,
+  QuickReplyCreateOptions,
+  QuickReplyLookup,
+  QuickReplySnapshot,
+  ReasoningParseOptions,
+  ReasoningParseResult,
   SendOptions,
 } from "@/lib/slash-command/types";
 import type { ScriptMessageData } from "@/types/script-message";
@@ -75,6 +80,26 @@ interface UseScriptBridgeOptions {
     text: string,
     options?: { switch?: boolean },
   ) => string | number | void | Promise<string | number | void>;
+  onExecuteQuickReplyByIndex?: (
+    index: number,
+  ) => string | number | void | Promise<string | number | void>;
+  onListQuickReplies?: (
+    setName: string,
+  ) => string[] | QuickReplySnapshot[] | Promise<string[] | QuickReplySnapshot[]>;
+  onGetQuickReply?: (
+    setName: string,
+    target: QuickReplyLookup,
+  ) => Record<string, unknown> | null | undefined | Promise<Record<string, unknown> | null | undefined>;
+  onCreateQuickReply?: (
+    setName: string,
+    label: string,
+    message: string,
+    options?: QuickReplyCreateOptions,
+  ) => void | Promise<void>;
+  onDeleteQuickReply?: (
+    setName: string,
+    target: QuickReplyLookup,
+  ) => void | Promise<void>;
   onSetExpression?: (
     label: string,
     options?: ExpressionSetOptions,
@@ -109,6 +134,11 @@ interface UseScriptBridgeOptions {
   onSwitchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
+  onParseReasoningBlock?: (
+    input: string,
+    options?: ReasoningParseOptions,
+  ) => ReasoningParseResult | null | undefined | Promise<ReasoningParseResult | null | undefined>;
+  onApplyReasoningRegex?: (reasoning: string) => string | Promise<string>;
 }
 
 interface UseScriptBridgeReturn {
@@ -160,6 +190,11 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onAddGroupMember,
     onSetGroupMemberEnabled,
     onAddSwipe,
+    onExecuteQuickReplyByIndex,
+    onListQuickReplies,
+    onGetQuickReply,
+    onCreateQuickReply,
+    onDeleteQuickReply,
     onSetExpression,
     onSetExpressionFolderOverride,
     onGetLastExpression,
@@ -172,6 +207,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onJumpToMessage,
     onRenderChatMessages,
     onSwitchCharacter,
+    onParseReasoningBlock,
+    onApplyReasoningRegex,
   } = options;
   const [scriptStatuses, setScriptStatuses] = useState<ScriptStatus[]>([]);
 
@@ -288,6 +325,11 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onAddGroupMember,
           onSetGroupMemberEnabled,
           onAddSwipe,
+          onExecuteQuickReplyByIndex,
+          onListQuickReplies,
+          onGetQuickReply,
+          onCreateQuickReply,
+          onDeleteQuickReply,
           onSetExpression,
           onSetExpressionFolderOverride,
           onGetLastExpression,
@@ -300,6 +342,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onJumpToMessage,
           onRenderChatMessages,
           onSwitchCharacter: onSwitchCharacter ? handleCharacterSwitch : undefined,
+          onParseReasoningBlock,
+          onApplyReasoningRegex,
         });
         console.log("[useScriptBridge] API_CALL 返回:", method, "result:", result);
         return result;
@@ -350,6 +394,11 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onAddGroupMember,
       onSetGroupMemberEnabled,
       onAddSwipe,
+      onExecuteQuickReplyByIndex,
+      onListQuickReplies,
+      onGetQuickReply,
+      onCreateQuickReply,
+      onDeleteQuickReply,
       onSetExpression,
       onSetExpressionFolderOverride,
       onGetLastExpression,
@@ -362,6 +411,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onJumpToMessage,
       onRenderChatMessages,
       onSwitchCharacter,
+      onParseReasoningBlock,
+      onApplyReasoningRegex,
       handleCharacterSwitch,
     ],
   );

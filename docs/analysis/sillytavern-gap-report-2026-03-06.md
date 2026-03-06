@@ -1,11 +1,11 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-06T01:59:21.017Z
+- generatedAt: 2026-03-06T02:17:31.573Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-06.json`
 
 ## Coverage Snapshot
 
-- slash commands: 331/426 (77.70%)
+- slash commands: 338/426 (79.34%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
@@ -15,9 +15,7 @@
 - [P3] /floor-teleport (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /forcesave (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /hide (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /parse-reasoning (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /proxy (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-arg (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-chat-set (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-chat-set-off (score=2, upstreamRefs=1, localRefs=0)
@@ -25,10 +23,6 @@
 - [P3] /qr-contextadd (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-contextclear (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-contextdel (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-create (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-delete (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-get (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-list (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-presetadd (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-presetdelete (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-presetupdate (score=2, upstreamRefs=1, localRefs=0)
@@ -36,6 +30,12 @@
 - [P3] /qr-set-create (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-set-delete (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qr-set-list (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-set-off (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-set-on (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-set-update (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qr-update (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /qrset (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /random (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

@@ -129,6 +129,40 @@ export interface ImportVariableMapping {
   target: string;
 }
 
+export interface ReasoningParseResult {
+  reasoning: string;
+  content: string;
+}
+
+export interface ReasoningParseOptions {
+  strict?: boolean;
+}
+
+export interface QuickReplyLookup {
+  label?: string;
+  id?: number;
+}
+
+export interface QuickReplyCreateOptions {
+  icon?: string;
+  showLabel?: boolean;
+  title?: string;
+  hidden?: boolean;
+  startup?: boolean;
+  user?: boolean;
+  bot?: boolean;
+  load?: boolean;
+  new?: boolean;
+  group?: boolean;
+  generation?: boolean;
+  automationId?: string;
+}
+
+export interface QuickReplySnapshot {
+  label: string;
+  [key: string]: unknown;
+}
+
 export type ImageGenerationProcessingMode = "standard" | "minimal";
 
 export interface ImageGenerationConfig {
@@ -291,6 +325,11 @@ export interface ExecutionContext {
     reasoning: string,
     options?: { collapse?: boolean },
   ) => void | Promise<void>;
+  parseReasoningBlock?: (
+    input: string,
+    options?: ReasoningParseOptions,
+  ) => ReasoningParseResult | null | undefined | Promise<ReasoningParseResult | null | undefined>;
+  applyReasoningRegex?: (reasoning: string) => string | Promise<string>;
   deleteCurrentChat?: () => void | Promise<void>;
   closeCurrentChat?: () => void | Promise<void>;
   deleteMessagesByName?: (name: string) => number | Promise<number>;
@@ -321,6 +360,26 @@ export interface ExecutionContext {
     text: string,
     options?: { switch?: boolean },
   ) => string | number | void | Promise<string | number | void>;
+  executeQuickReplyByIndex?: (
+    index: number,
+  ) => string | number | void | Promise<string | number | void>;
+  listQuickReplies?: (
+    setName: string,
+  ) => string[] | QuickReplySnapshot[] | Promise<string[] | QuickReplySnapshot[]>;
+  getQuickReply?: (
+    setName: string,
+    target: QuickReplyLookup,
+  ) => Record<string, unknown> | null | undefined | Promise<Record<string, unknown> | null | undefined>;
+  createQuickReply?: (
+    setName: string,
+    label: string,
+    message: string,
+    options?: QuickReplyCreateOptions,
+  ) => void | Promise<void>;
+  deleteQuickReply?: (
+    setName: string,
+    target: QuickReplyLookup,
+  ) => void | Promise<void>;
   getCurrentChatName?: () => string | Promise<string>;
   setInputText?: (text: string) => void | Promise<void>;
   getCurrentCharacter?: () => CharacterSummary | undefined | Promise<CharacterSummary | undefined>;

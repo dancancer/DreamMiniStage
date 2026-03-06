@@ -34,6 +34,11 @@ import type {
   PersonaSetMode,
   PersonaLockType,
   PopupCommandOptions,
+  QuickReplyCreateOptions,
+  QuickReplyLookup,
+  QuickReplySnapshot,
+  ReasoningParseOptions,
+  ReasoningParseResult,
   SetModelOptions,
   SendOptions,
 } from "@/lib/slash-command/types";
@@ -134,6 +139,26 @@ export interface ApiCallContext {
     text: string,
     options?: { switch?: boolean },
   ) => string | number | void | Promise<string | number | void>;
+  onExecuteQuickReplyByIndex?: (
+    index: number,
+  ) => string | number | void | Promise<string | number | void>;
+  onListQuickReplies?: (
+    setName: string,
+  ) => string[] | QuickReplySnapshot[] | Promise<string[] | QuickReplySnapshot[]>;
+  onGetQuickReply?: (
+    setName: string,
+    target: QuickReplyLookup,
+  ) => Record<string, unknown> | null | undefined | Promise<Record<string, unknown> | null | undefined>;
+  onCreateQuickReply?: (
+    setName: string,
+    label: string,
+    message: string,
+    options?: QuickReplyCreateOptions,
+  ) => void | Promise<void>;
+  onDeleteQuickReply?: (
+    setName: string,
+    target: QuickReplyLookup,
+  ) => void | Promise<void>;
   onAskCharacter?: (
     target: string,
     prompt: string,
@@ -289,6 +314,11 @@ export interface ApiCallContext {
   onSwitchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
+  onParseReasoningBlock?: (
+    input: string,
+    options?: ReasoningParseOptions,
+  ) => ReasoningParseResult | null | undefined | Promise<ReasoningParseResult | null | undefined>;
+  onApplyReasoningRegex?: (reasoning: string) => string | Promise<string>;
   onRemovePromptInjections?: (id?: string) => number | Promise<number>;
 }
 

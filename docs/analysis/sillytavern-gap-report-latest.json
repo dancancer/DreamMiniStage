@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-06T01:59:21.017Z",
+  "generatedAt": "2026-03-06T02:17:31.573Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 331,
-    "coverage": "77.70%",
+    "covered": 338,
+    "coverage": "79.34%",
     "missingTop": [
       {
         "command": "expression-upload",
@@ -34,21 +34,7 @@
         "priority": "P3"
       },
       {
-        "command": "parse-reasoning",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "proxy",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "qr",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -98,34 +84,6 @@
       },
       {
         "command": "qr-contextdel",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "qr-create",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "qr-delete",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "qr-get",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "qr-list",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -224,13 +182,6 @@
       },
       {
         "command": "reasoning-formatting",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "reasoning-parse",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

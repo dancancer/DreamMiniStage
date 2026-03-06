@@ -817,6 +817,11 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onPeekGroupMember = ctx.onPeekGroupMember;
   const onSetGroupMemberEnabled = ctx.onSetGroupMemberEnabled;
   const onAddSwipe = ctx.onAddSwipe;
+  const onExecuteQuickReplyByIndex = ctx.onExecuteQuickReplyByIndex;
+  const onListQuickReplies = ctx.onListQuickReplies;
+  const onGetQuickReply = ctx.onGetQuickReply;
+  const onCreateQuickReply = ctx.onCreateQuickReply;
+  const onDeleteQuickReply = ctx.onDeleteQuickReply;
   const onAskCharacter = ctx.onAskCharacter;
   const onSetPersonaLock = ctx.onSetPersonaLock
     ? async (
@@ -954,6 +959,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onRenderChatMessages = ctx.onRenderChatMessages;
   const onSelectContextPreset = ctx.onSelectContextPreset;
   const onSwitchCharacter = ctx.onSwitchCharacter;
+  const onParseReasoningBlock = ctx.onParseReasoningBlock;
+  const onApplyReasoningRegex = ctx.onApplyReasoningRegex;
   const onRemovePromptInjections = ctx.onRemovePromptInjections;
 
   const getWorldBookEntry = async (id: string): Promise<WorldBookEntryData | undefined> => {
@@ -1385,6 +1392,11 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     peekGroupMember: onPeekGroupMember,
     setGroupMemberEnabled: onSetGroupMemberEnabled,
     addSwipe: onAddSwipe,
+    executeQuickReplyByIndex: onExecuteQuickReplyByIndex,
+    listQuickReplies: onListQuickReplies,
+    getQuickReply: onGetQuickReply,
+    createQuickReply: onCreateQuickReply,
+    deleteQuickReply: onDeleteQuickReply,
     askCharacter: onAskCharacter,
     getAuthorNoteState: onGetAuthorNoteState,
     setAuthorNoteState: onSetAuthorNoteState,
@@ -1498,6 +1510,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     },
     getMessageReasoning,
     setMessageReasoning,
+    parseReasoningBlock: onParseReasoningBlock,
+    applyReasoningRegex: onApplyReasoningRegex,
     injectPrompt,
     listPromptInjections: listInjectedPrompts,
     removePromptInjections: removeInjectedPrompts,

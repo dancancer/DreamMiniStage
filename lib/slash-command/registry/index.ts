@@ -27,6 +27,7 @@ import * as ExpressionHandlers from "./handlers/expression";
 import * as ExtensionHandlers from "./handlers/extensions";
 import * as NotePersonaHandlers from "./handlers/note-persona";
 import * as ProfilePromptHandlers from "./handlers/profile-prompt";
+import * as QuickReplyHandlers from "./handlers/quick-reply";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -203,6 +204,8 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["get-reasoning", ChatHandlers.handleGetReasoning],
   ["reasoning-set", ChatHandlers.handleSetReasoning],
   ["set-reasoning", ChatHandlers.handleSetReasoning],
+  ["reasoning-parse", ChatHandlers.handleReasoningParse],
+  ["parse-reasoning", ChatHandlers.handleReasoningParse],
   ["listinjects", ChatHandlers.handleListInjects],
   ["flushinject", ChatHandlers.handleFlushInjects],
   ["flushinjects", ChatHandlers.handleFlushInjects],
@@ -235,6 +238,11 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["extension-state", ExtensionHandlers.handleExtensionState],
   ["extension-exists", ExtensionHandlers.handleExtensionExists],
   ["extension-installed", ExtensionHandlers.handleExtensionExists],
+  ["qr", QuickReplyHandlers.handleQr],
+  ["qr-list", QuickReplyHandlers.handleQrList],
+  ["qr-get", QuickReplyHandlers.handleQrGet],
+  ["qr-create", QuickReplyHandlers.handleQrCreate],
+  ["qr-delete", QuickReplyHandlers.handleQrDelete],
 
   // ─── 工具命令 ───
   ["?", CoreHandlers.handleHelp],

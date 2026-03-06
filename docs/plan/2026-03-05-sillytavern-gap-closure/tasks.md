@@ -144,3 +144,9 @@
 - [x] 补齐低耦合工具命令簇（`/dupe`、`/length`、`/is-mobile`、`/newchat`），统一单路径与 fail-fast 语义。
 - [x] 补齐导入/弹窗命令簇（`/import`、`/popup`、`/pick-icon`），并补齐宿主透传位与默认实现（popup/pick-icon/is-mobile）。
 - [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
+
+## 25. P3 增量收敛（推理解析 + Quick Reply 第一批）
+
+- [x] 补齐推理解析命令（`/reasoning-parse|/parse-reasoning`），支持 strict/return/regex 语义与宿主回调覆写。
+- [x] 补齐 Quick Reply 第一批命令（`/qr`、`/qr-list`、`/qr-get`、`/qr-create`、`/qr-delete`），统一宿主透传单路径与 fail-fast 校验。
+- [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
