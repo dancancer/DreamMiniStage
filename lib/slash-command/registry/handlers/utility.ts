@@ -126,7 +126,7 @@ function trimToEndSentence(input: string): string {
     "!",
     "?",
     "*",
-    '"',
+    "\"",
     ")",
     "}",
     "`",

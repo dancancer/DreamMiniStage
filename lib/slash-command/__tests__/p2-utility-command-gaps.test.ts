@@ -120,19 +120,19 @@ describe("P2 utility command gaps", () => {
 
   it("/sort 支持数组排序与对象 value 排序", async () => {
     const sortedList = await executeSlashCommandScript("/sort [3,1,2]", createContext());
-    const sortedKeys = await executeSlashCommandScript('/sort {"b":2,"a":1}', createContext());
-    const sortedByValue = await executeSlashCommandScript('/sort keysort=false {"b":1,"a":2}', createContext());
+    const sortedKeys = await executeSlashCommandScript("/sort {\"b\":2,\"a\":1}", createContext());
+    const sortedByValue = await executeSlashCommandScript("/sort keysort=false {\"b\":1,\"a\":2}", createContext());
 
     expect(sortedList.isError).toBe(false);
     expect(sortedKeys.isError).toBe(false);
     expect(sortedByValue.isError).toBe(false);
     expect(sortedList.pipe).toBe("[1,2,3]");
-    expect(sortedKeys.pipe).toBe('["a","b"]');
-    expect(sortedByValue.pipe).toBe('["b","a"]');
+    expect(sortedKeys.pipe).toBe("[\"a\",\"b\"]");
+    expect(sortedByValue.pipe).toBe("[\"b\",\"a\"]");
   });
 
   it("/sort 对非法 keysort 参数显式 fail-fast", async () => {
-    const result = await executeSlashCommandScript('/sort keysort=maybe {"a":1}', createContext());
+    const result = await executeSlashCommandScript("/sort keysort=maybe {\"a\":1}", createContext());
 
     expect(result.isError).toBe(true);
     expect(result.errorMessage).toContain("invalid keysort");
