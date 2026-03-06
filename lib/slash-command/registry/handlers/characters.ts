@@ -40,6 +40,16 @@ function normalizeAskReturnType(raw: string | undefined): "pipe" | "none" {
   throw new Error(`/ask invalid return value: ${raw || ""}`);
 }
 
+function normalizeDupeResult(value: unknown): string {
+  if (value === undefined || value === null) {
+    return "";
+  }
+  if (typeof value !== "string") {
+    throw new Error("/dupe host returned non-string result");
+  }
+  return value;
+}
+
 /** /char [name|id] - 读取当前角色，或切换角色 */
 export const handleCharacter: CommandHandler = async (args, namedArgs, ctx, pipe) => {
   const target = (args.join(" ") || namedArgs.name || namedArgs.id || pipe || "").trim();
@@ -99,4 +109,14 @@ export const handleAsk: CommandHandler = async (args, namedArgs, ctx, pipe) => {
     throw new Error("/ask host returned non-string result");
   }
   return result;
+};
+
+/** /dupe - 复制当前角色 */
+export const handleDupe: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  if (!ctx.duplicateCharacter) {
+    throw new Error("/dupe is not available in current context");
+  }
+
+  const result = await Promise.resolve(ctx.duplicateCharacter());
+  return normalizeDupeResult(result);
 };

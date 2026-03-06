@@ -138,3 +138,9 @@
 - [x] 补齐 profile/prompt 长尾命令簇（`/profile`、`/profile-create`、`/profile-get`、`/profile-list`、`/profile-update`、`/prompt`、`/prompt-post-processing|/ppp`），统一单路径与 fail-fast 语义。
 - [x] 扩展 Slash 执行上下文（ExecutionContext / Script Bridge）透传 profile/prompt-post-processing 回调能力，并在宿主默认路径补齐 localStorage 存储（profiles/selected/ppp）。
 - [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。
+
+## 24. P3 增量收敛（工具 + 弹窗导入）
+
+- [x] 补齐低耦合工具命令簇（`/dupe`、`/length`、`/is-mobile`、`/newchat`），统一单路径与 fail-fast 语义。
+- [x] 补齐导入/弹窗命令簇（`/import`、`/popup`、`/pick-icon`），并补齐宿主透传位与默认实现（popup/pick-icon/is-mobile）。
+- [x] 运行定向回归 + gap 分析并更新报告、分析文档与 handoff。

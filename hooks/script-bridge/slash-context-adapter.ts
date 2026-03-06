@@ -205,6 +205,60 @@ async function defaultShowButtonsPopup(
   return labels[index - 1];
 }
 
+async function defaultShowPopup(
+  text: string,
+  options?: {
+    header?: string;
+    scroll?: boolean;
+    large?: boolean;
+    wide?: boolean;
+    wider?: boolean;
+    transparent?: boolean;
+    okButton?: string;
+    cancelButton?: string;
+    result?: boolean;
+  },
+): Promise<string | number> {
+  if (typeof window === "undefined") {
+    throw new Error("/popup is not available in current context");
+  }
+
+  const header = options?.header?.trim();
+  const popupText = [header, text].filter(Boolean).join("\n\n");
+  const useResult = options?.result === true;
+  const hasCancelButton = typeof options?.cancelButton === "string";
+
+  if (hasCancelButton || useResult) {
+    const confirmed = window.confirm(popupText);
+    if (useResult) {
+      return confirmed ? 1 : 0;
+    }
+    return confirmed ? text : "";
+  }
+
+  window.alert(popupText);
+  return useResult ? 1 : text;
+}
+
+async function defaultPickIcon(): Promise<string | false> {
+  if (typeof window === "undefined" || typeof window.prompt !== "function") {
+    throw new Error("/pick-icon is not available in current context");
+  }
+
+  const raw = window.prompt("Input icon name:", "");
+  const iconName = (raw || "").trim();
+  return iconName || false;
+}
+
+function defaultIsMobile(): boolean {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  const ua = navigator.userAgent || "";
+  return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(ua);
+}
+
 async function defaultCloseCurrentChat(): Promise<void> {
   if (typeof document === "undefined") {
     throw new Error("/closechat is not available in current context");
@@ -616,6 +670,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onCloseChat = ctx.onCloseChat ?? (typeof document !== "undefined" ? defaultCloseCurrentChat : undefined);
   const onGetChatName = ctx.onGetChatName;
   const onSetInput = ctx.onSetInput;
+  const onDuplicateCharacter = ctx.onDuplicateCharacter;
+  const onNewChat = ctx.onNewChat;
   const onGenerateImage = ctx.onGenerateImage;
   const onGetImageGenerationConfig = ctx.onGetImageGenerationConfig;
   const onSetImageGenerationConfig = ctx.onSetImageGenerationConfig;
@@ -784,6 +840,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onReloadPage = ctx.onReloadPage;
   const onGetClipboardText = ctx.onGetClipboardText;
   const onSetClipboardText = ctx.onSetClipboardText;
+  const onImportVariables = ctx.onImportVariables;
   const onOpenDataBank = ctx.onOpenDataBank;
   const onListDataBankEntries = ctx.onListDataBankEntries;
   const onGetDataBankText = ctx.onGetDataBankText;
@@ -860,6 +917,13 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const defaultButtonsPopupCallback = typeof window !== "undefined"
     ? defaultShowButtonsPopup
     : undefined;
+  const defaultPopupCallback = typeof window !== "undefined"
+    ? defaultShowPopup
+    : undefined;
+  const defaultPickIconCallback = typeof window !== "undefined"
+    ? defaultPickIcon
+    : undefined;
+  const defaultIsMobileCallback = defaultIsMobile;
   const onIsExtensionInstalled = ctx.onIsExtensionInstalled ?? defaultIsExtensionInstalled;
   const onGetExtensionEnabledState = ctx.onGetExtensionEnabledState ?? defaultGetExtensionEnabledState;
   const onSetExtensionEnabled = ctx.onSetExtensionEnabled ?? defaultSetExtensionEnabled;
@@ -876,6 +940,9 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onSetAverageBackgroundColor = ctx.onSetAverageBackgroundColor ?? defaultSetAverageBackgroundColor;
   const onSetChatDisplayMode = ctx.onSetChatDisplayMode ?? defaultSetChatDisplayMode;
   const onShowButtonsPopup = ctx.onShowButtonsPopup ?? defaultButtonsPopupCallback;
+  const onShowPopup = ctx.onShowPopup ?? defaultPopupCallback;
+  const onPickIcon = ctx.onPickIcon ?? defaultPickIconCallback;
+  const onIsMobile = ctx.onIsMobile ?? defaultIsMobileCallback;
   const onGenerateCaption = ctx.onGenerateCaption;
   const onPlayNotificationSound = ctx.onPlayNotificationSound;
   const onSetExpression = ctx.onSetExpression;
@@ -1298,6 +1365,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     closeCurrentChat: onCloseChat,
     getCurrentChatName: onGetChatName,
     setInputText: onSetInput,
+    duplicateCharacter: onDuplicateCharacter,
+    createNewChat: onNewChat,
     generateImage: onGenerateImage,
     getImageGenerationConfig: onGetImageGenerationConfig,
     setImageGenerationConfig: onSetImageGenerationConfig,
@@ -1335,6 +1404,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     reloadPage: onReloadPage,
     getClipboardText: onGetClipboardText,
     setClipboardText: onSetClipboardText,
+    importVariables: onImportVariables,
     openDataBank: onOpenDataBank,
     listDataBankEntries: onListDataBankEntries,
     getDataBankText: onGetDataBankText,
@@ -1361,6 +1431,9 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     setAverageBackgroundColor: onSetAverageBackgroundColor,
     setChatDisplayMode: onSetChatDisplayMode,
     showButtonsPopup: onShowButtonsPopup,
+    showPopup: onShowPopup,
+    pickIcon: onPickIcon,
+    isMobileDevice: onIsMobile,
     generateCaption: onGenerateCaption,
     playNotificationSound: onPlayNotificationSound,
     setExpression: onSetExpression,

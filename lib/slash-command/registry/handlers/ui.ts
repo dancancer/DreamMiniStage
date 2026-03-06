@@ -2,7 +2,7 @@
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                    UI Command Handlers                                   ║
  * ║                                                                           ║
- * ║  UI 命令最小子集 - panels/bg/theme/movingui/vn/caption/beep              ║
+ * ║  UI 命令最小子集 - panels/bg/theme/movingui/vn/popup/pick-icon            ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -73,6 +73,47 @@ function parseButtonLabels(raw: string | undefined): string[] {
     throw new Error("/buttons labels must contain at least one non-empty string");
   }
   return labels;
+}
+
+function parseStrictBoolean(
+  raw: string | undefined,
+  commandName: string,
+  fieldName: string,
+  defaultValue: boolean,
+): boolean {
+  if (raw === undefined) {
+    return defaultValue;
+  }
+
+  const parsed = parseBoolean(raw, undefined);
+  if (parsed === undefined) {
+    throw new Error(`/${commandName} invalid ${fieldName} value: ${raw}`);
+  }
+  return parsed;
+}
+
+function normalizePopupResult(
+  value: unknown,
+  commandName: string,
+): string {
+  if (value === undefined || value === null || value === "") {
+    return "";
+  }
+
+  if (typeof value !== "string" && typeof value !== "number") {
+    throw new Error(`/${commandName} host callback must return string/number when result=true`);
+  }
+  return String(value);
+}
+
+function normalizePickIconResult(value: unknown): string {
+  if (value === false || value === undefined || value === null) {
+    return "false";
+  }
+  if (typeof value !== "string") {
+    throw new Error("/pick-icon host callback must return string or false");
+  }
+  return value || "false";
 }
 
 /** /panels - 切换 UI 面板显示 */
@@ -239,6 +280,37 @@ export const handleButtons: CommandHandler = async (args, namedArgs, ctx, pipe) 
     return JSON.stringify(result);
   }
   throw new Error("/buttons host callback must return string or string[]");
+};
+
+/** /popup [text] - 弹出提示框，支持 result=true 返回确认结果 */
+export const handlePopup: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const callback = ensureHostCallback(ctx.showPopup, "popup");
+  const text = resolveCommandText(args, pipe);
+  if (!text) {
+    throw new Error("/popup requires popup text");
+  }
+
+  const options = {
+    header: namedArgs.header,
+    scroll: parseStrictBoolean(namedArgs.scroll, "popup", "scroll", true),
+    large: parseStrictBoolean(namedArgs.large, "popup", "large", false),
+    wide: parseStrictBoolean(namedArgs.wide, "popup", "wide", false),
+    wider: parseStrictBoolean(namedArgs.wider, "popup", "wider", false),
+    transparent: parseStrictBoolean(namedArgs.transparent, "popup", "transparent", false),
+    okButton: namedArgs.okButton,
+    cancelButton: namedArgs.cancelButton,
+    result: parseStrictBoolean(namedArgs.result, "popup", "result", false),
+  };
+
+  const result = await Promise.resolve(callback(text, options));
+  return options.result ? normalizePopupResult(result, "popup") : text;
+};
+
+/** /pick-icon - 打开图标选择器并返回选中值（取消返回 false） */
+export const handlePickIcon: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  const callback = ensureHostCallback(ctx.pickIcon, "pick-icon");
+  const result = await Promise.resolve(callback());
+  return normalizePickIconResult(result);
 };
 
 /** /caption [prompt] - 生成图片描述 */

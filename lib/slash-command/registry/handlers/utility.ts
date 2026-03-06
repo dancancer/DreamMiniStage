@@ -2,7 +2,7 @@
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                    Utility Command Handlers                              ║
  * ║                                                                           ║
- * ║  工具命令 - run / trimtokens / closure-* / lock/bind / clipboard-*        ║
+ * ║  工具命令 - run / trimtokens / is-mobile / import / clipboard-*            ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -124,6 +124,64 @@ function resolveClipboardText(args: string[], namedArgs: Record<string, string>,
   const fromArgs = args.join(" ");
   const fromNamed = namedArgs.text;
   return fromArgs || fromNamed || pipe || "";
+}
+
+function detectIsMobileUserAgent(): boolean {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  const userAgent = navigator.userAgent || "";
+  return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(userAgent);
+}
+
+function parseImportMappings(
+  args: string[],
+  namedArgs: Record<string, string>,
+  pipe: string,
+): Array<{ source: string; target: string }> {
+  const fromNamed = (namedArgs.items || namedArgs.keys || "").trim();
+  const sourceText = fromNamed || args.join(" ") || pipe;
+  const tokens = sourceText
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0);
+  if (tokens.length === 0) {
+    throw new Error("/import requires items to import");
+  }
+
+  const mappings: Array<{ source: string; target: string }> = [];
+  for (let index = 0; index < tokens.length; index += 1) {
+    const source = tokens[index];
+    if (!source) {
+      continue;
+    }
+
+    const marker = tokens[index + 1]?.toLowerCase();
+    if (marker === "as") {
+      const target = tokens[index + 2];
+      if (!target) {
+        throw new Error(`/import missing target variable after 'as': ${source}`);
+      }
+      mappings.push({ source, target });
+      index += 2;
+      continue;
+    }
+
+    mappings.push({ source, target: source });
+  }
+
+  return mappings;
+}
+
+function normalizeImportResult(value: unknown): string {
+  if (value === undefined || value === null) {
+    return "";
+  }
+  if (!Number.isInteger(value) || Number(value) < 0) {
+    throw new Error("/import host returned invalid import count");
+  }
+  return String(value);
 }
 
 function isEscapedCharacter(input: string, index: number): boolean {
@@ -381,6 +439,33 @@ export const handleCount: CommandHandler = async (_args, _namedArgs, ctx, _pipe)
   }
 
   return String(tokenCount);
+};
+
+/** /is-mobile - 返回当前终端是否为移动设备 */
+export const handleIsMobile: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  const isMobile = ctx.isMobileDevice
+    ? await Promise.resolve(ctx.isMobileDevice())
+    : detectIsMobileUserAgent();
+  if (typeof isMobile !== "boolean") {
+    throw new Error("/is-mobile host returned non-boolean result");
+  }
+  return String(isMobile);
+};
+
+/** /import from=<qr> <x [as y]> - 从宿主导入作用域变量 */
+export const handleImport: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.importVariables) {
+    throw new Error("/import is not available in current context");
+  }
+
+  const from = (namedArgs.from || "").trim();
+  if (!from) {
+    throw new Error("/import requires from=<source>");
+  }
+
+  const mappings = parseImportMappings(args, namedArgs, pipe);
+  const result = await Promise.resolve(ctx.importVariables(from, mappings));
+  return normalizeImportResult(result);
 };
 
 /** /reload-page - 触发宿主页面刷新（宿主未实现时 fail-fast） */

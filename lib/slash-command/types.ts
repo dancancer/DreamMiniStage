@@ -112,6 +112,23 @@ export interface ButtonsCommandOptions {
   multiple?: boolean;
 }
 
+export interface PopupCommandOptions {
+  header?: string;
+  scroll?: boolean;
+  large?: boolean;
+  wide?: boolean;
+  wider?: boolean;
+  transparent?: boolean;
+  okButton?: string;
+  cancelButton?: string;
+  result?: boolean;
+}
+
+export interface ImportVariableMapping {
+  source: string;
+  target: string;
+}
+
 export type ImageGenerationProcessingMode = "standard" | "minimal";
 
 export interface ImageGenerationConfig {
@@ -311,6 +328,8 @@ export interface ExecutionContext {
   switchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
+  duplicateCharacter?: () => string | void | Promise<string | void>;
+  createNewChat?: (options?: { deleteCurrentChat?: boolean }) => void | Promise<void>;
   askCharacter?: (
     target: string,
     prompt: string,
@@ -465,6 +484,10 @@ export interface ExecutionContext {
   ) => boolean | Promise<boolean>;
   getClipboardText?: () => string | Promise<string>;
   setClipboardText?: (text: string) => void | Promise<void>;
+  importVariables?: (
+    from: string,
+    mappings: ImportVariableMapping[],
+  ) => number | void | Promise<number | void>;
   reloadPage?: () => void | Promise<void>;
   listGallery?: (
     options?: ListGalleryOptions,
@@ -546,6 +569,12 @@ export interface ExecutionContext {
     labels: string[],
     options?: ButtonsCommandOptions,
   ) => string | string[] | Promise<string | string[]>;
+  showPopup?: (
+    text: string,
+    options?: PopupCommandOptions,
+  ) => string | number | null | undefined | Promise<string | number | null | undefined>;
+  pickIcon?: () => string | false | Promise<string | false>;
+  isMobileDevice?: () => boolean | Promise<boolean>;
   generateCaption?: (
     options?: CaptionCommandOptions,
   ) => string | Promise<string>;

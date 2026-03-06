@@ -2,7 +2,7 @@
  * ╔══════════════════════════════════════════════════════════════════════════╗
  * ║                 Chat Management Command Handlers                          ║
  * ║                                                                           ║
- * ║  聊天管理命令 - chat-* / member-* / delchat / delmode / delname / swipe  ║
+ * ║  聊天管理命令 - chat-* / newchat / member-* / delchat / delmode / swipe   ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -36,6 +36,18 @@ function parseDeleteCount(raw: string | undefined, commandName: string): number 
   const parsed = Number.parseInt(raw.trim(), 10);
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw new Error(`/${commandName} invalid delete count: ${raw}`);
+  }
+  return parsed;
+}
+
+function parseNewChatDelete(raw: string | undefined): boolean {
+  if (raw === undefined) {
+    return false;
+  }
+
+  const parsed = parseBoolean(raw, undefined);
+  if (parsed === undefined) {
+    throw new Error(`/newchat invalid delete value: ${raw}`);
   }
   return parsed;
 }
@@ -240,6 +252,21 @@ export const handleCloseChat: CommandHandler = async (_args, _namedArgs, ctx, _p
   }
 
   await Promise.resolve(ctx.closeCurrentChat());
+  return "";
+};
+
+/**
+ * /newchat [delete=true|false] - 创建新会话
+ * SillyTavern 语义：返回空字符串。
+ */
+export const handleNewChat: CommandHandler = async (args, namedArgs, ctx, _pipe) => {
+  if (!ctx.createNewChat) {
+    throw new Error("/newchat is not available in current context");
+  }
+
+  const deleteRaw = namedArgs.delete ?? args[0];
+  const deleteCurrentChat = parseNewChatDelete(deleteRaw);
+  await Promise.resolve(ctx.createNewChat({ deleteCurrentChat }));
   return "";
 };
 

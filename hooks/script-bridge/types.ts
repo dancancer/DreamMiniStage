@@ -24,6 +24,7 @@ import type {
   ExpressionSetOptions,
   GroupMemberField,
   GroupMemberMoveDirection,
+  ImportVariableMapping,
   ImageGenerationConfig,
   ImageGenerationOptions,
   InstructModePatch,
@@ -32,6 +33,7 @@ import type {
   PersonaLockState,
   PersonaSetMode,
   PersonaLockType,
+  PopupCommandOptions,
   SetModelOptions,
   SendOptions,
 } from "@/lib/slash-command/types";
@@ -81,6 +83,8 @@ export interface ApiCallContext {
   onCloseChat?: () => void | Promise<void>;
   onGetChatName?: () => string | Promise<string>;
   onSetInput?: (text: string) => void | Promise<void>;
+  onDuplicateCharacter?: () => string | void | Promise<string | void>;
+  onNewChat?: (options?: { deleteCurrentChat?: boolean }) => void | Promise<void>;
   onGenerateImage?: (
     prompt: string,
     options?: ImageGenerationOptions,
@@ -170,6 +174,10 @@ export interface ApiCallContext {
   onReloadPage?: () => void | Promise<void>;
   onGetClipboardText?: () => string | Promise<string>;
   onSetClipboardText?: (text: string) => void | Promise<void>;
+  onImportVariables?: (
+    from: string,
+    mappings: ImportVariableMapping[],
+  ) => number | void | Promise<number | void>;
   onOpenDataBank?: () => void | Promise<void>;
   onListDataBankEntries?: (
     options?: { source?: DataBankSource },
@@ -243,6 +251,12 @@ export interface ApiCallContext {
     labels: string[],
     options?: ButtonsCommandOptions,
   ) => string | string[] | Promise<string | string[]>;
+  onShowPopup?: (
+    text: string,
+    options?: PopupCommandOptions,
+  ) => string | number | null | undefined | Promise<string | number | null | undefined>;
+  onPickIcon?: () => string | false | Promise<string | false>;
+  onIsMobile?: () => boolean | Promise<boolean>;
   onGenerateCaption?: (
     options?: CaptionCommandOptions,
   ) => string | Promise<string>;

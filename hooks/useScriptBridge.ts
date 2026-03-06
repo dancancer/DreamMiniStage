@@ -25,6 +25,8 @@ import type {
   ExpressionListOptions,
   ExpressionSetOptions,
   GroupMemberField,
+  ImportVariableMapping,
+  PopupCommandOptions,
   SendOptions,
 } from "@/lib/slash-command/types";
 import type { ScriptMessageData } from "@/types/script-message";
@@ -56,6 +58,8 @@ interface UseScriptBridgeOptions {
   onSwipe?: (target?: string) => void | Promise<void>;
   onGetChatName?: () => string | Promise<string>;
   onSetInput?: (text: string) => void | Promise<void>;
+  onDuplicateCharacter?: () => string | void | Promise<string | void>;
+  onNewChat?: (options?: { deleteCurrentChat?: boolean }) => void | Promise<void>;
   onGetGroupMember?: (
     target: string,
     field: GroupMemberField,
@@ -87,6 +91,16 @@ interface UseScriptBridgeOptions {
     text: string,
     options?: ExpressionClassifyOptions,
   ) => string | Promise<string>;
+  onImportVariables?: (
+    from: string,
+    mappings: ImportVariableMapping[],
+  ) => number | void | Promise<number | void>;
+  onShowPopup?: (
+    text: string,
+    options?: PopupCommandOptions,
+  ) => string | number | null | undefined | Promise<string | number | null | undefined>;
+  onPickIcon?: () => string | false | Promise<string | false>;
+  onIsMobile?: () => boolean | Promise<boolean>;
   onJumpToMessage?: (index: number) => void | Promise<void>;
   onRenderChatMessages?: (
     count: number,
@@ -140,6 +154,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onSwipe,
     onGetChatName,
     onSetInput,
+    onDuplicateCharacter,
+    onNewChat,
     onGetGroupMember,
     onAddGroupMember,
     onSetGroupMemberEnabled,
@@ -149,6 +165,10 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onGetLastExpression,
     onListExpressions,
     onClassifyExpression,
+    onImportVariables,
+    onShowPopup,
+    onPickIcon,
+    onIsMobile,
     onJumpToMessage,
     onRenderChatMessages,
     onSwitchCharacter,
@@ -262,6 +282,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onSwipe,
           onGetChatName,
           onSetInput,
+          onDuplicateCharacter,
+          onNewChat,
           onGetGroupMember,
           onAddGroupMember,
           onSetGroupMemberEnabled,
@@ -271,6 +293,10 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onGetLastExpression,
           onListExpressions,
           onClassifyExpression,
+          onImportVariables,
+          onShowPopup,
+          onPickIcon,
+          onIsMobile,
           onJumpToMessage,
           onRenderChatMessages,
           onSwitchCharacter: onSwitchCharacter ? handleCharacterSwitch : undefined,
@@ -318,6 +344,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onSwipe,
       onGetChatName,
       onSetInput,
+      onDuplicateCharacter,
+      onNewChat,
       onGetGroupMember,
       onAddGroupMember,
       onSetGroupMemberEnabled,
@@ -327,6 +355,10 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onGetLastExpression,
       onListExpressions,
       onClassifyExpression,
+      onImportVariables,
+      onShowPopup,
+      onPickIcon,
+      onIsMobile,
       onJumpToMessage,
       onRenderChatMessages,
       onSwitchCharacter,
