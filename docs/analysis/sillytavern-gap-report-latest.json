@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-06T06:11:48.515Z",
+  "generatedAt": "2026-03-06T07:08:51.316Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 399,
-    "coverage": "93.66%",
+    "covered": 409,
+    "coverage": "96.01%",
     "missingTop": [
       {
         "command": "floor-teleport",
@@ -21,13 +21,6 @@
       },
       {
         "command": "qrset",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "random",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -56,13 +49,6 @@
       },
       {
         "command": "sd-style",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sort",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -104,13 +90,6 @@
         "priority": "P3"
       },
       {
-        "command": "tokens",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "translate",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -118,56 +97,7 @@
         "priority": "P3"
       },
       {
-        "command": "trimend",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "trimstart",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "tts",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "vector-chats-state",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "vector-files-state",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "vector-max-entries",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "vector-query",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "vector-threshold",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

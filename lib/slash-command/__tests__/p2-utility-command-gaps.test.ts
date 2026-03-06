@@ -118,6 +118,60 @@ describe("P2 utility command gaps", () => {
     expect(badTokenCount.errorMessage).toContain("invalid token count");
   });
 
+  it("/sort 支持数组排序与对象 value 排序", async () => {
+    const sortedList = await executeSlashCommandScript("/sort [3,1,2]", createContext());
+    const sortedKeys = await executeSlashCommandScript('/sort {"b":2,"a":1}', createContext());
+    const sortedByValue = await executeSlashCommandScript('/sort keysort=false {"b":1,"a":2}', createContext());
+
+    expect(sortedList.isError).toBe(false);
+    expect(sortedKeys.isError).toBe(false);
+    expect(sortedByValue.isError).toBe(false);
+    expect(sortedList.pipe).toBe("[1,2,3]");
+    expect(sortedKeys.pipe).toBe('["a","b"]');
+    expect(sortedByValue.pipe).toBe('["b","a"]');
+  });
+
+  it("/sort 对非法 keysort 参数显式 fail-fast", async () => {
+    const result = await executeSlashCommandScript('/sort keysort=maybe {"a":1}', createContext());
+
+    expect(result.isError).toBe(true);
+    expect(result.errorMessage).toContain("invalid keysort");
+  });
+
+  it("/tokens 支持 tokenizer 与估算降级", async () => {
+    const countTokens = vi.fn().mockResolvedValue(7);
+    const withTokenizer = await executeSlashCommandScript("/tokens hello world", createContext({ countTokens }));
+    const fallback = await executeSlashCommandScript("/tokens abcd", createContext());
+
+    expect(withTokenizer.isError).toBe(false);
+    expect(fallback.isError).toBe(false);
+    expect(withTokenizer.pipe).toBe("7");
+    expect(fallback.pipe).toBe("1");
+    expect(countTokens).toHaveBeenCalledWith("hello world");
+  });
+
+  it("/trimstart 与 /trimend 支持句子边界裁剪", async () => {
+    const trimStart = await executeSlashCommandScript(
+      "/trimstart Intro. Keep this sentence.",
+      createContext(),
+    );
+    const trimEnd = await executeSlashCommandScript(
+      "/trimend Keep this sentence. trailing words",
+      createContext(),
+    );
+    const trimEndFromPipe = await executeSlashCommandScript(
+      "/echo Hello there! tail|/trimend",
+      createContext(),
+    );
+
+    expect(trimStart.isError).toBe(false);
+    expect(trimEnd.isError).toBe(false);
+    expect(trimEndFromPipe.isError).toBe(false);
+    expect(trimStart.pipe).toBe("Keep this sentence.");
+    expect(trimEnd.pipe).toBe("Keep this sentence.");
+    expect(trimEndFromPipe.pipe).toBe("Hello there!");
+  });
+
   it("/reload-page 可调用宿主回调并返回空字符串", async () => {
     const reloadPage = vi.fn().mockResolvedValue(undefined);
     const ctx = createContext({ reloadPage });

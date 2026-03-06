@@ -7,7 +7,7 @@
  */
 
 import type { CommandHandler } from "../types";
-import { parseBoolean } from "../utils/helpers";
+import { parseBoolean, parseNumber } from "../utils/helpers";
 
 type WorldState = "on" | "off" | "toggle";
 type LoreType = "primary" | "additional" | "all";
@@ -123,12 +123,88 @@ function normalizeCreateLoreInput(
   };
 }
 
+type VectorBooleanGetter = () => boolean | Promise<boolean>;
+type VectorBooleanSetter = (value: boolean) => boolean | void | Promise<boolean | void>;
+type VectorNumberGetter = () => number | Promise<number>;
+type VectorNumberSetter = (value: number) => number | void | Promise<number | void>;
+
 function normalizeVectorWorldInfoState(raw: string): boolean {
   const parsed = parseBoolean(raw, undefined);
   if (parsed === undefined) {
     throw new Error(`/vector-worldinfo-state invalid boolean value: ${raw}`);
   }
   return parsed;
+}
+
+function normalizeVectorBooleanValue(commandName: string, raw: string): boolean {
+  const parsed = parseBoolean(raw, undefined);
+  if (parsed === undefined) {
+    throw new Error(`/${commandName} invalid boolean value: ${raw}`);
+  }
+  return parsed;
+}
+
+function normalizeVectorPositiveNumber(commandName: string, raw: string): number {
+  const parsed = parseNumber(raw);
+  if (parsed === undefined || !Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`/${commandName} invalid numeric value: ${raw}`);
+  }
+  return parsed;
+}
+
+function normalizeVectorThreshold(raw: string): number {
+  const parsed = parseNumber(raw);
+  if (parsed === undefined || !Number.isFinite(parsed) || parsed < 0 || parsed > 1) {
+    throw new Error(`/vector-threshold invalid threshold value: ${raw}`);
+  }
+  return parsed;
+}
+
+async function handleVectorBooleanState(
+  commandName: string,
+  args: string[],
+  pipe: string,
+  getter: VectorBooleanGetter,
+  setter?: VectorBooleanSetter,
+): Promise<string> {
+  const raw = (args.join(" ") || pipe || "").trim();
+  if (!raw) {
+    return String(await Promise.resolve(getter()));
+  }
+  if (!setter) {
+    throw new Error(`/${commandName} set is not available in current context`);
+  }
+
+  const nextValue = normalizeVectorBooleanValue(commandName, raw);
+  const applied = await Promise.resolve(setter(nextValue));
+  if (typeof applied === "boolean") {
+    return String(applied);
+  }
+  return String(await Promise.resolve(getter()));
+}
+
+async function handleVectorNumberState(
+  commandName: string,
+  args: string[],
+  pipe: string,
+  getter: VectorNumberGetter,
+  normalize: (raw: string) => number,
+  setter?: VectorNumberSetter,
+): Promise<string> {
+  const raw = (args.join(" ") || pipe || "").trim();
+  if (!raw) {
+    return String(await Promise.resolve(getter()));
+  }
+  if (!setter) {
+    throw new Error(`/${commandName} set is not available in current context`);
+  }
+
+  const nextValue = normalize(raw);
+  const applied = await Promise.resolve(setter(nextValue));
+  if (typeof applied === "number" && Number.isFinite(applied)) {
+    return String(applied);
+  }
+  return String(await Promise.resolve(getter()));
 }
 
 function getFieldStrings(
@@ -334,6 +410,84 @@ export const handleCreateLore: CommandHandler = async (args, namedArgs, ctx, pip
     throw new Error(`/createlore failed for file=${file}`);
   }
   return String(created.id);
+};
+
+/** /vector-threshold [number] - 查询或设置向量阈值 */
+export const handleVectorThreshold: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.getVectorScoreThreshold) {
+    throw new Error("/vector-threshold is not available in current context");
+  }
+
+  return handleVectorNumberState(
+    "vector-threshold",
+    args,
+    pipe,
+    ctx.getVectorScoreThreshold,
+    normalizeVectorThreshold,
+    ctx.setVectorScoreThreshold,
+  );
+};
+
+/** /vector-query [number] - 查询或设置向量查询消息数 */
+export const handleVectorQuery: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.getVectorQueryMessages) {
+    throw new Error("/vector-query is not available in current context");
+  }
+
+  return handleVectorNumberState(
+    "vector-query",
+    args,
+    pipe,
+    ctx.getVectorQueryMessages,
+    (raw) => normalizeVectorPositiveNumber("vector-query", raw),
+    ctx.setVectorQueryMessages,
+  );
+};
+
+/** /vector-max-entries [number] - 查询或设置最大注入条目数 */
+export const handleVectorMaxEntries: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.getVectorMaxEntries) {
+    throw new Error("/vector-max-entries is not available in current context");
+  }
+
+  return handleVectorNumberState(
+    "vector-max-entries",
+    args,
+    pipe,
+    ctx.getVectorMaxEntries,
+    (raw) => normalizeVectorPositiveNumber("vector-max-entries", raw),
+    ctx.setVectorMaxEntries,
+  );
+};
+
+/** /vector-chats-state [bool] - 查询或设置 chat 向量化开关 */
+export const handleVectorChatsState: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.getVectorChatsState) {
+    throw new Error("/vector-chats-state is not available in current context");
+  }
+
+  return handleVectorBooleanState(
+    "vector-chats-state",
+    args,
+    pipe,
+    ctx.getVectorChatsState,
+    ctx.setVectorChatsState,
+  );
+};
+
+/** /vector-files-state [bool] - 查询或设置 file 向量化开关 */
+export const handleVectorFilesState: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.getVectorFilesState) {
+    throw new Error("/vector-files-state is not available in current context");
+  }
+
+  return handleVectorBooleanState(
+    "vector-files-state",
+    args,
+    pipe,
+    ctx.getVectorFilesState,
+    ctx.setVectorFilesState,
+  );
 };
 
 /** /vector-worldinfo-state [bool] - 查询或设置 worldinfo 向量化开关 */

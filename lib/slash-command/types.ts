@@ -18,6 +18,7 @@ export interface SendOptions {
 export interface CharacterSummary {
   id: string;
   name: string;
+  tags?: string[];
 }
 
 export interface CharacterSwitchResult {
@@ -755,6 +756,26 @@ export interface ExecutionContext {
   setVectorWorldInfoState?: (
     enabled: boolean,
   ) => boolean | void | Promise<boolean | void>;
+  getVectorChatsState?: () => boolean | Promise<boolean>;
+  setVectorChatsState?: (
+    enabled: boolean,
+  ) => boolean | void | Promise<boolean | void>;
+  getVectorFilesState?: () => boolean | Promise<boolean>;
+  setVectorFilesState?: (
+    enabled: boolean,
+  ) => boolean | void | Promise<boolean | void>;
+  getVectorMaxEntries?: () => number | Promise<number>;
+  setVectorMaxEntries?: (
+    value: number,
+  ) => number | void | Promise<number | void>;
+  getVectorQueryMessages?: () => number | Promise<number>;
+  setVectorQueryMessages?: (
+    value: number,
+  ) => number | void | Promise<number | void>;
+  getVectorScoreThreshold?: () => number | Promise<number>;
+  setVectorScoreThreshold?: (
+    value: number,
+  ) => number | void | Promise<number | void>;
 
   // 扩展操作 - P2 高频缺口（branch / ui）
   togglePanels?: () => void | Promise<void>;

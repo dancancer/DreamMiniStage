@@ -29,6 +29,18 @@ import {
   setVectorMemoryEnabled,
 } from "@/lib/vector-memory/manager";
 import {
+  getVectorChatsState,
+  getVectorFilesState,
+  getVectorMaxEntriesSetting,
+  getVectorQuerySetting,
+  getVectorThresholdSetting,
+  setVectorChatsState,
+  setVectorFilesState,
+  setVectorMaxEntriesSetting,
+  setVectorQuerySetting,
+  setVectorThresholdSetting,
+} from "@/lib/vector-memory/settings";
+import {
   upsertPromptInjection,
   listPromptInjections,
   removePromptInjections,
@@ -1111,6 +1123,26 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     return isVectorMemoryEnabled();
   };
 
+  const getVectorChatsEnabled = (): boolean => getVectorChatsState();
+
+  const setVectorChatsEnabled = (enabled: boolean): boolean => setVectorChatsState(enabled);
+
+  const getVectorFilesEnabled = (): boolean => getVectorFilesState();
+
+  const setVectorFilesEnabled = (enabled: boolean): boolean => setVectorFilesState(enabled);
+
+  const getVectorQueryMessages = (): number => getVectorQuerySetting();
+
+  const setVectorQueryMessages = (value: number): number => setVectorQuerySetting(value);
+
+  const getVectorScoreThreshold = (): number => getVectorThresholdSetting();
+
+  const setVectorScoreThreshold = (value: number): number => setVectorThresholdSetting(value);
+
+  const getVectorMaxEntries = (): number => getVectorMaxEntriesSetting();
+
+  const setVectorMaxEntries = (value: number): number => setVectorMaxEntriesSetting(value);
+
   const getPreset = async (): Promise<PresetInfo | undefined> => {
     const presets = await PresetOperations.getAllPresets();
     const active = presets.find((p) => p.enabled !== false);
@@ -1264,11 +1296,22 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const toCharacterSummary = (
     record: {
       id: string;
-      data?: { name?: string };
+      data?: {
+        name?: string;
+        data?: {
+          name?: string;
+          tags?: unknown[];
+        };
+      };
     },
   ): CharacterSummary => ({
     id: record.id,
-    name: record.data?.name?.trim() || record.id,
+    name: record.data?.name?.trim() || record.data?.data?.name?.trim() || record.id,
+    tags: Array.isArray(record.data?.data?.tags)
+      ? record.data.data.tags
+        .map((item) => String(item || "").trim())
+        .filter((item) => item.length > 0)
+      : undefined,
   });
 
   const getCurrentCharacter = async (): Promise<CharacterSummary | undefined> => {
@@ -1720,6 +1763,16 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     renameCurrentCharacter: onRenameCurrentCharacter,
     getVectorWorldInfoState,
     setVectorWorldInfoState,
+    getVectorChatsState: getVectorChatsEnabled,
+    setVectorChatsState: setVectorChatsEnabled,
+    getVectorFilesState: getVectorFilesEnabled,
+    setVectorFilesState: setVectorFilesEnabled,
+    getVectorMaxEntries,
+    setVectorMaxEntries,
+    getVectorQueryMessages,
+    setVectorQueryMessages,
+    getVectorScoreThreshold,
+    setVectorScoreThreshold,
     getVariable: getLocalVariable,
     setVariable: setLocalVariable,
     deleteVariable: deleteLocalVariable,

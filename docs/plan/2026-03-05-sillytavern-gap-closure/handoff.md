@@ -2,34 +2,29 @@
 
 ## 本轮完成
 
-- 补齐媒体/画廊命令：`/show-gallery|/sg`、`/expression-upload|/uploadsprite`，统一走显式宿主回调；`show-gallery` 只负责打开画廊，`expression-upload` 只负责把 URL+label+folder/spriteName 交给宿主上传，不在 Slash 层伪造 UI。
-- 补齐工具注册运维：`/tools-register|/tool-register`、`/tools-unregister|/tool-unregister`。注册命令复用 Script Tool Registry 单路径，把 closure block 序列化为 action script，并在 adapter 中临时注入 `arg.*` 变量后执行，避免再造第二套工具注册表。
-- 补齐 `qr-arg`，并在 Slash 内核执行期打通 `{{arg::...}}` 宏替换、`*` wildcard 回退，以及 `{{var::...}}`/`{{globalvar::...}}` 的统一宏展开逻辑。
-- 扩展 Script Bridge / UI 接线：
-  - `hooks/script-bridge/slash-context-adapter.ts` 新增 `registerTool/unregisterTool/showGallery/uploadExpressionAsset` 透传。
-  - `hooks/script-bridge/tool-handlers.ts`、`hooks/script-bridge/function-tool-bridge.ts` 支持在既有 registry 中注册本地 handler。
-  - `hooks/useScriptBridge.ts`、`hooks/script-bridge/types.ts`、`components/CharacterChatPanel.tsx` 补齐对应宿主注入位。
+- 补齐低耦合 utility 命令簇：`/random`、`/sort`、`/tokens`、`/trimstart`、`/trimend`。实现策略保持单路径：`/random` 直接复用 `listCharacters + switchCharacter`，`/sort` 对齐 SillyTavern 的“数组按值排序 / 对象返回排序后的 key 列表”，`/tokens` 与 `trim*` 继续复用现有 tokenizer/文本处理语义，不额外引入宿主分支。
+- 补齐 vector 状态命令簇：`/vector-chats-state`、`/vector-files-state`、`/vector-max-entries`、`/vector-query`、`/vector-threshold`。为这批命令新增 `lib/vector-memory/settings.ts` 作为宿主 runtime settings 单一存储入口，并在 `hooks/script-bridge/slash-context-adapter.ts` 中统一挂到 ExecutionContext，避免把 worldinfo/chat/files 三套状态拆散到不同 localStorage key。
+- 扩展上下文与类型：`lib/slash-command/types.ts` 为 vector 状态读写补齐上下文回调定义；`CharacterSummary` 新增可选 `tags`，让 `/random <tag>` 可以在本地角色元数据上做过滤，不需要重新发明额外角色索引。
 - 新增/扩展测试：
-  - `lib/slash-command/__tests__/p2-utility-command-gaps.test.ts`：新增 `/show-gallery|/sg`。
-  - `lib/slash-command/__tests__/p3-expression-command-gaps.test.ts`：新增 `/expression-upload|/uploadsprite`。
-  - `lib/slash-command/__tests__/p3-tool-tag-command-gaps.test.ts`：新增 tool register/unregister 契约测试。
-  - `lib/slash-command/__tests__/p3-reasoning-quickreply-command-gaps.test.ts`：新增 `/qr-arg` + 宏/wildcard。
-  - `hooks/script-bridge/__tests__/slash-tool-tag-integration.test.ts`：新增 adapter 到 registry 的真实注册/调用/注销闭环。
-- 更新能力矩阵、gap report、分析文档与执行清单，确保文档与代码状态同步。
+  - `lib/slash-command/__tests__/p2-utility-command-gaps.test.ts`：新增 `/sort`、`/tokens`、`/trimstart`、`/trimend` 契约测试。
+  - `lib/slash-command/__tests__/p2-character-command-gaps.test.ts`：新增 `/random` 的标签过滤、结构化返回与 fail-fast 测试。
+  - `lib/slash-command/__tests__/p2-world-lore-command-gaps.test.ts`：新增 vector 状态簇读写与参数校验测试。
+  - `lib/vector-memory/__tests__/settings.test.ts`：新增 runtime settings 持久化与越界回退测试，专门守住 threshold=0 这类边界语义。
+- 更新能力矩阵、gap report、分析文档与执行清单；本轮新增 10 个 slash 命令后，gap Top25 已移除 `random`、`sort`、`tokens`、`trimstart`、`trimend`、`vector-chats-state`、`vector-files-state`、`vector-max-entries`、`vector-query`、`vector-threshold`。
 
 ## 回归结果
 
 - `pnpm typecheck`：通过。
-- `pnpm vitest run lib/slash-command/__tests__/p2-utility-command-gaps.test.ts lib/slash-command/__tests__/p3-expression-command-gaps.test.ts lib/slash-command/__tests__/p3-tool-tag-command-gaps.test.ts lib/slash-command/__tests__/p3-reasoning-quickreply-command-gaps.test.ts hooks/script-bridge/__tests__/slash-tool-tag-integration.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`：`6 files / 49 tests` 全通过。
-- `pnpm vitest run lib/core/__tests__/st-baseline-*.test.ts lib/slash-command/__tests__/material-replay-control-flow.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts lib/slash-command/__tests__/p2-utility-command-gaps.test.ts lib/slash-command/__tests__/p3-expression-command-gaps.test.ts lib/slash-command/__tests__/p3-tool-tag-command-gaps.test.ts lib/slash-command/__tests__/p3-reasoning-quickreply-command-gaps.test.ts hooks/script-bridge/__tests__/slash-tool-tag-integration.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`：`18 files / 341 tests` 全通过。
+- `pnpm vitest run lib/slash-command/__tests__/p2-utility-command-gaps.test.ts lib/slash-command/__tests__/p2-character-command-gaps.test.ts lib/slash-command/__tests__/p2-world-lore-command-gaps.test.ts lib/vector-memory/__tests__/settings.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`：`5 files / 48 tests` 全通过。
+- `pnpm vitest run lib/core/__tests__/st-baseline-*.test.ts lib/slash-command/__tests__/material-replay-control-flow.test.ts hooks/script-bridge/__tests__/variable-handlers.test.ts lib/slash-command/__tests__/p2-utility-command-gaps.test.ts lib/slash-command/__tests__/p2-character-command-gaps.test.ts lib/slash-command/__tests__/p2-world-lore-command-gaps.test.ts lib/vector-memory/__tests__/settings.test.ts hooks/script-bridge/__tests__/api-surface-contract.test.ts`：`17 files / 340 tests` 全通过。
 - `pnpm analyze:sillytavern-gap`：
-  - slash coverage：`93.66%`（上一轮 `91.55%`，+`2.11`pp）
+  - slash coverage：`96.01%`（上一轮 `93.66%`，+`2.35`pp）
   - api matrix coverage：`100.00%`
   - api facade coverage：`100.00%`
-  - Top25 已移除：`qr-arg`、`show-gallery`、`expression-upload`、`tool-register`、`tool-unregister`、`tools-register`、`tools-unregister`
+  - Top25 已移除：`random`、`sort`、`tokens`、`trimstart`、`trimend`、`vector-chats-state`、`vector-files-state`、`vector-max-entries`、`vector-query`、`vector-threshold`
 
 ## 下一步建议
 
-1. 继续拿低耦合 utility 长尾提速：`/random`、`/sort`、`/tokens`、`/trimstart`、`/trimend`。这批命令主要是参数处理，最容易在不扩大回归面的前提下继续抬升 coverage。
-2. 然后收口 vector 状态簇：`/vector-chats-state`、`/vector-files-state`、`/vector-max-entries`、`/vector-query`、`/vector-threshold`、`/wi-get-timed-effect`，尽量直接复用现有 worldinfo / vector adapter。
-3. 若还要继续冲一轮高价值缺口，就在媒体生成里二选一：`sd` 系列或 `tts` 系列；原则不变，必须是宿主显式回调，不在 Slash 层伪造 UI。
+1. 直接收口 timed effect：`/wi-get-timed-effect`、`/wi-set-timed-effect`。这里不要新造状态源，优先复用现有 `world-book-advanced` 的 sticky/cooldown/delay runtime 字段与当前 chat 轮次语义。
+2. 从媒体生成长尾里二选一推进：要么 `sd`/`sd-source`/`sd-style`，要么 `tts`/`speak`/`translate`。原则不变，必须走显式宿主回调，不在 Slash 层伪造 UI。
+3. 如果想继续快速抬升 coverage，就拿参数简单的残余命令：`/qrset`、`/reroll-pick`、`/tempchat`、`/summarize`、`/yt-script`。这批命令比 timed effect/媒体更低耦合，但业务价值略低。

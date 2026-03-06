@@ -52,13 +52,14 @@
    - P3 stop/model + narrator 长尾：`/stop-strings`、`/stopping-strings`、`/custom-stopping-strings`、`/custom-stop-strings`、`/model`、`/name`、`/nar`、`/narrate`
    - P3 note + persona 长尾：`/note`、`/note-depth|/depth`、`/note-frequency|/note-freq|/freq`、`/note-position|/note-pos|/pos`、`/note-role`、`/persona-set|/persona`、`/persona-lock`、`/persona-sync|/sync`
    - P3 profile + prompt 长尾：`/profile`、`/profile-create`、`/profile-get`、`/profile-list`、`/profile-update`、`/prompt`、`/prompt-post-processing`、`/ppp`
-   - P3 低耦合工具簇：`/dupe`、`/length`、`/is-mobile`、`/newchat`
+   - P3 低耦合工具簇：`/dupe`、`/length`、`/is-mobile`、`/newchat`、`/random`、`/sort`、`/tokens`、`/trimstart`、`/trimend`
    - P3 导入/弹窗簇：`/import`、`/popup`、`/pick-icon`
    - P3 工具/标签簇：`/tools-list|/tool-list`、`/tools-invoke|/tool-invoke`、`/tag-add`、`/tag-remove`、`/tag-exists`、`/tag-list`
    - P3 推理解析 + Quick Reply 第一批：`/reasoning-parse|/parse-reasoning`、`/qr`、`/qr-list`、`/qr-get`、`/qr-create`、`/qr-delete`
    - P3 Quick Reply 第二/三批 + set/preset：`/qr-set`、`/qr-set-on`、`/qr-set-off`、`/qr-chat-set`、`/qr-chat-set-on`、`/qr-chat-set-off`、`/qr-set-list`、`/qr-update`、`/qr-contextadd`、`/qr-contextdel`、`/qr-contextclear`、`/qr-set-create|/qr-presetadd`、`/qr-set-update|/qr-presetupdate`、`/qr-set-delete|/qr-presetdelete`
    - P3 Secret Store 簇：`/secret-id|/secret-rotate`、`/secret-delete`、`/secret-write`、`/secret-rename`、`/secret-read|/secret-find|/secret-get`
    - P3 画廊/工具注册/QR 参数簇：`/show-gallery|/sg`、`/expression-upload|/uploadsprite`、`/tools-register|/tool-register`、`/tools-unregister|/tool-unregister`、`/qr-arg`
+   - P3 vector 状态簇：`/vector-chats-state`、`/vector-files-state`、`/vector-max-entries`、`/vector-query`、`/vector-threshold`
 2. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
@@ -67,12 +68,12 @@
    - `/member-up`、`/upmember`、`/memberup`
    - `/member-down`、`/downmember`、`/memberdown`
    - `/member-peek`、`/peek`、`/memberpeek`、`/peekmember`
-4. Top25 优先命令缺口已不再包含 P1/P2 项，当前主战场切换为 P3 长尾命令可用性。
+4. Top25 优先命令缺口已不再包含 P1/P2 项，当前主战场切换为 P3 长尾命令可用性；本轮已从 Top25 中继续移除 `random`、`sort`、`tokens`、`trimstart`、`trimend`、`vector-chats-state`、`vector-files-state`、`vector-max-entries`、`vector-query`、`vector-threshold`。
 
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已进一步移除 `sysprompt*`、`/sysname`、`/sysgen`、`/tool-list`、`/tool-invoke`、`/tag-add`、`/tag-remove`、`/tag-exists`、`/tag-list`，并继续移除 `qr-arg`、`show-gallery`、`expression-upload`、`tool-register`、`tool-unregister`、`tools-register`、`tools-unregister`；当前主缺口切换为 `floor-teleport`、`proxy`、`qrset`、`random`、`reroll-pick`，以及一组 vector / image / tts 长尾命令。
+- Top25 已进一步移除 `sysprompt*`、`/sysname`、`/sysgen`、`/tool-list`、`/tool-invoke`、`/tag-add`、`/tag-remove`、`/tag-exists`、`/tag-list`、`random`、`sort`、`tokens`、`trimstart`、`trimend`、`vector-chats-state`、`vector-files-state`、`vector-max-entries`、`vector-query`、`vector-threshold`；当前主缺口切换为 `floor-teleport`、`proxy`、`qrset`、`reroll-pick`、`wi-get-timed-effect`、`wi-set-timed-effect`，以及 `sd` / `tts` / `translate` 一组媒体长尾命令。
 
 ## 4. 基线素材与回归状态
 
@@ -93,6 +94,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 优先推进低耦合 utility 长尾（`/random`、`/sort`、`/tokens`、`/trimstart`、`/trimend`），这批命令主要是参数/数据处理，最容易继续抬升覆盖率。
-2. 评估 vector 状态簇（`/vector-chats-state`、`/vector-files-state`、`/vector-max-entries`、`/vector-query`、`/vector-threshold`、`/wi-get-timed-effect`），优先复用现有 worldinfo / vector adapter，避免再开新状态源。
-3. 从媒体生成长尾里二选一推进：要么收口 `sd`/`sd-source`/`sd-style`，要么收口 `tts`/`speak`/`translate`；前提仍然是显式宿主回调，不在 Slash 层伪造 UI。
+1. 优先推进 timed effect 收口（`/wi-get-timed-effect`、`/wi-set-timed-effect`），尽量直接复用现有 worldbook advanced runtime，而不是再造第二套状态机。
+2. 从媒体生成长尾里二选一推进：要么收口 `sd`/`sd-source`/`sd-style`，要么收口 `tts`/`speak`/`translate`；前提仍然是显式宿主回调，不在 Slash 层伪造 UI。
+3. 若还要继续提速 coverage，就清 utility/会话残余别名：`/qrset`、`/reroll-pick`、`/tempchat`、`/summarize`、`/yt-script`，优先挑参数语义简单且不要求额外 UI 状态的命令。

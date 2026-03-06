@@ -93,6 +93,70 @@ describe("P2 character/message high-frequency gaps", () => {
     expect(JSON.parse(second.pipe)).toEqual([{ id: "char-2", name: "Bob" }]);
   });
 
+  it("/random 支持按标签过滤并切换到随机角色", async () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.75);
+    const listCharacters = vi.fn().mockResolvedValue([
+      { id: "char-1", name: "Alice", tags: ["mage"] },
+      { id: "char-2", name: "Bob", tags: ["hero"] },
+      { id: "char-3", name: "Carol", tags: ["hero"] },
+    ]);
+    const switchCharacter = vi.fn().mockResolvedValue(undefined);
+    const ctx = createCharacterContext({ listCharacters, switchCharacter });
+
+    const result = await executeSlashCommandScript("/random hero", ctx);
+
+    randomSpy.mockRestore();
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("char-3");
+    expect(switchCharacter).toHaveBeenCalledWith("char-3");
+  });
+
+  it("/random 在命中结构化切换结果时透传 JSON", async () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
+    const listCharacters = vi.fn().mockResolvedValue([
+      { id: "char-2", name: "Bob", tags: ["hero"] },
+    ]);
+    const switchCharacter = vi.fn().mockResolvedValue({
+      target: "char-2",
+      characterId: "char-2",
+      characterName: "Bob",
+      sessionId: "session-2",
+      sessionName: "Bob - 03/06 12:00 [from Alice]",
+    });
+    const ctx = createCharacterContext({ listCharacters, switchCharacter });
+
+    const result = await executeSlashCommandScript("/random", ctx);
+
+    randomSpy.mockRestore();
+    expect(result.isError).toBe(false);
+    expect(JSON.parse(result.pipe)).toEqual({
+      target: "char-2",
+      characterId: "char-2",
+      characterName: "Bob",
+      sessionId: "session-2",
+      sessionName: "Bob - 03/06 12:00 [from Alice]",
+    });
+  });
+
+  it("/random 在无候选或缺失回调时显式 fail-fast", async () => {
+    const noCandidate = await executeSlashCommandScript(
+      "/random hero",
+      createCharacterContext({
+        listCharacters: vi.fn().mockResolvedValue([{ id: "char-1", name: "Alice", tags: ["mage"] }]),
+        switchCharacter: vi.fn().mockResolvedValue(undefined),
+      }),
+    );
+    const missingHost = await executeSlashCommandScript(
+      "/random",
+      createCharacterContext({ listCharacters: vi.fn().mockResolvedValue([]) }),
+    );
+
+    expect(noCandidate.isError).toBe(true);
+    expect(missingHost.isError).toBe(true);
+    expect(noCandidate.errorMessage).toContain("no characters found for tag");
+    expect(missingHost.errorMessage).toContain("not available");
+  });
+
   it("/char 切换在缺失回调时 fail-fast", async () => {
     const ctx = createCharacterContext();
     const result = await executeSlashCommandScript("/char someone", ctx);

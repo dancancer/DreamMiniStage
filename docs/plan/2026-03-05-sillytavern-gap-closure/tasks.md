@@ -189,3 +189,9 @@
 - [x] 补齐工具注册运维（`/tools-register|/tool-register`、`/tools-unregister|/tool-unregister`），并复用 Script Tool Registry 单路径执行 action script。
 - [x] 补齐 `qr-arg`，打通 `{{arg::...}}` 宏替换与 `*` wildcard 回退。
 - [x] 运行 `pnpm typecheck`、定向回归、`pnpm analyze:sillytavern-gap`，并更新报告、分析文档与 handoff。
+
+## 32. P3 增量收敛（utility + vector 状态）
+
+- [x] 补齐低耦合 utility 命令簇（`/random`、`/sort`、`/tokens`、`/trimstart`、`/trimend`），统一单路径与 fail-fast 语义。
+- [x] 补齐 vector 状态命令簇（`/vector-chats-state`、`/vector-files-state`、`/vector-max-entries`、`/vector-query`、`/vector-threshold`），复用宿主 runtime settings 单一路径。
+- [x] 运行 `pnpm typecheck`、定向回归、baseline 回归与 `pnpm analyze:sillytavern-gap`，并更新报告、分析文档与 handoff。

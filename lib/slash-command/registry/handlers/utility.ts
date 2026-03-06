@@ -7,7 +7,7 @@
  */
 
 import type { CommandHandler } from "../types";
-import { parseNumber } from "../utils/helpers";
+import { parseBoolean, parseNumber } from "../utils/helpers";
 
 const RUN_NAMED_ARG_PATTERN = /\{\{arg::([a-zA-Z0-9_-]+)\}\}/g;
 const CLOSURE_PAYLOAD_FORMAT = "dreammini-closure-v1";
@@ -62,6 +62,18 @@ function normalizeTrimDirection(raw: string | undefined): TrimDirection {
   throw new Error(`/trimtokens invalid direction: ${raw || ""}`);
 }
 
+function normalizeSortKeyMode(raw: string | undefined): boolean {
+  if (raw === undefined) {
+    return true;
+  }
+
+  const parsed = parseBoolean(raw, undefined);
+  if (parsed === undefined) {
+    throw new Error(`/sort invalid keysort value: ${raw}`);
+  }
+  return parsed;
+}
+
 function parseDelayMs(raw: string | undefined): number {
   const parsed = parseNumber(raw);
   if (parsed === undefined || !Number.isFinite(parsed) || parsed < 0) {
@@ -98,6 +110,122 @@ function estimateTokenCount(text: string): number {
     return 0;
   }
   return Math.max(1, Math.ceil(normalized.length / 4));
+}
+
+function resolveUtilityText(args: string[], namedArgs: Record<string, string>, pipe: string): string {
+  return (args.join(" ") || namedArgs.text || pipe || "").toString();
+}
+
+function trimToEndSentence(input: string): string {
+  if (!input) {
+    return "";
+  }
+
+  const punctuation = new Set([
+    ".",
+    "!",
+    "?",
+    "*",
+    '"',
+    ")",
+    "}",
+    "`",
+    "]",
+    "$",
+    "。",
+    "！",
+    "？",
+    "”",
+    "）",
+    "】",
+    "’",
+    "」",
+    "_",
+  ]);
+  const characters = Array.from(input);
+  let last = -1;
+
+  for (let index = characters.length - 1; index >= 0; index -= 1) {
+    const current = characters[index];
+    const isEmoji = /(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u.test(current);
+    if (!punctuation.has(current) && !isEmoji) {
+      continue;
+    }
+
+    last = !isEmoji && index > 0 && /[\s\n]/.test(characters[index - 1])
+      ? index - 1
+      : index;
+    break;
+  }
+
+  if (last === -1) {
+    return input.trimEnd();
+  }
+
+  return characters.slice(0, last + 1).join("").trimEnd();
+}
+
+function trimToStartSentence(input: string): string {
+  if (!input) {
+    return "";
+  }
+
+  const positions = [
+    { index: input.indexOf("."), skipWhitespace: false },
+    { index: input.indexOf("!"), skipWhitespace: false },
+    { index: input.indexOf("?"), skipWhitespace: false },
+    { index: input.indexOf("\n"), skipWhitespace: true },
+  ].filter((entry) => entry.index > 0);
+
+  if (positions.length === 0) {
+    return input;
+  }
+
+  const first = positions.reduce((best, current) => current.index < best.index ? current : best);
+  const offset = first.skipWhitespace ? 1 : 2;
+  return input.slice(first.index + offset);
+}
+
+function compareSortValues(left: unknown, right: unknown): number {
+  let a = left;
+  let b = right;
+  if (typeof a !== typeof b) {
+    a = typeof a;
+    b = typeof b;
+  }
+  if (a === b) {
+    return 0;
+  }
+
+  const normalizedLeft = typeof a === "number" || typeof a === "boolean"
+    ? a
+    : String(a);
+  const normalizedRight = typeof b === "number" || typeof b === "boolean"
+    ? b
+    : String(b);
+  return normalizedLeft > normalizedRight ? 1 : -1;
+}
+
+function sortStructuredValue(text: string, keySort: boolean): string {
+  try {
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) {
+      parsed.sort(compareSortValues);
+      return JSON.stringify(parsed);
+    }
+
+    if (parsed && typeof parsed === "object") {
+      const source = parsed as Record<string, unknown>;
+      const keys = Object.keys(source).sort((left, right) => keySort
+        ? compareSortValues(left, right)
+        : compareSortValues(source[left], source[right]));
+      return JSON.stringify(keys);
+    }
+
+    return JSON.stringify(parsed);
+  } catch {
+    return text;
+  }
 }
 
 function trimByCharacterRatio(
@@ -434,6 +562,40 @@ export const handleTrimTokens: CommandHandler = async (args, namedArgs, ctx, pip
   }
 
   return trimByCharacterRatio(text, limit, tokenCount, direction);
+};
+
+/** /sort - 对 JSON 数组或对象键进行升序排序 */
+export const handleSort: CommandHandler = async (args, namedArgs, _ctx, pipe) => {
+  const text = resolveUtilityText(args, namedArgs, pipe);
+  if (!text) {
+    throw new Error("/sort requires a value");
+  }
+
+  return sortStructuredValue(text, normalizeSortKeyMode(namedArgs.keysort));
+};
+
+/** /tokens - 统计输入文本 token 数 */
+export const handleTokens: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const text = resolveUtilityText(args, namedArgs, pipe);
+  const tokenCount = ctx.countTokens
+    ? await Promise.resolve(ctx.countTokens(text))
+    : estimateTokenCount(text);
+
+  if (!Number.isFinite(tokenCount) || tokenCount < 0) {
+    throw new Error("/tokens tokenizer returned invalid token count");
+  }
+
+  return String(tokenCount);
+};
+
+/** /trimstart - 去掉首句之前的前缀 */
+export const handleTrimStart: CommandHandler = async (args, namedArgs, _ctx, pipe) => {
+  return trimToStartSentence(resolveUtilityText(args, namedArgs, pipe));
+};
+
+/** /trimend - 截断到最后一个完整句尾 */
+export const handleTrimEnd: CommandHandler = async (args, namedArgs, _ctx, pipe) => {
+  return trimToEndSentence(resolveUtilityText(args, namedArgs, pipe));
 };
 
 /** /count - 统计当前会话消息 token 数 */

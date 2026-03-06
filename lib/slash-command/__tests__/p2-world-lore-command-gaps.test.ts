@@ -211,6 +211,83 @@ describe("P2 world/lore command gaps", () => {
     expect(invalid.errorMessage).toContain("invalid boolean");
   });
 
+  it("vector 状态命令支持布尔与数值读写", async () => {
+    let threshold = 0.25;
+    let query = 2;
+    let maxEntries = 5;
+    let chatsEnabled = false;
+    let filesEnabled = true;
+    const ctx = createContext({
+      getVectorScoreThreshold: vi.fn(() => threshold),
+      setVectorScoreThreshold: vi.fn((next: number) => {
+        threshold = next;
+        return threshold;
+      }),
+      getVectorQueryMessages: vi.fn(() => query),
+      setVectorQueryMessages: vi.fn((next: number) => {
+        query = next;
+        return query;
+      }),
+      getVectorMaxEntries: vi.fn(() => maxEntries),
+      setVectorMaxEntries: vi.fn((next: number) => {
+        maxEntries = next;
+        return maxEntries;
+      }),
+      getVectorChatsState: vi.fn(() => chatsEnabled),
+      setVectorChatsState: vi.fn((next: boolean) => {
+        chatsEnabled = next;
+        return chatsEnabled;
+      }),
+      getVectorFilesState: vi.fn(() => filesEnabled),
+      setVectorFilesState: vi.fn((next: boolean) => {
+        filesEnabled = next;
+        return filesEnabled;
+      }),
+    });
+
+    const thresholdResult = await executeSlashCommandScript("/vector-threshold 0.4", ctx);
+    const queryResult = await executeSlashCommandScript("/vector-query 4", ctx);
+    const maxEntriesResult = await executeSlashCommandScript("/vector-max-entries 8", ctx);
+    const chatsResult = await executeSlashCommandScript("/vector-chats-state true", ctx);
+    const filesResult = await executeSlashCommandScript("/vector-files-state false", ctx);
+
+    expect(thresholdResult.isError).toBe(false);
+    expect(queryResult.isError).toBe(false);
+    expect(maxEntriesResult.isError).toBe(false);
+    expect(chatsResult.isError).toBe(false);
+    expect(filesResult.isError).toBe(false);
+    expect(thresholdResult.pipe).toBe("0.4");
+    expect(queryResult.pipe).toBe("4");
+    expect(maxEntriesResult.pipe).toBe("8");
+    expect(chatsResult.pipe).toBe("true");
+    expect(filesResult.pipe).toBe("false");
+  });
+
+  it("vector 状态命令对非法参数与缺失宿主显式 fail-fast", async () => {
+    const invalidThreshold = await executeSlashCommandScript(
+      "/vector-threshold 2",
+      createContext({ getVectorScoreThreshold: vi.fn(() => 0.25), setVectorScoreThreshold: vi.fn() }),
+    );
+    const invalidQuery = await executeSlashCommandScript(
+      "/vector-query 0",
+      createContext({ getVectorQueryMessages: vi.fn(() => 2), setVectorQueryMessages: vi.fn() }),
+    );
+    const invalidBoolean = await executeSlashCommandScript(
+      "/vector-chats-state maybe",
+      createContext({ getVectorChatsState: vi.fn(() => false), setVectorChatsState: vi.fn() }),
+    );
+    const missingHost = await executeSlashCommandScript("/vector-files-state", createContext());
+
+    expect(invalidThreshold.isError).toBe(true);
+    expect(invalidQuery.isError).toBe(true);
+    expect(invalidBoolean.isError).toBe(true);
+    expect(missingHost.isError).toBe(true);
+    expect(invalidThreshold.errorMessage).toContain("invalid threshold");
+    expect(invalidQuery.errorMessage).toContain("invalid numeric");
+    expect(invalidBoolean.errorMessage).toContain("invalid boolean");
+    expect(missingHost.errorMessage).toContain("not available");
+  });
+
   it("world/lore 命令在宿主不支持时显式 fail-fast", async () => {
     const ctx = createContext();
 
@@ -225,6 +302,11 @@ describe("P2 world/lore command gaps", () => {
     const setEntryField = await executeSlashCommandScript("/setentryfield file=book-1 uid=uid-1 value", ctx);
     const findLore = await executeSlashCommandScript("/findlore file=book-1 shadow", ctx);
     const createLore = await executeSlashCommandScript("/createlore file=book-1 key=shadow content", ctx);
+    const vectorThreshold = await executeSlashCommandScript("/vector-threshold", ctx);
+    const vectorQuery = await executeSlashCommandScript("/vector-query", ctx);
+    const vectorMaxEntries = await executeSlashCommandScript("/vector-max-entries", ctx);
+    const vectorChats = await executeSlashCommandScript("/vector-chats-state", ctx);
+    const vectorFiles = await executeSlashCommandScript("/vector-files-state", ctx);
     const vectorState = await executeSlashCommandScript("/vector-worldinfo-state", ctx);
 
     expect(world.isError).toBe(true);
@@ -238,6 +320,11 @@ describe("P2 world/lore command gaps", () => {
     expect(setEntryField.isError).toBe(true);
     expect(findLore.isError).toBe(true);
     expect(createLore.isError).toBe(true);
+    expect(vectorThreshold.isError).toBe(true);
+    expect(vectorQuery.isError).toBe(true);
+    expect(vectorMaxEntries.isError).toBe(true);
+    expect(vectorChats.isError).toBe(true);
+    expect(vectorFiles.isError).toBe(true);
     expect(vectorState.isError).toBe(true);
 
     expect(world.errorMessage).toContain("not available");
@@ -251,6 +338,11 @@ describe("P2 world/lore command gaps", () => {
     expect(setEntryField.errorMessage).toContain("not available");
     expect(findLore.errorMessage).toContain("not available");
     expect(createLore.errorMessage).toContain("not available");
+    expect(vectorThreshold.errorMessage).toContain("not available");
+    expect(vectorQuery.errorMessage).toContain("not available");
+    expect(vectorMaxEntries.errorMessage).toContain("not available");
+    expect(vectorChats.errorMessage).toContain("not available");
+    expect(vectorFiles.errorMessage).toContain("not available");
     expect(vectorState.errorMessage).toContain("not available");
   });
 });

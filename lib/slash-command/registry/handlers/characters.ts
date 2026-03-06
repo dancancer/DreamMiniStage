@@ -41,6 +41,19 @@ function normalizeAskReturnType(raw: string | undefined): "pipe" | "none" {
   throw new Error(`/ask invalid return value: ${raw || ""}`);
 }
 
+function filterCharactersByTag(characters: CharacterSummary[], rawTag: string): CharacterSummary[] {
+  const normalized = rawTag.trim().toLowerCase();
+  if (!normalized) {
+    return characters;
+  }
+
+  return characters.filter((character) => (character.tags || []).some((tag) => tag.toLowerCase() === normalized));
+}
+
+function pickRandomCharacter(characters: CharacterSummary[]): CharacterSummary {
+  return characters[Math.floor(Math.random() * characters.length)];
+}
+
 function parseStrictOptionalBoolean(
   raw: string | undefined,
   commandName: string,
@@ -126,6 +139,28 @@ export const handleAsk: CommandHandler = async (args, namedArgs, ctx, pipe) => {
     throw new Error("/ask host returned non-string result");
   }
   return result;
+};
+
+/** /random [tag] - 随机切换到一个角色 */
+export const handleRandom: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  if (!ctx.listCharacters || !ctx.switchCharacter) {
+    throw new Error("/random is not available in current context");
+  }
+
+  const tag = (args.join(" ") || pipe || "").trim();
+  const characters = await Promise.resolve(ctx.listCharacters());
+  const candidates = tag ? filterCharactersByTag(characters, tag) : characters;
+
+  if (candidates.length === 0) {
+    throw new Error(tag ? `/random no characters found for tag: ${tag}` : "/random no characters available");
+  }
+
+  const target = pickRandomCharacter(candidates);
+  const switchResult = await Promise.resolve(ctx.switchCharacter(target.id));
+  if (isCharacterSwitchResult(switchResult)) {
+    return JSON.stringify(switchResult);
+  }
+  return target.id;
 };
 
 /** /dupe - 复制当前角色 */
