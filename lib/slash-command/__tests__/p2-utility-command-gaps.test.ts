@@ -283,7 +283,6 @@ describe("P2 utility command gaps", () => {
     expect(result.errorMessage).toContain("not available");
   });
 
-
   it("/listchatvar 作为 /listvar 别名返回变量键列表", async () => {
     const listVariables = vi.fn().mockReturnValue(["foo", "bar"]);
     const ctx = createContext({ listVariables });

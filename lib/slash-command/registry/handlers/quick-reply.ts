@@ -173,7 +173,6 @@ function readQrArgWildcards(scope: { get(key: string): unknown }): QrArgWildcard
   });
 }
 
-
 function normalizeQuickReplyList(value: unknown): string[] {
   if (!Array.isArray(value)) {
     throw new Error("/qr-list host returned non-array quick replies");

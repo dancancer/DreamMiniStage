@@ -92,7 +92,6 @@ function resolveGalleryOptions(namedArgs: Record<string, string>): { character?:
   };
 }
 
-
 function estimateTokenCount(text: string): number {
   const normalized = text.trim();
   if (!normalized) {

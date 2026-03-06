@@ -86,7 +86,6 @@ function resolveExpressionUploadUrl(args: string[], namedArgs: Record<string, st
   return url;
 }
 
-
 /** /expression-set [label] - 设置当前角色表情（别名 /emote /sprite） */
 export const handleExpressionSet: CommandHandler = async (args, namedArgs, ctx, pipe) => {
   const callback = ensureHostCallback(ctx.setExpression, "expression-set");
@@ -172,7 +171,6 @@ export const handleExpressionClassify: CommandHandler = async (args, namedArgs, 
   }
   return result;
 };
-
 
 /** /expression-upload|/uploadsprite [url] - 从 URL 上传角色表情素材 */
 export const handleExpressionUpload: CommandHandler = async (args, namedArgs, ctx, pipe) => {

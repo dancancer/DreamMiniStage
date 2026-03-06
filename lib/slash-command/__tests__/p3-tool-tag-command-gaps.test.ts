@@ -127,7 +127,7 @@ describe("P3 tool/tag command gaps", () => {
     const ctx = createContext({ registerTool, unregisterTool });
 
     const registered = await executeSlashCommandScript(
-      '/tools-register name=echo description=Echo parameters={"type":"object","properties":{"message":{"type":"string"}},"required":["message"]} {: /echo {{var::arg.message}} :}',
+      "/tools-register name=echo description=Echo parameters={\"type\":\"object\",\"properties\":{\"message\":{\"type\":\"string\"}},\"required\":[\"message\"]} {: /echo {{var::arg.message}} :}",
       ctx,
     );
     const aliasRegistered = await executeSlashCommandScript(
@@ -193,7 +193,7 @@ describe("P3 tool/tag command gaps", () => {
       createContext({ registerTool: vi.fn().mockResolvedValue(true) }),
     );
     const badSchemaType = await executeSlashCommandScript(
-      '/tools-register name=echo description=Echo parameters={"type":"array"} {: /echo ok :}',
+      "/tools-register name=echo description=Echo parameters={\"type\":\"array\"} {: /echo ok :}",
       createContext({ registerTool: vi.fn().mockResolvedValue(true) }),
     );
     const badBool = await executeSlashCommandScript(

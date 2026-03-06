@@ -120,7 +120,6 @@ function extractActionBlock(commandName: string, invocationMeta?: { blocks?: Arr
   return body;
 }
 
-
 function normalizeToolDefinitions(value: unknown): SlashToolDefinition[] {
   if (!Array.isArray(value)) {
     throw new Error("/tool-list host callback must return tool definitions");
@@ -303,7 +302,6 @@ export const handleToolUnregister: CommandHandler = async (args, _namedArgs, ctx
   }
   return String(removed);
 };
-
 
 /** /tag-add <tag> - 为角色追加标签 */
 export const handleTagAdd: CommandHandler = async (args, namedArgs, ctx, pipe) => {
