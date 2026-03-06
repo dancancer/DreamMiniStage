@@ -79,6 +79,8 @@
 10. 缺失宿主能力已按策略分组：
    - 待接通：`/translate`（`onTranslateText`）、`/proxy`（`onSelectProxyPreset`）、`/yt-script`（`onGetYouTubeTranscript`）。
    - 故意 fail-fast：`/wi-get-timed-effect`、`/wi-set-timed-effect`（缺少稳定的 chat timed effect metadata 设计，暂不引入兼容分支）。
+11. M3 回放已落地并进入可复验状态：`p4-session-replay-e2e.mjs` 新增 round9，覆盖 `/floor-teleport` 宿主锚点滚动与 `/proxy` fail-fast 错误链路；最新通过 run 为 `p4r11-1772804943599`。
+12. 回放稳定性修补：`app/session/page.tsx` 将 `currentCharacter` 改为 `useMemo`，消除 header effect 的高频触发，避免 replay 中 `Maximum update depth exceeded` 噪声漂移。
 
 ### 3.3 P3（机会性补齐）
 
@@ -104,6 +106,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 进入 M3：基于现有 `scripts/p4-session-replay-e2e.mjs` 扩一轮 `/session` replay，优先固化 slash 直达 + refresh 持久化 + session 隔离。
-2. 在真实宿主能力里按需接通两项：优先 `selectProxyPreset`、`getYouTubeTranscript`，并在页面层补成功路径断言。
+1. 进入“宿主能力真接通”阶段：优先实现 `selectProxyPreset` 与 `getYouTubeTranscript` 的页面宿主成功路径。
+2. 为 `proxy / yt-script` 补页面级成功路径断言，并与现有 fail-fast 断言成对维护。
 3. `wi-* timed effect` 继续保持显式 fail-fast，直到 chat metadata 设计冻结后再接通，避免回退到多分支兼容路径。

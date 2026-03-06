@@ -1,0 +1,1288 @@
+[2026-03-06T13:49:09.678Z] [info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[2026-03-06T13:49:09.726Z] [log] 🔧 Tool Registry initialized with 9 tools (including 4 specialized worldbook tools)
+[2026-03-06T13:49:09.776Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:09.776Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:09.783Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:09.783Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:09.873Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:09.873Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:09.891Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:09.922Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:09.922Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:09.922Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:09.922Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:09.922Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:09.922Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:09.922Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:09.922Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:09.922Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:09.922Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:09.925Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:09.925Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:09.925Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:09.925Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:09.925Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:09.926Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:09.926Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:09.926Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:09.926Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:09.926Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:09.926Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:09.926Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:09.926Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:09.926Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:09.926Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:09.926Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:09.926Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:09.926Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:09.928Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:09.928Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:09.930Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:09.930Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:09.930Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:09.930Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:10.008Z] [log] %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
+[2026-03-06T13:49:10.008Z] [log] %c[Vercel Web Analytics]%c [view] http://127.0.0.1:3303/ color: rgb(120, 120, 120) color: inherit {o: http://127.0.0.1:3303/, sv: 0.1.3, sdkn: @vercel/analytics/react, sdkv: 1.6.1, ts: 1772804950008} /_vercel/insights/view
+[2026-03-06T13:49:10.933Z] [error] Failed to load resource: the server responded with a status of 404 (Not Found)
+[2026-03-06T13:49:10.970Z] [error] Failed to load resource: the server responded with a status of 404 (Not Found)
+[2026-03-06T13:49:11.896Z] [log] [Fast Refresh] done in 2005ms
+[2026-03-06T13:49:11.902Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:12.640Z] [log] [Fast Refresh] done in 738ms
+[2026-03-06T13:49:12.830Z] [info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[2026-03-06T13:49:12.870Z] [log] 🔧 Tool Registry initialized with 9 tools (including 4 specialized worldbook tools)
+[2026-03-06T13:49:12.924Z] [log] [ResourceManager] 启动定期清理
+[2026-03-06T13:49:12.924Z] [log] [ResourceManager] 注册全局清理处理器
+[2026-03-06T13:49:12.946Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:12.946Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:12.948Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:12.948Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:12.981Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:12.982Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:12.982Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:12.987Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:12.988Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:12.988Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:12.988Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:12.988Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:12.988Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:12.988Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:12.988Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:12.988Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:12.988Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:12.990Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:12.990Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:12.990Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:12.990Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:12.990Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:12.990Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:12.990Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:12.990Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:12.990Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:12.990Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:12.990Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:12.990Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:12.990Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:12.990Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:12.990Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:12.990Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:12.990Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:12.990Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:12.996Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:12.997Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:12.997Z] [log] %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
+[2026-03-06T13:49:12.997Z] [log] %c[Vercel Web Analytics]%c [view] http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-a color: rgb(120, 120, 120) color: inherit {o: http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-a, sv: 0.1.3, sdkn: @vercel/analytics/react, sdkv: 1.6.1, ts: 1772804952997} /_vercel/insights/view
+[2026-03-06T13:49:12.998Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:12.998Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:12.998Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:12.998Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:13.226Z] [log] [Fast Refresh] done in 243ms
+[2026-03-06T13:49:13.521Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:13.521Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:13.521Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.522Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.522Z] [log] [PromptViewerButton] 组件卸载，清理资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.522Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.522Z] [log] [PromptViewerModal] 组件卸载，清理所有资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.522Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.523Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:13.523Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:13.523Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.523Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.544Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.544Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.545Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:13.545Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:13.545Z] [log] [ContentParser][START] 输入长度=20
+[2026-03-06T13:49:13.545Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening A...
+[2026-03-06T13:49:13.545Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:13.545Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:13.545Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:13.545Z] [log] [MarkdownConverter][START] 输入长度=20
+[2026-03-06T13:49:13.545Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:13.545Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:13.545Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:13.545Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:13.545Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:13.545Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:13.545Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:13.545Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][DONE] 输出长度=20
+[2026-03-06T13:49:13.546Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:13.546Z] [log] [TagReplacer][START] 输入长度=20
+[2026-03-06T13:49:13.546Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:13.546Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:13.546Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:13.546Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:13.547Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:13.547Z] [log] [ContentParser][SEGMENT] [0] type=html, len=20
+[2026-03-06T13:49:13.547Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:13.547Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:13.547Z] [log] [ContentParser][START] 输入长度=20
+[2026-03-06T13:49:13.547Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening A...
+[2026-03-06T13:49:13.547Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:13.547Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:13.547Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][START] 输入长度=20
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][DONE] 输出长度=20
+[2026-03-06T13:49:13.547Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:13.547Z] [log] [TagReplacer][START] 输入长度=20
+[2026-03-06T13:49:13.547Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:13.547Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:13.547Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:13.547Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:13.547Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:13.547Z] [log] [ContentParser][SEGMENT] [0] type=html, len=20
+[2026-03-06T13:49:13.607Z] [warning] 找不到节点类型的工具类: userInput
+[2026-03-06T13:49:13.607Z] [warning] 找不到节点类型的工具类: pluginMessage
+[2026-03-06T13:49:13.608Z] [warning] 找不到节点类型的工具类: plugin
+[2026-03-06T13:49:13.608Z] [warning] 找不到节点类型的工具类: output
+[2026-03-06T13:49:13.608Z] [log] Node user-input-1: Processing workflow beforeExecute
+[2026-03-06T13:49:13.617Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:13.617Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:13.617Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:13.617Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:13.618Z] [log] Node user-input-1: Processing workflow afterExecute
+[2026-03-06T13:49:13.618Z] [log] Node plugin-message-1: Processing workflow beforeExecute
+[2026-03-06T13:49:13.618Z] [log] 🔌 PluginMessageNode: Processing user input {userInputLength: 27, characterId: p4-round10-character, userInputPreview: P4 Round10 SlashPathMessage...}
+[2026-03-06T13:49:13.618Z] [log] 🔌 PluginMessageNode: Initializing plugin system...
+[2026-03-06T13:49:13.618Z] [log] ✅ PluginMessageNode: Plugin system initialized
+[2026-03-06T13:49:13.618Z] [log] 🔌 PluginMessageNode: Processing onMessage hooks...
+[2026-03-06T13:49:13.618Z] [log] 📝 Dialogue Stats: Message received: P4 Round10 SlashPathMessage...
+[2026-03-06T13:49:13.618Z] [log] ✅ PluginMessageNode: onMessage hooks processed {originalLength: 27, processedLength: 27, changed: false}
+[2026-03-06T13:49:13.618Z] [log] ✅ PluginMessageNode: Processing complete {originalLength: 27, processedLength: 27, changed: false}
+[2026-03-06T13:49:13.618Z] [log] Node plugin-message-1: Processing workflow afterExecute
+[2026-03-06T13:49:13.618Z] [log] Node history-pre-1: Processing workflow beforeExecute
+[2026-03-06T13:49:13.618Z] [log] [historyPreTool] Executing getChatHistoryMessages [p4r11-1772804943599-session-a, 10]
+[2026-03-06T13:49:13.628Z] [log] [HistoryPreNodeTools] Got 2 chat history messages for p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.628Z] [log] [historyPreTool] Executing getConversationContext [p4r11-1772804943599-session-a, 3]
+[2026-03-06T13:49:13.628Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:13.628Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:13.628Z] [log] [ContentParser][START] 输入长度=0
+[2026-03-06T13:49:13.628Z] [log] [ContentParser][EMPTY] 输入为空，返回空内容
+[2026-03-06T13:49:13.628Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:13.628Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:13.628Z] [log] [ContentParser][START] 输入长度=0
+[2026-03-06T13:49:13.628Z] [log] [ContentParser][EMPTY] 输入为空，返回空内容
+[2026-03-06T13:49:13.628Z] [log] [HistoryPreNode] Prepared history for p4r11-1772804943599-session-a: 2 messages
+[2026-03-06T13:49:13.628Z] [log] Node history-pre-1: Processing workflow afterExecute
+[2026-03-06T13:49:13.628Z] [log] Node preset-1: Processing workflow beforeExecute
+[2026-03-06T13:49:13.628Z] [log] [presetTool] Executing buildPromptFramework [p4-round10-character, zh, , undefined, 200, false, none, p4r11-1772804943599-session-a, P4 Round10 SlashPathMessage, Array(2)]
+[2026-03-06T13:49:13.629Z] [log] [PresetNodeTools] Found 0 presets in IndexedDB
+[2026-03-06T13:49:13.629Z] [log] [PresetNodeTools] No enabled preset found in IndexedDB
+[2026-03-06T13:49:13.629Z] [log] [PresetNodeTools] Falling back to minimal default preset
+[2026-03-06T13:49:13.630Z] [debug] [WI] Loaded 0 entries from 0 global world books
+[2026-03-06T13:49:13.630Z] [debug] [WI] No character world book found for: p4-round10-character
+[2026-03-06T13:49:13.630Z] [debug] [WI] No dialogue world book found for: p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.630Z] [debug] [WI] Cached 0 entries for p4-round10-character:p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.638Z] [log] [PresetNodeTools] Built: preset=default, msgs=7, historyMsgs=2
+[2026-03-06T13:49:13.638Z] [log] Node preset-1: Processing workflow afterExecute
+[2026-03-06T13:49:13.638Z] [log] Node context-1: Processing workflow beforeExecute
+[2026-03-06T13:49:13.638Z] [log] [ContextNode] Pass-through messages=7
+[2026-03-06T13:49:13.638Z] [log] Node context-1: Processing workflow afterExecute
+[2026-03-06T13:49:13.638Z] [log] Node world-book-1: Processing workflow beforeExecute
+[2026-03-06T13:49:13.638Z] [log] [worldBookTool] Executing modifyMessages [p4-round10-character, Array(7), P4 Round10 SlashPathMessage, p4r11-1772804943599-session-a]
+[2026-03-06T13:49:13.638Z] [debug] [WI] Cache hit for p4-round10-character:p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.638Z] [log] Node world-book-1: Processing workflow afterExecute
+[2026-03-06T13:49:13.638Z] [log] Node llm-1: Processing workflow beforeExecute
+[2026-03-06T13:49:13.638Z] [log] [llmTool] Executing invokeLLM [Object]
+[2026-03-06T13:49:13.639Z] [log] invokeLLM
+[2026-03-06T13:49:13.639Z] [log] [LLMNodeTools:invokeLLM] 广播 llm-prompt-captured 事件: {dialogueKey: p4r11-1772804943599-session-a, characterId: p4-round10-character, messagesCount: 7}
+[2026-03-06T13:49:13.661Z] [error] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[2026-03-06T13:49:13.661Z] [error] Method execution failed: invokeLLM Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/ at APIError.generate (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:149:20) at OpenAI.makeStatusError (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8658:260) at OpenAI.makeRequest (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8829:30) at async http://127.0.0.1:3303/_next/static/chunks/fd141_@langchain_openai_c9e0528c._.js:2101:29 at async RetryOperation._fn (http://127.0.0.1:3303/_next/static/chunks/node_modules__pnpm_aeaebd4e._.js:5393:25)
+[2026-03-06T13:49:13.661Z] [error] Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/ at APIError.generate (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:149:20) at OpenAI.makeStatusError (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8658:260) at OpenAI.makeRequest (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8829:30) at async http://127.0.0.1:3303/_next/static/chunks/fd141_@langchain_openai_c9e0528c._.js:2101:29 at async RetryOperation._fn (http://127.0.0.1:3303/_next/static/chunks/node_modules__pnpm_aeaebd4e._.js:5393:25)
+[2026-03-06T13:49:13.661Z] [error] Streaming error: Error: No response returned from workflow at Object.start (http://127.0.0.1:3303/_next/static/chunks/_c6730766._.js:672:27)
+[2026-03-06T13:49:13.661Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:13.661Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:13.670Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:13.675Z] [log] [ResourceManager] 页面卸载，执行清理
+[2026-03-06T13:49:13.675Z] [log] [ResourceManager] 开始清理所有资源: 2 个
+[2026-03-06T13:49:13.675Z] [log] [PromptViewerModal] 资源管理器清理: p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.675Z] [log] [PromptViewerButton] 资源管理器清理: p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.675Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.675Z] [log] [ResourceManager] 清理完成: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.677Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:13.677Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:13.677Z] [log] [ContentParser][START] 输入长度=0
+[2026-03-06T13:49:13.677Z] [log] [ContentParser][EMPTY] 输入为空，返回空内容
+[2026-03-06T13:49:13.680Z] [log] [PromptInterceptor] 启动清理定时器
+[2026-03-06T13:49:13.680Z] [log] [ResourceManager] 注册清理函数: prompt-interceptor
+[2026-03-06T13:49:13.680Z] [log] [PromptInterceptor] 已注册事件监听器
+[2026-03-06T13:49:13.680Z] [log] [PromptInterceptor] 停止拦截: p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.680Z] [log] [PromptViewer] 停止拦截: p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.680Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.680Z] [log] [ResourceManager] 清理完成: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:13.680Z] [log] [ResourceManager] 所有资源清理完成
+[2026-03-06T13:49:14.418Z] [log] [Fast Refresh] done in 748ms
+[2026-03-06T13:49:14.439Z] [log] [ResourceManager] 页面隐藏，执行轻量清理
+[2026-03-06T13:49:14.439Z] [log] [ResourceManager] 定期清理完成
+[2026-03-06T13:49:14.477Z] [info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[2026-03-06T13:49:14.515Z] [log] 🔧 Tool Registry initialized with 9 tools (including 4 specialized worldbook tools)
+[2026-03-06T13:49:14.576Z] [log] [ResourceManager] 启动定期清理
+[2026-03-06T13:49:14.576Z] [log] [ResourceManager] 注册全局清理处理器
+[2026-03-06T13:49:14.595Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:14.595Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:14.597Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:14.597Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:14.629Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:14.629Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:14.630Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:14.637Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:14.637Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:14.637Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:14.637Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:14.637Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:14.637Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:14.637Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:14.637Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:14.637Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:14.637Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:14.644Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:14.644Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:14.644Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:14.644Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:14.644Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:14.644Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:14.644Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:14.644Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:14.644Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:14.644Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:14.644Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:14.644Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:14.644Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:14.644Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:14.644Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:14.644Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:14.644Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:14.644Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:14.646Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:14.646Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:14.648Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:14.648Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:14.648Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:14.648Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:14.656Z] [log] %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
+[2026-03-06T13:49:14.657Z] [log] %c[Vercel Web Analytics]%c [view] http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-a color: rgb(120, 120, 120) color: inherit {o: http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-a, sv: 0.1.3, sdkn: @vercel/analytics/react, sdkv: 1.6.1, ts: 1772804954656} /_vercel/insights/view
+[2026-03-06T13:49:14.666Z] [log] [Fast Refresh] done in 36ms
+[2026-03-06T13:49:15.151Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:15.151Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:15.151Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.152Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.152Z] [log] [PromptViewerButton] 组件卸载，清理资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.152Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.152Z] [log] [PromptViewerModal] 组件卸载，清理所有资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.152Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.153Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:15.153Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:15.153Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.153Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.166Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.166Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.174Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:15.174Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:15.174Z] [log] [ContentParser][START] 输入长度=20
+[2026-03-06T13:49:15.174Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening A...
+[2026-03-06T13:49:15.174Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:15.174Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:15.174Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:15.174Z] [log] [MarkdownConverter][START] 输入长度=20
+[2026-03-06T13:49:15.174Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:15.174Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:15.174Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:15.174Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:15.174Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:15.174Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:15.174Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][DONE] 输出长度=20
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:15.175Z] [log] [TagReplacer][START] 输入长度=20
+[2026-03-06T13:49:15.175Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:15.175Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:15.175Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:15.175Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:15.175Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:15.175Z] [log] [ContentParser][SEGMENT] [0] type=html, len=20
+[2026-03-06T13:49:15.175Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:15.175Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:15.175Z] [log] [ContentParser][START] 输入长度=20
+[2026-03-06T13:49:15.175Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening A...
+[2026-03-06T13:49:15.175Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:15.175Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:15.175Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][START] 输入长度=20
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:15.175Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:15.176Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:15.176Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:15.176Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:15.176Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:15.176Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:15.176Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:15.176Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:15.176Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:15.176Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:15.176Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:15.176Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:15.176Z] [log] [MarkdownConverter][DONE] 输出长度=20
+[2026-03-06T13:49:15.176Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:15.176Z] [log] [TagReplacer][START] 输入长度=20
+[2026-03-06T13:49:15.176Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:15.176Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:15.176Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:15.176Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:15.176Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:15.176Z] [log] [ContentParser][SEGMENT] [0] type=html, len=20
+[2026-03-06T13:49:15.215Z] [log] [ResourceManager] 页面卸载，执行清理
+[2026-03-06T13:49:15.215Z] [log] [ResourceManager] 开始清理所有资源: 2 个
+[2026-03-06T13:49:15.215Z] [log] [PromptViewerModal] 资源管理器清理: p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.215Z] [log] [PromptViewerButton] 资源管理器清理: p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.215Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.215Z] [log] [ResourceManager] 清理完成: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.218Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:15.219Z] [log] [PromptInterceptor] 启动清理定时器
+[2026-03-06T13:49:15.219Z] [log] [ResourceManager] 注册清理函数: prompt-interceptor
+[2026-03-06T13:49:15.219Z] [log] [PromptInterceptor] 已注册事件监听器
+[2026-03-06T13:49:15.219Z] [log] [PromptInterceptor] 停止拦截: p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.219Z] [log] [PromptViewer] 停止拦截: p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.219Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.219Z] [log] [ResourceManager] 清理完成: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:15.219Z] [log] [ResourceManager] 所有资源清理完成
+[2026-03-06T13:49:15.258Z] [log] [ResourceManager] 页面隐藏，执行轻量清理
+[2026-03-06T13:49:15.258Z] [log] [ResourceManager] 定期清理完成
+[2026-03-06T13:49:15.292Z] [info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[2026-03-06T13:49:15.327Z] [log] 🔧 Tool Registry initialized with 9 tools (including 4 specialized worldbook tools)
+[2026-03-06T13:49:15.353Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:15.354Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:15.356Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:15.356Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:15.388Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:15.400Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:15.416Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:15.416Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:15.416Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:15.416Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:15.416Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:15.416Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:15.416Z] [log] %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
+[2026-03-06T13:49:15.416Z] [log] %c[Vercel Web Analytics]%c [view] http://127.0.0.1:3303/ color: rgb(120, 120, 120) color: inherit {o: http://127.0.0.1:3303/, sv: 0.1.3, sdkn: @vercel/analytics/react, sdkv: 1.6.1, ts: 1772804955416} /_vercel/insights/view
+[2026-03-06T13:49:15.433Z] [log] [Fast Refresh] done in 32ms
+[2026-03-06T13:49:15.436Z] [error] Failed to load resource: the server responded with a status of 404 (Not Found)
+[2026-03-06T13:49:15.436Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:15.436Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:15.437Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:15.437Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:15.437Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:15.462Z] [error] Failed to load resource: the server responded with a status of 404 (Not Found)
+[2026-03-06T13:49:15.462Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:15.462Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:15.462Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:15.462Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:15.462Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:15.462Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:15.462Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:15.462Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:15.462Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:15.464Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:15.464Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:15.464Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:15.464Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:15.464Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:15.464Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:15.464Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:15.464Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:15.464Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:15.464Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:15.468Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:15.468Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:15.468Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:15.469Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:15.469Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:15.508Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:16.226Z] [log] [Fast Refresh] done in 717ms
+[2026-03-06T13:49:16.253Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:16.286Z] [log] [Fast Refresh] done in 34ms
+[2026-03-06T13:49:16.321Z] [log] [ResourceManager] 启动定期清理
+[2026-03-06T13:49:16.321Z] [log] [ResourceManager] 注册全局清理处理器
+[2026-03-06T13:49:16.348Z] [log] %c[Vercel Web Analytics]%c [view] http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-b color: rgb(120, 120, 120) color: inherit {o: http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-b, sv: 0.1.3, sdkn: @vercel/analytics/react, sdkv: 1.6.1, ts: 1772804956336} /_vercel/insights/view
+[2026-03-06T13:49:16.882Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:16.883Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:16.883Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.883Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.883Z] [log] [PromptViewerButton] 组件卸载，清理资源: p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.883Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerButton-p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.883Z] [log] [PromptViewerModal] 组件卸载，清理所有资源: p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.884Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerModal-p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.884Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:16.884Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:16.884Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.884Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.906Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.906Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.910Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:16.910Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:16.910Z] [log] [ContentParser][START] 输入长度=20
+[2026-03-06T13:49:16.910Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening B...
+[2026-03-06T13:49:16.910Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:16.910Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:16.910Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][START] 输入长度=20
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening B...
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:16.911Z] [log] [MarkdownConverter][DONE] 输出长度=20
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening B...
+[2026-03-06T13:49:16.912Z] [log] [TagReplacer][START] 输入长度=20
+[2026-03-06T13:49:16.912Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening B...
+[2026-03-06T13:49:16.912Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:16.912Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:16.912Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:16.912Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:16.912Z] [log] [ContentParser][SEGMENT] [0] type=html, len=20
+[2026-03-06T13:49:16.912Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:16.912Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:16.912Z] [log] [ContentParser][START] 输入长度=20
+[2026-03-06T13:49:16.912Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening B...
+[2026-03-06T13:49:16.912Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:16.912Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:16.912Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][START] 输入长度=20
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening B...
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:16.912Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:16.913Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:16.913Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:16.913Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:16.913Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:16.913Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:16.913Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:16.913Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:16.913Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:16.913Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:16.913Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:16.913Z] [log] [MarkdownConverter][DONE] 输出长度=20
+[2026-03-06T13:49:16.913Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening B...
+[2026-03-06T13:49:16.913Z] [log] [TagReplacer][START] 输入长度=20
+[2026-03-06T13:49:16.913Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening B...
+[2026-03-06T13:49:16.913Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:16.913Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:16.913Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:16.913Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:16.913Z] [log] [ContentParser][SEGMENT] [0] type=html, len=20
+[2026-03-06T13:49:16.950Z] [log] [ResourceManager] 页面卸载，执行清理
+[2026-03-06T13:49:16.950Z] [log] [ResourceManager] 开始清理所有资源: 2 个
+[2026-03-06T13:49:16.950Z] [log] [PromptViewerModal] 资源管理器清理: p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.951Z] [log] [PromptViewerButton] 资源管理器清理: p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.951Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.951Z] [log] [ResourceManager] 清理完成: PromptViewerButton-p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.953Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:16.954Z] [log] [PromptInterceptor] 启动清理定时器
+[2026-03-06T13:49:16.954Z] [log] [ResourceManager] 注册清理函数: prompt-interceptor
+[2026-03-06T13:49:16.954Z] [log] [PromptInterceptor] 已注册事件监听器
+[2026-03-06T13:49:16.954Z] [log] [PromptInterceptor] 停止拦截: p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.954Z] [log] [PromptViewer] 停止拦截: p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.954Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.954Z] [log] [ResourceManager] 清理完成: PromptViewerModal-p4r11-1772804943599-session-b
+[2026-03-06T13:49:16.954Z] [log] [ResourceManager] 所有资源清理完成
+[2026-03-06T13:49:17.719Z] [log] [Fast Refresh] done in 766ms
+[2026-03-06T13:49:17.742Z] [log] [ResourceManager] 页面隐藏，执行轻量清理
+[2026-03-06T13:49:17.742Z] [log] [ResourceManager] 定期清理完成
+[2026-03-06T13:49:17.881Z] [info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[2026-03-06T13:49:17.958Z] [log] 🔧 Tool Registry initialized with 9 tools (including 4 specialized worldbook tools)
+[2026-03-06T13:49:18.035Z] [log] [ResourceManager] 启动定期清理
+[2026-03-06T13:49:18.035Z] [log] [ResourceManager] 注册全局清理处理器
+[2026-03-06T13:49:18.055Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:18.056Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:18.058Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:18.058Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:18.102Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:18.104Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:18.108Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:18.109Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:18.109Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:18.109Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:18.109Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:18.109Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:18.111Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:18.111Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:18.111Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:18.111Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:18.111Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:18.111Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:18.111Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:18.111Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:18.111Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:18.111Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:18.111Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:18.112Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:18.112Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:18.112Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:18.121Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:18.121Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:18.121Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:18.121Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:18.121Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:18.121Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:18.121Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:18.121Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:18.121Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:18.121Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:18.123Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:18.123Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:18.123Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:18.125Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:18.125Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:18.128Z] [log] [Fast Refresh] done in 23ms
+[2026-03-06T13:49:18.285Z] [log] %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
+[2026-03-06T13:49:18.285Z] [log] %c[Vercel Web Analytics]%c [view] http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-plain color: rgb(120, 120, 120) color: inherit {o: http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-plain, sv: 0.1.3, sdkn: @vercel/analytics/react, sdkv: 1.6.1, ts: 1772804958285} /_vercel/insights/view
+[2026-03-06T13:49:18.627Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:18.627Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:18.627Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.628Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.628Z] [log] [PromptViewerButton] 组件卸载，清理资源: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.628Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerButton-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.628Z] [log] [PromptViewerModal] 组件卸载，清理所有资源: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.628Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerModal-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.629Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:18.629Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:18.629Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.629Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.645Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.645Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.646Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:18.646Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:18.646Z] [log] [ContentParser][START] 输入长度=24
+[2026-03-06T13:49:18.646Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:18.646Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:18.646Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:18.646Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][START] 输入长度=24
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:18.646Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][DONE] 输出长度=24
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:18.647Z] [log] [TagReplacer][START] 输入长度=24
+[2026-03-06T13:49:18.647Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:18.647Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:18.647Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:18.647Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:18.647Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:18.647Z] [log] [ContentParser][SEGMENT] [0] type=html, len=24
+[2026-03-06T13:49:18.647Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:18.647Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:18.647Z] [log] [ContentParser][START] 输入长度=24
+[2026-03-06T13:49:18.647Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:18.647Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:18.647Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:18.647Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][START] 输入长度=24
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:18.647Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][DONE] 输出长度=24
+[2026-03-06T13:49:18.648Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:18.648Z] [log] [TagReplacer][START] 输入长度=24
+[2026-03-06T13:49:18.648Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:18.648Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:18.648Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:18.648Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:18.648Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:18.648Z] [log] [ContentParser][SEGMENT] [0] type=html, len=24
+[2026-03-06T13:49:18.690Z] [warning] 找不到节点类型的工具类: userInput
+[2026-03-06T13:49:18.690Z] [warning] 找不到节点类型的工具类: pluginMessage
+[2026-03-06T13:49:18.690Z] [warning] 找不到节点类型的工具类: plugin
+[2026-03-06T13:49:18.691Z] [warning] 找不到节点类型的工具类: output
+[2026-03-06T13:49:18.691Z] [log] Node user-input-1: Processing workflow beforeExecute
+[2026-03-06T13:49:18.699Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:18.699Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:18.699Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:18.699Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:18.699Z] [log] Node user-input-1: Processing workflow afterExecute
+[2026-03-06T13:49:18.699Z] [log] Node plugin-message-1: Processing workflow beforeExecute
+[2026-03-06T13:49:18.699Z] [log] 🔌 PluginMessageNode: Processing user input {userInputLength: 43, characterId: p4-round10-character, userInputPreview: Player Input：P4 Round10 Plain401 Message A3...}
+[2026-03-06T13:49:18.699Z] [log] 🔌 PluginMessageNode: Initializing plugin system...
+[2026-03-06T13:49:18.699Z] [log] ✅ PluginMessageNode: Plugin system initialized
+[2026-03-06T13:49:18.699Z] [log] 🔌 PluginMessageNode: Processing onMessage hooks...
+[2026-03-06T13:49:18.699Z] [log] 📝 Dialogue Stats: Message received: Player Input：P4 Round10 Plain401 Message A3...
+[2026-03-06T13:49:18.699Z] [log] ✅ PluginMessageNode: onMessage hooks processed {originalLength: 43, processedLength: 43, changed: false}
+[2026-03-06T13:49:18.699Z] [log] ✅ PluginMessageNode: Processing complete {originalLength: 43, processedLength: 43, changed: false}
+[2026-03-06T13:49:18.699Z] [log] Node plugin-message-1: Processing workflow afterExecute
+[2026-03-06T13:49:18.699Z] [log] Node history-pre-1: Processing workflow beforeExecute
+[2026-03-06T13:49:18.700Z] [log] [historyPreTool] Executing getChatHistoryMessages [p4r11-1772804943599-session-plain, 10]
+[2026-03-06T13:49:18.707Z] [log] [HistoryPreNodeTools] Got 2 chat history messages for p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.707Z] [log] [historyPreTool] Executing getConversationContext [p4r11-1772804943599-session-plain, 3]
+[2026-03-06T13:49:18.707Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:18.707Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:18.707Z] [log] [ContentParser][START] 输入长度=0
+[2026-03-06T13:49:18.707Z] [log] [ContentParser][EMPTY] 输入为空，返回空内容
+[2026-03-06T13:49:18.707Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:18.707Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:18.707Z] [log] [ContentParser][START] 输入长度=0
+[2026-03-06T13:49:18.707Z] [log] [ContentParser][EMPTY] 输入为空，返回空内容
+[2026-03-06T13:49:18.707Z] [log] [HistoryPreNode] Prepared history for p4r11-1772804943599-session-plain: 2 messages
+[2026-03-06T13:49:18.707Z] [log] Node history-pre-1: Processing workflow afterExecute
+[2026-03-06T13:49:18.707Z] [log] Node preset-1: Processing workflow beforeExecute
+[2026-03-06T13:49:18.707Z] [log] [presetTool] Executing buildPromptFramework [p4-round10-character, zh, , undefined, 200, false, none, p4r11-1772804943599-session-plain, Player Input：P4 Round10 Plain401 Message A3, Array(2)]
+[2026-03-06T13:49:18.707Z] [log] [PresetNodeTools] Found 0 presets in IndexedDB
+[2026-03-06T13:49:18.707Z] [log] [PresetNodeTools] No enabled preset found in IndexedDB
+[2026-03-06T13:49:18.707Z] [log] [PresetNodeTools] Falling back to minimal default preset
+[2026-03-06T13:49:18.708Z] [debug] [WI] Loaded 0 entries from 0 global world books
+[2026-03-06T13:49:18.708Z] [debug] [WI] No character world book found for: p4-round10-character
+[2026-03-06T13:49:18.708Z] [debug] [WI] No dialogue world book found for: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.708Z] [debug] [WI] Cached 0 entries for p4-round10-character:p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.709Z] [log] [PresetNodeTools] Built: preset=default, msgs=7, historyMsgs=2
+[2026-03-06T13:49:18.709Z] [log] Node preset-1: Processing workflow afterExecute
+[2026-03-06T13:49:18.709Z] [log] Node context-1: Processing workflow beforeExecute
+[2026-03-06T13:49:18.709Z] [log] [ContextNode] Pass-through messages=7
+[2026-03-06T13:49:18.709Z] [log] Node context-1: Processing workflow afterExecute
+[2026-03-06T13:49:18.709Z] [log] Node world-book-1: Processing workflow beforeExecute
+[2026-03-06T13:49:18.709Z] [log] [worldBookTool] Executing modifyMessages [p4-round10-character, Array(7), Player Input：P4 Round10 Plain401 Message A3, p4r11-1772804943599-session-plain]
+[2026-03-06T13:49:18.709Z] [debug] [WI] Cache hit for p4-round10-character:p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.709Z] [log] Node world-book-1: Processing workflow afterExecute
+[2026-03-06T13:49:18.709Z] [log] Node llm-1: Processing workflow beforeExecute
+[2026-03-06T13:49:18.709Z] [log] [llmTool] Executing invokeLLM [Object]
+[2026-03-06T13:49:18.709Z] [log] invokeLLM
+[2026-03-06T13:49:18.709Z] [log] [LLMNodeTools:invokeLLM] 广播 llm-prompt-captured 事件: {dialogueKey: p4r11-1772804943599-session-plain, characterId: p4-round10-character, messagesCount: 7}
+[2026-03-06T13:49:18.712Z] [error] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[2026-03-06T13:49:18.712Z] [error] Method execution failed: invokeLLM Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/ at APIError.generate (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:149:20) at OpenAI.makeStatusError (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8658:260) at OpenAI.makeRequest (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8829:30) at async http://127.0.0.1:3303/_next/static/chunks/fd141_@langchain_openai_c9e0528c._.js:2101:29 at async RetryOperation._fn (http://127.0.0.1:3303/_next/static/chunks/node_modules__pnpm_aeaebd4e._.js:5393:25)
+[2026-03-06T13:49:18.712Z] [error] Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/ at APIError.generate (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:149:20) at OpenAI.makeStatusError (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8658:260) at OpenAI.makeRequest (http://127.0.0.1:3303/_next/static/chunks/9ba6a_openai_4bdebbd2._.js:8829:30) at async http://127.0.0.1:3303/_next/static/chunks/fd141_@langchain_openai_c9e0528c._.js:2101:29 at async RetryOperation._fn (http://127.0.0.1:3303/_next/static/chunks/node_modules__pnpm_aeaebd4e._.js:5393:25)
+[2026-03-06T13:49:18.712Z] [error] Streaming error: Error: No response returned from workflow at Object.start (http://127.0.0.1:3303/_next/static/chunks/_c6730766._.js:672:27)
+[2026-03-06T13:49:18.723Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:18.724Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:18.730Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:18.740Z] [log] [ResourceManager] 页面卸载，执行清理
+[2026-03-06T13:49:18.740Z] [log] [ResourceManager] 开始清理所有资源: 2 个
+[2026-03-06T13:49:18.740Z] [log] [PromptViewerModal] 资源管理器清理: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.740Z] [log] [PromptViewerButton] 资源管理器清理: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.740Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.740Z] [log] [ResourceManager] 清理完成: PromptViewerButton-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.742Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:18.742Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:18.742Z] [log] [ContentParser][START] 输入长度=0
+[2026-03-06T13:49:18.742Z] [log] [ContentParser][EMPTY] 输入为空，返回空内容
+[2026-03-06T13:49:18.746Z] [log] [PromptInterceptor] 启动清理定时器
+[2026-03-06T13:49:18.746Z] [log] [ResourceManager] 注册清理函数: prompt-interceptor
+[2026-03-06T13:49:18.746Z] [log] [PromptInterceptor] 已注册事件监听器
+[2026-03-06T13:49:18.746Z] [log] [PromptInterceptor] 停止拦截: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.746Z] [log] [PromptViewer] 停止拦截: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.746Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.746Z] [log] [ResourceManager] 清理完成: PromptViewerModal-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:18.746Z] [log] [ResourceManager] 所有资源清理完成
+[2026-03-06T13:49:19.502Z] [log] [Fast Refresh] done in 771ms
+[2026-03-06T13:49:19.524Z] [log] [ResourceManager] 页面隐藏，执行轻量清理
+[2026-03-06T13:49:19.524Z] [log] [ResourceManager] 定期清理完成
+[2026-03-06T13:49:19.563Z] [info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[2026-03-06T13:49:19.602Z] [log] 🔧 Tool Registry initialized with 9 tools (including 4 specialized worldbook tools)
+[2026-03-06T13:49:19.662Z] [log] [ResourceManager] 启动定期清理
+[2026-03-06T13:49:19.662Z] [log] [ResourceManager] 注册全局清理处理器
+[2026-03-06T13:49:19.682Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:19.682Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:19.684Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:19.684Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:19.714Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:19.716Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:19.716Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:19.721Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:19.721Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:19.721Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:19.721Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:19.721Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:19.721Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:19.721Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:19.721Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:19.721Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:19.721Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:19.727Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:19.727Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:19.727Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:19.727Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:19.727Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:19.727Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:19.727Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:19.727Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:19.727Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:19.727Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:19.727Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:19.727Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:19.727Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:19.727Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:19.727Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:19.727Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:19.727Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:19.727Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:19.731Z] [log] %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
+[2026-03-06T13:49:19.731Z] [log] %c[Vercel Web Analytics]%c [view] http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-plain color: rgb(120, 120, 120) color: inherit {o: http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-plain, sv: 0.1.3, sdkn: @vercel/analytics/react, sdkv: 1.6.1, ts: 1772804959731} /_vercel/insights/view
+[2026-03-06T13:49:19.731Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:19.731Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:19.734Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:19.734Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:19.734Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:19.734Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:19.746Z] [log] [Fast Refresh] done in 30ms
+[2026-03-06T13:49:20.238Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:20.238Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:20.238Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.239Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.239Z] [log] [PromptViewerButton] 组件卸载，清理资源: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.239Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerButton-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.239Z] [log] [PromptViewerModal] 组件卸载，清理所有资源: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.239Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerModal-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.239Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:20.239Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:20.240Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.240Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.254Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.254Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.254Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:20.254Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:20.254Z] [log] [ContentParser][START] 输入长度=24
+[2026-03-06T13:49:20.254Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:20.254Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:20.254Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:20.254Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:20.254Z] [log] [MarkdownConverter][START] 输入长度=24
+[2026-03-06T13:49:20.254Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:20.254Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][DONE] 输出长度=24
+[2026-03-06T13:49:20.255Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:20.255Z] [log] [TagReplacer][START] 输入长度=24
+[2026-03-06T13:49:20.255Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:20.255Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:20.255Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:20.255Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:20.255Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:20.255Z] [log] [ContentParser][SEGMENT] [0] type=html, len=24
+[2026-03-06T13:49:20.255Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:20.255Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:20.255Z] [log] [ContentParser][START] 输入长度=24
+[2026-03-06T13:49:20.255Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:20.255Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:20.256Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:20.256Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][START] 输入长度=24
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][DONE] 输出长度=24
+[2026-03-06T13:49:20.256Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:20.256Z] [log] [TagReplacer][START] 输入长度=24
+[2026-03-06T13:49:20.256Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening Plain...
+[2026-03-06T13:49:20.256Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:20.256Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:20.256Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:20.256Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:20.256Z] [log] [ContentParser][SEGMENT] [0] type=html, len=24
+[2026-03-06T13:49:20.285Z] [log] [ResourceManager] 页面卸载，执行清理
+[2026-03-06T13:49:20.285Z] [log] [ResourceManager] 开始清理所有资源: 2 个
+[2026-03-06T13:49:20.285Z] [log] [PromptViewerModal] 资源管理器清理: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.285Z] [log] [PromptViewerButton] 资源管理器清理: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.285Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.285Z] [log] [ResourceManager] 清理完成: PromptViewerButton-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.288Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:20.288Z] [log] [PromptInterceptor] 启动清理定时器
+[2026-03-06T13:49:20.288Z] [log] [ResourceManager] 注册清理函数: prompt-interceptor
+[2026-03-06T13:49:20.289Z] [log] [PromptInterceptor] 已注册事件监听器
+[2026-03-06T13:49:20.289Z] [log] [PromptInterceptor] 停止拦截: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.289Z] [log] [PromptViewer] 停止拦截: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.289Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.289Z] [log] [ResourceManager] 清理完成: PromptViewerModal-p4r11-1772804943599-session-plain
+[2026-03-06T13:49:20.289Z] [log] [ResourceManager] 所有资源清理完成
+[2026-03-06T13:49:21.055Z] [log] [Fast Refresh] done in 766ms
+[2026-03-06T13:49:21.077Z] [log] [ResourceManager] 页面隐藏，执行轻量清理
+[2026-03-06T13:49:21.077Z] [log] [ResourceManager] 定期清理完成
+[2026-03-06T13:49:21.116Z] [info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[2026-03-06T13:49:21.154Z] [log] 🔧 Tool Registry initialized with 9 tools (including 4 specialized worldbook tools)
+[2026-03-06T13:49:21.219Z] [log] [ResourceManager] 启动定期清理
+[2026-03-06T13:49:21.219Z] [log] [ResourceManager] 注册全局清理处理器
+[2026-03-06T13:49:21.240Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:21.240Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:21.243Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:21.243Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:21.277Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:21.278Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:21.278Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:21.288Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:21.288Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:21.288Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:21.289Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:21.289Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:21.289Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:21.289Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:21.289Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:21.289Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:21.289Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:21.295Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:21.295Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:21.295Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:21.295Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:21.295Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:21.295Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:21.295Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:21.295Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:21.295Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:21.296Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:21.296Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:21.296Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:21.296Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:21.296Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:21.296Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:21.296Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:21.296Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:21.296Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:21.296Z] [log] %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
+[2026-03-06T13:49:21.296Z] [log] %c[Vercel Web Analytics]%c [view] http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-a color: rgb(120, 120, 120) color: inherit {o: http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-a, sv: 0.1.3, sdkn: @vercel/analytics/react, sdkv: 1.6.1, ts: 1772804961296} /_vercel/insights/view
+[2026-03-06T13:49:21.298Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:21.298Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:21.299Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:21.300Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:21.300Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:21.300Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:21.312Z] [log] [Fast Refresh] done in 33ms
+[2026-03-06T13:49:21.800Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:21.800Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:21.800Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.800Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.801Z] [log] [PromptViewerButton] 组件卸载，清理资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.801Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.801Z] [log] [PromptViewerModal] 组件卸载，清理所有资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.801Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.801Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:21.801Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:21.802Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.802Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.815Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.815Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.820Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:21.820Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:21.820Z] [log] [ContentParser][START] 输入长度=20
+[2026-03-06T13:49:21.820Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening A...
+[2026-03-06T13:49:21.820Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:21.820Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:21.820Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:21.820Z] [log] [MarkdownConverter][START] 输入长度=20
+[2026-03-06T13:49:21.820Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:21.820Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:21.820Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:21.820Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:21.820Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:21.820Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:21.820Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:21.820Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:21.820Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:21.820Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][DONE] 输出长度=20
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:21.821Z] [log] [TagReplacer][START] 输入长度=20
+[2026-03-06T13:49:21.821Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:21.821Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:21.821Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:21.821Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:21.821Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:21.821Z] [log] [ContentParser][SEGMENT] [0] type=html, len=20
+[2026-03-06T13:49:21.821Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:21.821Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:21.821Z] [log] [ContentParser][START] 输入长度=20
+[2026-03-06T13:49:21.821Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening A...
+[2026-03-06T13:49:21.821Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:21.821Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:21.821Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][START] 输入长度=20
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:21.821Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:21.822Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:21.822Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:21.822Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:21.822Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:21.822Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:21.822Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:21.822Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:21.822Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:21.822Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:21.822Z] [log] [MarkdownConverter][DONE] 输出长度=20
+[2026-03-06T13:49:21.822Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:21.822Z] [log] [TagReplacer][START] 输入长度=20
+[2026-03-06T13:49:21.822Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:21.822Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:21.822Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:21.822Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:21.822Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:21.822Z] [log] [ContentParser][SEGMENT] [0] type=html, len=20
+[2026-03-06T13:49:21.892Z] [log] [ResourceManager] 页面卸载，执行清理
+[2026-03-06T13:49:21.892Z] [log] [ResourceManager] 开始清理所有资源: 2 个
+[2026-03-06T13:49:21.892Z] [log] [PromptViewerModal] 资源管理器清理: p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.892Z] [log] [PromptViewerButton] 资源管理器清理: p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.892Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.892Z] [log] [ResourceManager] 清理完成: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.895Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:21.896Z] [log] [PromptInterceptor] 启动清理定时器
+[2026-03-06T13:49:21.896Z] [log] [ResourceManager] 注册清理函数: prompt-interceptor
+[2026-03-06T13:49:21.896Z] [log] [PromptInterceptor] 已注册事件监听器
+[2026-03-06T13:49:21.896Z] [log] [PromptInterceptor] 停止拦截: p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.896Z] [log] [PromptViewer] 停止拦截: p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.896Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.896Z] [log] [ResourceManager] 清理完成: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:21.896Z] [log] [ResourceManager] 所有资源清理完成
+[2026-03-06T13:49:22.672Z] [log] [Fast Refresh] done in 776ms
+[2026-03-06T13:49:22.707Z] [log] [ResourceManager] 页面隐藏，执行轻量清理
+[2026-03-06T13:49:22.707Z] [log] [ResourceManager] 定期清理完成
+[2026-03-06T13:49:22.748Z] [info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[2026-03-06T13:49:22.786Z] [log] 🔧 Tool Registry initialized with 9 tools (including 4 specialized worldbook tools)
+[2026-03-06T13:49:22.845Z] [log] [ResourceManager] 启动定期清理
+[2026-03-06T13:49:22.845Z] [log] [ResourceManager] 注册全局清理处理器
+[2026-03-06T13:49:22.863Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:22.864Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:22.866Z] [log] 🔌 Initializing Enhanced Plugin Registry...
+[2026-03-06T13:49:22.866Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:22.922Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:22.922Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:22.924Z] [log] [Fast Refresh] rebuilding
+[2026-03-06T13:49:22.924Z] [log] %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
+[2026-03-06T13:49:22.924Z] [log] %c[Vercel Web Analytics]%c [view] http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-a color: rgb(120, 120, 120) color: inherit {o: http://127.0.0.1:3303/session?id=p4r11-1772804943599-session-a, sv: 0.1.3, sdkn: @vercel/analytics/react, sdkv: 1.6.1, ts: 1772804962923} /_vercel/insights/view
+[2026-03-06T13:49:22.945Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:22.945Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:22.945Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:22.945Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:22.945Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:22.945Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:22.945Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:22.945Z] [log] 🔍 Discovery complete: 1 plugins found
+[2026-03-06T13:49:22.945Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:22.945Z] [log] 📦 Loading plugin: dialogue-stats
+[2026-03-06T13:49:22.950Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:22.950Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:22.950Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:22.950Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:22.950Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:22.950Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:22.950Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:22.950Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:22.950Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:22.950Z] [log] 📊 Dialogue Stats Plugin loaded
+[2026-03-06T13:49:22.950Z] [log] ✅ Dialogue Statistics plugin loaded successfully
+[2026-03-06T13:49:22.950Z] [log] ✅ Plugin loaded: 对话统计 (Dialogue Statistics)
+[2026-03-06T13:49:22.950Z] [log] 🔌 Enabling plugin: dialogue-stats
+[2026-03-06T13:49:22.950Z] [log] 📊 Dialogue Statistics plugin enabling...
+[2026-03-06T13:49:22.950Z] [log] ✅ Dialogue Statistics plugin enabled
+[2026-03-06T13:49:22.950Z] [log] ✅ Plugin enabled: dialogue-stats
+[2026-03-06T13:49:22.950Z] [log] ✅ Enhanced Plugin Registry initialized
+[2026-03-06T13:49:22.950Z] [log] 🔍 Discovering plugins from registry...
+[2026-03-06T13:49:22.952Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:22.955Z] [log] 📋 Loaded 1 plugins from registry
+[2026-03-06T13:49:22.956Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:22.956Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:22.957Z] [log] ✅ Discovered plugin: 对话统计 (Dialogue Statistics) (dialogue-stats)
+[2026-03-06T13:49:22.957Z] [log] 🎯 Plugin discovery complete: 1 found, 0 errors
+[2026-03-06T13:49:22.979Z] [log] [Fast Refresh] done in 55ms
+[2026-03-06T13:49:23.442Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:23.442Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:23.442Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:23.442Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:23.442Z] [log] [PromptViewerButton] 组件卸载，清理资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:23.443Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:23.443Z] [log] [PromptViewerModal] 组件卸载，清理所有资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:23.443Z] [log] [ResourceManager] 取消注册清理函数: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:23.443Z] [log] [ContentParser][ASYNC] ━━━ 异步解析，characterId=p4-round10-character, placement=2 ━━━
+[2026-03-06T13:49:23.443Z] [log] [ContentParser][ASYNC] 1. 调用 RegexProcessor...
+[2026-03-06T13:49:23.443Z] [log] [ResourceManager] 注册清理函数: PromptViewerModal-p4r11-1772804943599-session-a
+[2026-03-06T13:49:23.443Z] [log] [ResourceManager] 注册清理函数: PromptViewerButton-p4r11-1772804943599-session-a
+[2026-03-06T13:49:23.457Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:23.457Z] [log] [PromptViewerStore] 清理对话资源: p4r11-1772804943599-session-a
+[2026-03-06T13:49:23.457Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:23.457Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:23.457Z] [log] [ContentParser][START] 输入长度=20
+[2026-03-06T13:49:23.457Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening A...
+[2026-03-06T13:49:23.457Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:23.457Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:23.457Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:23.458Z] [log] [MarkdownConverter][START] 输入长度=20
+[2026-03-06T13:49:23.458Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:23.458Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:23.458Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:23.458Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:23.458Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:23.458Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:23.458Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:23.459Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:23.460Z] [log] [MarkdownConverter][DONE] 输出长度=20
+[2026-03-06T13:49:23.460Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:23.460Z] [log] [TagReplacer][START] 输入长度=20
+[2026-03-06T13:49:23.460Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:23.460Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:23.460Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:23.460Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:23.460Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:23.460Z] [log] [ContentParser][SEGMENT] [0] type=html, len=20
+[2026-03-06T13:49:23.460Z] [log] [ContentParser][ASYNC] RegexProcessor 完成，应用脚本: (无)
+[2026-03-06T13:49:23.460Z] [log] [ContentParser][START] ━━━ 开始解析内容 ━━━
+[2026-03-06T13:49:23.460Z] [log] [ContentParser][START] 输入长度=20
+[2026-03-06T13:49:23.460Z] [log] [ContentParser][INPUT] 前300字符: P4 Round10 Opening A...
+[2026-03-06T13:49:23.460Z] [log] [ContentParser][STEP] 1. 提取沙箱内容...
+[2026-03-06T13:49:23.460Z] [log] [ContentParser][SANDBOX] 提取到 0 个沙箱
+[2026-03-06T13:49:23.460Z] [log] [ContentParser][STEP] 2. 处理 HTML 内容（Markdown + 标签替换）...
+[2026-03-06T13:49:23.460Z] [log] [MarkdownConverter][START] 输入长度=20
+[2026-03-06T13:49:23.460Z] [log] [MarkdownConverter][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:23.460Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] 匹配: 0 处
+[2026-03-06T13:49:23.460Z] [log] [MarkdownConverter][STYLE_TAG_PROTECT] ✗ 未变化
+[2026-03-06T13:49:23.460Z] [log] [MarkdownConverter][IMAGE_EXTRACT] 匹配: 0 处
+[2026-03-06T13:49:23.460Z] [log] [MarkdownConverter][IMAGE_EXTRACT] ✗ 未变化
+[2026-03-06T13:49:23.460Z] [log] [MarkdownConverter][HR_REMOVE] 匹配: 0 处
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][HR_REMOVE] ✗ 未变化
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][CODE_BLOCK] 匹配: 0 处
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][CODE_BLOCK] ✗ 未变化
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][BLOCKQUOTE] 匹配: 0 处
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][BLOCKQUOTE] ✗ 未变化
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] 匹配: 0 处
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][BLOCKQUOTE_MERGE] ✗ 未变化
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][IMAGE_RESTORE] 匹配: 0 处
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][IMAGE_RESTORE] ✗ 未变化
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][BOLD] 匹配: 0 处
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][BOLD] ✗ 未变化
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][ITALIC] 匹配: 0 处
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][ITALIC] ✗ 未变化
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][TALK] 匹配: 0 处
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][TALK] ✗ 未变化
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][BRACKET] 匹配: 0 处
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][BRACKET] ✗ 未变化
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][DONE] 输出长度=20
+[2026-03-06T13:49:23.461Z] [log] [MarkdownConverter][OUTPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:23.461Z] [log] [TagReplacer][START] 输入长度=20
+[2026-03-06T13:49:23.461Z] [log] [TagReplacer][INPUT] 前200字符: P4 Round10 Opening A...
+[2026-03-06T13:49:23.461Z] [log] [TagReplacer][DETECT] 检测到标签: 0 种 -
+[2026-03-06T13:49:23.461Z] [log] [TagReplacer][SKIP] 无标签，跳过处理
+[2026-03-06T13:49:23.461Z] [log] [ContentParser][STEP] 3. 分割为段落...
+[2026-03-06T13:49:23.461Z] [log] [ContentParser][DONE] 生成 1 个段落
+[2026-03-06T13:49:23.461Z] [log] [ContentParser][SEGMENT] [0] type=html, len=20

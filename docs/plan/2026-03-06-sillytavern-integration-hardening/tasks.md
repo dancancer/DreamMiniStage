@@ -18,9 +18,12 @@
 
 ## 3. M3：Playwright Replay
 
-- [ ] 复用 `scripts/p4-session-replay-e2e.mjs` 增加新的 `/session` replay 场景。
-- [ ] 让 replay 覆盖 slash 执行、refresh 持久化、session 隔离、失败链路。
-- [ ] 将产物写入现有 artifacts 目录，并更新 run index。
+- [x] 复用 `scripts/p4-session-replay-e2e.mjs` 增加新的 `/session` replay 场景。
+  - 已新增 round9：覆盖 `/floor-teleport` 锚点滚动与 `/proxy` fail-fast 错误链路。
+- [x] 让 replay 覆盖 slash 执行、refresh 持久化、session 隔离、失败链路。
+  - round7/8 保持 slash 直达 + refresh + session 隔离 + 401 失败链路；round9 补宿主 wiring 路径。
+- [x] 将产物写入现有 artifacts 目录，并更新 run index。
+  - 最新通过 run：`p4r11-1772804943599`（`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/`）。
 
 ## 4. 文档 / 交接
 

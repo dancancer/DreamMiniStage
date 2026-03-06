@@ -15,7 +15,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useCallback, Suspense, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/app/i18n";
@@ -249,7 +249,10 @@ function SessionPageContent() {
   const { setHeaderContent } = useHeaderContent();
   const currentCharacterName = characterNameOverride || loader.character?.name || "";
   const currentSessionName = sessionId ? getSessionById(sessionId)?.name || "" : "";
-  const currentCharacter = loader.character ? { ...loader.character, name: currentCharacterName } : null;
+  const currentCharacter = useMemo(() => {
+    if (!loader.character) return null;
+    return { ...loader.character, name: currentCharacterName };
+  }, [loader.character, currentCharacterName]);
 
   useEffect(() => {
     setCharacterNameOverride(null);

@@ -18,8 +18,9 @@ import {
 } from "./p4-session-replay-lib.mjs";
 
 // ============================================================================
-// P4 /session Replay（round7 + round8）
-// 目标：单命令复验 slash 直达、刷新持久化、会话隔离、401 失败链路。
+// P4 /session Replay（round7 + round8 + round9）
+// 目标：单命令复验 slash 直达、刷新持久化、会话隔离、401 失败链路、
+//       以及高价值 slash 宿主 wiring（floor-teleport/proxy）。
 // ============================================================================
 
 const __filename = fileURLToPath(import.meta.url);
@@ -284,6 +285,92 @@ async function runRound8(page, payload, files) {
   await page.screenshot({ path: files.round8Refresh, fullPage: true });
 }
 
+async function resolveTeleportTargetIndex(page) {
+  await page.waitForSelector("[data-session-message-index]", {
+    state: "attached",
+    timeout: CHECK_TIMEOUT_MS,
+  });
+
+  const teleportIndex = await page.evaluate(() => {
+    const firstAnchor = document.querySelector("[data-session-message-index]");
+    if (!(firstAnchor instanceof HTMLElement)) return null;
+    const rawIndex = firstAnchor.dataset.sessionMessageIndex;
+    if (!rawIndex) return null;
+    const parsed = Number.parseInt(rawIndex, 10);
+    return Number.isNaN(parsed) ? null : parsed;
+  });
+
+  if (!Number.isInteger(teleportIndex)) {
+    throw new Error("Teleport target index is unavailable");
+  }
+
+  return teleportIndex;
+}
+
+async function installTeleportProbe(page, index) {
+  const probeReady = await page.evaluate((targetIndex) => {
+    const target = document.querySelector(`[data-session-message-index="${targetIndex}"]`);
+    if (!(target instanceof HTMLElement)) return false;
+
+    window.__p4TeleportProbe = {
+      calls: [],
+    };
+
+    target.scrollIntoView = (...args) => {
+      window.__p4TeleportProbe.calls.push(args);
+    };
+    return true;
+  }, index);
+
+  if (!probeReady) {
+    throw new Error(`Teleport target not found for index=${index}`);
+  }
+}
+
+async function expectTeleportTriggered(page, checkpointName) {
+  const probeResult = await page.evaluate(() => {
+    const probe = window.__p4TeleportProbe;
+    if (!probe) return null;
+    return {
+      callCount: probe.calls.length,
+      firstCall: probe.calls[0] || null,
+    };
+  });
+
+  if (!probeResult) {
+    throw new Error("Teleport probe is missing");
+  }
+  if (probeResult.callCount < 1) {
+    throw new Error("Teleport probe captured no scrollIntoView call");
+  }
+
+  addCheckpoint(checkpointName, true, {
+    callCount: probeResult.callCount,
+    firstCall: probeResult.firstCall,
+  });
+}
+
+async function runRound9(page, payload, files) {
+  await page.goto(`${BASE_URL}/session?id=${encodeURIComponent(payload.ids.sessionAId)}`, { waitUntil: "domcontentloaded" });
+  await expectText(page, "P4 Round10 Opening A", "round9-open-session-a");
+
+  const firstTeleportIndex = await resolveTeleportTargetIndex(page);
+  await installTeleportProbe(page, firstTeleportIndex);
+  await submitInput(page, `/floor-teleport ${firstTeleportIndex}`);
+  await expectTeleportTriggered(page, "round9-floor-teleport-anchor");
+  await page.screenshot({ path: files.round9Teleport, fullPage: true });
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  const refreshedTeleportIndex = await resolveTeleportTargetIndex(page);
+  await installTeleportProbe(page, refreshedTeleportIndex);
+  await submitInput(page, `/floor-teleport ${refreshedTeleportIndex}`);
+  await expectTeleportTriggered(page, "round9-floor-teleport-refresh");
+
+  await submitInput(page, "/proxy p4-missing-preset");
+  await expectText(page, "/proxy is not wired in /session host yet", "round9-proxy-fail-fast");
+  await page.screenshot({ path: files.round9FailFast, fullPage: true });
+}
+
 async function main() {
   const startedAt = nowIso();
   const files = artifactPaths(RUN_DIR);
@@ -370,6 +457,7 @@ async function main() {
 
     await runRound7(page, payload, files);
     await runRound8(page, payload, files);
+    await runRound9(page, payload, files);
 
     noiseReport = await buildNoiseReport(files);
     addCheckpoint("noise-baseline-diff", !noiseReport.hasNewNoise, {
