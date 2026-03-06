@@ -1,0 +1,398 @@
+import React, { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import SessionPage from "../page";
+
+const mocks = vi.hoisted(() => ({
+  routerPush: vi.fn(),
+  routerReplace: vi.fn(),
+  createSession: vi.fn().mockResolvedValue("temp-session-2"),
+  fetchAllSessions: vi.fn().mockResolvedValue(undefined),
+  updateSessionName: vi.fn().mockResolvedValue(true),
+  setHeaderContent: vi.fn(),
+  toastError: vi.fn(),
+  setScriptVariable: vi.fn(),
+  deleteScriptVariable: vi.fn(),
+  latestChatInputProps: undefined as undefined | {
+    setUserInput: (value: string) => void;
+    onSubmit: (event: React.FormEvent) => void;
+  },
+  dialogue: {
+    messages: [
+      { id: "m0", role: "assistant", content: "hello" },
+      { id: "m1", role: "assistant", content: "world" },
+    ],
+    openingMessages: [],
+    openingIndex: 0,
+    openingLocked: true,
+    isSending: false,
+    suggestedInputs: [],
+    addUserMessage: vi.fn().mockResolvedValue(undefined),
+    triggerGeneration: vi.fn().mockResolvedValue(undefined),
+    addRoleMessage: vi.fn().mockResolvedValue(undefined),
+    handleSwipe: vi.fn().mockResolvedValue(undefined),
+    truncateMessagesAfter: vi.fn(),
+    handleRegenerate: vi.fn(),
+    handleOpeningNavigate: vi.fn(),
+    exportJsonl: vi.fn(),
+    importJsonl: vi.fn(),
+    initializeNewDialogue: vi.fn(),
+    setMessages: vi.fn(),
+    setSuggestedInputs: vi.fn(),
+    fetchLatestDialogue: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams("id=session-1"),
+  useRouter: () => ({
+    push: mocks.routerPush,
+    replace: mocks.routerReplace,
+  }),
+}));
+
+vi.mock("next/link", async () => {
+  const ReactModule = await import("react");
+  return {
+    default: ({ href, children, ...props }: { href: string; children?: React.ReactNode }) =>
+      ReactModule.createElement("a", { href, ...props }, children),
+  };
+});
+
+vi.mock("@/app/i18n", () => ({
+  useLanguage: () => ({
+    t: (key: string) => key,
+    fontClass: "font-body",
+    serifFontClass: "font-serif",
+    language: "en",
+  }),
+}));
+
+vi.mock("@/contexts/header-content", () => ({
+  useHeaderContent: () => ({
+    setHeaderContent: mocks.setHeaderContent,
+  }),
+}));
+
+vi.mock("@/components/chat/ChatTopBarContent", () => ({
+  ChatTopBarContent: () => null,
+}));
+
+vi.mock("@/hooks/useCharacterDialogue", () => ({
+  useCharacterDialogue: () => mocks.dialogue,
+}));
+
+vi.mock("@/hooks/useCharacterLoader", () => ({
+  useCharacterLoader: () => ({
+    character: { id: "char-1", name: "Alice", extensions: {} },
+    dialogueData: null,
+    error: null,
+  }),
+}));
+
+vi.mock("@/lib/store/ui-store", () => ({
+  useUIStore: (selector: (state: Record<string, unknown>) => unknown) => selector({
+    characterView: "chat",
+    setCharacterView: vi.fn(),
+    presetViewPayload: null,
+    resetPresetViewPayload: vi.fn(),
+  }),
+}));
+
+vi.mock("@/lib/store/user-store", () => ({
+  useUserStore: (selector: (state: Record<string, unknown>) => unknown) => selector({
+    displayUsername: "Tester",
+  }),
+}));
+
+vi.mock("@/lib/store/session-store", () => ({
+  useSessionStore: (selector: (state: Record<string, unknown>) => unknown) => selector({
+    getSessionById: (sessionId: string) => sessionId === "session-1"
+      ? {
+        id: "session-1",
+        characterId: "char-1",
+        name: "Session One",
+        characterName: "Alice",
+        characterAvatar: "",
+      }
+      : undefined,
+    fetchAllSessions: mocks.fetchAllSessions,
+    createSession: mocks.createSession,
+    updateSessionName: mocks.updateSessionName,
+    sessions: [{ id: "session-1", characterId: "char-1", name: "Session One" }],
+    isLoading: false,
+  }),
+}));
+
+vi.mock("@/lib/store/script-variables", () => {
+  const state = {
+    variables: {
+      global: {},
+      character: {},
+    },
+    setVariable: mocks.setScriptVariable,
+    deleteVariable: mocks.deleteScriptVariable,
+  };
+
+  const useScriptVariables = ((selector?: (value: typeof state) => unknown) =>
+    typeof selector === "function" ? selector(state) : state) as {
+      (selector?: (value: typeof state) => unknown): unknown;
+      getState: () => { variables: { global: Record<string, unknown>; character: Record<string, Record<string, unknown>> } };
+    };
+
+  useScriptVariables.getState = () => ({
+    variables: {
+      global: {},
+      character: {},
+    },
+  });
+
+  return { useScriptVariables };
+});
+
+vi.mock("@/lib/store/toast-store", () => ({
+  toast: {
+    error: mocks.toastError,
+  },
+}));
+
+vi.mock("@/components/LoginModal", () => ({ default: () => null }));
+vi.mock("@/components/DialogueTreeModal", () => ({ default: () => null }));
+vi.mock("@/components/WorldBookEditor", () => ({ default: () => null }));
+vi.mock("@/components/PresetEditor", () => ({ default: () => null }));
+vi.mock("@/components/RegexScriptEditor", () => ({ default: () => null }));
+
+vi.mock("@/hooks/useApiConfig", () => ({
+  useApiConfig: () => ({
+    configs: [],
+    activeConfigId: "",
+    currentModel: "",
+    getCurrentConfig: () => undefined,
+    handleConfigSelect: vi.fn(),
+    handleModelSwitch: vi.fn(),
+    showApiDropdown: false,
+    setShowApiDropdown: vi.fn(),
+    showModelDropdown: false,
+    setShowModelDropdown: vi.fn(),
+    selectedConfigId: "",
+    setSelectedConfigId: vi.fn(),
+  }),
+}));
+
+vi.mock("@/hooks/useLocalStorage", () => ({
+  useLocalStorageBoolean: () => ({
+    value: false,
+    setValue: vi.fn(),
+  }),
+}));
+
+vi.mock("@/utils/username-helper", () => ({
+  getDisplayUsername: () => "Tester",
+  setDisplayUsername: vi.fn(),
+}));
+
+vi.mock("@/components/UserNameSettingModal", () => ({ default: () => null }));
+vi.mock("@/components/ScriptDebugPanel", () => ({ default: () => null }));
+
+vi.mock("@/components/character-chat", async () => {
+  const ReactModule = await import("react");
+
+  return {
+    ApiSelector: () => null,
+    MessageHeaderControls: () => null,
+    ControlPanel: () => null,
+    ChatInput: ({
+      userInput,
+      setUserInput,
+      onSubmit,
+      children,
+    }: {
+      userInput: string;
+      setUserInput: (value: string) => void;
+      onSubmit: (event: React.FormEvent) => void;
+      children?: React.ReactNode;
+    }) => {
+      mocks.latestChatInputProps = { setUserInput, onSubmit };
+      return (
+        <form data-testid="slash-form" onSubmit={onSubmit}>
+          <input data-testid="session-input" value={userInput} readOnly={true} />
+          <button type="submit">run</button>
+          {children}
+        </form>
+      );
+    },
+    MessageList: ({
+      messages,
+    }: {
+      messages: Array<{ id: string; content: string }>;
+    }) => ReactModule.createElement(
+      "div",
+      { "data-testid": "message-list" },
+      messages.map((message, index) => ReactModule.createElement(
+        "div",
+        {
+          key: message.id,
+          "data-session-message-id": message.id,
+          "data-session-message-index": index,
+        },
+        message.content,
+      )),
+    ),
+  };
+});
+
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(globalThis as { React?: typeof React }).React = React;
+
+interface RenderedPage {
+  container: HTMLDivElement;
+  root: Root;
+}
+
+function renderPage(): RenderedPage {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+
+  const root = createRoot(container);
+  act(() => {
+    root.render(<SessionPage />);
+  });
+
+  return { container, root };
+}
+
+async function flushEffects(): Promise<void> {
+  await act(async () => {
+    await Promise.resolve();
+  });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+}
+
+function unmountPage(rendered: RenderedPage): void {
+  act(() => {
+    rendered.root.unmount();
+  });
+  rendered.container.remove();
+}
+
+async function submitSlash(script: string): Promise<void> {
+  if (!mocks.latestChatInputProps) {
+    throw new Error("chat input props should be ready");
+  }
+
+  await act(async () => {
+    mocks.latestChatInputProps?.setUserInput(script);
+  });
+  await flushEffects();
+
+  if (!mocks.latestChatInputProps) {
+    throw new Error("chat input props should stay ready after update");
+  }
+
+  await act(async () => {
+    mocks.latestChatInputProps?.onSubmit({
+      preventDefault: () => undefined,
+    } as React.FormEvent);
+  });
+  await flushEffects();
+}
+
+describe("Session page slash integration", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.createSession.mockResolvedValue("temp-session-2");
+  });
+
+  it("executes /tempchat through page host wiring and navigates to the new temp session", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/tempchat");
+
+    expect(mocks.createSession).toHaveBeenCalledWith(
+      "char-1",
+      expect.objectContaining({
+        name: expect.stringContaining("[temp]"),
+      }),
+    );
+    expect(mocks.routerPush).toHaveBeenCalledWith("/session?id=temp-session-2");
+
+    unmountPage(rendered);
+  });
+
+  it("executes /floor-teleport through page host wiring and scrolls to the target message anchor", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    const target = rendered.container.querySelector("[data-session-message-index='1']");
+    if (!(target instanceof HTMLDivElement)) {
+      throw new Error("target message should exist");
+    }
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(target, "scrollIntoView", {
+      value: scrollIntoView,
+      configurable: true,
+    });
+
+    await submitSlash("/floor-teleport 1");
+
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "center" });
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("surfaces explicit fail-fast host errors for unwired slash commands", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/proxy");
+
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      expect.stringContaining("/proxy is not wired in /session host yet"),
+    );
+
+    unmountPage(rendered);
+  });
+
+  it("keeps slash jump behavior after refresh remount for the same session", async () => {
+    const firstRender = renderPage();
+    await flushEffects();
+
+    const firstTarget = firstRender.container.querySelector("[data-session-message-index='1']");
+    if (!(firstTarget instanceof HTMLDivElement)) {
+      throw new Error("first render target message should exist");
+    }
+    const firstScrollIntoView = vi.fn();
+    Object.defineProperty(firstTarget, "scrollIntoView", {
+      value: firstScrollIntoView,
+      configurable: true,
+    });
+
+    await submitSlash("/floor-teleport 1");
+    expect(firstScrollIntoView).toHaveBeenCalledTimes(1);
+    unmountPage(firstRender);
+
+    const refreshedRender = renderPage();
+    await flushEffects();
+
+    const refreshedTarget = refreshedRender.container.querySelector("[data-session-message-index='1']");
+    if (!(refreshedTarget instanceof HTMLDivElement)) {
+      throw new Error("refreshed target message should exist");
+    }
+    const refreshedScrollIntoView = vi.fn();
+    Object.defineProperty(refreshedTarget, "scrollIntoView", {
+      value: refreshedScrollIntoView,
+      configurable: true,
+    });
+
+    await submitSlash("/floor-teleport 1");
+
+    expect(refreshedScrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "center" });
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(refreshedRender);
+  });
+});

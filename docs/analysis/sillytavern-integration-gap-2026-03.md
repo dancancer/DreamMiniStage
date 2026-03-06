@@ -75,6 +75,10 @@
 6. 顺手修补了 Script Bridge Hook 注入漂移：`useScriptBridge` 现在会实际透传 `tempchat/translate/timed-effect` 相关回调，以及新增的 `proxy/yt-script` 注入位。
 7. `/session` 宿主第一轮已落地：`/tempchat` 现可创建当前角色的 `[temp]` 会话并跳转，`/floor-teleport` 复用 `/chat-jump` 的页面锚点滚动；`/translate`、`/proxy`、`/yt-script`、`/wi-get-timed-effect`、`/wi-set-timed-effect` 仍保持显式 fail-fast，避免桥接层“看起来支持”但页面层静默空转。
 8. 新增 bridge 注入完整性契约测试，直接守护 `CharacterChatPanel -> useScriptBridge -> ApiCallContext -> ExecutionContext` 的高价值注入位，避免再出现组件边界漏传。
+9. `/session` 页面级最小集成用例已补齐：新增 refresh-remount 场景，验证同一会话在刷新后仍可稳定执行 `/floor-teleport` 并命中消息锚点。
+10. 缺失宿主能力已按策略分组：
+   - 待接通：`/translate`（`onTranslateText`）、`/proxy`（`onSelectProxyPreset`）、`/yt-script`（`onGetYouTubeTranscript`）。
+   - 故意 fail-fast：`/wi-get-timed-effect`、`/wi-set-timed-effect`（缺少稳定的 chat timed effect metadata 设计，暂不引入兼容分支）。
 
 ### 3.3 P3（机会性补齐）
 
@@ -100,6 +104,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 进入 M2：先补 `CharacterChatPanel` 组件级 harness，覆盖 `tempchat / translate / proxy / yt-script / wi-* / floor-teleport` 的 slash -> hook -> host callback 调用链。
-2. 为 `/session` 页面补最小集成用例，优先验证 `tempchat` 跳转、`floor-teleport` 定位、以及 fail-fast 错误回显。
-3. 在真实宿主能力里按需挑两项继续接通：优先 `selectProxyPreset`、`getYouTubeTranscript`；`wi-* timed effect` 若没有 chat metadata 设计，就继续保持 fail-fast。
+1. 进入 M3：基于现有 `scripts/p4-session-replay-e2e.mjs` 扩一轮 `/session` replay，优先固化 slash 直达 + refresh 持久化 + session 隔离。
+2. 在真实宿主能力里按需接通两项：优先 `selectProxyPreset`、`getYouTubeTranscript`，并在页面层补成功路径断言。
+3. `wi-* timed effect` 继续保持显式 fail-fast，直到 chat metadata 设计冻结后再接通，避免回退到多分支兼容路径。

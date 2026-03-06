@@ -9,10 +9,12 @@
 
 ## 2. M2：组件级 / 页面级集成测试
 
-- [ ] 为 `CharacterChatPanel` 增补集成测试 harness，验证 slash -> hook -> host callback 的真实调用链。
-- [ ] 优先覆盖 `tempchat / translate / proxy / yt-script / wi-get-timed-effect / wi-set-timed-effect / floor-teleport`。
-- [ ] 为 `/session` 页面补最小集成用例，验证输入执行、错误回显、消息跳转与刷新保持。
-- [ ] 记录缺失宿主实现的能力，并区分“待接通”和“故意 fail-fast”。
+- [x] 为 `CharacterChatPanel` 增补集成测试 harness，验证 slash -> hook -> host callback 的真实调用链。
+- [x] 优先覆盖 `tempchat / translate / proxy / yt-script / wi-get-timed-effect / wi-set-timed-effect / floor-teleport`。
+- [x] 为 `/session` 页面补最小集成用例，验证输入执行、错误回显、消息跳转与刷新保持。
+  - 已落地输入执行 / 错误回显 / 消息跳转 / refresh-remount 保持断言：`app/session/__tests__/page.slash-integration.test.tsx`。
+- [x] 记录缺失宿主实现的能力，并区分“待接通”和“故意 fail-fast”。
+  - 结论已同步到 `docs/analysis/sillytavern-integration-gap-2026-03.md` 与 `handoff.md`。
 
 ## 3. M3：Playwright Replay
 
