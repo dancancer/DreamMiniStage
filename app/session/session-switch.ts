@@ -18,6 +18,14 @@ function normalizeName(name: string | undefined): string {
   return (name ?? "").trim();
 }
 
+export function buildTemporarySessionName(
+  characterName: string,
+  now: Date = new Date(),
+): string {
+  const name = normalizeName(characterName) || "unknown";
+  return `${name} - ${formatTimestamp(now)} [temp]`;
+}
+
 export function buildSwitchedSessionName(
   toCharacterName: string,
   fromCharacterName?: string,

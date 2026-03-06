@@ -77,6 +77,7 @@ interface MessageItemProps {
 
 interface RoleMessageProps {
   message: Message;
+  index: number;
   roleKind: "system" | "narrator" | "custom";
   scriptVariables?: Record<string, unknown>;
   onScriptMessage?: (data: ScriptMessageData) => Promise<unknown> | unknown;
@@ -84,6 +85,7 @@ interface RoleMessageProps {
 
 function RoleMessage({
   message,
+  index,
   roleKind,
   scriptVariables,
   onScriptMessage,
@@ -91,7 +93,11 @@ function RoleMessage({
   const tone = pickRoleTone(roleKind);
   const displayName = (message.name || "").trim();
   return (
-    <div className="flex justify-start mb-4">
+    <div
+      className="flex justify-start mb-4"
+      data-session-message-id={message.id}
+      data-session-message-index={index}
+    >
       <div className="max-w-3xl w-full space-y-1">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className={`px-2 py-0.5 rounded-full border ${tone.badgeBg} ${tone.badgeText} ${tone.badgeBorder}`}>
@@ -137,7 +143,7 @@ export default function MessageItem({
 }: MessageItemProps) {
   // 用户消息直接返回简化版
   if (message.role === "user") {
-    return <UserMessage message={message} serifFontClass={serifFontClass} />;
+    return <UserMessage message={message} index={index} serifFontClass={serifFontClass} />;
   }
 
   // 系统 / 旁白 / 自定义角色消息
@@ -146,6 +152,7 @@ export default function MessageItem({
     return (
       <RoleMessage
         message={message}
+        index={index}
         roleKind={roleKind}
         scriptVariables={scriptVariables}
         onScriptMessage={onScriptMessage}
@@ -182,14 +189,19 @@ export default function MessageItem({
 
 interface UserMessageProps {
   message: Message;
+  index: number;
   serifFontClass: string;
 }
 
-function UserMessage({ message, serifFontClass }: UserMessageProps) {
+function UserMessage({ message, index, serifFontClass }: UserMessageProps) {
   const extractedContent = extractUserContent(message.content);
 
   return (
-    <div className="flex justify-end mb-4">
+    <div
+      className="flex justify-end mb-4"
+      data-session-message-id={message.id}
+      data-session-message-index={index}
+    >
       <div className="max-w-md lg:max-w-2xl break-words whitespace-pre-line text-cream story-text leading-relaxed magical-text">
         <p
           className={serifFontClass}
@@ -271,7 +283,11 @@ function AssistantMessage({
   }, [message.id, onRegenerate]);
 
   return (
-    <div className="mb-6">
+    <div
+      className="mb-6"
+      data-session-message-id={message.id}
+      data-session-message-index={index}
+    >
       {/* 消息头部 */}
       <MessageHeader
         character={character}

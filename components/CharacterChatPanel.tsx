@@ -27,6 +27,11 @@ import type {
   ExpressionUploadOptions,
   GroupMemberField,
   SendOptions,
+  TranslateTextOptions,
+  WorldInfoTimedEffectFormat,
+  WorldInfoTimedEffectName,
+  WorldInfoTimedEffectState,
+  YouTubeTranscriptOptions,
 } from "@/lib/slash-command/types";
 import { useLocalStorageBoolean } from "@/hooks/useLocalStorage";
 import UserNameSettingModal from "@/components/UserNameSettingModal";
@@ -95,6 +100,29 @@ interface Props {
   onForceSaveChat?: () => void | Promise<void>;
   onHideMessages?: (startIndex: number) => void | Promise<void>;
   onUnhideMessages?: () => void | Promise<void>;
+  onOpenTemporaryChat?: () => void | Promise<void>;
+  onJumpToMessage?: (index: number) => void | Promise<void>;
+  onTranslateText?: (
+    text: string,
+    options?: TranslateTextOptions,
+  ) => string | Promise<string>;
+  onGetYouTubeTranscript?: (
+    urlOrId: string,
+    options?: YouTubeTranscriptOptions,
+  ) => string | Promise<string>;
+  onSelectProxyPreset?: (name?: string) => string | Promise<string>;
+  onGetWorldInfoTimedEffect?: (
+    file: string,
+    uid: string,
+    effect: WorldInfoTimedEffectName,
+    options?: { format?: WorldInfoTimedEffectFormat },
+  ) => boolean | number | Promise<boolean | number>;
+  onSetWorldInfoTimedEffect?: (
+    file: string,
+    uid: string,
+    effect: WorldInfoTimedEffectName,
+    state: WorldInfoTimedEffectState,
+  ) => void | Promise<void>;
   onGetGroupMember?: (
     target: string,
     field: GroupMemberField,
@@ -182,6 +210,13 @@ export default function CharacterChatPanel({
   onForceSaveChat,
   onHideMessages,
   onUnhideMessages,
+  onOpenTemporaryChat,
+  onJumpToMessage,
+  onTranslateText,
+  onGetYouTubeTranscript,
+  onSelectProxyPreset,
+  onGetWorldInfoTimedEffect,
+  onSetWorldInfoTimedEffect,
   onGetGroupMember,
   onAddGroupMember,
   onSetGroupMemberEnabled,
@@ -252,9 +287,16 @@ export default function CharacterChatPanel({
     onGetChatName: () => chatName || dialogueKey || character.name || "",
     onRenameChat,
     onSetInput: (text) => setUserInput(text),
+    onOpenTemporaryChat,
+    onJumpToMessage,
     onForceSaveChat,
     onHideMessages,
     onUnhideMessages,
+    onTranslateText,
+    onGetYouTubeTranscript,
+    onSelectProxyPreset,
+    onGetWorldInfoTimedEffect,
+    onSetWorldInfoTimedEffect,
     onGetGroupMember,
     onAddGroupMember,
     onSetGroupMemberEnabled,

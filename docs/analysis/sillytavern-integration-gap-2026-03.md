@@ -73,6 +73,8 @@
 4. Top25 优先命令缺口现已清零，slash 命令面对齐阶段可以从“补命令”切换到“守回归 + 补宿主落地”。
 5. 本轮新增的收口策略继续保持单路径：`/proxy` 与 `/yt-script` 走显式宿主回调，`/floor-teleport` 复用 `/chat-jump` 现有实现，不为长尾命令再复制状态机。
 6. 顺手修补了 Script Bridge Hook 注入漂移：`useScriptBridge` 现在会实际透传 `tempchat/translate/timed-effect` 相关回调，以及新增的 `proxy/yt-script` 注入位。
+7. `/session` 宿主第一轮已落地：`/tempchat` 现可创建当前角色的 `[temp]` 会话并跳转，`/floor-teleport` 复用 `/chat-jump` 的页面锚点滚动；`/translate`、`/proxy`、`/yt-script`、`/wi-get-timed-effect`、`/wi-set-timed-effect` 仍保持显式 fail-fast，避免桥接层“看起来支持”但页面层静默空转。
+8. 新增 bridge 注入完整性契约测试，直接守护 `CharacterChatPanel -> useScriptBridge -> ApiCallContext -> ExecutionContext` 的高价值注入位，避免再出现组件边界漏传。
 
 ### 3.3 P3（机会性补齐）
 
@@ -98,6 +100,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 给 `useScriptBridge` 增加注入位透传完整性契约测试，防止 slash adapter / hook 两层再次漂移。
-2. 在真实 Session 宿主中按需接通 `selectProxyPreset` 与 `getYouTubeTranscript`，把本轮桥接层命令真正落到 UI/runtime。
-3. 后续优先投入真实素材回放与宿主一致性验证，而不是继续追逐 slash 总覆盖率数字。
+1. 进入 M2：先补 `CharacterChatPanel` 组件级 harness，覆盖 `tempchat / translate / proxy / yt-script / wi-* / floor-teleport` 的 slash -> hook -> host callback 调用链。
+2. 为 `/session` 页面补最小集成用例，优先验证 `tempchat` 跳转、`floor-teleport` 定位、以及 fail-fast 错误回显。
+3. 在真实宿主能力里按需挑两项继续接通：优先 `selectProxyPreset`、`getYouTubeTranscript`；`wi-* timed effect` 若没有 chat metadata 设计，就继续保持 fail-fast。

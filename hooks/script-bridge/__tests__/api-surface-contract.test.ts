@@ -92,4 +92,50 @@ describe("script bridge api surface", () => {
     const missingCommands = SLASH_COMMAND_MATRIX.filter((command) => !hasCommand(command));
     expect(missingCommands).toEqual([]);
   });
+
+
+  it("keeps high-value host injections aligned across panel, hook, ApiCallContext and execution context", () => {
+    const panelSource = readFileSync(
+      path.resolve(process.cwd(), "components/CharacterChatPanel.tsx"),
+      "utf8",
+    );
+    const hookSource = readFileSync(
+      path.resolve(process.cwd(), "hooks/useScriptBridge.ts"),
+      "utf8",
+    );
+    const contextSource = readFileSync(
+      path.resolve(process.cwd(), "hooks/script-bridge/types.ts"),
+      "utf8",
+    );
+    const adapterSource = readFileSync(
+      path.resolve(process.cwd(), "hooks/script-bridge/slash-context-adapter.ts"),
+      "utf8",
+    );
+    const mappings = [
+      ["onOpenTemporaryChat", "openTemporaryChat"],
+      ["onJumpToMessage", "jumpToMessage"],
+      ["onTranslateText", "translateText"],
+      ["onGetYouTubeTranscript", "getYouTubeTranscript"],
+      ["onSelectProxyPreset", "selectProxyPreset"],
+      ["onGetWorldInfoTimedEffect", "getWorldInfoTimedEffect"],
+      ["onSetWorldInfoTimedEffect", "setWorldInfoTimedEffect"],
+    ] as const;
+
+    for (const [optionName, executionName] of mappings) {
+      const panelMatches = panelSource.match(new RegExp(String.raw`\b${optionName}\b`, "g")) || [];
+      const hookMatches = hookSource.match(new RegExp(String.raw`\b${optionName}\b`, "g")) || [];
+
+      expect(
+        panelMatches.length,
+        `${optionName} should stay visible in CharacterChatPanel props, destructuring and useScriptBridge call`,
+      ).toBeGreaterThanOrEqual(3);
+      expect(
+        hookMatches.length,
+        `${optionName} should stay visible in useScriptBridge options, destructuring, handleApiCall context and dependencies`,
+      ).toBeGreaterThanOrEqual(4);
+      expect(contextSource).toContain(`${optionName}?:`);
+      expect(adapterSource).toContain(`const ${optionName} = ctx.${optionName};`);
+      expect(adapterSource).toContain(`${executionName}: ${optionName},`);
+    }
+  });
 });

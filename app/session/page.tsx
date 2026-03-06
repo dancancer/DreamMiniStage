@@ -37,10 +37,18 @@ import { useScriptVariables } from "@/lib/store/script-variables";
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import { DialogueNode, DialogueTree } from "@/lib/models/node-model";
-import { buildSwitchedSessionName } from "@/app/session/session-switch";
+import { buildSwitchedSessionName, buildTemporarySessionName } from "@/app/session/session-switch";
 import { executeSlashCommandScript } from "@/lib/slash-command";
 import type { DialogueMessage } from "@/types/character-dialogue";
-import type { CharacterSwitchResult, ExecutionContext } from "@/lib/slash-command/types";
+import type {
+  CharacterSwitchResult,
+  ExecutionContext,
+  TranslateTextOptions,
+  WorldInfoTimedEffectFormat,
+  WorldInfoTimedEffectName,
+  WorldInfoTimedEffectState,
+  YouTubeTranscriptOptions,
+} from "@/lib/slash-command/types";
 import { extractNodeIdFromMessageId } from "@/utils/message-id";
 import {
   upsertPromptInjection,
@@ -126,6 +134,14 @@ function buildDialogueTreeSnapshot(
     [...otherNodes, ...pathNodes],
     orderedNodeIds[orderedNodeIds.length - 1] || "root",
   );
+}
+
+function buildSessionSlashHostError(commandName: string, detail: string): Error {
+  return new Error(`${commandName} is not wired in /session host yet: ${detail}`);
+}
+
+function getSessionMessageSelector(index: number): string {
+  return `[data-session-message-index="${index}"]`;
 }
 
 function SessionPageContent() {
@@ -404,6 +420,72 @@ function SessionPageContent() {
     await LocalCharacterDialogueOperations.updateDialogueTree(sessionId, nextTree);
   }, [sessionId, characterId, dialogue.messages]);
 
+  const handleOpenTemporaryChat = useCallback(async (): Promise<void> => {
+    if (!characterId) {
+      throw new Error("Character ID is required to open temporary chat");
+    }
+
+    const nextSessionName = buildTemporarySessionName(currentCharacterName);
+    const nextSessionId = await createSession(characterId, { name: nextSessionName });
+    if (!nextSessionId) {
+      throw new Error(`Failed to create temporary chat for character: ${characterId}`);
+    }
+
+    router.push(`/session?id=${encodeURIComponent(nextSessionId)}`);
+  }, [characterId, createSession, currentCharacterName, router]);
+
+  const handleJumpToMessage = useCallback(async (index: number): Promise<void> => {
+    if (index < 0 || index >= dialogue.messages.length) {
+      throw new Error(`/chat-jump message index out of range: ${index}`);
+    }
+    if (typeof document === "undefined") {
+      throw new Error("/chat-jump requires browser document");
+    }
+
+    const target = document.querySelector<HTMLElement>(getSessionMessageSelector(index));
+    if (!target) {
+      throw new Error(`/chat-jump message element not found: ${index}`);
+    }
+
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [dialogue.messages.length]);
+
+  const handleTranslateText = useCallback(async (
+    _text: string,
+    _options?: TranslateTextOptions,
+  ): Promise<string> => {
+    throw buildSessionSlashHostError("/translate", "translation backend");
+  }, []);
+
+  const handleGetYouTubeTranscript = useCallback(async (
+    _urlOrId: string,
+    _options?: YouTubeTranscriptOptions,
+  ): Promise<string> => {
+    throw buildSessionSlashHostError("/yt-script", "YouTube transcript backend");
+  }, []);
+
+  const handleSelectProxyPreset = useCallback(async (_name?: string): Promise<string> => {
+    throw buildSessionSlashHostError("/proxy", "proxy preset host callback");
+  }, []);
+
+  const handleGetWorldInfoTimedEffect = useCallback(async (
+    _file: string,
+    _uid: string,
+    _effect: WorldInfoTimedEffectName,
+    _options?: { format?: WorldInfoTimedEffectFormat },
+  ): Promise<boolean | number> => {
+    throw buildSessionSlashHostError("/wi-get-timed-effect", "chat timed effect state");
+  }, []);
+
+  const handleSetWorldInfoTimedEffect = useCallback(async (
+    _file: string,
+    _uid: string,
+    _effect: WorldInfoTimedEffectName,
+    _state: WorldInfoTimedEffectState,
+  ): Promise<void> => {
+    throw buildSessionSlashHostError("/wi-set-timed-effect", "chat timed effect state");
+  }, []);
+
   const executeSessionSlashInput = useCallback(async (script: string) => {
     const snapshot = useScriptVariables.getState().variables;
     const globalVariables: Record<string, unknown> = { ...snapshot.global };
@@ -456,9 +538,16 @@ function SessionPageContent() {
       getCurrentChatName: () => currentSessionName || sessionId || "",
       renameCurrentChat: handleRenameChat,
       setInputText: async (text) => setUserInput(text),
+      openTemporaryChat: handleOpenTemporaryChat,
       forceSaveChat: handleForceSaveChat,
       hideMessages: handleHideMessages,
       unhideMessages: handleUnhideMessages,
+      translateText: handleTranslateText,
+      getYouTubeTranscript: handleGetYouTubeTranscript,
+      selectProxyPreset: handleSelectProxyPreset,
+      getWorldInfoTimedEffect: handleGetWorldInfoTimedEffect,
+      setWorldInfoTimedEffect: handleSetWorldInfoTimedEffect,
+      jumpToMessage: handleJumpToMessage,
       renameCurrentCharacter: handleRenameCurrentCharacter,
       getMessageReasoning: async (index) => {
         const message = dialogue.messages[index];
@@ -573,9 +662,16 @@ function SessionPageContent() {
     sessionId,
     handleSwitchCharacter,
     handleRenameChat,
+    handleOpenTemporaryChat,
     handleForceSaveChat,
     handleHideMessages,
     handleUnhideMessages,
+    handleTranslateText,
+    handleGetYouTubeTranscript,
+    handleSelectProxyPreset,
+    handleGetWorldInfoTimedEffect,
+    handleSetWorldInfoTimedEffect,
+    handleJumpToMessage,
     handleRenameCurrentCharacter,
     setScriptVariable,
     deleteScriptVariable,
@@ -742,9 +838,16 @@ function SessionPageContent() {
             onContinue={dialogue.triggerGeneration}
             onSwipe={dialogue.handleSwipe}
             onRenameChat={handleRenameChat}
+            onOpenTemporaryChat={handleOpenTemporaryChat}
             onForceSaveChat={handleForceSaveChat}
             onHideMessages={handleHideMessages}
             onUnhideMessages={handleUnhideMessages}
+            onTranslateText={handleTranslateText}
+            onGetYouTubeTranscript={handleGetYouTubeTranscript}
+            onSelectProxyPreset={handleSelectProxyPreset}
+            onGetWorldInfoTimedEffect={handleGetWorldInfoTimedEffect}
+            onSetWorldInfoTimedEffect={handleSetWorldInfoTimedEffect}
+            onJumpToMessage={handleJumpToMessage}
             onSwitchCharacter={handleSwitchCharacter}
             onRenameCurrentCharacter={handleRenameCurrentCharacter}
             onExportJsonl={dialogue.exportJsonl}
