@@ -263,6 +263,27 @@ describe("P2 utility command gaps", () => {
     expect(invalid.errorMessage).toContain("non-array");
   });
 
+  it("/show-gallery|/sg 透传角色/群组筛选并返回空字符串", async () => {
+    const showGallery = vi.fn().mockResolvedValue(undefined);
+    const ctx = createContext({ showGallery });
+
+    const canonical = await executeSlashCommandScript("/show-gallery char=Alice", ctx);
+    const alias = await executeSlashCommandScript("/sg group=Group-A", ctx);
+
+    expect(canonical).toMatchObject({ isError: false, pipe: "" });
+    expect(alias).toMatchObject({ isError: false, pipe: "" });
+    expect(showGallery).toHaveBeenNthCalledWith(1, { character: "Alice" });
+    expect(showGallery).toHaveBeenNthCalledWith(2, { group: "Group-A" });
+  });
+
+  it("/show-gallery 在宿主缺失时显式 fail-fast", async () => {
+    const result = await executeSlashCommandScript("/show-gallery", createContext());
+
+    expect(result.isError).toBe(true);
+    expect(result.errorMessage).toContain("not available");
+  });
+
+
   it("/listchatvar 作为 /listvar 别名返回变量键列表", async () => {
     const listVariables = vi.fn().mockReturnValue(["foo", "bar"]);
     const ctx = createContext({ listVariables });

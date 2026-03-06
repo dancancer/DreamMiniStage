@@ -58,6 +58,7 @@
    - P3 推理解析 + Quick Reply 第一批：`/reasoning-parse|/parse-reasoning`、`/qr`、`/qr-list`、`/qr-get`、`/qr-create`、`/qr-delete`
    - P3 Quick Reply 第二/三批 + set/preset：`/qr-set`、`/qr-set-on`、`/qr-set-off`、`/qr-chat-set`、`/qr-chat-set-on`、`/qr-chat-set-off`、`/qr-set-list`、`/qr-update`、`/qr-contextadd`、`/qr-contextdel`、`/qr-contextclear`、`/qr-set-create|/qr-presetadd`、`/qr-set-update|/qr-presetupdate`、`/qr-set-delete|/qr-presetdelete`
    - P3 Secret Store 簇：`/secret-id|/secret-rotate`、`/secret-delete`、`/secret-write`、`/secret-rename`、`/secret-read|/secret-find|/secret-get`
+   - P3 画廊/工具注册/QR 参数簇：`/show-gallery|/sg`、`/expression-upload|/uploadsprite`、`/tools-register|/tool-register`、`/tools-unregister|/tool-unregister`、`/qr-arg`
 2. 聊天编辑命令簇已完成本轮收敛：
    - `/delchat` `/delete` `/delmode` `/delname` `/delswipe`
    - 并补齐别名 `/cancel` `/swipedel`
@@ -71,7 +72,7 @@
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已进一步移除 `sysprompt*`、`/sysname`、`/sysgen`、`/tool-list`、`/tool-invoke`、`/tag-add`、`/tag-remove`、`/tag-exists`、`/tag-list`；当前主缺口进一步收敛到 `qr-arg`、`show-gallery`、`expression-upload`，以及 `tool-register/unregister` 一类宿主注册长尾命令。
+- Top25 已进一步移除 `sysprompt*`、`/sysname`、`/sysgen`、`/tool-list`、`/tool-invoke`、`/tag-add`、`/tag-remove`、`/tag-exists`、`/tag-list`，并继续移除 `qr-arg`、`show-gallery`、`expression-upload`、`tool-register`、`tool-unregister`、`tools-register`、`tools-unregister`；当前主缺口切换为 `floor-teleport`、`proxy`、`qrset`、`random`、`reroll-pick`，以及一组 vector / image / tts 长尾命令。
 
 ## 4. 基线素材与回归状态
 
@@ -92,6 +93,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 优先推进低耦合媒体/画廊长尾（`/show-gallery|/sg`、`/expression-upload`），直接把现有 `list-gallery` / expression 能力接成显式宿主回调，不在 Slash 层伪造 UI。
-2. `/qr-arg` 仍值得做，但必须和 `{{arg::...}}` 宏解析、`*` wildcard 一起落地；只补命令壳会把复杂度推迟到下一层。
-3. 继续收口工具注册运维（`/tools-register|/tool-register`、`/tools-unregister|/tool-unregister`），沿用本轮 Script Tool Registry 单路径，不再引入第二套注册表。
+1. 优先推进低耦合 utility 长尾（`/random`、`/sort`、`/tokens`、`/trimstart`、`/trimend`），这批命令主要是参数/数据处理，最容易继续抬升覆盖率。
+2. 评估 vector 状态簇（`/vector-chats-state`、`/vector-files-state`、`/vector-max-entries`、`/vector-query`、`/vector-threshold`、`/wi-get-timed-effect`），优先复用现有 worldinfo / vector adapter，避免再开新状态源。
+3. 从媒体生成长尾里二选一推进：要么收口 `sd`/`sd-source`/`sd-style`，要么收口 `tts`/`speak`/`translate`；前提仍然是显式宿主回调，不在 Slash 层伪造 UI。

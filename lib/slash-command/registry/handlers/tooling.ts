@@ -7,7 +7,7 @@
  */
 
 import type { CommandHandler } from "../types";
-import type { SlashToolDefinition } from "../../types";
+import type { SlashToolDefinition, SlashToolRegistration } from "../../types";
 
 type ToolListReturnType = "json" | "object" | "pipe" | "none";
 
@@ -56,6 +56,70 @@ function parseToolParameters(raw: string | undefined): Record<string, unknown> {
   }
   return parsed;
 }
+
+function parseToolSchema(raw: string | undefined): SlashToolRegistration["parameters"] {
+  if (!raw || raw.trim().length === 0) {
+    throw new Error("/tools-register requires parameters=<json>");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error("/tools-register parameters must be a valid JSON object");
+  }
+
+  if (!isPlainObject(parsed)) {
+    throw new Error("/tools-register parameters must be a JSON object");
+  }
+
+  const type = typeof parsed.type === "string" ? parsed.type.trim().toLowerCase() : "object";
+  if (type !== "object") {
+    throw new Error("/tools-register parameters.type must be 'object'");
+  }
+
+  return {
+    type: "object",
+    properties: isPlainObject(parsed.properties)
+      ? parsed.properties as SlashToolRegistration["parameters"]["properties"]
+      : {},
+    required: Array.isArray(parsed.required)
+      ? parsed.required.map((item) => String(item))
+      : undefined,
+  };
+}
+
+function parseOptionalBoolean(raw: string | undefined, commandName: string, argName: string): boolean | undefined {
+  if (raw === undefined) {
+    return undefined;
+  }
+
+  const normalized = raw.trim().toLowerCase();
+  if (["true", "1", "on", "yes"].includes(normalized)) {
+    return true;
+  }
+  if (["false", "0", "off", "no"].includes(normalized)) {
+    return false;
+  }
+  throw new Error(`/${commandName} invalid ${argName} value: ${raw}`);
+}
+
+function extractActionBlock(commandName: string, invocationMeta?: { blocks?: Array<{ raw: string }> }): string {
+  const raw = invocationMeta?.blocks?.[0]?.raw?.trim();
+  if (!raw) {
+    throw new Error(`/${commandName} requires closure block action`);
+  }
+  if (!raw.startsWith("{:") || !raw.endsWith(":}")) {
+    throw new Error(`/${commandName} received invalid closure block`);
+  }
+
+  const body = raw.slice(2, -2).trim();
+  if (!body) {
+    throw new Error(`/${commandName} requires non-empty closure block action`);
+  }
+  return body;
+}
+
 
 function normalizeToolDefinitions(value: unknown): SlashToolDefinition[] {
   if (!Array.isArray(value)) {
@@ -190,6 +254,56 @@ export const handleToolInvoke: CommandHandler = async (args, namedArgs, ctx, pip
   const result = await callback(toolName, parameters);
   return normalizeToolResult(result);
 };
+
+/** /tools-register|/tool-register {: ... :} - 注册脚本工具 */
+export const handleToolRegister: CommandHandler = async (
+  _args,
+  namedArgs,
+  ctx,
+  _pipe,
+  invocationMeta,
+) => {
+  const callback = ensureHostCallback(ctx.registerTool, "tools-register");
+  const name = (namedArgs.name || "").trim();
+  const description = (namedArgs.description || "").trim();
+  if (!name) {
+    throw new Error("/tools-register requires name=<tool-name>");
+  }
+  if (!description) {
+    throw new Error("/tools-register requires description=<text>");
+  }
+
+  const registered = await callback({
+    name,
+    description,
+    parameters: parseToolSchema(namedArgs.parameters),
+    action: extractActionBlock("tools-register", invocationMeta),
+    displayName: (namedArgs.displayName || namedArgs.displayname || "").trim() || undefined,
+    formatMessage: (namedArgs.formatMessage || namedArgs.formatmessage || "").trim() || undefined,
+    shouldRegister: parseOptionalBoolean(namedArgs.shouldRegister || namedArgs.shouldregister, "tools-register", "shouldRegister"),
+    stealth: parseOptionalBoolean(namedArgs.stealth, "tools-register", "stealth"),
+  });
+  if (typeof registered !== "boolean") {
+    throw new Error("/tools-register host callback must return boolean");
+  }
+  return String(registered);
+};
+
+/** /tools-unregister|/tool-unregister <name> - 注销脚本工具 */
+export const handleToolUnregister: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  const callback = ensureHostCallback(ctx.unregisterTool, "tools-unregister");
+  const name = resolveCommandText(args, pipe);
+  if (!name) {
+    throw new Error("/tools-unregister requires tool name");
+  }
+
+  const removed = await callback(name);
+  if (typeof removed !== "boolean") {
+    throw new Error("/tools-unregister host callback must return boolean");
+  }
+  return String(removed);
+};
+
 
 /** /tag-add <tag> - 为角色追加标签 */
 export const handleTagAdd: CommandHandler = async (args, namedArgs, ctx, pipe) => {

@@ -120,6 +120,28 @@ describe("P3 reasoning/quick-reply command gaps", () => {
     expect(invalidHostPayload.errorMessage).toContain("invalid reasoning parse payload");
   });
 
+  it("/qr-arg 支持 plain value、closure sentinel 与 wildcard 宏回退", async () => {
+    const ctx = createContext();
+
+    const plain = await executeSlashCommandScript("/qr-arg hello world|/echo {{arg::hello}}", ctx);
+    const closure = await executeSlashCommandScript("/qr-arg x {: /echo test :}|/echo {{arg::x}}", ctx);
+    const wildcard = await executeSlashCommandScript("/qr-arg * wildcard|/echo {{arg::any}}", ctx);
+
+    expect(plain).toMatchObject({ isError: false, pipe: "world" });
+    expect(closure).toMatchObject({ isError: false, pipe: "[Closure]" });
+    expect(wildcard).toMatchObject({ isError: false, pipe: "wildcard" });
+  });
+
+  it("/qr-arg 在缺少参数值时显式 fail-fast", async () => {
+    const missingName = await executeSlashCommandScript("/qr-arg", createContext());
+    const missingValue = await executeSlashCommandScript("/qr-arg hello", createContext());
+
+    expect(missingName.isError).toBe(true);
+    expect(missingValue.isError).toBe(true);
+    expect(missingName.errorMessage).toContain("requires argument name");
+    expect(missingValue.errorMessage).toContain("requires argument value");
+  });
+
   it("/qr 可执行指定索引并返回宿主结果", async () => {
     const executeQuickReplyByIndex = vi.fn().mockResolvedValue("ok");
     const ctx = createContext({ executeQuickReplyByIndex });

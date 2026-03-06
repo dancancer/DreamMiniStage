@@ -101,6 +101,13 @@ export interface ExpressionClassifyOptions {
   prompt?: string;
 }
 
+export interface ExpressionUploadOptions {
+  name?: string;
+  label: string;
+  folder?: string;
+  spriteName?: string;
+}
+
 export interface CaptionCommandOptions {
   prompt?: string;
   quiet?: boolean;
@@ -136,6 +143,17 @@ export interface SlashToolDefinition {
     }>;
     required?: string[];
   };
+}
+
+export interface SlashToolRegistration {
+  name: string;
+  description: string;
+  parameters: SlashToolDefinition["parameters"];
+  action: string;
+  displayName?: string;
+  formatMessage?: string;
+  shouldRegister?: boolean;
+  stealth?: boolean;
 }
 
 export interface CharacterTagCommandOptions {
@@ -296,6 +314,7 @@ export interface CommandInvocationMeta {
   raw: string;
   namedArgumentList: ParsedNamedArgument[];
   unnamedArgumentList: ParsedUnnamedArgument[];
+  blocks?: Array<{ raw: string }>;
   parserFlags?: ParserFlags;
   scopeDepth?: number;
 }
@@ -673,6 +692,13 @@ export interface ExecutionContext {
   listGallery?: (
     options?: ListGalleryOptions,
   ) => string[] | Promise<string[]>;
+  showGallery?: (
+    options?: ListGalleryOptions,
+  ) => void | Promise<void>;
+  registerTool?: (
+    registration: SlashToolRegistration,
+  ) => boolean | Promise<boolean>;
+  unregisterTool?: (name: string) => boolean | Promise<boolean>;
   openDataBank?: () => void | Promise<void>;
   listDataBankEntries?: (
     options?: { source?: DataBankSource },
@@ -760,6 +786,10 @@ export interface ExecutionContext {
     options?: CaptionCommandOptions,
   ) => string | Promise<string>;
   playNotificationSound?: () => void | Promise<void>;
+  uploadExpressionAsset?: (
+    imageUrl: string,
+    options: ExpressionUploadOptions,
+  ) => string | Promise<string>;
   setExpression?: (
     label: string,
     options?: ExpressionSetOptions,
@@ -873,6 +903,13 @@ export interface ActivateLoreOptions {
 //                              命令处理器类型
 // ============================================================================
 
+export interface CommandScope {
+  get(key: string): unknown;
+  set(key: string, value: unknown): void;
+  setLocal(key: string, value: unknown): void;
+  delete(key: string): boolean;
+}
+
 /** 单个命令的处理函数签名 */
 export type CommandHandler = (
   args: string[],
@@ -880,4 +917,5 @@ export type CommandHandler = (
   context: ExecutionContext,
   pipe: string,
   invocationMeta?: CommandInvocationMeta,
+  scope?: CommandScope,
 ) => Promise<string>;

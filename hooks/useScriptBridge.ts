@@ -24,6 +24,7 @@ import type {
   ExpressionFolderOverrideOptions,
   ExpressionListOptions,
   ExpressionSetOptions,
+  ExpressionUploadOptions,
   GroupMemberField,
   ImportVariableMapping,
   PopupCommandOptions,
@@ -180,6 +181,13 @@ interface UseScriptBridgeOptions {
     from: string,
     mappings: ImportVariableMapping[],
   ) => number | void | Promise<number | void>;
+  onShowGallery?: (
+    options?: { character?: string; group?: string },
+  ) => void | Promise<void>;
+  onUploadExpressionAsset?: (
+    imageUrl: string,
+    options: ExpressionUploadOptions,
+  ) => string | Promise<string>;
   onShowPopup?: (
     text: string,
     options?: PopupCommandOptions,
@@ -283,6 +291,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onListExpressions,
     onClassifyExpression,
     onImportVariables,
+    onShowGallery,
+    onUploadExpressionAsset,
     onShowPopup,
     onPickIcon,
     onIsMobile,
@@ -437,6 +447,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onListExpressions,
           onClassifyExpression,
           onImportVariables,
+          onShowGallery,
+          onUploadExpressionAsset,
           onShowPopup,
           onPickIcon,
           onIsMobile,
@@ -525,6 +537,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onListExpressions,
       onClassifyExpression,
       onImportVariables,
+      onShowGallery,
+      onUploadExpressionAsset,
       onShowPopup,
       onPickIcon,
       onIsMobile,

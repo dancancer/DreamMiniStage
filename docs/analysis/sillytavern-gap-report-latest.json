@@ -1,17 +1,10 @@
 {
-  "generatedAt": "2026-03-06T05:10:36.833Z",
+  "generatedAt": "2026-03-06T06:11:48.515Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 390,
-    "coverage": "91.55%",
+    "covered": 399,
+    "coverage": "93.66%",
     "missingTop": [
-      {
-        "command": "expression-upload",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
       {
         "command": "floor-teleport",
         "upstreamRefs": 1,
@@ -21,13 +14,6 @@
       },
       {
         "command": "proxy",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "qr-arg",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -70,20 +56,6 @@
       },
       {
         "command": "sd-style",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sg",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "show-gallery",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,
@@ -139,34 +111,6 @@
         "priority": "P3"
       },
       {
-        "command": "tool-register",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "tool-unregister",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "tools-register",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "tools-unregister",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "translate",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -189,13 +133,6 @@
       },
       {
         "command": "tts",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "uploadsprite",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

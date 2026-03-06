@@ -11,6 +11,8 @@ const characterOpsMocks = vi.hoisted(() => ({
 const toolBridgeMocks = vi.hoisted(() => ({
   getRegisteredScriptTools: vi.fn(),
   invokeScriptTool: vi.fn(),
+  registerScriptTool: vi.fn(),
+  unregisterScriptTool: vi.fn(),
 }));
 
 vi.mock("@/lib/data/roleplay/character-record-operation", () => ({
@@ -24,6 +26,8 @@ vi.mock("@/lib/data/roleplay/character-record-operation", () => ({
 vi.mock("../tool-handlers", () => ({
   getRegisteredScriptTools: toolBridgeMocks.getRegisteredScriptTools,
   invokeScriptTool: toolBridgeMocks.invokeScriptTool,
+  registerScriptTool: toolBridgeMocks.registerScriptTool,
+  unregisterScriptTool: toolBridgeMocks.unregisterScriptTool,
 }));
 
 import { slashHandlers } from "../slash-handlers";
@@ -55,8 +59,16 @@ function createMockContext(overrides: Partial<ApiCallContext> = {}): ApiCallCont
 }
 
 describe("slash handlers tool/tag integration", () => {
+  const registeredTools = new Map<string, {
+    name: string;
+    description: string;
+    parameters: { type: "object"; properties?: Record<string, unknown>; required?: string[] };
+    handler?: (args: Record<string, unknown>) => unknown | Promise<unknown>;
+  }>();
+
   beforeEach(() => {
     vi.clearAllMocks();
+    registeredTools.clear();
     currentRecord = {
       id: "char-current",
       data: {
@@ -85,24 +97,47 @@ describe("slash handlers tool/tag integration", () => {
       return currentRecord;
     });
 
-    toolBridgeMocks.getRegisteredScriptTools.mockReturnValue([
-      {
-        name: "weather",
-        description: "Read the weather",
-        parameters: {
-          type: "object",
-          properties: {
-            city: { type: "string" },
-          },
-          required: ["city"],
+    registeredTools.set("weather", {
+      name: "weather",
+      description: "Read the weather",
+      parameters: {
+        type: "object",
+        properties: {
+          city: { type: "string" },
         },
+        required: ["city"],
       },
-    ]);
-    toolBridgeMocks.invokeScriptTool.mockImplementation(async (name, parameters) => ({
-      name,
-      parameters,
-      ok: true,
-    }));
+    });
+    toolBridgeMocks.getRegisteredScriptTools.mockImplementation(() => {
+      return Array.from(registeredTools.values()).map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.parameters,
+      }));
+    });
+    toolBridgeMocks.registerScriptTool.mockImplementation((name, description, parameters, handler) => {
+      registeredTools.set(name, {
+        name,
+        description,
+        parameters,
+        handler,
+      });
+      return true;
+    });
+    toolBridgeMocks.unregisterScriptTool.mockImplementation((name) => {
+      return registeredTools.delete(name);
+    });
+    toolBridgeMocks.invokeScriptTool.mockImplementation(async (name, parameters) => {
+      const tool = registeredTools.get(name);
+      if (tool?.handler) {
+        return tool.handler(parameters);
+      }
+      return {
+        name,
+        parameters,
+        ok: true,
+      };
+    });
   });
 
   it("通过 adapter 让 tag 命令直接读写角色元数据", async () => {
@@ -139,5 +174,35 @@ describe("slash handlers tool/tag integration", () => {
       pipe: '{"name":"weather","parameters":{"city":"Paris"},"ok":true}',
     });
     expect(toolBridgeMocks.invokeScriptTool).toHaveBeenCalledWith("weather", { city: "Paris" });
+  });
+
+  it("通过 adapter 让 tool 注册命令落到单一路径 registry，并执行 action script", async () => {
+    const ctx = createMockContext();
+
+    const result = await slashHandlers.triggerSlash(
+      [
+        '/tool-register name=echo description=Echo parameters={"type":"object","properties":{"message":{"type":"string"}}} {: /echo {{var::arg.message}} :}|/tool-invoke echo parameters={"message":"Ping"}',
+      ],
+      ctx,
+    );
+    const removed = await slashHandlers.triggerSlash([
+      "/tool-unregister echo",
+    ], ctx);
+
+    expect(result).toMatchObject({ isError: false, pipe: "Ping" });
+    expect(removed).toMatchObject({ isError: false, pipe: "true" });
+    expect(toolBridgeMocks.registerScriptTool).toHaveBeenCalledWith(
+      "echo",
+      "Echo",
+      {
+        type: "object",
+        properties: {
+          message: { type: "string" },
+        },
+        required: undefined,
+      },
+      expect.any(Function),
+    );
+    expect(toolBridgeMocks.unregisterScriptTool).toHaveBeenCalledWith("echo");
   });
 });

@@ -19,6 +19,8 @@ import {
   getRegisteredFunctionTools,
   handleFunctionToolResult,
   invokeFunctionTool,
+  registerFunctionTool,
+  unregisterFunctionTool,
 } from "./extension-handlers";
 
 // ============================================================================
@@ -89,6 +91,22 @@ export function findScriptTool(name: string): ScriptTool | undefined {
 export function clearIframeTools(iframeId: string): void {
   clearIframeFunctionTools(iframeId);
 }
+
+/** 注册脚本工具（单源：functionToolRegistry） */
+export function registerScriptTool(
+  name: string,
+  description: string,
+  parameters: ToolFunction["parameters"],
+  handler?: (args: Record<string, unknown>) => unknown | Promise<unknown>,
+): boolean {
+  return registerFunctionTool(name, description, parameters, undefined, handler);
+}
+
+/** 注销脚本工具（单源：functionToolRegistry） */
+export function unregisterScriptTool(name: string): boolean {
+  return unregisterFunctionTool(name);
+}
+
 
 // ============================================================================
 //                              工具调用桥接

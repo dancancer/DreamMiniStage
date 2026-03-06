@@ -83,6 +83,16 @@ function normalizeGalleryList(value: unknown): string[] {
   });
 }
 
+function resolveGalleryOptions(namedArgs: Record<string, string>): { character?: string; group?: string } {
+  const character = (namedArgs.char || "").trim();
+  const group = (namedArgs.group || "").trim();
+  return {
+    ...(character ? { character } : {}),
+    ...(group ? { group } : {}),
+  };
+}
+
+
 function estimateTokenCount(text: string): number {
   const normalized = text.trim();
   if (!normalized) {
@@ -488,16 +498,23 @@ export const handleDelay: CommandHandler = async (args, namedArgs, _ctx, pipe) =
   return "";
 };
 
+/** /show-gallery|/sg - 打开当前角色/群组画廊 */
+export const handleShowGallery: CommandHandler = async (_args, namedArgs, ctx, _pipe) => {
+  if (!ctx.showGallery) {
+    throw new Error("/show-gallery is not available in current context");
+  }
+
+  await Promise.resolve(ctx.showGallery(resolveGalleryOptions(namedArgs)));
+  return "";
+};
+
 /** /list-gallery - 列出角色/群组画廊内容 */
 export const handleListGallery: CommandHandler = async (_args, namedArgs, ctx, _pipe) => {
   if (!ctx.listGallery) {
     throw new Error("/list-gallery is not available in current context");
   }
 
-  const list = await Promise.resolve(ctx.listGallery({
-    character: namedArgs.char,
-    group: namedArgs.group,
-  }));
+  const list = await Promise.resolve(ctx.listGallery(resolveGalleryOptions(namedArgs)));
   return JSON.stringify(normalizeGalleryList(list));
 };
 

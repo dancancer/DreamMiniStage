@@ -1,28 +1,24 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-06T05:10:36.833Z
+- generatedAt: 2026-03-06T06:11:48.515Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-06.json`
 
 ## Coverage Snapshot
 
-- slash commands: 390/426 (91.55%)
+- slash commands: 399/426 (93.66%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
 ## Priority Command Gaps (Top 25)
 
-- [P3] /expression-upload (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /floor-teleport (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /proxy (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qr-arg (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /qrset (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /random (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /reroll-pick (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /sd (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /sd-source (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /sd-style (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /sg (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /show-gallery (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /sort (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /speak (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /start-reply-with (score=2, upstreamRefs=1, localRefs=0)
@@ -30,12 +26,16 @@
 - [P3] /tempchat (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /test (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /tokens (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /tool-register (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /tool-unregister (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /tools-register (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /tools-unregister (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /translate (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /trimend (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /trimstart (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /tts (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /vector-chats-state (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /vector-files-state (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /vector-max-entries (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /vector-query (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /vector-threshold (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /wi-get-timed-effect (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

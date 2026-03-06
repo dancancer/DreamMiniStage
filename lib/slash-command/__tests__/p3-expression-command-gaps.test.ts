@@ -88,6 +88,38 @@ describe("P3 expression command gaps", () => {
     });
   });
 
+  it("/expression-upload|/uploadsprite 支持 URL 上传参数透传", async () => {
+    const uploadExpressionAsset = vi
+      .fn()
+      .mockResolvedValueOnce("joy")
+      .mockResolvedValueOnce("idle_v2");
+    const ctx = createContext({ uploadExpressionAsset });
+
+    const canonical = await executeSlashCommandScript(
+      "/expression-upload name=Alice label=joy folder=party spriteName=joy_v2 https://example.com/joy.png",
+      ctx,
+    );
+    const alias = await executeSlashCommandScript(
+      "/uploadsprite label=idle https://example.com/idle.png",
+      ctx,
+    );
+
+    expect(canonical).toMatchObject({ isError: false, pipe: "joy" });
+    expect(alias).toMatchObject({ isError: false, pipe: "idle_v2" });
+    expect(uploadExpressionAsset).toHaveBeenNthCalledWith(1, "https://example.com/joy.png", {
+      name: "Alice",
+      label: "joy",
+      folder: "party",
+      spriteName: "joy_v2",
+    });
+    expect(uploadExpressionAsset).toHaveBeenNthCalledWith(2, "https://example.com/idle.png", {
+      name: undefined,
+      label: "idle",
+      folder: undefined,
+      spriteName: undefined,
+    });
+  });
+
   it("expression 命令簇在宿主缺失、参数非法、返回异常时显式 fail-fast", async () => {
     const noHostResult = await executeSlashCommandScript("/expression-list", createContext());
     expect(noHostResult.isError).toBe(true);
@@ -118,5 +150,33 @@ describe("P3 expression command gaps", () => {
     expect(badClassifyReturn.isError).toBe(true);
     expect(missingText.errorMessage).toContain("requires text");
     expect(badClassifyReturn.errorMessage).toContain("must return a string");
+
+    const badUploadCtx = createContext({
+      uploadExpressionAsset: vi.fn().mockResolvedValue(42 as unknown as string),
+    });
+    const missingUploadHost = await executeSlashCommandScript(
+      "/expression-upload label=joy https://example.com/a.png",
+      createContext(),
+    );
+    const missingUploadLabel = await executeSlashCommandScript(
+      "/expression-upload",
+      badUploadCtx,
+    );
+    const missingUploadUrl = await executeSlashCommandScript(
+      "/expression-upload label=joy",
+      badUploadCtx,
+    );
+    const badUploadReturn = await executeSlashCommandScript(
+      "/expression-upload label=joy https://example.com/a.png",
+      badUploadCtx,
+    );
+    expect(missingUploadHost.isError).toBe(true);
+    expect(missingUploadLabel.isError).toBe(true);
+    expect(missingUploadUrl.isError).toBe(true);
+    expect(badUploadReturn.isError).toBe(true);
+    expect(missingUploadHost.errorMessage).toContain("not available");
+    expect(missingUploadLabel.errorMessage).toContain("requires label");
+    expect(missingUploadUrl.errorMessage).toContain("requires image url");
+    expect(badUploadReturn.errorMessage).toContain("must return a string");
   });
 });

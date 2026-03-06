@@ -69,6 +69,24 @@ function normalizeStringList(
   return list;
 }
 
+function resolveExpressionUploadLabel(args: string[], namedArgs: Record<string, string>): string {
+  const label = (namedArgs.label || args[0] || "").trim();
+  if (!label) {
+    throw new Error("/expression-upload requires label=<expression>");
+  }
+  return label;
+}
+
+function resolveExpressionUploadUrl(args: string[], namedArgs: Record<string, string>, pipe: string): string {
+  const positionalArgs = namedArgs.label ? args : args.slice(1);
+  const url = (namedArgs.url || positionalArgs.join(" ") || pipe || "").trim();
+  if (!url) {
+    throw new Error("/expression-upload requires image url");
+  }
+  return url;
+}
+
+
 /** /expression-set [label] - 设置当前角色表情（别名 /emote /sprite） */
 export const handleExpressionSet: CommandHandler = async (args, namedArgs, ctx, pipe) => {
   const callback = ensureHostCallback(ctx.setExpression, "expression-set");
@@ -151,6 +169,24 @@ export const handleExpressionClassify: CommandHandler = async (args, namedArgs, 
   });
   if (typeof result !== "string") {
     throw new Error("/expression-classify host callback must return a string");
+  }
+  return result;
+};
+
+
+/** /expression-upload|/uploadsprite [url] - 从 URL 上传角色表情素材 */
+export const handleExpressionUpload: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const callback = ensureHostCallback(ctx.uploadExpressionAsset, "expression-upload");
+  const label = resolveExpressionUploadLabel(args, namedArgs);
+  const imageUrl = resolveExpressionUploadUrl(args, namedArgs, pipe);
+  const result = await callback(imageUrl, {
+    name: (namedArgs.name || "").trim() || undefined,
+    label,
+    folder: (namedArgs.folder || "").trim() || undefined,
+    spriteName: (namedArgs.spriteName || namedArgs.spritename || "").trim() || undefined,
+  });
+  if (typeof result !== "string") {
+    throw new Error("/expression-upload host callback must return a string");
   }
   return result;
 };

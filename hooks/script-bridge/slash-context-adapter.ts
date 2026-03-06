@@ -17,6 +17,7 @@ import type {
   CharacterSummary,
   ConnectionProfileState,
   PersonaLockType,
+  SlashToolRegistration,
 } from "@/lib/slash-command/types";
 import { executeSlashCommandScript } from "@/lib/slash-command/executor";
 import { getAudioManager } from "@/lib/audio/store";
@@ -34,7 +35,7 @@ import {
 } from "@/lib/slash-command/prompt-injection-store";
 import type { WorldBookEntry } from "@/lib/models/world-book-model";
 import { createLoreRegexAdapters } from "./slash-context-lore-regex";
-import { getRegisteredScriptTools, invokeScriptTool } from "./tool-handlers";
+import { getRegisteredScriptTools, invokeScriptTool, registerScriptTool, unregisterScriptTool } from "./tool-handlers";
 
 interface HostPluginRegistryEntry {
   manifest?: {
@@ -969,6 +970,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onIsMobile = ctx.onIsMobile ?? defaultIsMobileCallback;
   const onGenerateCaption = ctx.onGenerateCaption;
   const onPlayNotificationSound = ctx.onPlayNotificationSound;
+  const onShowGallery = ctx.onShowGallery;
+  const onUploadExpressionAsset = ctx.onUploadExpressionAsset;
   const onSetExpression = ctx.onSetExpression;
   const onSetExpressionFolderOverride = ctx.onSetExpressionFolderOverride;
   const onGetLastExpression = ctx.onGetLastExpression;
@@ -1399,6 +1402,96 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     return invokeScriptTool(name, parameters);
   };
 
+  const resolveToolVariableEntries = (
+    value: unknown,
+    prefix = "arg",
+  ): Array<[string, unknown]> => {
+    const entries: Array<[string, unknown]> = [];
+    const visit = (currentValue: unknown, currentKey: string) => {
+      if (
+        typeof currentValue === "string"
+        || typeof currentValue === "number"
+        || typeof currentValue === "boolean"
+      ) {
+        entries.push([currentKey, currentValue]);
+      } else {
+        entries.push([currentKey, JSON.stringify(currentValue)]);
+      }
+
+      if (Array.isArray(currentValue)) {
+        currentValue.forEach((item, index) => {
+          visit(item, `${currentKey}.${index}`);
+        });
+        return;
+      }
+
+      if (currentValue && typeof currentValue === "object") {
+        Object.entries(currentValue).forEach(([key, item]) => {
+          visit(item, `${currentKey}.${key}`);
+        });
+      }
+    };
+
+    visit(value, prefix);
+    return entries;
+  };
+
+  const captureToolVariableSnapshot = (key: string): { key: string; existed: boolean; value: unknown } => {
+    const target = ctx.characterId ? characterVariables : globalVariables;
+    return Object.prototype.hasOwnProperty.call(target, key)
+      ? { key, existed: true, value: target[key] }
+      : { key, existed: false, value: undefined };
+  };
+
+  const withTemporaryToolVariables = async <T>(
+    parameters: Record<string, unknown>,
+    runner: () => Promise<T>,
+  ): Promise<T> => {
+    const entries = resolveToolVariableEntries(parameters);
+    const snapshots = entries.map(([key]) => captureToolVariableSnapshot(key));
+
+    entries.forEach(([key, value]) => {
+      setLocalVariable(key, value);
+    });
+
+    try {
+      return await runner();
+    } finally {
+      snapshots.forEach((snapshot) => {
+        if (snapshot.existed) {
+          setLocalVariable(snapshot.key, snapshot.value);
+          return;
+        }
+        deleteLocalVariable(snapshot.key);
+      });
+    }
+  };
+
+  const registerTool = async (registration: SlashToolRegistration): Promise<boolean> => {
+    if (registration.shouldRegister === false) {
+      return false;
+    }
+
+    return registerScriptTool(
+      registration.name,
+      registration.description,
+      {
+        type: "object",
+        properties: registration.parameters.properties ?? {},
+        required: registration.parameters.required,
+      },
+      async (parameters) => withTemporaryToolVariables(parameters, async () => {
+        return executionContext.runSlashCommand
+          ? executionContext.runSlashCommand(registration.action)
+          : "";
+      }),
+    );
+  };
+
+  const unregisterTool = async (name: string): Promise<boolean> => {
+    return unregisterScriptTool(name);
+  };
+
   const getMessageReasoning = async (index: number): Promise<string | undefined> => {
     const message = ctx.messages[index];
     if (!message) {
@@ -1573,6 +1666,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     reloadPage: onReloadPage,
     listTools,
     invokeTool,
+    registerTool,
+    unregisterTool,
     addCharacterTag,
     removeCharacterTag,
     hasCharacterTag,
@@ -1611,6 +1706,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     isMobileDevice: onIsMobile,
     generateCaption: onGenerateCaption,
     playNotificationSound: onPlayNotificationSound,
+    showGallery: onShowGallery,
+    uploadExpressionAsset: onUploadExpressionAsset,
     setExpression: onSetExpression,
     setExpressionFolderOverride: onSetExpressionFolderOverride,
     getLastExpression: onGetLastExpression,

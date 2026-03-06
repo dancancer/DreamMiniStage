@@ -22,6 +22,7 @@ import type {
   ExpressionFolderOverrideOptions,
   ExpressionListOptions,
   ExpressionSetOptions,
+  ExpressionUploadOptions,
   GroupMemberField,
   GroupMemberMoveDirection,
   ImportVariableMapping,
@@ -346,6 +347,13 @@ export interface ApiCallContext {
     options?: CaptionCommandOptions,
   ) => string | Promise<string>;
   onPlayNotificationSound?: () => void | Promise<void>;
+  onShowGallery?: (
+    options?: { character?: string; group?: string },
+  ) => void | Promise<void>;
+  onUploadExpressionAsset?: (
+    imageUrl: string,
+    options: ExpressionUploadOptions,
+  ) => string | Promise<string>;
   onSetExpression?: (
     label: string,
     options?: ExpressionSetOptions,

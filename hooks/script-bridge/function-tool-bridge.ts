@@ -52,6 +52,7 @@ export function registerFunctionTool(
   description: string,
   parameters: FunctionToolDefinition["parameters"],
   iframeId?: string,
+  handler?: (args: Record<string, unknown>) => unknown | Promise<unknown>,
 ): boolean {
   if (!name || typeof name !== "string") {
     console.warn("[registerFunctionTool] Invalid name:", name);
@@ -66,10 +67,10 @@ export function registerFunctionTool(
 
   functionToolRegistry.set(name, {
     definition,
-    handler: async (toolArgs) => {
+    handler: handler ?? (async (toolArgs) => {
       console.log(`[registerFunctionTool] Tool called: ${name}`, toolArgs);
       return { success: true, args: toolArgs };
-    },
+    }),
     sourceIframe: iframeId,
   });
 

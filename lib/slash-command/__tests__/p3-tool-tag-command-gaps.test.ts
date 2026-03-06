@@ -121,6 +121,121 @@ describe("P3 tool/tag command gaps", () => {
     expect(invokeBadParams.errorMessage).toContain("JSON object");
   });
 
+  it("/tools-register|/tool-register 与 /tools-unregister|/tool-unregister 透传工具注册信息", async () => {
+    const registerTool = vi.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    const unregisterTool = vi.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    const ctx = createContext({ registerTool, unregisterTool });
+
+    const registered = await executeSlashCommandScript(
+      '/tools-register name=echo description=Echo parameters={"type":"object","properties":{"message":{"type":"string"}},"required":["message"]} {: /echo {{var::arg.message}} :}',
+      ctx,
+    );
+    const aliasRegistered = await executeSlashCommandScript(
+      "/tool-register name=noop description=Noop parameters={} {: /pass ok :}",
+      ctx,
+    );
+    const removed = await executeSlashCommandScript("/tools-unregister echo", ctx);
+    const aliasRemoved = await executeSlashCommandScript("/tool-unregister noop", ctx);
+
+    expect(registered).toMatchObject({ isError: false, pipe: "true" });
+    expect(aliasRegistered).toMatchObject({ isError: false, pipe: "false" });
+    expect(removed).toMatchObject({ isError: false, pipe: "true" });
+    expect(aliasRemoved).toMatchObject({ isError: false, pipe: "false" });
+    expect(registerTool).toHaveBeenNthCalledWith(1, {
+      name: "echo",
+      description: "Echo",
+      parameters: {
+        type: "object",
+        properties: {
+          message: { type: "string" },
+        },
+        required: ["message"],
+      },
+      action: "/echo {{var::arg.message}}",
+      displayName: undefined,
+      formatMessage: undefined,
+      shouldRegister: undefined,
+      stealth: undefined,
+    });
+    expect(registerTool).toHaveBeenNthCalledWith(2, {
+      name: "noop",
+      description: "Noop",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: undefined,
+      },
+      action: "/pass ok",
+      displayName: undefined,
+      formatMessage: undefined,
+      shouldRegister: undefined,
+      stealth: undefined,
+    });
+    expect(unregisterTool).toHaveBeenNthCalledWith(1, "echo");
+    expect(unregisterTool).toHaveBeenNthCalledWith(2, "noop");
+  });
+
+  it("tool 注册命令在缺块、缺参、宿主缺失或返回异常时显式 fail-fast", async () => {
+    const missingHost = await executeSlashCommandScript(
+      "/tools-register name=echo description=Echo parameters={} {: /echo ok :}",
+      createContext(),
+    );
+    const missingName = await executeSlashCommandScript(
+      "/tools-register description=Echo parameters={} {: /echo ok :}",
+      createContext({ registerTool: vi.fn().mockResolvedValue(true) }),
+    );
+    const missingAction = await executeSlashCommandScript(
+      "/tools-register name=echo description=Echo parameters={}",
+      createContext({ registerTool: vi.fn().mockResolvedValue(true) }),
+    );
+    const badSchema = await executeSlashCommandScript(
+      "/tools-register name=echo description=Echo parameters=[] {: /echo ok :}",
+      createContext({ registerTool: vi.fn().mockResolvedValue(true) }),
+    );
+    const badSchemaType = await executeSlashCommandScript(
+      '/tools-register name=echo description=Echo parameters={"type":"array"} {: /echo ok :}',
+      createContext({ registerTool: vi.fn().mockResolvedValue(true) }),
+    );
+    const badBool = await executeSlashCommandScript(
+      "/tools-register name=echo description=Echo parameters={} shouldRegister=maybe {: /echo ok :}",
+      createContext({ registerTool: vi.fn().mockResolvedValue(true) }),
+    );
+    const badReturn = await executeSlashCommandScript(
+      "/tools-register name=echo description=Echo parameters={} {: /echo ok :}",
+      createContext({ registerTool: vi.fn().mockResolvedValue("yes") as unknown as ExecutionContext["registerTool"] }),
+    );
+    const unregisterMissingHost = await executeSlashCommandScript("/tool-unregister echo", createContext());
+    const unregisterMissingName = await executeSlashCommandScript(
+      "/tool-unregister",
+      createContext({ unregisterTool: vi.fn().mockResolvedValue(true) }),
+    );
+    const unregisterBadReturn = await executeSlashCommandScript(
+      "/tool-unregister echo",
+      createContext({ unregisterTool: vi.fn().mockResolvedValue("yes") as unknown as ExecutionContext["unregisterTool"] }),
+    );
+
+    expect(missingHost.isError).toBe(true);
+    expect(missingName.isError).toBe(true);
+    expect(missingAction.isError).toBe(true);
+    expect(badSchema.isError).toBe(true);
+    expect(badSchemaType.isError).toBe(true);
+    expect(badBool.isError).toBe(true);
+    expect(badReturn.isError).toBe(true);
+    expect(unregisterMissingHost.isError).toBe(true);
+    expect(unregisterMissingName.isError).toBe(true);
+    expect(unregisterBadReturn.isError).toBe(true);
+    expect(missingHost.errorMessage).toContain("not available");
+    expect(missingName.errorMessage).toContain("requires name");
+    expect(missingAction.errorMessage).toContain("requires closure block action");
+    expect(badSchema.errorMessage).toContain("JSON object");
+    expect(badSchemaType.errorMessage).toContain("parameters.type");
+    expect(badBool.errorMessage).toContain("invalid shouldRegister");
+    expect(badReturn.errorMessage).toContain("must return boolean");
+    expect(unregisterMissingHost.errorMessage).toContain("not available");
+    expect(unregisterMissingName.errorMessage).toContain("requires tool name");
+    expect(unregisterBadReturn.errorMessage).toContain("must return boolean");
+  });
+
   it("/tag-add|/tag-remove|/tag-exists|/tag-list 透传角色名并返回字符串结果", async () => {
     const addCharacterTag = vi.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false);
     const removeCharacterTag = vi.fn().mockResolvedValue(true);

@@ -135,19 +135,28 @@ async function executeCommand(node: CommandNode, ctx: ExecContext): Promise<Exec
   ));
 
   try {
+    const expandedPipe = expandCommandMacros(ctx.pipe, ctx);
+    const expandedArgs = node.args.map((arg) => expandCommandMacros(arg, { ...ctx, pipe: expandedPipe }));
+    const expandedNamedArgs = Object.fromEntries(
+      Object.entries(node.namedArgs).map(([key, value]) => [
+        key,
+        expandCommandMacros(value, { ...ctx, pipe: expandedPipe }),
+      ]),
+    );
     const invocationMeta = {
       raw: node.raw,
       namedArgumentList: node.namedArgumentList,
       unnamedArgumentList: node.unnamedArgumentList,
+      blocks: node.blocks.map((block) => ({ raw: block.raw })),
       parserFlags: node.parserFlags,
       scopeDepth: node.scopeDepth,
     };
 
     const result = await descriptor.handler(
-      node.args,
-      node.namedArgs,
+      expandedArgs,
+      expandedNamedArgs,
       ctx.options.context,
-      ctx.pipe,
+      expandedPipe,
       ctx.scope,
       invocationMeta,
     );
@@ -243,7 +252,8 @@ interface ConditionResult {
 type Comparator = "===" | "!==" | "==" | "!=" | ">=" | "<=" | ">" | "<";
 
 const COMPARATORS: Comparator[] = ["===", "!==", ">=", "<=", "==", "!=", ">", "<"];
-const CONDITION_MACRO_PATTERN = /\{\{([^{}]+)\}\}/g;
+const COMMAND_MACRO_PATTERN = /\{\{([^{}]+)\}\}/g;
+const REGEX_SPECIAL_CHARACTERS = new Set(["\\", "^", "$", ".", "|", "?", "*", "+", "(", ")", "[", "]", "{", "}"]);
 
 function evaluateCondition(expr: string, ctx: ExecContext): ConditionResult {
   try {
@@ -269,25 +279,103 @@ function evaluateCondition(expr: string, ctx: ExecContext): ConditionResult {
 }
 
 function preprocessConditionMacros(expr: string, ctx: ExecContext): string {
-  return expr.replace(CONDITION_MACRO_PATTERN, (_match, rawMacro: string) => {
-    const [macroNameRaw, ...argParts] = rawMacro.split("::");
-    const macroName = macroNameRaw.trim().toLowerCase();
-    const macroArg = argParts.join("::").trim();
-    if (!macroArg) {
-      throw new Error(`macro '${rawMacro}' missing argument`);
-    }
+  return expandCommandMacros(expr, ctx);
+}
 
-    if (macroName === "getvar") {
-      return stringifyMacroValue(ctx.options.context.getVariable(macroArg));
-    }
-    if (macroName === "getglobalvar") {
-      const scoped = ctx.options.context.getScopedVariable?.("global", macroArg);
-      const fallback = scoped !== undefined ? scoped : ctx.options.context.getVariable(macroArg);
-      return stringifyMacroValue(fallback);
-    }
+interface QrArgWildcardEntry {
+  pattern: string;
+  value: unknown;
+}
 
-    throw new Error(`unsupported macro '{{${rawMacro}}}'`);
+function expandCommandMacros(value: string, ctx: ExecContext): string {
+  if (!value.includes("{{")) {
+    return value;
+  }
+
+  return value.replace(COMMAND_MACRO_PATTERN, (_match, rawMacro: string) => {
+    return stringifyMacroValue(resolveSupportedMacro(rawMacro, ctx));
   });
+}
+
+function resolveSupportedMacro(rawMacro: string, ctx: ExecContext): unknown {
+  const [macroNameRaw, ...argParts] = rawMacro.split("::");
+  const macroName = macroNameRaw.trim().toLowerCase();
+  const macroArg = argParts.join("::").trim();
+  if (!macroArg) {
+    throw new Error(`macro '${rawMacro}' missing argument`);
+  }
+
+  if (macroName === "arg") {
+    return resolveQuickReplyArgMacro(macroArg, ctx);
+  }
+  if (macroName === "var" || macroName === "getvar") {
+    return resolveVariableMacro(macroArg, ctx);
+  }
+  if (macroName === "globalvar" || macroName === "getglobalvar") {
+    return resolveGlobalVariableMacro(macroArg, ctx);
+  }
+
+  throw new Error(`unsupported macro '{{${rawMacro}}}'`);
+}
+
+function resolveVariableMacro(key: string, ctx: ExecContext): unknown {
+  const scoped = ctx.scope.get(key);
+  if (scoped !== undefined) {
+    return scoped;
+  }
+  return ctx.options.context.getVariable(key);
+}
+
+function resolveGlobalVariableMacro(key: string, ctx: ExecContext): unknown {
+  const scoped = ctx.options.context.getScopedVariable?.("global", key);
+  return scoped !== undefined ? scoped : ctx.options.context.getVariable(key);
+}
+
+function resolveQuickReplyArgMacro(key: string, ctx: ExecContext): unknown {
+  const exact = ctx.scope.get(`__qr_arg__:${key}`);
+  if (exact !== undefined) {
+    return exact;
+  }
+
+  const wildcardEntries = ctx.scope.get("__qr_arg_wildcards__");
+  if (!Array.isArray(wildcardEntries)) {
+    return "";
+  }
+
+  for (const entry of wildcardEntries) {
+    if (!isQrArgWildcardEntry(entry)) {
+      continue;
+    }
+    if (matchesQrArgWildcard(entry.pattern, key)) {
+      return entry.value;
+    }
+  }
+
+  return "";
+}
+
+function isQrArgWildcardEntry(value: unknown): value is QrArgWildcardEntry {
+  return Boolean(value)
+    && typeof value === "object"
+    && typeof (value as QrArgWildcardEntry).pattern === "string";
+}
+
+function escapeRegexSegment(value: string): string {
+  let result = "";
+  for (const character of value) {
+    result += REGEX_SPECIAL_CHARACTERS.has(character)
+      ? "\\" + character
+      : character;
+  }
+  return result;
+}
+
+function matchesQrArgWildcard(pattern: string, target: string): boolean {
+  const escaped = pattern
+    .split("*")
+    .map(escapeRegexSegment)
+    .join(".*");
+  return new RegExp(`^${escaped}$`).test(target);
 }
 
 function stringifyMacroValue(value: unknown): string {

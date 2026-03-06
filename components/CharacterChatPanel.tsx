@@ -24,6 +24,7 @@ import type {
   ExpressionFolderOverrideOptions,
   ExpressionListOptions,
   ExpressionSetOptions,
+  ExpressionUploadOptions,
   GroupMemberField,
   SendOptions,
 } from "@/lib/slash-command/types";
@@ -125,6 +126,13 @@ interface Props {
     text: string,
     options?: ExpressionClassifyOptions,
   ) => string | Promise<string>;
+  onShowGallery?: (
+    options?: { character?: string; group?: string },
+  ) => void | Promise<void>;
+  onUploadExpressionAsset?: (
+    imageUrl: string,
+    options: ExpressionUploadOptions,
+  ) => string | Promise<string>;
   onSwitchCharacter?: (
     target: string
   ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
@@ -183,6 +191,8 @@ export default function CharacterChatPanel({
   onGetLastExpression,
   onListExpressions,
   onClassifyExpression,
+  onShowGallery,
+  onUploadExpressionAsset,
   onSwitchCharacter,
   onRenameCurrentCharacter,
   onExportJsonl,
@@ -254,6 +264,8 @@ export default function CharacterChatPanel({
     onGetLastExpression,
     onListExpressions,
     onClassifyExpression,
+    onShowGallery,
+    onUploadExpressionAsset,
     onSwitchCharacter,
     onRenameCurrentCharacter,
   });

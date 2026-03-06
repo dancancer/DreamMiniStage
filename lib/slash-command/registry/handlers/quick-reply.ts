@@ -22,6 +22,13 @@ import { parseBoolean } from "../utils/helpers";
 
 const QUICK_REPLY_SET_SCOPES = new Set<QuickReplySetScope>(["all", "global", "chat"]);
 
+const QR_ARG_WILDCARDS_KEY = "__qr_arg_wildcards__";
+
+interface QrArgWildcardEntry {
+  pattern: string;
+  value: string;
+}
+
 function ensureHostCallback<T>(callback: T | undefined, commandName: string): T {
   if (!callback) {
     throw new Error(`/${commandName} is not available in current context`);
@@ -123,6 +130,49 @@ function normalizeQuickReplyExecutionResult(commandName: string, value: unknown)
   }
   return String(value);
 }
+
+function resolveQrArgValue(
+  args: string[],
+  namedArgs: Record<string, string>,
+  pipe: string,
+  invocationMeta?: { blocks?: Array<{ raw: string }> },
+): string {
+  const positional = args.slice(1).join(" ").trim();
+  const fromNamed = (namedArgs.value || "").trim();
+  if (fromNamed) {
+    return fromNamed;
+  }
+  if (positional) {
+    return positional;
+  }
+
+  const block = invocationMeta?.blocks?.[0]?.raw?.trim();
+  if (block) {
+    return "[Closure]";
+  }
+
+  const fromPipe = pipe.trim();
+  if (fromPipe) {
+    return fromPipe;
+  }
+
+  throw new Error("/qr-arg requires argument value");
+}
+
+function readQrArgWildcards(scope: { get(key: string): unknown }): QrArgWildcardEntry[] {
+  const value = scope.get(QR_ARG_WILDCARDS_KEY);
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((entry): entry is QrArgWildcardEntry => {
+    return Boolean(entry)
+      && typeof entry === "object"
+      && typeof (entry as QrArgWildcardEntry).pattern === "string"
+      && typeof (entry as QrArgWildcardEntry).value === "string";
+  });
+}
+
 
 function normalizeQuickReplyList(value: unknown): string[] {
   if (!Array.isArray(value)) {
@@ -272,6 +322,36 @@ function buildQuickReplyVisibilityOptions(
     visible: parseRequiredBoolean(namedArgs.visible, commandName, "visible", true),
   };
 }
+
+/** /qr-arg <name> <value> - 设置 Quick Reply 参数回退值 */
+export const handleQrArg: CommandHandler = async (
+  args,
+  namedArgs,
+  _ctx,
+  pipe,
+  invocationMeta,
+  scope,
+) => {
+  if (!scope) {
+    throw new Error("/qr-arg scope is unavailable");
+  }
+
+  const key = (namedArgs.key || namedArgs.name || args[0] || "").trim();
+  if (!key) {
+    throw new Error("/qr-arg requires argument name");
+  }
+
+  const value = resolveQrArgValue(args, namedArgs, pipe, invocationMeta);
+  if (key.includes("*")) {
+    const wildcards = readQrArgWildcards(scope).filter((entry) => entry.pattern !== key);
+    wildcards.push({ pattern: key, value });
+    scope.setLocal(QR_ARG_WILDCARDS_KEY, wildcards);
+    return "";
+  }
+
+  scope.setLocal(`__qr_arg__:${key}`, value);
+  return "";
+};
 
 /** /qr [index] - 执行指定索引的 Quick Reply */
 export const handleQr: CommandHandler = async (args, namedArgs, ctx, pipe) => {

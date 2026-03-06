@@ -41,8 +41,8 @@ function makeResolver(): (name: string) => CommandDescriptor | undefined {
     if (!handler) return undefined;
     return {
       name,
-      handler: (args, namedArgs, context, pipe, _scope, invocationMeta) =>
-        handler(args, namedArgs, context, pipe, invocationMeta),
+      handler: (args, namedArgs, context, pipe, scope, invocationMeta) =>
+        handler(args, namedArgs, context, pipe, invocationMeta, scope),
     };
   };
 }

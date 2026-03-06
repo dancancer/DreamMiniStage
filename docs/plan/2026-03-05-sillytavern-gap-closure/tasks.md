@@ -181,3 +181,11 @@
 - [x] 补齐工具命令簇（`/tools-list|/tool-list`、`/tools-invoke|/tool-invoke`），统一复用 Script Tool Registry 单路径与 JSON 参数校验。
 - [x] 补齐角色标签命令簇（`/tag-add`、`/tag-remove`、`/tag-exists`、`/tag-list`），统一复用角色元数据存储单路径。
 - [x] 运行 typecheck + 定向回归 + gap 分析，并更新报告、分析文档与 handoff。
+
+
+## 31. P3 增量收敛（画廊/工具注册/QR 参数）
+
+- [x] 补齐媒体/画廊命令（`/show-gallery|/sg`、`/expression-upload|/uploadsprite`），统一显式宿主回调与 fail-fast 语义。
+- [x] 补齐工具注册运维（`/tools-register|/tool-register`、`/tools-unregister|/tool-unregister`），并复用 Script Tool Registry 单路径执行 action script。
+- [x] 补齐 `qr-arg`，打通 `{{arg::...}}` 宏替换与 `*` wildcard 回退。
+- [x] 运行 `pnpm typecheck`、定向回归、`pnpm analyze:sillytavern-gap`，并更新报告、分析文档与 handoff。
