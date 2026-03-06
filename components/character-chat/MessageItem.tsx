@@ -34,6 +34,8 @@ export interface Message {
   role: string;
   thinkingContent?: string;
   content: string;
+  name?: string;
+  compact?: boolean;
   hidden?: boolean;
   timestamp?: string;
   isUser?: boolean;
@@ -87,6 +89,7 @@ function RoleMessage({
   onScriptMessage,
 }: RoleMessageProps) {
   const tone = pickRoleTone(roleKind);
+  const displayName = (message.name || "").trim();
   return (
     <div className="flex justify-start mb-4">
       <div className="max-w-3xl w-full space-y-1">
@@ -94,6 +97,7 @@ function RoleMessage({
           <span className={`px-2 py-0.5 rounded-full border ${tone.badgeBg} ${tone.badgeText} ${tone.badgeBorder}`}>
             {renderRoleLabel(message.role)}
           </span>
+          {displayName ? <span className="text-sm font-medium text-foreground">{displayName}</span> : null}
           <span className="text-[11px] uppercase tracking-wide">{tone.caption}</span>
         </div>
         <div className={`rounded-lg border px-4 py-3 shadow-sm ${tone.bodyBg} ${tone.bodyBorder}`}>

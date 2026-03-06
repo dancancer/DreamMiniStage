@@ -449,7 +449,7 @@ function SessionPageContent() {
       onSend: async (text, options) => dialogue.addUserMessage(text, options),
       onTrigger: async () => dialogue.triggerGeneration(),
       onSendAs: async (role, text) => dialogue.addRoleMessage(role, text),
-      onSendSystem: async (text) => dialogue.addRoleMessage("system", text),
+      onSendSystem: async (text, options) => dialogue.addRoleMessage("system", text, options),
       onImpersonate: async (text) => dialogue.addRoleMessage("assistant", text),
       onContinue: async () => dialogue.triggerGeneration(),
       onSwipe: dialogue.handleSwipe,
@@ -737,7 +737,7 @@ function SessionPageContent() {
             onSendMessage={dialogue.addUserMessage}
             onTriggerGeneration={dialogue.triggerGeneration}
             onSendAs={(role, text) => dialogue.addRoleMessage(role, text)}
-            onSendSystem={(text) => dialogue.addRoleMessage("system", text)}
+            onSendSystem={(text, options) => dialogue.addRoleMessage("system", text, options)}
             onImpersonate={(text) => dialogue.addRoleMessage("assistant", text)}
             onContinue={dialogue.triggerGeneration}
             onSwipe={dialogue.handleSwipe}

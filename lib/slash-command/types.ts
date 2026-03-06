@@ -320,7 +320,7 @@ export interface ExecutionContext {
   onSend: (text: string, options?: SendOptions) => void | Promise<void>;
   onTrigger: (member?: string) => void | Promise<void>;
   onSendAs?: (role: string, text: string) => void | Promise<void>;
-  onSendSystem?: (text: string) => void | Promise<void>;
+  onSendSystem?: (text: string, options?: SendOptions) => void | Promise<void>;
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;

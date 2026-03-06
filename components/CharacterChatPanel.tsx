@@ -86,7 +86,7 @@ interface Props {
   onSendMessage?: (text: string, options?: SendOptions) => void | Promise<void>;
   onTriggerGeneration?: () => void | Promise<void>;
   onSendAs?: (role: string, text: string) => void | Promise<void>;
-  onSendSystem?: (text: string) => void | Promise<void>;
+  onSendSystem?: (text: string, options?: SendOptions) => void | Promise<void>;
   onImpersonate?: (text: string) => void | Promise<void>;
   onContinue?: () => void | Promise<void>;
   onSwipe?: (target?: string) => void | Promise<void>;
@@ -205,9 +205,9 @@ export default function CharacterChatPanel({
     if (onSendMessage) return onSendMessage(`[${role}] ${text}`);
   }, [onSendAs, onSendMessage]);
 
-  const handleSendSystem = useCallback(async (text: string) => {
-    if (onSendSystem) return onSendSystem(text);
-    if (onSendMessage) return onSendMessage(`[SYS] ${text}`);
+  const handleSendSystem = useCallback(async (text: string, options?: SendOptions) => {
+    if (onSendSystem) return onSendSystem(text, options);
+    if (onSendMessage) return onSendMessage(`[SYS] ${text}`, options);
   }, [onSendSystem, onSendMessage]);
 
   const handleImpersonate = useCallback(async (text: string) => {

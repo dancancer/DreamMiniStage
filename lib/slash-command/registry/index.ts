@@ -29,6 +29,7 @@ import * as NotePersonaHandlers from "./handlers/note-persona";
 import * as ProfilePromptHandlers from "./handlers/profile-prompt";
 import * as QuickReplyHandlers from "./handlers/quick-reply";
 import * as SecretHandlers from "./handlers/secrets";
+import * as SystemPromptHandlers from "./handlers/system-prompt";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    命令注册表 - 好品味：Map + 模块化
@@ -42,6 +43,8 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["sys", CoreHandlers.handleSys],
   ["narrator", CoreHandlers.handleSys],
   ["nar", CoreHandlers.handleSys],
+  ["sysname", SystemPromptHandlers.handleSystemName],
+  ["sysgen", SystemPromptHandlers.handleSystemGenerate],
   ["narrate", CoreHandlers.handleNarrate],
   ["impersonate", CoreHandlers.handleImpersonate],
   ["imp", CoreHandlers.handleImpersonate],
@@ -406,6 +409,14 @@ export const COMMAND_REGISTRY: Map<string, CommandHandler> = new Map([
   ["instruct-off", GenerationHandlers.handleInstructOff],
   ["instruct-state", GenerationHandlers.handleInstructState],
   ["instruct-toggle", GenerationHandlers.handleInstructState],
+  ["sysprompt", SystemPromptHandlers.handleSystemPrompt],
+  ["system-prompt", SystemPromptHandlers.handleSystemPrompt],
+  ["sysprompt-on", SystemPromptHandlers.handleSystemPromptOn],
+  ["sysprompt-enable", SystemPromptHandlers.handleSystemPromptOn],
+  ["sysprompt-off", SystemPromptHandlers.handleSystemPromptOff],
+  ["sysprompt-disable", SystemPromptHandlers.handleSystemPromptOff],
+  ["sysprompt-state", SystemPromptHandlers.handleSystemPromptState],
+  ["sysprompt-toggle", SystemPromptHandlers.handleSystemPromptState],
   ["context", GenerationHandlers.handleContext],
   ["listpresets", GenerationHandlers.handleListPresets],
   ["getpromptentry", GenerationHandlers.handleGetPromptEntry],

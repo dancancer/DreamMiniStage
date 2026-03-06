@@ -59,23 +59,30 @@ export function addRoleMessage(
   dialogueKey: string,
   role: string,
   message: string,
-  _getState: () => DialogueState,
+  options: SendOptions | undefined,
+  getState: () => DialogueState,
   setState: (updater: (state: DialogueState) => Partial<DialogueState>) => void,
 ) {
   if (!dialogueKey || !message.trim()) return;
 
+  const messages = getState().dialogues[dialogueKey]?.messages || [];
+  const targetIndex = normalizeInsertIndex(options?.at, messages.length);
   const newMessage: DialogueMessage = {
     id: Date.now().toString() + "-" + role,
     role,
     content: message,
+    name: options?.name,
+    compact: options?.compact,
   };
+  const nextMessages = [...messages];
+  nextMessages.splice(targetIndex, 0, newMessage);
 
   setState((state: DialogueState) => ({
     dialogues: {
       ...state.dialogues,
       [dialogueKey]: {
         ...state.dialogues[dialogueKey],
-        messages: [...(state.dialogues[dialogueKey]?.messages || []), newMessage],
+        messages: nextMessages,
         openingLocked: true,
       },
     },

@@ -1,11 +1,11 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-06T03:36:31.214Z
+- generatedAt: 2026-03-06T04:27:15.425Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-06.json`
 
 ## Coverage Snapshot
 
-- slash commands: 372/426 (87.32%)
+- slash commands: 382/426 (89.67%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
@@ -27,15 +27,15 @@
 - [P3] /speak (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /start-reply-with (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /summarize (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /sysgen (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /sysname (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /sysprompt (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /sysprompt-disable (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /sysprompt-enable (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /sysprompt-off (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /sysprompt-on (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /sysprompt-state (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /sysprompt-toggle (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /tag-add (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /tag-exists (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /tag-list (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /tag-remove (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /tempchat (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /test (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /tokens (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /tool-invoke (score=2, upstreamRefs=1, localRefs=0)
+- [P3] /tool-list (score=2, upstreamRefs=1, localRefs=0)
 
 ## Priority API Gaps (Top 25)
 

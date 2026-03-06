@@ -56,8 +56,8 @@ export const useDialogueStore = create<DialogueState>((set, get) => ({
     MessageActions.addUserMessage(dialogueKey, message, options, get, set as (updater: (state: DialogueState) => Partial<DialogueState>) => void);
   },
 
-  addRoleMessage: (dialogueKey: string, role: string, message: string) => {
-    MessageActions.addRoleMessage(dialogueKey, role, message, get, set as (updater: (state: DialogueState) => Partial<DialogueState>) => void);
+  addRoleMessage: (dialogueKey: string, role: string, message: string, options?: SendOptions) => {
+    MessageActions.addRoleMessage(dialogueKey, role, message, options, get, set as (updater: (state: DialogueState) => Partial<DialogueState>) => void);
   },
 
   // ========== 生成操作 ==========

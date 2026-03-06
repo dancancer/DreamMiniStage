@@ -8,6 +8,7 @@
 
 import type { CommandHandler } from "../types";
 import { normalizeIndex, parseNumber, parseBoolean, buildSendReturn } from "../utils/helpers";
+import { emitSystemMessage, readSystemNarratorNameFromStorage } from "../utils/system-message";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    消息发送命令
@@ -80,16 +81,30 @@ export const handleSendAs: CommandHandler = async (args, _namedArgs, ctx, pipe) 
   return text;
 };
 
+function buildSystemSendOptions(namedArgs: Record<string, string>) {
+  const name = (namedArgs.name || "").trim() || readSystemNarratorNameFromStorage() || undefined;
+  const compact = parseBoolean(namedArgs.compact, undefined);
+  const at = parseNumber(namedArgs.at);
+
+  if (name === undefined && compact === undefined && at === undefined) {
+    return undefined;
+  }
+
+  return {
+    ...(name !== undefined ? { name } : {}),
+    ...(compact !== undefined ? { compact } : {}),
+    ...(at !== undefined ? { at } : {}),
+  };
+}
+
 /** /sys <text> - 发送系统/旁白消息 */
-export const handleSys: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+export const handleSys: CommandHandler = async (args, namedArgs, ctx, pipe) => {
   const text = args.join(" ") || pipe;
   if (!text) return pipe;
-  if (ctx.onSendSystem) {
-    await ctx.onSendSystem(text);
-    return text;
-  }
-  await ctx.onSend(`[SYS] ${text}`);
-  return text;
+
+  const options = buildSystemSendOptions(namedArgs);
+  await emitSystemMessage(ctx, text, options);
+  return buildSendReturn(namedArgs.return, text, pipe, options?.at);
 };
 
 /** /narrate [text] - 旁白播报（优先走宿主 narrate 回调） */

@@ -85,7 +85,7 @@ export interface DialogueState {
   // ========== 消息操作 ==========
   sendMessage: (params: SendMessageParams) => Promise<void>;
   addUserMessage: (dialogueKey: string, message: string, options?: SendOptions) => void;
-  addRoleMessage: (dialogueKey: string, role: string, message: string) => void;
+  addRoleMessage: (dialogueKey: string, role: string, message: string, options?: SendOptions) => void;
 
   // ========== 生成操作 ==========
   triggerGeneration: (params: TriggerGenerationParams) => Promise<void>;

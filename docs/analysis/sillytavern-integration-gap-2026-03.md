@@ -70,7 +70,7 @@
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已进一步移除 `note*`、`depth/freq/pos`、`persona*`、`profile*`、`prompt*`、`ppp`，并在本轮继续移除整组 `secret-*` 与 `/swipeadd`；当前主缺口收敛到 `qr-arg`、`show-gallery`、`expression-upload`，以及一整簇共享存储型 `sysprompt*` 命令。
+- Top25 已进一步移除 `note*`、`depth/freq/pos`、`persona*`、`profile*`、`prompt*`、`ppp`、`secret-*`、`/swipeadd`，并在本轮继续移除整组 `sysprompt*`、`/sysname`、`/sysgen`；当前主缺口收敛到 `qr-arg`、`show-gallery`、`expression-upload`，以及 `tool-*` / `tag-*` 一类低耦合长尾命令。
 
 ## 4. 基线素材与回归状态
 
@@ -91,6 +91,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 优先推进 `sysprompt*` 命令簇（`/sysprompt`、`/sysprompt-on/off/state/toggle`、`/sysname`、`/sysgen`），复用本轮 Secret Store 的共享存储思路，一次性打掉一串 Top25。
-2. 收敛低耦合媒体/画廊长尾（`/show-gallery|/sg`、`/expression-upload`），优先走宿主回调或事件桥接单路径，避免再引入 UI 分叉。
-3. `/qr-arg` 仍值得做，但应直接补到 `{{arg::...}}` 宏解析与 `*` wildcard 语义；`/qrset` 属于废弃语法，继续遵守仓库兼容性约束，除非当前会话得到明确批准。
+1. 优先推进低耦合媒体/画廊长尾（`/show-gallery|/sg`、`/expression-upload`），直接复用现有 `list-gallery` / expression 宿主能力，避免在 Slash 层做假 UI。
+2. `/qr-arg` 仍值得做，但应直接补到 `{{arg::...}}` 宏解析与 `*` wildcard 语义；`/qrset` 属于废弃语法，继续遵守仓库兼容性约束，除非当前会话得到明确批准。
+3. 收敛工具与标签长尾（`/tool-list`、`/tool-invoke`、`/tag-add`、`/tag-remove`、`/tag-list`、`/tag-exists`），优先复用既有工具注册表与角色元数据单路径。

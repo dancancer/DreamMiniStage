@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-06T03:36:31.214Z",
+  "generatedAt": "2026-03-06T04:27:15.425Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 372,
-    "coverage": "87.32%",
+    "covered": 382,
+    "coverage": "89.67%",
     "missingTop": [
       {
         "command": "expression-upload",
@@ -112,76 +112,6 @@
       },
       {
         "command": "summarize",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sysgen",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sysname",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sysprompt",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sysprompt-disable",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sysprompt-enable",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sysprompt-off",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sysprompt-on",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sysprompt-state",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sysprompt-toggle",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "system-prompt",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

@@ -169,3 +169,9 @@
 - [x] 补齐 Secret 命令簇（`/secret-id|/secret-rotate`、`/secret-delete`、`/secret-write`、`/secret-rename`、`/secret-read|/secret-find|/secret-get`），统一单路径 localStorage secret store 与 fail-fast 语义。
 - [x] 将 Secret 激活项同步回 provider API key（`openaiApiKey` / `geminiApiKey` / `apiKey`）与当前激活模型配置，并补齐 `/swipeadd` 到现有 `/addswipe` 单路径实现。
 - [x] 运行 typecheck + 定向回归 + gap 分析，并更新报告、分析文档与 handoff。
+
+## 29. P3 增量收敛（Sysprompt + System Narrator）
+
+- [x] 补齐 sysprompt 命令簇（`/sysprompt|/system-prompt`、`/sysprompt-on|/sysprompt-enable`、`/sysprompt-off|/sysprompt-disable`、`/sysprompt-state|/sysprompt-toggle`），统一到 shared localStorage 单路径与 fail-fast 校验。
+- [x] 补齐 `sysname/sysgen`，并让 `/sys` 复用系统旁白显示名与消息插入选项（`at/name/compact`）单路径。
+- [x] 运行 typecheck + 定向回归 + gap 分析，并更新报告、分析文档与 handoff。

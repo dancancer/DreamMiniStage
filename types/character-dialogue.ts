@@ -69,7 +69,7 @@ export interface UseCharacterDialogueReturn {
   initializeNewDialogue: (charId: string) => Promise<void>;
   handleSendMessage: (message: string) => Promise<void>;
   addUserMessage: (message: string, options?: { at?: number; name?: string; compact?: boolean; returnType?: string }) => void;
-  addRoleMessage: (role: string, message: string) => void;
+  addRoleMessage: (role: string, message: string, options?: { at?: number; name?: string; compact?: boolean; returnType?: string }) => void;
   triggerGeneration: () => Promise<void>;
   truncateMessagesAfter: (nodeId: string) => Promise<void>;
   handleRegenerate: (nodeId: string) => Promise<void>;

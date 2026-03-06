@@ -24,6 +24,7 @@ import type { SendOptions } from "@/lib/slash-command/types";
 import { exportDialogueJsonl, importDialogueJsonl } from "@/function/dialogue/jsonl";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import { toast } from "@/lib/store/toast-store";
+import type { DialogueMessage } from "@/types/character-dialogue";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    类型定义
@@ -66,7 +67,7 @@ export function useCharacterDialogue({
   // ═══════════════════════════════════════════════════════════════
   const storeKey = useMemo(
     () => resolveDialogueKey({ dialogueKey, sessionId, characterId }),
-    [dialogueKey, sessionId, characterId]
+    [dialogueKey, sessionId, characterId],
   );
 
   // ═══════════════════════════════════════════════════════════════
@@ -167,7 +168,7 @@ export function useCharacterDialogue({
         fastModel: fastModelEnabled,
       });
     },
-    [language, readLlmConfig, initializeNewDialogue, responseLength, fastModelEnabled]
+    [language, readLlmConfig, initializeNewDialogue, responseLength, fastModelEnabled],
   );
 
   const handleSendMessage = useCallback(
@@ -198,7 +199,7 @@ export function useCharacterDialogue({
       readLlmConfig,
       sendMessage,
       onError,
-    ]
+    ],
   );
 
   const handleTruncateMessagesAfter = useCallback(
@@ -206,7 +207,7 @@ export function useCharacterDialogue({
       if (!storeKey) return;
       await truncateMessagesAfter(storeKey, nodeId);
     },
-    [storeKey, truncateMessagesAfter]
+    [storeKey, truncateMessagesAfter],
   );
 
   const handleRegenerate = useCallback(
@@ -234,7 +235,7 @@ export function useCharacterDialogue({
       readLlmConfig,
       regenerateMessage,
       onError,
-    ]
+    ],
   );
 
   const handleOpeningNavigate = useCallback(
@@ -242,7 +243,7 @@ export function useCharacterDialogue({
       if (!storeKey) return;
       await navigateOpening(storeKey, direction);
     },
-    [storeKey, navigateOpening]
+    [storeKey, navigateOpening],
   );
 
   const handleSwipe = useCallback(
@@ -300,11 +301,11 @@ export function useCharacterDialogue({
   }, [storeKey, characterId, language, fetchLatestDialogue]);
 
   const handleSetMessages = useCallback(
-    (messages: any[]) => {
+    (messages: DialogueMessage[]) => {
       if (!storeKey) return;
       setMessages(storeKey, messages);
     },
-    [storeKey, setMessages]
+    [storeKey, setMessages],
   );
 
   const handleSetSuggestedInputs = useCallback(
@@ -312,7 +313,7 @@ export function useCharacterDialogue({
       if (!storeKey) return;
       setSuggestedInputs(storeKey, inputs);
     },
-    [storeKey, setSuggestedInputs]
+    [storeKey, setSuggestedInputs],
   );
 
   // ─── 只添加用户消息（兼容 SillyTavern /send） ───
@@ -321,15 +322,15 @@ export function useCharacterDialogue({
       if (!storeKey) return;
       addUserMessageStore(storeKey, message, options);
     },
-    [storeKey, addUserMessageStore]
+    [storeKey, addUserMessageStore],
   );
 
   const addRoleMessage = useCallback(
-    (role: string, message: string) => {
+    (role: string, message: string, options?: SendOptions) => {
       if (!storeKey) return;
-      addRoleMessageStore(storeKey, role, message);
+      addRoleMessageStore(storeKey, role, message, options);
     },
-    [storeKey, addRoleMessageStore]
+    [storeKey, addRoleMessageStore],
   );
 
   // ─── 只触发 AI 生成（兼容 SillyTavern /trigger） ───
