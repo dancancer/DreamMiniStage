@@ -139,13 +139,21 @@ describe("P3 stop/model/member command gaps", () => {
 
     const narResult = await executeSlashCommandScript("/nar legacy narrator", ctx);
     const narrateResult = await executeSlashCommandScript("/narrate voice=Eve spoken text", ctx);
+    const speakResult = await executeSlashCommandScript("/speak voice=Mallory louder words", ctx);
+    const ttsResult = await executeSlashCommandScript("/tts voice=Bob piped line", ctx);
 
     expect(narResult.isError).toBe(false);
     expect(narrateResult.isError).toBe(false);
+    expect(speakResult.isError).toBe(false);
+    expect(ttsResult.isError).toBe(false);
     expect(narResult.pipe).toBe("legacy narrator");
     expect(narrateResult.pipe).toBe("");
+    expect(speakResult.pipe).toBe("");
+    expect(ttsResult.pipe).toBe("");
     expect(onSendSystem).toHaveBeenCalledWith("legacy narrator");
-    expect(narrateText).toHaveBeenCalledWith("spoken text", { voice: "Eve" });
+    expect(narrateText).toHaveBeenNthCalledWith(1, "spoken text", { voice: "Eve" });
+    expect(narrateText).toHaveBeenNthCalledWith(2, "louder words", { voice: "Mallory" });
+    expect(narrateText).toHaveBeenNthCalledWith(3, "piped line", { voice: "Bob" });
   });
 
   it("/name 作为 /message-name 别名支持末条消息读写", async () => {

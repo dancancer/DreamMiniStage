@@ -6,7 +6,7 @@
 ## 1. 结论摘要
 
 - 基础桥接能力已经形成稳定底座：Script Bridge API matrix 达到 `100%` 覆盖。
-- Slash 命令覆盖面继续提升：`390/426 = 91.55%`（较上一轮 `89.67%` 提升 `+1.88`pp）。
+- Slash 命令覆盖面继续提升：`419/426 = 98.36%`（较上一轮 `96.01%` 提升 `+2.35`pp）。
 - TavernHelper facade 已完成收敛：`141/141 = 100.00%`。
 - 基线素材体系已可用于持续回归：`test-baseline-assets` 覆盖 `12/12`，未覆盖资产为 `0`。
 
@@ -47,16 +47,16 @@
    - P3 UI 反馈簇：`/caption`、`/beep`、`/ding`
    - P3 UI 样式/交互簇：`/bgcol`、`/bubble`、`/bubbles`、`/flat`、`/default`、`/single`、`/story`、`/buttons`
    - P3 注入清理簇：`/flushinject`、`/flushinjects`
-   - P3 图像生成簇：`/imagine`、`/image`、`/img`、`/imagine-source`、`/img-source`、`/imagine-style`、`/img-style`、`/imagine-comfy-workflow`、`/icw`
+   - P3 图像生成簇：`/imagine`、`/image`、`/img`、`/sd`、`/imagine-source`、`/img-source`、`/sd-source`、`/imagine-style`、`/img-style`、`/sd-style`、`/imagine-comfy-workflow`、`/icw`
    - P3 instruct 模式簇：`/instruct`、`/instruct-on`、`/instruct-off`、`/instruct-state`、`/instruct-toggle`
-   - P3 stop/model + narrator 长尾：`/stop-strings`、`/stopping-strings`、`/custom-stopping-strings`、`/custom-stop-strings`、`/model`、`/name`、`/nar`、`/narrate`
+   - P3 stop/model + narrator 长尾：`/stop-strings`、`/stopping-strings`、`/custom-stopping-strings`、`/custom-stop-strings`、`/model`、`/start-reply-with`、`/name`、`/nar`、`/narrate`、`/speak`、`/tts`
    - P3 note + persona 长尾：`/note`、`/note-depth|/depth`、`/note-frequency|/note-freq|/freq`、`/note-position|/note-pos|/pos`、`/note-role`、`/persona-set|/persona`、`/persona-lock`、`/persona-sync|/sync`
    - P3 profile + prompt 长尾：`/profile`、`/profile-create`、`/profile-get`、`/profile-list`、`/profile-update`、`/prompt`、`/prompt-post-processing`、`/ppp`
-   - P3 低耦合工具簇：`/dupe`、`/length`、`/is-mobile`、`/newchat`、`/random`、`/sort`、`/tokens`、`/trimstart`、`/trimend`
+   - P3 低耦合工具簇：`/dupe`、`/length`、`/is-mobile`、`/newchat`、`/random`、`/sort`、`/tokens`、`/trimstart`、`/trimend`、`/test`
    - P3 导入/弹窗簇：`/import`、`/popup`、`/pick-icon`
    - P3 工具/标签簇：`/tools-list|/tool-list`、`/tools-invoke|/tool-invoke`、`/tag-add`、`/tag-remove`、`/tag-exists`、`/tag-list`
    - P3 推理解析 + Quick Reply 第一批：`/reasoning-parse|/parse-reasoning`、`/qr`、`/qr-list`、`/qr-get`、`/qr-create`、`/qr-delete`
-   - P3 Quick Reply 第二/三批 + set/preset：`/qr-set`、`/qr-set-on`、`/qr-set-off`、`/qr-chat-set`、`/qr-chat-set-on`、`/qr-chat-set-off`、`/qr-set-list`、`/qr-update`、`/qr-contextadd`、`/qr-contextdel`、`/qr-contextclear`、`/qr-set-create|/qr-presetadd`、`/qr-set-update|/qr-presetupdate`、`/qr-set-delete|/qr-presetdelete`
+   - P3 Quick Reply 第二/三批 + set/preset：`/qr-set`、`/qrset`、`/qr-set-on`、`/qr-set-off`、`/qr-chat-set`、`/qr-chat-set-on`、`/qr-chat-set-off`、`/qr-set-list`、`/qr-update`、`/qr-contextadd`、`/qr-contextdel`、`/qr-contextclear`、`/qr-set-create|/qr-presetadd`、`/qr-set-update|/qr-presetupdate`、`/qr-set-delete|/qr-presetdelete`
    - P3 Secret Store 簇：`/secret-id|/secret-rotate`、`/secret-delete`、`/secret-write`、`/secret-rename`、`/secret-read|/secret-find|/secret-get`
    - P3 画廊/工具注册/QR 参数簇：`/show-gallery|/sg`、`/expression-upload|/uploadsprite`、`/tools-register|/tool-register`、`/tools-unregister|/tool-unregister`、`/qr-arg`
    - P3 vector 状态簇：`/vector-chats-state`、`/vector-files-state`、`/vector-max-entries`、`/vector-query`、`/vector-threshold`
@@ -68,12 +68,13 @@
    - `/member-up`、`/upmember`、`/memberup`
    - `/member-down`、`/downmember`、`/memberdown`
    - `/member-peek`、`/peek`、`/memberpeek`、`/peekmember`
-4. Top25 优先命令缺口已不再包含 P1/P2 项，当前主战场切换为 P3 长尾命令可用性；本轮已从 Top25 中继续移除 `random`、`sort`、`tokens`、`trimstart`、`trimend`、`vector-chats-state`、`vector-files-state`、`vector-max-entries`、`vector-query`、`vector-threshold`。
+4. Top25 优先命令缺口已不再包含 P1/P2 项，当前主战场切换为 P3 长尾命令可用性；本轮继续从 Top25 中移除 `sd`、`sd-source`、`sd-style`、`speak`、`tts`、`qrset`、`summarize`、`start-reply-with`、`reroll-pick`、`test`。
+5. 本轮新增的轻量存储/执行语义已经对齐单路径：`/summarize` 走 `generateRaw`，`/start-reply-with` 与 `/reroll-pick` 走 scoped localStorage，避免为低耦合命令再引入宿主分叉。
 
 ### 3.3 P3（机会性补齐）
 
 - 低频 slash 命令长尾（以真实素材触发失败为准，不按“总数”盲目推进）。
-- Top25 已进一步移除 `sysprompt*`、`/sysname`、`/sysgen`、`/tool-list`、`/tool-invoke`、`/tag-add`、`/tag-remove`、`/tag-exists`、`/tag-list`、`random`、`sort`、`tokens`、`trimstart`、`trimend`、`vector-chats-state`、`vector-files-state`、`vector-max-entries`、`vector-query`、`vector-threshold`；当前主缺口切换为 `floor-teleport`、`proxy`、`qrset`、`reroll-pick`、`wi-get-timed-effect`、`wi-set-timed-effect`，以及 `sd` / `tts` / `translate` 一组媒体长尾命令。
+- Top25 已进一步收敛到最后 7 个命令：`floor-teleport`、`proxy`、`tempchat`、`translate`、`wi-get-timed-effect`、`wi-set-timed-effect`、`yt-script`。
 
 ## 4. 基线素材与回归状态
 
@@ -95,5 +96,5 @@
 ## 6. 下一阶段目标（短周期）
 
 1. 优先推进 timed effect 收口（`/wi-get-timed-effect`、`/wi-set-timed-effect`），尽量直接复用现有 worldbook advanced runtime，而不是再造第二套状态机。
-2. 从媒体生成长尾里二选一推进：要么收口 `sd`/`sd-source`/`sd-style`，要么收口 `tts`/`speak`/`translate`；前提仍然是显式宿主回调，不在 Slash 层伪造 UI。
-3. 若还要继续提速 coverage，就清 utility/会话残余别名：`/qrset`、`/reroll-pick`、`/tempchat`、`/summarize`、`/yt-script`，优先挑参数语义简单且不要求额外 UI 状态的命令。
+2. 将剩余低耦合宿主回调命令一次性收口：`/tempchat`、`/proxy`、`/yt-script`、`/translate`，保持 Slash 层只做参数校验与结果串接。
+3. 如果要继续快速抬 coverage，就先拿掉 `tempchat/proxy/yt-script` 三个薄命令，再回头啃 timed effect；这样更符合“先消灭特殊情况，再处理深水区”的节奏。

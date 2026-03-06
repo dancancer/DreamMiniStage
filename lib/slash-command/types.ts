@@ -354,6 +354,7 @@ export interface ExecutionResult {
 /** 命令执行所需的上下文 */
 export interface ExecutionContext {
   characterId?: string;
+  dialogueId?: string;
   messages: DialogueMessage[];
   onSend: (text: string, options?: SendOptions) => void | Promise<void>;
   onTrigger: (member?: string) => void | Promise<void>;

@@ -29,7 +29,8 @@ describe("P3 image/instruct command gaps", () => {
       .fn()
       .mockResolvedValueOnce("https://img.example/1.png")
       .mockResolvedValueOnce("https://img.example/2.png")
-      .mockResolvedValueOnce("https://img.example/3.png");
+      .mockResolvedValueOnce("https://img.example/3.png")
+      .mockResolvedValueOnce("https://img.example/4.png");
     const ctx = createContext({ generateImage });
 
     const imagine = await executeSlashCommandScript(
@@ -38,10 +39,12 @@ describe("P3 image/instruct command gaps", () => {
     );
     const imageAlias = await executeSlashCommandScript("/image portrait", ctx);
     const imgAlias = await executeSlashCommandScript("/echo rainy alley | /img", ctx);
+    const sdAlias = await executeSlashCommandScript("/sd monochrome skyline", ctx);
 
     expect(imagine).toMatchObject({ isError: false, pipe: "https://img.example/1.png" });
     expect(imageAlias).toMatchObject({ isError: false, pipe: "https://img.example/2.png" });
     expect(imgAlias).toMatchObject({ isError: false, pipe: "https://img.example/3.png" });
+    expect(sdAlias).toMatchObject({ isError: false, pipe: "https://img.example/4.png" });
 
     expect(generateImage).toHaveBeenNthCalledWith(1, "sunset city", {
       quiet: true,
@@ -70,6 +73,7 @@ describe("P3 image/instruct command gaps", () => {
     });
     expect(generateImage).toHaveBeenNthCalledWith(2, "portrait", expect.any(Object));
     expect(generateImage).toHaveBeenNthCalledWith(3, "rainy alley", expect.any(Object));
+    expect(generateImage).toHaveBeenNthCalledWith(4, "monochrome skyline", expect.any(Object));
   });
 
   it("/imagine-source|/img-source /imagine-style|/img-style /imagine-comfy-workflow|/icw 支持读写", async () => {
@@ -88,6 +92,20 @@ describe("P3 image/instruct command gaps", () => {
     const currentSource = await executeSlashCommandScript("/imagine-source", ctx);
     const switchedSource = await executeSlashCommandScript("/img-source comfy", ctx);
     const switchedStyle = await executeSlashCommandScript("/img-style anime", ctx);
+    const sdSourceAlias = await executeSlashCommandScript("/sd-source sd-next", createContext({
+      setImageGenerationConfig: vi.fn().mockResolvedValue({
+        source: "sd-next",
+        style: "anime",
+        comfyWorkflow: "wf-a",
+      }),
+    }));
+    const sdStyleAlias = await executeSlashCommandScript("/sd-style noir", createContext({
+      setImageGenerationConfig: vi.fn().mockResolvedValue({
+        source: "auto",
+        style: "noir",
+        comfyWorkflow: "wf-a",
+      }),
+    }));
     const switchedWorkflow = await executeSlashCommandScript(
       "/imagine-comfy-workflow wf-b",
       ctx,
@@ -104,6 +122,8 @@ describe("P3 image/instruct command gaps", () => {
     expect(currentSource).toMatchObject({ isError: false, pipe: "auto" });
     expect(switchedSource).toMatchObject({ isError: false, pipe: "comfy" });
     expect(switchedStyle).toMatchObject({ isError: false, pipe: "anime" });
+    expect(sdSourceAlias).toMatchObject({ isError: false, pipe: "sd-next" });
+    expect(sdStyleAlias).toMatchObject({ isError: false, pipe: "noir" });
     expect(switchedWorkflow).toMatchObject({ isError: false, pipe: "wf-b" });
     expect(aliasWorkflow).toMatchObject({ isError: false, pipe: "wf-c" });
     expect(currentStyle).toMatchObject({ isError: false, pipe: "anime" });

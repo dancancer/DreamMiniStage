@@ -31,16 +31,19 @@ describe("P3 quick-reply set/management command gaps", () => {
     });
 
     const toggle = await executeSlashCommandScript("/qr-set MainSet", ctx);
+    const legacyToggle = await executeSlashCommandScript("/qrset LegacySet", ctx);
     const enable = await executeSlashCommandScript("/qr-set-on visible=false SideSet", ctx);
     const disable = await executeSlashCommandScript("/qr-set-off MainSet", ctx);
     const invalidVisible = await executeSlashCommandScript("/qr-set visible=maybe MainSet", ctx);
 
     expect(toggle.isError).toBe(false);
+    expect(legacyToggle.isError).toBe(false);
     expect(enable.isError).toBe(false);
     expect(disable.isError).toBe(false);
     expect(invalidVisible.isError).toBe(true);
     expect(invalidVisible.errorMessage).toContain("invalid visible value");
-    expect(toggleGlobalQuickReplySet).toHaveBeenCalledWith("MainSet", { visible: true });
+    expect(toggleGlobalQuickReplySet).toHaveBeenNthCalledWith(1, "MainSet", { visible: true });
+    expect(toggleGlobalQuickReplySet).toHaveBeenNthCalledWith(2, "LegacySet", { visible: true });
     expect(addGlobalQuickReplySet).toHaveBeenCalledWith("SideSet", { visible: false });
     expect(removeGlobalQuickReplySet).toHaveBeenCalledWith("MainSet");
   });

@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-06T07:08:51.316Z",
+  "generatedAt": "2026-03-06T08:30:14.586Z",
   "slash": {
     "upstreamTotal": 426,
-    "covered": 409,
-    "coverage": "96.01%",
+    "covered": 419,
+    "coverage": "98.36%",
     "missingTop": [
       {
         "command": "floor-teleport",
@@ -20,62 +20,6 @@
         "priority": "P3"
       },
       {
-        "command": "qrset",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "reroll-pick",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sd",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sd-source",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "sd-style",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "speak",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "start-reply-with",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "summarize",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "tempchat",
         "upstreamRefs": 1,
         "localRefs": 0,
@@ -83,21 +27,7 @@
         "priority": "P3"
       },
       {
-        "command": "test",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
         "command": "translate",
-        "upstreamRefs": 1,
-        "localRefs": 0,
-        "score": 2,
-        "priority": "P3"
-      },
-      {
-        "command": "tts",
         "upstreamRefs": 1,
         "localRefs": 0,
         "score": 2,

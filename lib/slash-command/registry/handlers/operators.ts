@@ -230,6 +230,21 @@ export const handleMatch: CommandHandler = async (args, namedArgs, _ctx, pipe) =
   return match ? JSON.stringify(match) : "";
 };
 
+/** /test pattern=... [text] - 返回正则是否命中 */
+export const handleTest: CommandHandler = async (args, namedArgs, _ctx, pipe) => {
+  const params = resolveMatchInput(args, namedArgs, pipe);
+  if (params.pattern === "") {
+    throw new Error("Argument of 'pattern=' cannot be empty");
+  }
+
+  const re = regexFromString(params.pattern);
+  if (!re) {
+    throw new Error("The value of 'pattern' argument is not a valid regular expression.");
+  }
+
+  return JSON.stringify(re.test(params.text));
+};
+
 function resolveRandRange(
   args: string[],
   namedArgs: Record<string, string>,

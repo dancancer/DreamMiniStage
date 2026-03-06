@@ -44,6 +44,36 @@ describe("P3 chat config command gaps", () => {
     expect(window.localStorage.getItem("dreamministage.reasoning-template")).toBe("Compact");
   });
 
+  it("/start-reply-with 与 /reroll-pick 共享显式存储语义", async () => {
+    const firstCtx = createContext({ dialogueId: "dialogue-alpha" });
+    const sameChatCtx = createContext({ dialogueId: "dialogue-alpha" });
+    const otherChatCtx = createContext({ dialogueId: "dialogue-beta" });
+
+    const initialReply = await executeSlashCommandScript("/start-reply-with", firstCtx);
+    const setReply = await executeSlashCommandScript("/start-reply-with Sure!", firstCtx);
+    const forceEmpty = await executeSlashCommandScript("/start-reply-with force=true", firstCtx);
+    const readEmpty = await executeSlashCommandScript("/start-reply-with", firstCtx);
+    const firstSeed = await executeSlashCommandScript("/reroll-pick", firstCtx);
+    const secondSeed = await executeSlashCommandScript("/reroll-pick", sameChatCtx);
+    const forcedSeed = await executeSlashCommandScript("/reroll-pick 5", firstCtx);
+    const otherSeed = await executeSlashCommandScript("/reroll-pick", otherChatCtx);
+    const invalidForce = await executeSlashCommandScript("/start-reply-with force=maybe hi", firstCtx);
+
+    expect(initialReply).toMatchObject({ isError: false, pipe: "" });
+    expect(setReply).toMatchObject({ isError: false, pipe: "Sure!" });
+    expect(forceEmpty).toMatchObject({ isError: false, pipe: "" });
+    expect(readEmpty).toMatchObject({ isError: false, pipe: "" });
+    expect(firstSeed).toMatchObject({ isError: false, pipe: "1" });
+    expect(secondSeed).toMatchObject({ isError: false, pipe: "2" });
+    expect(forcedSeed).toMatchObject({ isError: false, pipe: "5" });
+    expect(otherSeed).toMatchObject({ isError: false, pipe: "1" });
+    expect(invalidForce.isError).toBe(true);
+    expect(invalidForce.errorMessage).toContain("invalid force value");
+    expect(window.localStorage.getItem("dreamministage.start-reply-with")).toBe("");
+    expect(window.localStorage.getItem("dreamministage.pick-reroll-seed:dialogue-alpha")).toBe("5");
+    expect(window.localStorage.getItem("dreamministage.pick-reroll-seed:dialogue-beta")).toBe("1");
+  });
+
   it("/renamechat 调用宿主回调并返回新名称", async () => {
     const renameCurrentChat = vi.fn().mockResolvedValue("Session Renamed");
     const ctx = createContext({ renameCurrentChat });

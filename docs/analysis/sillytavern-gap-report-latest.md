@@ -1,11 +1,11 @@
 # SillyTavern Gap Report (Auto)
 
-- generatedAt: 2026-03-06T07:08:51.316Z
+- generatedAt: 2026-03-06T08:30:14.586Z
 - source: `docs/analysis/sillytavern-gap-report-2026-03-06.json`
 
 ## Coverage Snapshot
 
-- slash commands: 409/426 (96.01%)
+- slash commands: 419/426 (98.36%)
 - script bridge API matrix: 133/133 (100.00%)
 - JS-Slash-Runner TavernHelper facade: 141/141 (100.00%)
 
@@ -13,18 +13,8 @@
 
 - [P3] /floor-teleport (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /proxy (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /qrset (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /reroll-pick (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /sd (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /sd-source (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /sd-style (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /speak (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /start-reply-with (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /summarize (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /tempchat (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /test (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /translate (score=2, upstreamRefs=1, localRefs=0)
-- [P3] /tts (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /wi-get-timed-effect (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /wi-set-timed-effect (score=2, upstreamRefs=1, localRefs=0)
 - [P3] /yt-script (score=2, upstreamRefs=1, localRefs=0)

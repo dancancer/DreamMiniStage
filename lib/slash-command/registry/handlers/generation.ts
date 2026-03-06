@@ -19,6 +19,7 @@ import { parseBoolean } from "../utils/helpers";
 type RegexToggleState = "on" | "off" | "toggle";
 type PromptEntryReturnType = "simple" | "list" | "dict";
 type PromptEntrySwitchState = "on" | "off" | "toggle";
+type SummarizeSource = "main" | "extras" | "webllm";
 
 interface PromptEntrySnapshot {
   identifier: string;
@@ -198,6 +199,9 @@ function parseContextQuiet(raw: string | undefined): boolean {
 }
 
 const REASONING_TEMPLATE_STORAGE_KEY = "dreamministage.reasoning-template";
+const START_REPLY_WITH_STORAGE_KEY = "dreamministage.start-reply-with";
+const PICK_REROLL_STORAGE_KEY_PREFIX = "dreamministage.pick-reroll-seed";
+const DEFAULT_SUMMARIZE_PROMPT = "Summarize the provided chat or text. Preserve concrete facts, decisions, named entities, unresolved threads, and tone. Do not invent new content.";
 
 function readStringFromStorage(storageKey: string): string {
   if (typeof window === "undefined") {
@@ -224,6 +228,79 @@ function writeStringToStorage(storageKey: string, value: string): string {
   }
 
   return normalized;
+}
+
+function readNumberFromStorage(storageKey: string): number | null {
+  const raw = readStringFromStorage(storageKey).trim();
+  if (!raw) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isInteger(parsed) ? parsed : null;
+}
+
+function writeNumberToStorage(storageKey: string, value: number): number {
+  writeStringToStorage(storageKey, String(value));
+  return value;
+}
+
+function normalizeSummarizeSource(raw: string | undefined): SummarizeSource {
+  const normalized = (raw || "main").trim().toLowerCase();
+  if (normalized === "main" || normalized === "extras" || normalized === "webllm") {
+    return normalized as SummarizeSource;
+  }
+  throw new Error(`/summarize invalid source value: ${raw || ""}`);
+}
+
+function buildSummarizeChatText(messages: Parameters<CommandHandler>[2]["messages"]): string {
+  return messages
+    .map((message) => {
+      const content = (message.content || "").trim();
+      if (!content) {
+        return "";
+      }
+
+      const speaker = (message.name || message.role || "message").trim();
+      return `${speaker}: ${content}`;
+    })
+    .filter((item) => item.length > 0)
+    .join("\n");
+}
+
+function normalizeStorageScope(raw: string | undefined): string {
+  const normalized = (raw || "global").trim();
+  if (!normalized) {
+    return "global";
+  }
+  return normalized.replace(/[^a-zA-Z0-9_-]+/g, "_");
+}
+
+function resolveRerollPickStorageKey(ctx: Parameters<CommandHandler>[2]): string {
+  const scope = normalizeStorageScope(ctx.dialogueId || ctx.characterId);
+  return `${PICK_REROLL_STORAGE_KEY_PREFIX}:${scope}`;
+}
+
+function normalizeRerollPickValue(raw: string | undefined, currentSeed: number): number {
+  const normalized = (raw || "").trim();
+  if (!normalized) {
+    return currentSeed + 1;
+  }
+
+  const parsed = Number.parseInt(normalized, 10);
+  return Number.isInteger(parsed) ? parsed : currentSeed + 1;
+}
+
+function normalizeSummarizeText(
+  args: string[],
+  pipe: string,
+  messages: Parameters<CommandHandler>[2]["messages"],
+): string {
+  const explicit = (args.join(" ") || pipe || "").trim();
+  if (explicit) {
+    return explicit;
+  }
+  return buildSummarizeChatText(messages);
 }
 
 function normalizeStopStringsSnapshot(
@@ -686,6 +763,25 @@ export const handleModel: CommandHandler = async (args, namedArgs, ctx, pipe) =>
   return updated;
 };
 
+/** /start-reply-with [text] - 读取或设置起始回复前缀 */
+export const handleStartReplyWith: CommandHandler = async (args, namedArgs, _ctx, pipe) => {
+  const force = parseStrictBoolean(namedArgs.force, "start-reply-with", "force", false);
+  const nextValue = (args.join(" ") || pipe || "").trim();
+  if (!nextValue && !force) {
+    return readStringFromStorage(START_REPLY_WITH_STORAGE_KEY);
+  }
+
+  return writeStringToStorage(START_REPLY_WITH_STORAGE_KEY, nextValue);
+};
+
+/** /reroll-pick [seed] - 递增或显式设置 pick reroll seed */
+export const handleRerollPick: CommandHandler = async (args, _namedArgs, ctx, pipe) => {
+  const storageKey = resolveRerollPickStorageKey(ctx);
+  const currentSeed = readNumberFromStorage(storageKey) ?? 0;
+  const nextSeed = normalizeRerollPickValue(args[0] || pipe, currentSeed);
+  return String(writeNumberToStorage(storageKey, nextSeed));
+};
+
 /** /reasoning-template [name] - 读取或设置当前推理模板 */
 export const handleReasoningTemplate: CommandHandler = async (args, namedArgs, _ctx, pipe) => {
   const nextTemplate = (args.join(" ") || namedArgs.name || pipe || "").trim();
@@ -1030,6 +1126,38 @@ export const handleGenRaw: CommandHandler = async (args, namedArgs, ctx, pipe) =
   });
   if (typeof result !== "string") {
     throw new Error("/genraw host returned non-string result");
+  }
+  return result;
+};
+
+/** /summarize [text] - 使用主生成能力做摘要 */
+export const handleSummarize: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const source = normalizeSummarizeSource(namedArgs.source);
+  parseStrictBoolean(namedArgs.quiet, "summarize", "quiet", false);
+
+  if (source !== "main") {
+    throw new Error(`/summarize unsupported source: ${source}`);
+  }
+  if (!ctx.generateRaw) {
+    throw new Error("/summarize is not available in current context");
+  }
+
+  const text = normalizeSummarizeText(args, pipe, ctx.messages);
+  if (!text) {
+    return "";
+  }
+
+  const prompt = (namedArgs.prompt || DEFAULT_SUMMARIZE_PROMPT).trim() || DEFAULT_SUMMARIZE_PROMPT;
+  const result = await Promise.resolve(ctx.generateRaw(text, {
+    lock: false,
+    instruct: true,
+    as: "system",
+    systemPrompt: prompt,
+    responseLength: 256,
+    trimNames: true,
+  }));
+  if (typeof result !== "string") {
+    throw new Error("/summarize host returned non-string result");
   }
   return result;
 };

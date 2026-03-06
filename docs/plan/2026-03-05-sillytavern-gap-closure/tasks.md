@@ -195,3 +195,9 @@
 - [x] 补齐低耦合 utility 命令簇（`/random`、`/sort`、`/tokens`、`/trimstart`、`/trimend`），统一单路径与 fail-fast 语义。
 - [x] 补齐 vector 状态命令簇（`/vector-chats-state`、`/vector-files-state`、`/vector-max-entries`、`/vector-query`、`/vector-threshold`），复用宿主 runtime settings 单一路径。
 - [x] 运行 `pnpm typecheck`、定向回归、baseline 回归与 `pnpm analyze:sillytavern-gap`，并更新报告、分析文档与 handoff。
+
+## 33. P3 增量收敛（媒体别名 + 低耦合长尾）
+
+- [x] 补齐媒体/语义别名命令（`/sd|/sd-source|/sd-style`、`/speak|/tts`、`/qrset`），统一复用既有 `imagine` / `narrate` / `qr-set` 单路径实现。
+- [x] 补齐低耦合长尾命令（`/summarize`、`/start-reply-with`、`/reroll-pick`、`/test`），其中 `/summarize` 复用 `generateRaw`，其余命令复用 localStorage/regex 单路径并保持 fail-fast。
+- [x] 运行 `pnpm typecheck`、定向回归、baseline 回归与 `pnpm analyze:sillytavern-gap`，并更新报告、分析文档与 handoff。

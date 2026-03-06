@@ -1636,6 +1636,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
 
   const executionContext: ExecutionContext = {
     characterId: ctx.characterId,
+    dialogueId: ctx.dialogueId,
     messages: ctx.messages,
     onSend,
     onTrigger,

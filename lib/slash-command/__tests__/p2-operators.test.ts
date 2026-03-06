@@ -205,6 +205,20 @@ describe("P2 utility commands", () => {
     expect(globalMissResult.pipe).toBe("[]");
   });
 
+  it("/test 返回 regex 命中布尔值", async () => {
+    const ctx = createMinimalContext();
+
+    const hitParsed = parseSlashCommands("/test pattern=\"/green/i\" \"Green lamp\"");
+    const hitResult = await executeSlashCommands(hitParsed.commands, ctx);
+    expect(hitResult.isError).toBe(false);
+    expect(hitResult.pipe).toBe("true");
+
+    const missParsed = parseSlashCommands("/echo blue sky|/test pattern=orange");
+    const missResult = await executeSlashCommands(missParsed.commands, ctx);
+    expect(missResult.isError).toBe(false);
+    expect(missResult.pipe).toBe("false");
+  });
+
   it("/push 维护数组变量并返回 JSON 字符串", async () => {
     const parsed = parseSlashCommands("/push list apple|/push list banana");
     const ctx = createMinimalContext();
