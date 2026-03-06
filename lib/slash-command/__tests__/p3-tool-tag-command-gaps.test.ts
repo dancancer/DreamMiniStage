@@ -67,15 +67,15 @@ describe("P3 tool/tag command gaps", () => {
     const ctx = createContext({ invokeTool });
 
     const canonical = await executeSlashCommandScript(
-      '/tools-invoke weather parameters={"city":"Shanghai"}',
+      "/tools-invoke weather parameters={\"city\":\"Shanghai\"}",
       ctx,
     );
     const alias = await executeSlashCommandScript(
-      '/tool-invoke weather parameters={"city":"Paris"}',
+      "/tool-invoke weather parameters={\"city\":\"Paris\"}",
       ctx,
     );
 
-    expect(canonical).toMatchObject({ isError: false, pipe: '{"ok":true,"city":"Shanghai"}' });
+    expect(canonical).toMatchObject({ isError: false, pipe: "{\"ok\":true,\"city\":\"Shanghai\"}" });
     expect(alias).toMatchObject({ isError: false, pipe: "done" });
     expect(invokeTool).toHaveBeenNthCalledWith(1, "weather", { city: "Shanghai" });
     expect(invokeTool).toHaveBeenNthCalledWith(2, "weather", { city: "Paris" });
@@ -133,12 +133,12 @@ describe("P3 tool/tag command gaps", () => {
       listCharacterTags,
     });
 
-    const added = await executeSlashCommandScript('/tag-add name=Alice scenario', ctx);
-    const duplicate = await executeSlashCommandScript('/tag-add name=Alice scenario', ctx);
-    const exists = await executeSlashCommandScript('/tag-exists name=Alice scenario', ctx);
-    const removed = await executeSlashCommandScript('/tag-remove name=Alice scenario', ctx);
-    const listed = await executeSlashCommandScript('/tag-list name=Alice', ctx);
-    const missing = await executeSlashCommandScript('/tag-exists name=Alice lore', ctx);
+    const added = await executeSlashCommandScript("/tag-add name=Alice scenario", ctx);
+    const duplicate = await executeSlashCommandScript("/tag-add name=Alice scenario", ctx);
+    const exists = await executeSlashCommandScript("/tag-exists name=Alice scenario", ctx);
+    const removed = await executeSlashCommandScript("/tag-remove name=Alice scenario", ctx);
+    const listed = await executeSlashCommandScript("/tag-list name=Alice", ctx);
+    const missing = await executeSlashCommandScript("/tag-exists name=Alice lore", ctx);
 
     expect(added).toMatchObject({ isError: false, pipe: "true" });
     expect(duplicate).toMatchObject({ isError: false, pipe: "false" });
