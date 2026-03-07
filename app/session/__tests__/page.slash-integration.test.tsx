@@ -3,7 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import SessionPage from "../page";
 import {
-  SESSION_HOST_BRIDGE_WINDOW_KEY,
+  setSessionSlashHostBridge,
   type SessionSlashHostBridge,
 } from "../session-host-bridge";
 
@@ -64,6 +64,7 @@ const mocks = vi.hoisted(() => {
       setUserInput: (value: string) => void;
       onSubmit: (event: React.FormEvent) => void;
     },
+    defaultTranslateText: vi.fn().mockResolvedValue("default translated"),
     modelStoreState,
     dialogue: {
       messages: [
@@ -114,6 +115,12 @@ vi.mock("@/app/i18n", () => ({
     fontClass: "font-body",
     serifFontClass: "font-serif",
     language: "en",
+  }),
+}));
+
+vi.mock("@/app/session/session-host-defaults", () => ({
+  createSessionDefaultHostBridge: () => ({
+    translateText: mocks.defaultTranslateText,
   }),
 }));
 
@@ -309,10 +316,6 @@ interface RenderedPage {
   root: Root;
 }
 
-type SessionHostWindow = Window & {
-  [SESSION_HOST_BRIDGE_WINDOW_KEY]?: SessionSlashHostBridge;
-};
-
 function renderPage(): RenderedPage {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -323,16 +326,6 @@ function renderPage(): RenderedPage {
   });
 
   return { container, root };
-}
-
-function setSessionSlashHostBridge(bridge?: SessionSlashHostBridge): void {
-  const sessionWindow = window as SessionHostWindow;
-  if (!bridge) {
-    delete sessionWindow[SESSION_HOST_BRIDGE_WINDOW_KEY];
-    return;
-  }
-
-  sessionWindow[SESSION_HOST_BRIDGE_WINDOW_KEY] = bridge;
 }
 
 async function flushEffects(): Promise<void> {
@@ -380,7 +373,9 @@ describe("Session page slash integration", () => {
     mocks.modelStoreState.configs = buildModelConfigs();
     mocks.modelStoreState.activeConfigId = "cfg-default";
     window.localStorage.clear();
-    setSessionSlashHostBridge();
+    mocks.defaultTranslateText.mockReset();
+    mocks.defaultTranslateText.mockResolvedValue("default translated");
+    setSessionSlashHostBridge(window, null);
   });
 
   it("executes /tempchat through page host wiring and navigates to the new temp session", async () => {
@@ -452,7 +447,7 @@ describe("Session page slash integration", () => {
 
   it("executes /translate through injected session host bridge", async () => {
     const translateText = vi.fn().mockResolvedValue("こんにちは");
-    setSessionSlashHostBridge({
+    setSessionSlashHostBridge(window, {
       translateText,
     });
 
@@ -470,14 +465,33 @@ describe("Session page slash integration", () => {
     unmountPage(rendered);
   });
 
-  it("surfaces explicit fail-fast host errors for unwired /translate", async () => {
+  it("executes /translate through the built-in session default host bridge", async () => {
     const rendered = renderPage();
     await flushEffects();
 
     await submitSlash("/translate hello world");
 
+    expect(mocks.defaultTranslateText).toHaveBeenCalledWith("hello world", {
+      provider: undefined,
+      target: undefined,
+    });
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("surfaces explicit default-host errors for unsupported /translate provider", async () => {
+    mocks.defaultTranslateText.mockRejectedValueOnce(
+      new Error("/translate provider not available in /session default host: mocker"),
+    );
+
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/translate provider=mocker hello world");
+
     expect(mocks.toastError).toHaveBeenCalledWith(
-      expect.stringContaining("/translate is not wired in /session host yet"),
+      expect.stringContaining("/translate provider not available in /session default host: mocker"),
     );
 
     unmountPage(rendered);
@@ -485,7 +499,7 @@ describe("Session page slash integration", () => {
 
   it("executes /yt-script through injected session host bridge", async () => {
     const getYouTubeTranscript = vi.fn().mockResolvedValue("line-1\nline-2");
-    setSessionSlashHostBridge({
+    setSessionSlashHostBridge(window, {
       getYouTubeTranscript,
     });
 

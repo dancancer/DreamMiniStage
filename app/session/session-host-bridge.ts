@@ -1,6 +1,6 @@
 /**
  * @input  lib/slash-command/types
- * @output SESSION_HOST_BRIDGE_WINDOW_KEY, SessionSlashHostBridge, resolveSessionSlashHostBridge, buildSessionSlashHostBridgeDetail
+ * @output SESSION_HOST_BRIDGE_WINDOW_KEY, SessionSlashHostBridge, resolveSessionSlashHostBridge, setSessionSlashHostBridge, buildSessionSlashHostBridgeDetail
  * @pos    /session 宿主桥接协议与解析工具
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
  *
@@ -44,6 +44,23 @@ export function resolveSessionSlashHostBridge(owner?: Window | null): SessionSla
   }
 
   return candidate;
+}
+
+export function setSessionSlashHostBridge(
+  owner: Window | null | undefined,
+  bridge: SessionSlashHostBridge | null,
+): void {
+  if (!owner) {
+    return;
+  }
+
+  const sessionWindow = owner as SessionHostWindow;
+  if (!bridge) {
+    delete sessionWindow[SESSION_HOST_BRIDGE_WINDOW_KEY];
+    return;
+  }
+
+  sessionWindow[SESSION_HOST_BRIDGE_WINDOW_KEY] = bridge;
 }
 
 export function buildSessionSlashHostBridgeDetail(

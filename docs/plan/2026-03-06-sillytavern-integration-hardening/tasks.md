@@ -21,9 +21,9 @@
 - [x] 复用 `scripts/p4-session-replay-e2e.mjs` 增加新的 `/session` replay 场景。
   - 已新增 round9：覆盖 `/floor-teleport` 锚点滚动与 `/proxy` fail-fast 错误链路。
 - [x] 让 replay 覆盖 slash 执行、refresh 持久化、session 隔离、失败链路。
-  - round7/8 保持 slash 直达 + refresh + session 隔离 + 401 失败链路；round9-12 补宿主 wiring 的成功/失败路径。
+  - round7/8 保持 slash 直达 + refresh + session 隔离 + 401 失败链路；round9-12 补宿主 wiring 的成功/失败路径，其中 round10 已切到 `/translate` 默认 provider 固定种子。
 - [x] 将产物写入现有 artifacts 目录，并更新 run index。
-  - 最新通过 run：`p4r14-1772882882394`（`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/`）。
+  - 最新通过 run：`p4r15-1772890368392`（`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/`）。
 
 ## 4. 文档 / 交接
 
@@ -66,4 +66,10 @@
 - [x] 新增 `app/session/session-host-bridge.ts`，统一收口 `/session` 宿主桥接 window key、方法签名与错误明细路径，移除 `page.tsx` 内散落的局部协议定义。
 - [x] 新增 `docs/analysis/session-host-bridge/README.md` 作为正式协议文档，并同步更新 `app/session/README.md` 与 `docs/analysis/README.md` 入口。
 - [x] 新增协议级单测 `app/session/__tests__/session-host-bridge.test.ts`，并让页面级集成测试复用统一 bridge key，避免测试与页面协议漂移。
+
+## 11. Translate 默认 Provider 固定化（2026-03-07 当前轮）
+
+- [x] 新增 `app/session/session-host-defaults.ts`，为 `/translate` 提供默认 provider=`session-host`：读取 active model preset，并支持 openai/ollama/gemini。
+- [x] `/session` 页面改为合并“默认宿主能力 + window 注入能力”：`/translate` 默认可用，`/yt-script` 继续由外部宿主注入并保持未注入 fail-fast。
+- [x] round10 replay 从临时 translate probe 切到默认 provider 固定种子；round11 `/translate` 负向守卫切换为 unsupported provider fail-fast，并同步更新噪声基线与新 run（`p4r15-1772890368392`）。
 

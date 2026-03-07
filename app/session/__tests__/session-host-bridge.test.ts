@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildSessionSlashHostBridgeDetail,
   resolveSessionSlashHostBridge,
+  setSessionSlashHostBridge,
   SESSION_HOST_BRIDGE_WINDOW_KEY,
   type SessionSlashHostBridge,
 } from "../session-host-bridge";
@@ -32,6 +33,20 @@ describe("session-host-bridge", () => {
     } as SessionHostWindow;
 
     expect(resolveSessionSlashHostBridge(owner)).toBe(bridge);
+  });
+
+
+  it("sets and clears the bridge through the canonical window slot", () => {
+    const bridge: SessionSlashHostBridge = {
+      getYouTubeTranscript: async (url) => url,
+    };
+    const owner = {} as SessionHostWindow;
+
+    setSessionSlashHostBridge(owner, bridge);
+    expect(resolveSessionSlashHostBridge(owner)).toBe(bridge);
+
+    setSessionSlashHostBridge(owner, null);
+    expect(resolveSessionSlashHostBridge(owner)).toBeNull();
   });
 
   it("builds the canonical window path for host bridge methods", () => {

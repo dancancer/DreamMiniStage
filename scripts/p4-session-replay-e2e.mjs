@@ -30,7 +30,7 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 
 const BASE_URL = process.env.P4_BASE_URL || "http://127.0.0.1:3303";
 const HEADLESS = process.env.P4_HEADLESS !== "false";
-const RUN_ID = process.env.P4_RUN_ID || `p4r14-${Date.now()}`;
+const RUN_ID = process.env.P4_RUN_ID || `p4r15-${Date.now()}`;
 const ARTIFACT_ROOT = path.resolve(
   REPO_ROOT,
   process.env.P4_ARTIFACT_ROOT || "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts",
@@ -59,6 +59,7 @@ const ROUND10_TRANSLATE_TARGET = "zh";
 const ROUND10_TRANSLATE_PROVIDER = "session-host";
 const ROUND10_TRANSLATE_SAMPLE = "P4 Round10 Translate Output";
 const ROUND11_TRANSLATE_TEXT = "P4 Round11 Translate FailFast";
+const ROUND11_TRANSLATE_PROVIDER = "mocker";
 const ROUND11_YT_TARGET = "https://youtu.be/dQw4w9WgXcQ";
 const ROUND12_PROXY_MISSING_PRESET = "missing-profile";
 const ROUND9_PROXY_PRESETS = [
@@ -85,6 +86,7 @@ const networkLogs = [];
 const consoleEvents = [];
 const networkEvents = [];
 const checkpoints = [];
+const translationRequests = [];
 
 function nowIso() {
   return new Date().toISOString();
@@ -523,72 +525,54 @@ async function expectYouTubeProviderTriggered(page, expectedUrl, expectedLang, c
   });
 }
 
-async function installTranslateProviderProbe(page) {
-  await page.evaluate((translateSample) => {
-    window.__p4TranslateProbe = { calls: [] };
-    const existingHost = window.__DREAMMINISTAGE_SESSION_HOST__;
-
-    window.__DREAMMINISTAGE_SESSION_HOST__ = {
-      ...(existingHost && typeof existingHost === "object" ? existingHost : {}),
-      translateText: (text, options) => {
-        window.__p4TranslateProbe.calls.push({
-          text,
-          options: options || null,
-        });
-        return translateSample;
-      },
-    };
-  }, ROUND10_TRANSLATE_SAMPLE);
+function parseTranslateRequestDetail(requestBody) {
+  const messages = Array.isArray(requestBody?.messages) ? requestBody.messages : [];
+  const systemPrompt = typeof messages[0]?.content === "string" ? messages[0].content : "";
+  const userPrompt = typeof messages[1]?.content === "string" ? messages[1].content : "";
+  const targetMatch = userPrompt.match(/Target language:\s*([^\n]+)/);
+  const userParts = userPrompt.split(/\n\n/);
+  return {
+    model: requestBody?.model || null,
+    systemPrompt,
+    userPrompt,
+    target: targetMatch?.[1]?.trim() || null,
+    text: userParts.slice(2).join("\n\n").trim(),
+  };
 }
 
-async function expectTranslateProviderTriggered(
-  page,
-  expectedText,
-  expectedTarget,
-  expectedProvider,
-  checkpointName,
-) {
-  await page.waitForFunction(() => {
-    const probe = window.__p4TranslateProbe;
-    return Boolean(probe && Array.isArray(probe.calls) && probe.calls.length > 0);
-  }, undefined, { timeout: CHECK_TIMEOUT_MS });
+function isTranslateRequest(requestBody) {
+  const detail = parseTranslateRequestDetail(requestBody);
+  return detail.systemPrompt.includes("translation engine")
+    && detail.text === ROUND10_TRANSLATE_TEXT;
+}
 
-  const probeResult = await page.evaluate(() => {
-    const probe = window.__p4TranslateProbe;
-    if (!probe) return null;
-    return {
-      callCount: probe.calls.length,
-      firstCall: probe.calls[0] || null,
-    };
-  });
-
-  if (!probeResult?.firstCall) {
-    throw new Error("translate probe captured no host callback");
+async function expectDefaultTranslateTriggered(expectedText, expectedTarget, checkpointName) {
+  const started = Date.now();
+  while (Date.now() - started <= CHECK_TIMEOUT_MS) {
+    if (translationRequests.length > 0) {
+      break;
+    }
+    await sleep(100);
   }
 
-  if (probeResult.firstCall.text !== expectedText) {
+  const firstRequest = translationRequests[0] || null;
+  if (!firstRequest) {
+    throw new Error("default translate provider captured no request");
+  }
+
+  if (firstRequest.text !== expectedText) {
     throw new Error(
-      `translate text mismatch: expected ${expectedText}, got ${probeResult.firstCall.text}`,
+      `translate text mismatch: expected ${expectedText}, got ${firstRequest.text}`,
     );
   }
-
-  const actualTarget = probeResult.firstCall.options?.target || null;
-  if (actualTarget !== expectedTarget) {
+  if (firstRequest.target !== expectedTarget) {
     throw new Error(
-      `translate target mismatch: expected ${expectedTarget}, got ${actualTarget}`,
-    );
-  }
-
-  const actualProvider = probeResult.firstCall.options?.provider || null;
-  if (actualProvider !== expectedProvider) {
-    throw new Error(
-      `translate provider mismatch: expected ${expectedProvider}, got ${actualProvider}`,
+      `translate target mismatch: expected ${expectedTarget}, got ${firstRequest.target}`,
     );
   }
 
   addCheckpoint(checkpointName, true, {
-    callCount: probeResult.callCount,
-    firstCall: probeResult.firstCall,
+    firstRequest,
   });
 }
 
@@ -635,17 +619,15 @@ async function runRound10(page, payload, files) {
   });
   await expectText(page, "P4 Round10 Opening A", "round10-open-session-a");
 
-  await installTranslateProviderProbe(page);
+  translationRequests.length = 0;
   await submitInput(
     page,
     `/translate target=${ROUND10_TRANSLATE_TARGET} provider=${ROUND10_TRANSLATE_PROVIDER} ${ROUND10_TRANSLATE_TEXT}`,
   );
-  await expectTranslateProviderTriggered(
-    page,
+  await expectDefaultTranslateTriggered(
     ROUND10_TRANSLATE_TEXT,
     ROUND10_TRANSLATE_TARGET,
-    ROUND10_TRANSLATE_PROVIDER,
-    "round10-translate-provider-success",
+    "round10-translate-default-provider-success",
   );
   await page.screenshot({ path: files.round10TranslateProvider, fullPage: true });
 }
@@ -656,13 +638,13 @@ async function runRound11(page, payload, files) {
   });
   await expectText(page, "P4 Round10 Opening A", "round11-open-session-a");
 
-  await submitInput(page, `/translate ${ROUND11_TRANSLATE_TEXT}`);
+  await submitInput(page, `/translate provider=${ROUND11_TRANSLATE_PROVIDER} ${ROUND11_TRANSLATE_TEXT}`);
   await expectText(
     page,
-    "/translate is not wired in /session host yet",
-    "round11-translate-provider-failfast",
+    `/translate provider not available in /session default host: ${ROUND11_TRANSLATE_PROVIDER}`,
+    "round11-translate-unsupported-provider-failfast",
   );
-  await page.screenshot({ path: files.round11TranslateFailFast, fullPage: true });
+  await page.screenshot({ path: files.round11TranslateUnsupportedProvider, fullPage: true });
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await expectText(page, "P4 Round10 Opening A", "round11-reload-session-a");
@@ -770,6 +752,43 @@ async function main() {
     await page.route("**/v1/chat/completions", async (route) => {
       const method = route.request().method();
       const url = route.request().url();
+      const requestBody = route.request().postDataJSON?.() || null;
+
+      if (isTranslateRequest(requestBody)) {
+        const detail = parseTranslateRequestDetail(requestBody);
+        translationRequests.push(detail);
+        networkEvents.push({
+          eventType: "mock",
+          method,
+          url,
+          status: 200,
+          error: "",
+        });
+        networkLogs.push(`[${nowIso()}] [MOCK-200-TRANSLATE] ${method} ${url}`);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: `chatcmpl-${RUN_ID}`,
+            model: requestBody?.model || ROUND9_PROXY_PRESETS[0].model,
+            choices: [{
+              index: 0,
+              message: {
+                role: "assistant",
+                content: ROUND10_TRANSLATE_SAMPLE,
+              },
+              finish_reason: "stop",
+            }],
+            usage: {
+              prompt_tokens: 12,
+              completion_tokens: 6,
+              total_tokens: 18,
+            },
+          }),
+        });
+        return;
+      }
+
       networkEvents.push({
         eventType: "mock",
         method,

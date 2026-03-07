@@ -10,6 +10,7 @@
 |------|------|------|
 | `page.tsx` | 页面入口 | 会话界面、slash 直达执行、宿主回调 wiring |
 | `session-host-bridge.ts` | 协议模块 | `/session` 宿主桥接协议、window key、解析工具 |
+| `session-host-defaults.ts` | 默认能力 | `/session` 内建 translate provider 与默认宿主实现 |
 | `session-switch.ts` | 工具 | 会话切换/临时会话命名策略 |
 
 ## 最新变更（2026-03-07）
@@ -18,6 +19,7 @@
 - `page.tsx` 已把 `/chat-jump` / `/floor-teleport` 接到真实页面锚点滚动。
 - `page.tsx` 已把 `/proxy` 接到 `model-store`：支持读取当前 preset，并按名称或 `configId` 切换 active config；切换后会同步 `llmType/model/baseUrl/apiKey` 到 localStorage。
 - `session-host-bridge.ts` 已统一收口 `/session` 宿主桥接协议：集中管理 `window.__DREAMMINISTAGE_SESSION_HOST__`、`translateText`、`getYouTubeTranscript` 与错误明细路径，避免魔法字符串继续散落。
-- `page.tsx` 已为 `/translate` 与 `/yt-script` 接入宿主 provider 入口：`window.__DREAMMINISTAGE_SESSION_HOST__`，未注入时保持显式 fail-fast；正式协议文档见 `docs/analysis/session-host-bridge/README.md`。
+- `session-host-defaults.ts` 已为 `/translate` 提供内建默认 provider：读取当前 active model preset，走 OpenAI/Ollama/Gemini 真实后端；默认 provider 名称为 `session-host`。
+- `page.tsx` 现在会将内建默认宿主能力与 `window.__DREAMMINISTAGE_SESSION_HOST__` 注入能力合并：`/translate` 默认可用，`/yt-script` 仍在未注入时显式 fail-fast；正式协议文档见 `docs/analysis/session-host-bridge/README.md`。
 - `wi-* timed effect` 继续显式 fail-fast，等待 chat metadata 结构冻结后再接通。
 - `session-switch.ts` 新增 `buildTemporarySessionName`，统一临时会话命名，避免页面内继续散落字符串拼接规则。

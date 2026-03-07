@@ -28,12 +28,18 @@
 - `options.lang`: transcript 语言，例如 `"ja"`、`"en"`
 - 返回值必须是字符串；非字符串会被 `/session` 视为协议违规并显式失败
 
+## 当前内建默认能力
+
+- `/translate` 已内建默认 provider：`session-host`。
+- 默认 translate provider 读取当前 active model preset，支持 `openai`、`ollama`、`gemini`。
+- `/yt-script` 目前仍没有仓库内建 transcript backend，继续依赖外部宿主注入 `getYouTubeTranscript(...)`。
+
 ## 页面侧行为
 
 - 页面入口通过 `resolveSessionSlashHostBridge(...)` 读取宿主对象。
 - 当方法缺失时，页面会报：
-  - `/translate is not wired in /session host yet: window.__DREAMMINISTAGE_SESSION_HOST__.translateText`
   - `/yt-script is not wired in /session host yet: window.__DREAMMINISTAGE_SESSION_HOST__.getYouTubeTranscript`
+- `/translate` 只有在 active model preset 缺失、provider 显式指定为未知值、或默认 provider 返回非法结果时才会显式失败。
 - 这两条报错是回归门的一部分；不要替换成静默空转或模糊提示。
 
 ## 推荐注入方式
@@ -51,7 +57,7 @@ window.__DREAMMINISTAGE_SESSION_HOST__ = {
 
 ## 兼容性边界
 
-- 允许只注入 `translateText` 或只注入 `getYouTubeTranscript`；未注入的方法继续 fail-fast。
+- 允许只注入 `translateText` 或只注入 `getYouTubeTranscript`；缺失的方法会先看页面内建默认能力，仍不存在时继续 fail-fast。
 - 不提供 legacy key、备用 window slot、或 silent fallback。
 - 如果后续要引入默认 provider，应直接在宿主层明确默认值，并保持本协议 shape 不变。
 
@@ -59,5 +65,5 @@ window.__DREAMMINISTAGE_SESSION_HOST__ = {
 
 - 页面级：`app/session/__tests__/page.slash-integration.test.tsx`
 - 协议级：`app/session/__tests__/session-host-bridge.test.ts`
-- Replay 成功路径：`round9 /yt-script`、`round10 /translate`
-- Replay 失败路径：`round11 /translate`、`round11 /yt-script`
+- Replay 成功路径：`round9 /yt-script`、`round10 /translate 默认 provider`
+- Replay 失败路径：`round11 /translate unsupported provider`、`round11 /yt-script`

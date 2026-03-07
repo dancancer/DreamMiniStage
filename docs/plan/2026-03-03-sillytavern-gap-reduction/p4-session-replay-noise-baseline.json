@@ -34,7 +34,7 @@
     {
       "id": "console-missing-node-tools",
       "level": "warning",
-      "messageIncludes": "找不到节点类型的工具类:",
+      "messageIncludes": "\u627e\u4e0d\u5230\u8282\u70b9\u7c7b\u578b\u7684\u5de5\u5177\u7c7b:",
       "classification": "known-noise"
     }
   ],
@@ -46,6 +46,14 @@
       "status": 401,
       "urlIncludes": "https://api.openai.com/v1/chat/completions",
       "classification": "expected-failfast"
+    },
+    {
+      "id": "network-openai-translate-mock-200",
+      "eventType": "mock",
+      "method": "POST",
+      "status": 200,
+      "urlIncludes": "https://api.openai.com/v1/chat/completions",
+      "classification": "expected-success"
     },
     {
       "id": "network-openai-response-401",
@@ -76,6 +84,14 @@
       "eventType": "requestfailed",
       "method": "GET",
       "urlIncludes": "http://127.0.0.1:3303/session",
+      "errorIncludes": "net::ERR_ABORTED",
+      "classification": "known-noise"
+    },
+    {
+      "id": "network-vercel-script-aborted",
+      "eventType": "requestfailed",
+      "method": "GET",
+      "urlIncludes": "https://va.vercel-scripts.com/v1/script.debug.js",
       "errorIncludes": "net::ERR_ABORTED",
       "classification": "known-noise"
     }

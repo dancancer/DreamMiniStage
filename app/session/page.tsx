@@ -44,6 +44,7 @@ import {
   buildSessionSlashHostBridgeDetail,
   resolveSessionSlashHostBridge,
 } from "@/app/session/session-host-bridge";
+import { createSessionDefaultHostBridge } from "@/app/session/session-host-defaults";
 import { executeSlashCommandScript } from "@/lib/slash-command";
 import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
@@ -285,6 +286,24 @@ function SessionPageContent() {
     if (!loader.character) return null;
     return { ...loader.character, name: currentCharacterName };
   }, [loader.character, currentCharacterName]);
+  const defaultSessionHostBridge = useMemo(() => createSessionDefaultHostBridge({
+    language,
+  }), [language]);
+  const resolveSessionHostBridge = useCallback(() => {
+    if (typeof window === "undefined") {
+      return defaultSessionHostBridge;
+    }
+
+    const injectedBridge = resolveSessionSlashHostBridge(window);
+    if (!injectedBridge) {
+      return defaultSessionHostBridge;
+    }
+
+    return {
+      ...defaultSessionHostBridge,
+      ...injectedBridge,
+    };
+  }, [defaultSessionHostBridge]);
 
   useEffect(() => {
     setCharacterNameOverride(null);
@@ -489,7 +508,7 @@ function SessionPageContent() {
     text: string,
     options?: TranslateTextOptions,
   ): Promise<string> => {
-    const hostBridge = resolveSessionSlashHostBridge(typeof window === "undefined" ? null : window);
+    const hostBridge = resolveSessionHostBridge();
     if (!hostBridge?.translateText) {
       throw buildSessionSlashHostError("/translate", buildSessionSlashHostBridgeDetail("translateText"));
     }
@@ -499,13 +518,13 @@ function SessionPageContent() {
       throw new Error("/translate host returned non-string result");
     }
     return translated;
-  }, []);
+  }, [resolveSessionHostBridge]);
 
   const handleGetYouTubeTranscript = useCallback(async (
     urlOrId: string,
     options?: YouTubeTranscriptOptions,
   ): Promise<string> => {
-    const hostBridge = resolveSessionSlashHostBridge(typeof window === "undefined" ? null : window);
+    const hostBridge = resolveSessionHostBridge();
     if (!hostBridge?.getYouTubeTranscript) {
       throw buildSessionSlashHostError("/yt-script", buildSessionSlashHostBridgeDetail("getYouTubeTranscript"));
     }
@@ -515,7 +534,7 @@ function SessionPageContent() {
       throw new Error("/yt-script host returned non-string result");
     }
     return transcript;
-  }, []);
+  }, [resolveSessionHostBridge]);
 
   const handleSelectProxyPreset = useCallback(async (name?: string): Promise<string> => {
     const { configs, activeConfigId, setActiveConfig } = useModelStore.getState();
