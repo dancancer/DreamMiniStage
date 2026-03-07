@@ -35,7 +35,6 @@ describe("session-host-bridge", () => {
     expect(resolveSessionSlashHostBridge(owner)).toBe(bridge);
   });
 
-
   it("sets and clears the bridge through the canonical window slot", () => {
     const bridge: SessionSlashHostBridge = {
       getYouTubeTranscript: async (url) => url,
