@@ -32,7 +32,7 @@
 
 - `/translate` 已内建默认 provider：`session-host`。
 - 默认 translate provider 读取当前 active model preset，支持 `openai`、`ollama`、`gemini`。
-- `/yt-script` 目前仍没有仓库内建 transcript backend，继续依赖外部宿主注入 `getYouTubeTranscript(...)`。
+- `/yt-script` 已内建默认 provider：`session-host`。当前默认 backend 是 `Jina Reader -> active model transcript extraction`；若 reader 内容里不存在 transcript/lyrics，则显式 fail-fast。
 
 ## 页面侧行为
 
@@ -40,6 +40,7 @@
 - 当方法缺失时，页面会报：
   - `/yt-script is not wired in /session host yet: window.__DREAMMINISTAGE_SESSION_HOST__.getYouTubeTranscript`
 - `/translate` 只有在 active model preset 缺失、provider 显式指定为未知值、或默认 provider 返回非法结果时才会显式失败。
+- `/yt-script` 只有在 active model preset 缺失、Jina Reader 拉取失败、或 transcript/lyrics 提取结果为空时才会显式失败。
 - 这两条报错是回归门的一部分；不要替换成静默空转或模糊提示。
 
 ## 推荐注入方式
@@ -65,5 +66,5 @@ window.__DREAMMINISTAGE_SESSION_HOST__ = {
 
 - 页面级：`app/session/__tests__/page.slash-integration.test.tsx`
 - 协议级：`app/session/__tests__/session-host-bridge.test.ts`
-- Replay 成功路径：`round9 /yt-script`、`round10 /translate 默认 provider`
-- Replay 失败路径：`round11 /translate unsupported provider`、`round11 /yt-script`
+- Replay 成功路径：`round9 /yt-script 默认 provider`、`round10 /translate 默认 provider`
+- Replay 失败路径：`round11 /translate unsupported provider`、`round11 /yt-script 默认 provider`

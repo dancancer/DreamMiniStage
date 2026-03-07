@@ -65,6 +65,7 @@ const mocks = vi.hoisted(() => {
       onSubmit: (event: React.FormEvent) => void;
     },
     defaultTranslateText: vi.fn().mockResolvedValue("default translated"),
+    defaultYouTubeTranscript: vi.fn().mockResolvedValue("default transcript"),
     modelStoreState,
     dialogue: {
       messages: [
@@ -121,6 +122,7 @@ vi.mock("@/app/i18n", () => ({
 vi.mock("@/app/session/session-host-defaults", () => ({
   createSessionDefaultHostBridge: () => ({
     translateText: mocks.defaultTranslateText,
+    getYouTubeTranscript: mocks.defaultYouTubeTranscript,
   }),
 }));
 
@@ -375,6 +377,8 @@ describe("Session page slash integration", () => {
     window.localStorage.clear();
     mocks.defaultTranslateText.mockReset();
     mocks.defaultTranslateText.mockResolvedValue("default translated");
+    mocks.defaultYouTubeTranscript.mockReset();
+    mocks.defaultYouTubeTranscript.mockResolvedValue("default transcript");
     setSessionSlashHostBridge(window, null);
   });
 
@@ -516,14 +520,32 @@ describe("Session page slash integration", () => {
     unmountPage(rendered);
   });
 
-  it("surfaces explicit fail-fast host errors for unwired /yt-script", async () => {
+  it("executes /yt-script through the built-in session default host bridge", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/yt-script https://youtu.be/dQw4w9WgXcQ");
+
+    expect(mocks.defaultYouTubeTranscript).toHaveBeenCalledWith("https://youtu.be/dQw4w9WgXcQ", {
+      lang: undefined,
+    });
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("surfaces explicit default-host errors for unavailable /yt-script transcript", async () => {
+    mocks.defaultYouTubeTranscript.mockRejectedValueOnce(
+      new Error("/yt-script transcript not available from /session default host"),
+    );
+
     const rendered = renderPage();
     await flushEffects();
 
     await submitSlash("/yt-script https://youtu.be/dQw4w9WgXcQ");
 
     expect(mocks.toastError).toHaveBeenCalledWith(
-      expect.stringContaining("/yt-script is not wired in /session host yet"),
+      expect.stringContaining("/yt-script transcript not available from /session default host"),
     );
 
     unmountPage(rendered);

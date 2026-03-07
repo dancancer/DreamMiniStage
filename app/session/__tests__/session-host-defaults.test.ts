@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   createApiClient: vi.fn(),
@@ -23,6 +23,7 @@ vi.mock("@/lib/store/model-store", () => ({
 import {
   createSessionDefaultHostBridge,
   SESSION_DEFAULT_TRANSLATE_PROVIDER,
+  SESSION_NO_TRANSCRIPT_TOKEN,
 } from "../session-host-defaults";
 
 function buildOpenAIConfig() {
@@ -37,8 +38,11 @@ function buildOpenAIConfig() {
 }
 
 describe("session-host-defaults", () => {
+  const fetchMock = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
     mocks.createApiClient.mockReturnValue({
       chat: vi.fn().mockResolvedValue({
         content: "translated text",
@@ -50,6 +54,10 @@ describe("session-host-defaults", () => {
       configs: [buildOpenAIConfig()],
       getActiveConfig: () => buildOpenAIConfig(),
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("translates with the active model when provider is omitted", async () => {
@@ -140,5 +148,60 @@ describe("session-host-defaults", () => {
       }),
     }));
     expect(mocks.createApiClient).not.toHaveBeenCalled();
+  });
+
+  it("extracts youtube transcript through jina reader plus active model", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      text: async () => "Title\n\nTranscript\n\nNever gonna give you up",
+    });
+    mocks.createApiClient.mockReturnValueOnce({
+      chat: vi.fn().mockResolvedValue({
+        content: "Never gonna give you up\nNever gonna let you down",
+      }),
+    });
+
+    const bridge = createSessionDefaultHostBridge({ language: "en" });
+    const result = await bridge.getYouTubeTranscript?.("https://youtu.be/dQw4w9WgXcQ", {
+      lang: "ja",
+    });
+
+    expect(result).toContain("Never gonna give you up");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://r.jina.ai/http://www.youtube.com/watch?v=dQw4w9WgXcQ&hl=ja",
+      expect.any(Object),
+    );
+
+    const client = mocks.createApiClient.mock.results.at(-1)?.value;
+    expect(client.chat).toHaveBeenCalledWith(expect.objectContaining({
+      messages: [
+        expect.objectContaining({
+          role: "system",
+          content: expect.stringContaining("spoken transcript or song lyrics"),
+        }),
+        expect.objectContaining({
+          role: "user",
+          content: expect.stringContaining("Source URL: https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+        }),
+      ],
+    }));
+  });
+
+  it("fails fast when transcript extraction returns the no-transcript token", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      text: async () => "Title\n\nTranscript\n\nUnavailable",
+    });
+    mocks.createApiClient.mockReturnValueOnce({
+      chat: vi.fn().mockResolvedValue({
+        content: SESSION_NO_TRANSCRIPT_TOKEN,
+      }),
+    });
+
+    const bridge = createSessionDefaultHostBridge({ language: "en" });
+
+    await expect(bridge.getYouTubeTranscript?.("dQw4w9WgXcQ")).rejects.toThrow(
+      "/yt-script transcript not available from /session default host",
+    );
   });
 });

@@ -5,17 +5,17 @@
 - M1 / M2 / M3 已全部落地：
   - M1：高价值宿主注入位 + bridge 注入契约守卫已完成。
   - M2：`CharacterChatPanel` harness 与 `/session` 页面级最小集成守卫已完成（含 refresh-remount）。
-  - M3：`scripts/p4-session-replay-e2e.mjs` 已扩到 round12，当前覆盖 `/floor-teleport` 宿主锚点滚动、`/proxy` 成功切换、`/proxy unknown preset` fail-fast、`/yt-script` provider 成功路径、`/translate` 默认 provider 成功路径，以及 `translate unsupported provider / yt-script 未注入` 两条负向守卫。
+  - M3：`scripts/p4-session-replay-e2e.mjs` 已扩到 round12，当前覆盖 `/floor-teleport` 宿主锚点滚动、`/proxy` 成功切换、`/proxy unknown preset` fail-fast、`/yt-script` 默认 provider 成功路径、`/translate` 默认 provider 成功路径，以及 `translate unsupported provider / yt-script 默认 provider fail-fast` 两条负向守卫。
 - 本轮（加固增量）已完成：
   - `/session` 的 `/proxy` 从 fail-fast 改为真实宿主路径：接入 `model-store`，支持读取当前 preset 与按 preset 名/ID 切换，并同步 `llmType/model/baseUrl/apiKey` 到 localStorage。
-  - `/session` 为 `/translate` 与 `/yt-script` 增加宿主 provider 入口：`window.__DREAMMINISTAGE_SESSION_HOST__`；宿主已注入时走成功路径，未注入保持显式 fail-fast。
+  - `/session` 为 `/translate` 与 `/yt-script` 增加宿主 provider 入口：`window.__DREAMMINISTAGE_SESSION_HOST__`；外部宿主已注入时优先走注入实现，未注入时回退到页面默认 provider（若页面默认不存在则继续 fail-fast）。
   - 页面级测试补齐成对守卫：
     - `/proxy`：成功切换 + unknown preset 失败。
-    - `/translate`：provider 成功 + 未注入 fail-fast。
-    - `/yt-script`：provider 成功 + 未注入 fail-fast。
+    - `/translate`：外部 provider 成功 + 默认 provider 成功/unsupported 守卫。
+    - `/yt-script`：外部 provider 成功 + 默认 provider 成功/失败守卫。
 - 本轮（回归门对齐）已完成：
   - `scripts/p4-session-replay-e2e.mjs` round9 从 `/proxy` fail-fast 断言切换为成功断言，补入 `model-config-storage` 种子并校验 `activeConfigId + llmType/model/baseUrl/apiKey` 同步结果。
-  - round9 新增 `/yt-script` provider 成功回放：注入 `window.__DREAMMINISTAGE_SESSION_HOST__.getYouTubeTranscript` 探针并断言 URL/lang 透传。
+  - round9 `/yt-script` 已升级为默认 provider 成功回放：不再依赖临时宿主探针，而是断言 canonical URL/lang 透传到默认 backend 提取链路。
   - round10 已升级为 `/translate` 默认 provider 成功回放：通过 active model preset 固定种子走真实默认宿主路径，不再依赖临时注入探针。
   - `scripts/p4-session-replay-lib.mjs` 产物清单与 summary 文案同步更新，新增截图产物：
     - `round9-proxy-switch-pass.png`
@@ -42,24 +42,28 @@
   - 新增 `app/session/__tests__/session-host-defaults.test.ts`，并将页面级集成测试改为验证：默认 translate provider 成功、unsupported provider fail-fast、外部注入仍可覆盖默认实现。
   - `scripts/p4-session-replay-e2e.mjs` round10 已从临时 translate probe 切到默认 provider 固定种子；round11 `/translate` 负向守卫切换为 unsupported provider fail-fast。
   - `docs/plan/2026-03-03-sillytavern-gap-reduction/p4-session-replay-noise-baseline.json` 已补入 `network-openai-translate-mock-200` 与 `network-vercel-script-aborted` 规则，避免默认 provider 成功路径被误报为噪声漂移。
+- 本轮（YT 默认 Provider 固定化）已完成：
+  - `app/session/session-host-defaults.ts` 已为 `/yt-script` 提供内建默认 provider：通过 `Jina Reader -> active model transcript extraction` 获取 transcript/lyrics；reader 拉取失败或提取为空时显式 fail-fast。
+  - `app/session/__tests__/session-host-defaults.test.ts` 与 `app/session/__tests__/page.slash-integration.test.tsx` 已补齐 `/yt-script` 默认 provider 成功/失败守卫，并保留外部注入覆盖默认实现的断言。
+  - `scripts/p4-session-replay-e2e.mjs` round9 `/yt-script` 成功路径已从临时探针切到默认 provider 固定种子；round11 `/yt-script` 负向守卫已切换为默认 provider fail-fast。
 - Replay 回归现状：
-  - 最新通过 run：`p4r15-1772890368392`。
-  - 产物目录：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r15-1772890368392`。
+  - 最新通过 run：`p4r15-1772894030582`。
+  - 产物目录：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r15-1772894030582`。
   - run index 已更新：`p4-session-replay-run-index.json/.md`。
 - 为让 replay 噪声基线恢复稳定，本轮顺手修复了 `/session` 页 header 注入循环源头：
   - `app/session/page.tsx` 将 `currentCharacter` 改为 `useMemo`，消除 render 周期对象重建导致的 effect 高频触发。
 - `/session` 宿主能力清单（最新）：
   - 已接通：`tempchat`、`floor-teleport`、`proxy`。
   - 内建默认 provider：`translate`（provider=`session-host`，读取 active model preset；正式协议见 `docs/analysis/session-host-bridge/README.md`）。
-  - 外部宿主 provider：`yt-script`（依赖 `window.__DREAMMINISTAGE_SESSION_HOST__` 注入真实能力）。
+  - 内建默认 provider：`yt-script`（provider=`session-host`，走 `Jina Reader -> active model transcript extraction`）。
   - 故意 fail-fast：`wi-get-timed-effect`、`wi-set-timed-effect`。
 - 本轮已验证：
   - `pnpm vitest run app/session/__tests__/page.slash-integration.test.tsx app/session/__tests__/session-host-bridge.test.ts app/session/__tests__/session-host-defaults.test.ts`
   - `pnpm typecheck`
-  - `pnpm p4:session-replay`（最新 run：`p4r15-1772890368392`）
+  - `pnpm p4:session-replay`（最新 run：`p4r15-1772894030582`）
 
 ## 推荐下一步
 
-1. 为 `/yt-script` 选定并落地真实默认 provider；现在 translate 已有默认 provider，剩余缺口已经集中到 transcript 路径。
-2. 如果要继续去探针化，优先把 `/yt-script` 成功路径也换成固定种子，而不是继续依赖 replay 临时注入探针。
+1. 观察 `/yt-script` 默认 backend 在真实视频类型上的稳定性；如果 `Jina Reader -> active model` 对长视频或无描述视频误判偏高，再决定是否引入专门 transcript backend。
+2. 保持 `/translate` 与 `/yt-script` 的默认 provider 固定种子回放，避免回到临时探针成功路径。
 3. `wi-* timed effect` 继续维持显式 fail-fast，先冻结 metadata 结构，再一次性接通，避免临时兼容分支。

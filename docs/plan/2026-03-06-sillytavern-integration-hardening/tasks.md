@@ -23,7 +23,7 @@
 - [x] 让 replay 覆盖 slash 执行、refresh 持久化、session 隔离、失败链路。
   - round7/8 保持 slash 直达 + refresh + session 隔离 + 401 失败链路；round9-12 补宿主 wiring 的成功/失败路径，其中 round10 已切到 `/translate` 默认 provider 固定种子。
 - [x] 将产物写入现有 artifacts 目录，并更新 run index。
-  - 最新通过 run：`p4r15-1772890368392`（`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/`）。
+  - 最新通过 run：`p4r15-1772894030582`（`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/`）。
 
 ## 4. 文档 / 交接
 
@@ -40,13 +40,13 @@
 ## 6. Replay 回归门对齐（2026-03-07）
 
 - [x] round9 将 `/proxy` 从 fail-fast 断言升级为“真实 preset 成功切换”断言，并校验 localStorage 同步字段。
-- [x] round9 新增 `/yt-script` provider 成功回放场景，断言 URL/lang 透传到宿主桥接回调。
+- [x] round9 `/yt-script` 已升级为默认 provider 成功回放，断言 canonical URL/lang 透传到默认 backend 提取链路。
 - [x] replay 产物清单与 summary 同步更新，新增 `round9-proxy-switch-pass.png` 与 `round9-yt-script-provider-pass.png`。
 
 ## 7. Extension Provider 双命令闭环（2026-03-07 当前轮）
 
 - [x] 页面级集成测试补齐 `/translate` 成对守卫：provider 成功 + 未注入 fail-fast。
-- [x] `scripts/p4-session-replay-e2e.mjs` 新增 round10 `/translate` provider 成功回放，断言 text/target/provider 透传正确。
+- [x] `scripts/p4-session-replay-e2e.mjs` round10 已切到 `/translate` 默认 provider 成功回放，断言 text/target 透传正确。
 - [x] replay 产物与 summary 清单新增 `round10-translate-provider-pass.png`，并完成一次新 run 回归。
 
 ## 8. Provider Fail-Fast Replay Guard（2026-03-07 当前轮）
@@ -72,4 +72,10 @@
 - [x] 新增 `app/session/session-host-defaults.ts`，为 `/translate` 提供默认 provider=`session-host`：读取 active model preset，并支持 openai/ollama/gemini。
 - [x] `/session` 页面改为合并“默认宿主能力 + window 注入能力”：`/translate` 默认可用，`/yt-script` 继续由外部宿主注入并保持未注入 fail-fast。
 - [x] round10 replay 从临时 translate probe 切到默认 provider 固定种子；round11 `/translate` 负向守卫切换为 unsupported provider fail-fast，并同步更新噪声基线与新 run（`p4r15-1772890368392`）。
+
+## 12. YT 默认 Provider 固定化（2026-03-07 当前轮）
+
+- [x] `app/session/session-host-defaults.ts` 为 `/yt-script` 提供默认 provider=`session-host`：通过 `Jina Reader -> active model` 提取 transcript/lyrics，并在 reader/提取失败时显式 fail-fast。
+- [x] 页面级与默认宿主单测补齐 `/yt-script`：默认 provider 成功、默认 provider 失败、外部注入覆盖默认实现。
+- [x] round9 `/yt-script` 成功回放已从临时探针切到默认 provider 固定种子；round11 `/yt-script` 负向守卫切到默认 provider fail-fast，并完成新 run 回归（`p4r15-1772894030582`）。
 

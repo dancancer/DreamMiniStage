@@ -1,10 +1,24 @@
 {
   "version": 1,
-  "generatedAt": "2026-03-07T13:33:17.066Z",
+  "generatedAt": "2026-03-07T14:34:19.166Z",
   "staleMissThreshold": 3,
   "maxRuns": 60,
-  "latestRunId": "p4r15-1772890368392",
+  "latestRunId": "p4r15-1772894030582",
   "runs": [
+    {
+      "runId": "p4r15-1772894030582",
+      "startedAt": "2026-03-07T14:33:50.582Z",
+      "finishedAt": "2026-03-07T14:34:19.166Z",
+      "durationMs": 28584,
+      "allPassed": true,
+      "checkpointTotal": 27,
+      "checkpointPassed": 27,
+      "unknownSignatureCount": 0,
+      "hasNewNoise": false,
+      "runDir": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r15-1772894030582",
+      "summaryPath": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r15-1772894030582/summary.md",
+      "noiseReportPath": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r15-1772894030582/round12-noise-baseline-report.md"
+    },
     {
       "runId": "p4r15-1772890368392",
       "startedAt": "2026-03-07T13:32:48.392Z",
@@ -93,82 +107,82 @@
   "ruleHealth": {
     "console": {
       "console-resource-404": {
-        "totalHits": 6,
+        "totalHits": 7,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r15-1772890368392",
-        "lastHitAt": "2026-03-07T13:33:17.066Z"
+        "lastHitRunId": "p4r15-1772894030582",
+        "lastHitAt": "2026-03-07T14:34:19.166Z"
       },
       "console-resource-401": {
-        "totalHits": 6,
+        "totalHits": 7,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r15-1772890368392",
-        "lastHitAt": "2026-03-07T13:33:17.066Z"
+        "lastHitRunId": "p4r15-1772894030582",
+        "lastHitAt": "2026-03-07T14:34:19.166Z"
       },
       "console-llm-method-failed": {
-        "totalHits": 6,
+        "totalHits": 7,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r15-1772890368392",
-        "lastHitAt": "2026-03-07T13:33:17.066Z"
+        "lastHitRunId": "p4r15-1772894030582",
+        "lastHitAt": "2026-03-07T14:34:19.166Z"
       },
       "console-llm-openai-error": {
-        "totalHits": 6,
+        "totalHits": 7,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r15-1772890368392",
-        "lastHitAt": "2026-03-07T13:33:17.066Z"
+        "lastHitRunId": "p4r15-1772894030582",
+        "lastHitAt": "2026-03-07T14:34:19.166Z"
       },
       "console-stream-no-response": {
-        "totalHits": 6,
+        "totalHits": 7,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r15-1772890368392",
-        "lastHitAt": "2026-03-07T13:33:17.066Z"
+        "lastHitRunId": "p4r15-1772894030582",
+        "lastHitAt": "2026-03-07T14:34:19.166Z"
       },
       "console-missing-node-tools": {
-        "totalHits": 6,
+        "totalHits": 7,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r15-1772890368392",
-        "lastHitAt": "2026-03-07T13:33:17.066Z"
+        "lastHitRunId": "p4r15-1772894030582",
+        "lastHitAt": "2026-03-07T14:34:19.166Z"
       }
     },
     "network": {
       "network-openai-mock-401": {
-        "totalHits": 6,
+        "totalHits": 7,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r15-1772890368392",
-        "lastHitAt": "2026-03-07T13:33:17.066Z"
+        "lastHitRunId": "p4r15-1772894030582",
+        "lastHitAt": "2026-03-07T14:34:19.166Z"
       },
       "network-openai-translate-mock-200": {
-        "totalHits": 1,
+        "totalHits": 2,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r15-1772890368392",
-        "lastHitAt": "2026-03-07T13:33:17.066Z"
+        "lastHitRunId": "p4r15-1772894030582",
+        "lastHitAt": "2026-03-07T14:34:19.166Z"
       },
       "network-openai-response-401": {
-        "totalHits": 6,
+        "totalHits": 7,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r15-1772890368392",
-        "lastHitAt": "2026-03-07T13:33:17.066Z"
+        "lastHitRunId": "p4r15-1772894030582",
+        "lastHitAt": "2026-03-07T14:34:19.166Z"
       },
       "network-background-404": {
-        "totalHits": 6,
+        "totalHits": 7,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r15-1772890368392",
-        "lastHitAt": "2026-03-07T13:33:17.066Z"
+        "lastHitRunId": "p4r15-1772894030582",
+        "lastHitAt": "2026-03-07T14:34:19.166Z"
       },
       "network-ga-request-aborted": {
-        "totalHits": 6,
+        "totalHits": 7,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r15-1772890368392",
-        "lastHitAt": "2026-03-07T13:33:17.066Z"
+        "lastHitRunId": "p4r15-1772894030582",
+        "lastHitAt": "2026-03-07T14:34:19.166Z"
       },
       "network-session-rsc-aborted": {
         "totalHits": 2,
-        "consecutiveMisses": 2,
+        "consecutiveMisses": 3,
         "lastHitRunId": "p4r13-1772863786323",
         "lastHitAt": "2026-03-07T06:10:27.206Z"
       },
       "network-vercel-script-aborted": {
         "totalHits": 1,
-        "consecutiveMisses": 0,
+        "consecutiveMisses": 1,
         "lastHitRunId": "p4r15-1772890368392",
         "lastHitAt": "2026-03-07T13:33:17.066Z"
       }
@@ -176,6 +190,14 @@
   },
   "staleRules": {
     "console": [],
-    "network": []
+    "network": [
+      {
+        "id": "network-session-rsc-aborted",
+        "consecutiveMisses": 3,
+        "totalHits": 2,
+        "lastHitRunId": "p4r13-1772863786323",
+        "lastHitAt": "2026-03-07T06:10:27.206Z"
+      }
+    ]
   }
 }

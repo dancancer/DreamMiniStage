@@ -60,7 +60,11 @@ const ROUND10_TRANSLATE_PROVIDER = "session-host";
 const ROUND10_TRANSLATE_SAMPLE = "P4 Round10 Translate Output";
 const ROUND11_TRANSLATE_TEXT = "P4 Round11 Translate FailFast";
 const ROUND11_TRANSLATE_PROVIDER = "mocker";
-const ROUND11_YT_TARGET = "https://youtu.be/dQw4w9WgXcQ";
+const ROUND11_YT_TARGET = "https://youtu.be/invalidvideo1";
+const ROUND11_YT_CANONICAL_URL = "https://www.youtube.com/watch?v=invalidvideo1";
+const ROUND9_YT_CANONICAL_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+const SESSION_YOUTUBE_TRANSCRIPT_SYSTEM_PROMPT = "You extract only the spoken transcript or song lyrics from a YouTube reader page dump. Return only the transcript text. If the source does not contain a transcript or lyrics, return exactly __NO_TRANSCRIPT_AVAILABLE__.";
+const SESSION_NO_TRANSCRIPT_TOKEN = "__NO_TRANSCRIPT_AVAILABLE__";
 const ROUND12_PROXY_MISSING_PRESET = "missing-profile";
 const ROUND9_PROXY_PRESETS = [
   {
@@ -87,6 +91,8 @@ const consoleEvents = [];
 const networkEvents = [];
 const checkpoints = [];
 const translationRequests = [];
+const transcriptRequests = [];
+const jinaReaderRequests = [];
 
 function nowIso() {
   return new Date().toISOString();
@@ -472,56 +478,64 @@ async function expectProxyPresetUnchanged(page, expectedPreset, checkpointName) 
   return snapshot;
 }
 
-async function installYouTubeProviderProbe(page) {
-  await page.evaluate((transcriptSample) => {
-    window.__p4YtScriptProbe = { calls: [] };
-    window.__DREAMMINISTAGE_SESSION_HOST__ = {
-      getYouTubeTranscript: (urlOrId, options) => {
-        window.__p4YtScriptProbe.calls.push({
-          urlOrId,
-          options: options || null,
-        });
-        return transcriptSample;
-      },
-    };
-  }, ROUND9_TRANSCRIPT_SAMPLE);
+function parseYouTubeTranscriptRequestDetail(requestBody) {
+  const messages = Array.isArray(requestBody?.messages) ? requestBody.messages : [];
+  const systemPrompt = typeof messages[0]?.content === "string" ? messages[0].content : "";
+  const userPrompt = typeof messages[1]?.content === "string" ? messages[1].content : "";
+  const sourceMatch = userPrompt.match(/Source URL:\s*([^\n]+)/);
+  const langMatch = userPrompt.match(/Preferred language:\s*([^\n]+)/);
+  return {
+    model: requestBody?.model || null,
+    systemPrompt,
+    userPrompt,
+    sourceUrl: sourceMatch?.[1]?.trim() || null,
+    preferredLanguage: langMatch?.[1]?.trim() || null,
+  };
 }
 
-async function expectYouTubeProviderTriggered(page, expectedUrl, expectedLang, checkpointName) {
-  await page.waitForFunction(() => {
-    const probe = window.__p4YtScriptProbe;
-    return Boolean(probe && Array.isArray(probe.calls) && probe.calls.length > 0);
-  }, undefined, { timeout: CHECK_TIMEOUT_MS });
+function isYouTubeTranscriptRequest(requestBody) {
+  const detail = parseYouTubeTranscriptRequestDetail(requestBody);
+  return detail.systemPrompt.includes(SESSION_YOUTUBE_TRANSCRIPT_SYSTEM_PROMPT);
+}
 
-  const probeResult = await page.evaluate(() => {
-    const probe = window.__p4YtScriptProbe;
-    if (!probe) return null;
-    return {
-      callCount: probe.calls.length,
-      firstCall: probe.calls[0] || null,
-    };
-  });
-
-  if (!probeResult?.firstCall) {
-    throw new Error("yt-script probe captured no host callback");
+async function expectDefaultYouTubeTranscriptTriggered(expectedUrl, expectedLang, checkpointName) {
+  const started = Date.now();
+  while (Date.now() - started <= CHECK_TIMEOUT_MS) {
+    if (transcriptRequests.length > 0 && jinaReaderRequests.length > 0) {
+      break;
+    }
+    await sleep(100);
   }
 
-  if (probeResult.firstCall.urlOrId !== expectedUrl) {
+  const firstTranscriptRequest = transcriptRequests[0] || null;
+  if (!firstTranscriptRequest) {
+    throw new Error("default yt-script provider captured no model request");
+  }
+  if (firstTranscriptRequest.sourceUrl !== expectedUrl) {
     throw new Error(
-      `yt-script url mismatch: expected ${expectedUrl}, got ${probeResult.firstCall.urlOrId}`,
+      `yt-script source url mismatch: expected ${expectedUrl}, got ${firstTranscriptRequest.sourceUrl}`,
+    );
+  }
+  if (firstTranscriptRequest.preferredLanguage !== expectedLang) {
+    throw new Error(
+      `yt-script preferred language mismatch: expected ${expectedLang}, got ${firstTranscriptRequest.preferredLanguage}`,
     );
   }
 
-  const actualLang = probeResult.firstCall.options?.lang || null;
-  if (actualLang !== expectedLang) {
-    throw new Error(
-      `yt-script lang mismatch: expected ${expectedLang}, got ${actualLang}`,
-    );
+  const firstReaderRequest = jinaReaderRequests[0] || null;
+  if (!firstReaderRequest) {
+    throw new Error("default yt-script provider captured no reader request");
+  }
+  if (!firstReaderRequest.includes(encodeURIComponent(expectedUrl)) && !firstReaderRequest.includes(expectedUrl.replace(/^https?:\/\//, ""))) {
+    throw new Error(`yt-script reader request mismatch: expected url containing ${expectedUrl}, got ${firstReaderRequest}`);
+  }
+  if (!firstReaderRequest.includes(`hl=${expectedLang}`)) {
+    throw new Error(`yt-script reader language mismatch: expected hl=${expectedLang}, got ${firstReaderRequest}`);
   }
 
   addCheckpoint(checkpointName, true, {
-    callCount: probeResult.callCount,
-    firstCall: probeResult.firstCall,
+    firstTranscriptRequest,
+    firstReaderRequest,
   });
 }
 
@@ -602,13 +616,13 @@ async function runRound9(page, payload, files) {
   });
   await page.screenshot({ path: files.round9ProxySwitch, fullPage: true });
 
-  await installYouTubeProviderProbe(page);
+  transcriptRequests.length = 0;
+  jinaReaderRequests.length = 0;
   await submitInput(page, `/yt-script lang=${ROUND9_YT_LANG} ${ROUND9_YT_TARGET}`);
-  await expectYouTubeProviderTriggered(
-    page,
-    ROUND9_YT_TARGET,
+  await expectDefaultYouTubeTranscriptTriggered(
+    ROUND9_YT_CANONICAL_URL,
     ROUND9_YT_LANG,
-    "round9-yt-script-provider-success",
+    "round9-yt-script-default-provider-success",
   );
   await page.screenshot({ path: files.round9YtProvider, fullPage: true });
 }
@@ -652,8 +666,8 @@ async function runRound11(page, payload, files) {
   await submitInput(page, `/yt-script ${ROUND11_YT_TARGET}`);
   await expectText(
     page,
-    "/yt-script is not wired in /session host yet",
-    "round11-yt-script-provider-failfast",
+    "/yt-script transcript not available from /session default host",
+    "round11-yt-script-default-provider-failfast",
   );
   await page.screenshot({ path: files.round11YtFailFast, fullPage: true });
 }
@@ -749,6 +763,29 @@ async function main() {
       }
     });
 
+    await page.route("https://r.jina.ai/**", async (route) => {
+      const url = route.request().url();
+      if (!url.includes("youtube.com/watch") && !url.includes("youtu.be/")) {
+        await route.continue();
+        return;
+      }
+
+      jinaReaderRequests.push(url);
+      await route.fulfill({
+        status: 200,
+        contentType: "text/plain; charset=utf-8",
+        body: [
+          "Title: P4 Transcript Fixture",
+          "",
+          `URL Source: ${ROUND9_YT_CANONICAL_URL}`,
+          "",
+          "Transcript",
+          "",
+          ROUND9_TRANSCRIPT_SAMPLE,
+        ].join("\n"),
+      });
+    });
+
     await page.route("**/v1/chat/completions", async (route) => {
       const method = route.request().method();
       const url = route.request().url();
@@ -783,6 +820,44 @@ async function main() {
               prompt_tokens: 12,
               completion_tokens: 6,
               total_tokens: 18,
+            },
+          }),
+        });
+        return;
+      }
+
+      if (isYouTubeTranscriptRequest(requestBody)) {
+        const detail = parseYouTubeTranscriptRequestDetail(requestBody);
+        transcriptRequests.push(detail);
+        networkEvents.push({
+          eventType: "mock",
+          method,
+          url,
+          status: 200,
+          error: "",
+        });
+        networkLogs.push(`[${nowIso()}] [MOCK-200-YT-TRANSCRIPT] ${method} ${url}`);
+        const transcriptContent = detail.sourceUrl === ROUND9_YT_CANONICAL_URL
+          ? ROUND9_TRANSCRIPT_SAMPLE
+          : SESSION_NO_TRANSCRIPT_TOKEN;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: `chatcmpl-${RUN_ID}-yt`,
+            model: requestBody?.model || ROUND9_PROXY_PRESETS[0].model,
+            choices: [{
+              index: 0,
+              message: {
+                role: "assistant",
+                content: transcriptContent,
+              },
+              finish_reason: "stop",
+            }],
+            usage: {
+              prompt_tokens: 18,
+              completion_tokens: 12,
+              total_tokens: 30,
             },
           }),
         });
