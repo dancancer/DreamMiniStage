@@ -1,0 +1,318 @@
+{
+  "runId": "p4r12-1772854328527",
+  "startedAt": "2026-03-07T03:32:08.527Z",
+  "finishedAt": "2026-03-07T03:32:31.012Z",
+  "baseUrl": "http://127.0.0.1:3303",
+  "allPassed": true,
+  "checkpoints": [
+    {
+      "name": "seed-indexeddb",
+      "passed": true,
+      "detail": {
+        "sessions": 3,
+        "dialogues": 3
+      },
+      "timestamp": "2026-03-07T03:32:14.840Z"
+    },
+    {
+      "name": "round7-open-session-a",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 Opening A"
+      },
+      "timestamp": "2026-03-07T03:32:18.774Z"
+    },
+    {
+      "name": "round7-slash-direct",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 SlashPathMessage"
+      },
+      "timestamp": "2026-03-07T03:32:18.853Z"
+    },
+    {
+      "name": "round7-refresh-persistence",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 SlashPathMessage"
+      },
+      "timestamp": "2026-03-07T03:32:20.388Z"
+    },
+    {
+      "name": "round7-session-b-opened",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 Opening B"
+      },
+      "timestamp": "2026-03-07T03:32:22.129Z"
+    },
+    {
+      "name": "round7-session-isolation",
+      "passed": true,
+      "detail": {
+        "leakedCount": 0
+      },
+      "timestamp": "2026-03-07T03:32:22.135Z"
+    },
+    {
+      "name": "round8-open-session-plain",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 Opening Plain"
+      },
+      "timestamp": "2026-03-07T03:32:23.628Z"
+    },
+    {
+      "name": "round8-plain-input-401",
+      "passed": true,
+      "detail": {
+        "status": 401
+      },
+      "timestamp": "2026-03-07T03:32:23.688Z"
+    },
+    {
+      "name": "round8-pre-refresh-message-visible",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 Plain401 Message A3"
+      },
+      "timestamp": "2026-03-07T03:32:23.710Z"
+    },
+    {
+      "name": "round8-refresh-persistence",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 Plain401 Message A3"
+      },
+      "timestamp": "2026-03-07T03:32:25.198Z"
+    },
+    {
+      "name": "round9-open-session-a",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 Opening A"
+      },
+      "timestamp": "2026-03-07T03:32:26.745Z"
+    },
+    {
+      "name": "round9-floor-teleport-anchor",
+      "passed": true,
+      "detail": {
+        "callCount": 1,
+        "firstCall": [
+          {
+            "behavior": "smooth",
+            "block": "center"
+          }
+        ]
+      },
+      "timestamp": "2026-03-07T03:32:26.779Z"
+    },
+    {
+      "name": "round9-floor-teleport-refresh",
+      "passed": true,
+      "detail": {
+        "callCount": 1,
+        "firstCall": [
+          {
+            "behavior": "smooth",
+            "block": "center"
+          }
+        ]
+      },
+      "timestamp": "2026-03-07T03:32:28.403Z"
+    },
+    {
+      "name": "round9-proxy-switch-success",
+      "passed": true,
+      "detail": {
+        "targetPresetId": "cfg-reverse",
+        "snapshot": {
+          "activeConfigId": "cfg-reverse",
+          "llmType": "openai",
+          "modelName": "gpt-4.1-mini",
+          "modelBaseUrl": "https://api.openai.com/v1",
+          "openaiModel": "gpt-4.1-mini",
+          "openaiBaseUrl": "https://api.openai.com/v1",
+          "openaiApiKey": "sk-reverse"
+        }
+      },
+      "timestamp": "2026-03-07T03:32:28.442Z"
+    },
+    {
+      "name": "round9-yt-script-provider-success",
+      "passed": true,
+      "detail": {
+        "callCount": 1,
+        "firstCall": {
+          "urlOrId": "https://youtu.be/dQw4w9WgXcQ",
+          "options": {
+            "lang": "ja"
+          }
+        }
+      },
+      "timestamp": "2026-03-07T03:32:29.283Z"
+    },
+    {
+      "name": "round10-open-session-a",
+      "passed": true,
+      "detail": {
+        "text": "P4 Round10 Opening A"
+      },
+      "timestamp": "2026-03-07T03:32:30.912Z"
+    },
+    {
+      "name": "round10-translate-provider-success",
+      "passed": true,
+      "detail": {
+        "callCount": 1,
+        "firstCall": {
+          "text": "P4 Round10 Translate Input",
+          "options": {
+            "target": "zh",
+            "provider": "session-host"
+          }
+        }
+      },
+      "timestamp": "2026-03-07T03:32:30.958Z"
+    },
+    {
+      "name": "noise-baseline-diff",
+      "passed": true,
+      "detail": {
+        "unknownSignatureCount": 0,
+        "report": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r12-1772854328527/round10-noise-baseline-report.md"
+      },
+      "timestamp": "2026-03-07T03:32:31.001Z"
+    }
+  ],
+  "runDir": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r12-1772854328527",
+  "startedDevServer": true,
+  "noiseBaseline": {
+    "baselineVersion": 1,
+    "console": {
+      "total": 20,
+      "known": [
+        {
+          "id": "console-llm-method-failed",
+          "classification": "expected-failfast",
+          "count": 2,
+          "sample": "error|Method execution failed: invokeLLM Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/ at APIErro"
+        },
+        {
+          "id": "console-llm-openai-error",
+          "classification": "expected-failfast",
+          "count": 2,
+          "sample": "error|Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/ at APIError.generate (http://127.0.0.1:3303/_"
+        },
+        {
+          "id": "console-missing-node-tools",
+          "classification": "known-noise",
+          "count": 8,
+          "sample": "warning|找不到节点类型的工具类: userInput"
+        },
+        {
+          "id": "console-resource-401",
+          "classification": "expected-failfast",
+          "count": 2,
+          "sample": "error|Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+        },
+        {
+          "id": "console-resource-404",
+          "classification": "known-noise",
+          "count": 4,
+          "sample": "error|Failed to load resource: the server responded with a status of 404 (Not Found)"
+        },
+        {
+          "id": "console-stream-no-response",
+          "classification": "expected-failfast",
+          "count": 2,
+          "sample": "error|Streaming error: Error: No response returned from workflow at Object.start (http://127.0.0.1:3303/_next/static/chunks/_d19d2e49._.js:672:27)"
+        }
+      ],
+      "unknown": []
+    },
+    "network": {
+      "total": 35,
+      "known": [
+        {
+          "id": "network-background-404",
+          "classification": "known-noise",
+          "count": 4,
+          "sample": "response|404|GET|http://127.0.0.1:3303/background_red.png"
+        },
+        {
+          "id": "network-ga-request-aborted",
+          "classification": "known-noise",
+          "count": 27,
+          "sample": "requestfailed|none|POST|https://www.google-analytics.com/g/collect"
+        },
+        {
+          "id": "network-openai-mock-401",
+          "classification": "expected-failfast",
+          "count": 2,
+          "sample": "mock|401|POST|https://api.openai.com/v1/chat/completions"
+        },
+        {
+          "id": "network-openai-response-401",
+          "classification": "expected-failfast",
+          "count": 2,
+          "sample": "response|401|POST|https://api.openai.com/v1/chat/completions"
+        }
+      ],
+      "unknown": []
+    },
+    "ruleAudit": {
+      "console": {
+        "totalRules": 6,
+        "matchedRuleCount": 6,
+        "allRuleIds": [
+          "console-resource-404",
+          "console-resource-401",
+          "console-llm-method-failed",
+          "console-llm-openai-error",
+          "console-stream-no-response",
+          "console-missing-node-tools"
+        ],
+        "matchedRuleIds": [
+          "console-llm-method-failed",
+          "console-llm-openai-error",
+          "console-missing-node-tools",
+          "console-resource-401",
+          "console-resource-404",
+          "console-stream-no-response"
+        ],
+        "unusedRuleIds": []
+      },
+      "network": {
+        "totalRules": 5,
+        "matchedRuleCount": 4,
+        "allRuleIds": [
+          "network-openai-mock-401",
+          "network-openai-response-401",
+          "network-background-404",
+          "network-ga-request-aborted",
+          "network-session-rsc-aborted"
+        ],
+        "matchedRuleIds": [
+          "network-background-404",
+          "network-ga-request-aborted",
+          "network-openai-mock-401",
+          "network-openai-response-401"
+        ],
+        "unusedRuleIds": [
+          "network-session-rsc-aborted"
+        ]
+      }
+    },
+    "hasNewNoise": false,
+    "unknownSignatureCount": 0
+  },
+  "summaryPath": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r12-1772854328527/summary.md",
+  "noiseReportPath": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r12-1772854328527/round10-noise-baseline-report.md",
+  "runIndex": {
+    "jsonPath": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.json",
+    "markdownPath": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.md",
+    "staleRuleCount": 0
+  }
+}

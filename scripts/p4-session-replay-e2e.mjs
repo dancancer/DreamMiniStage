@@ -18,9 +18,9 @@ import {
 } from "./p4-session-replay-lib.mjs";
 
 // ============================================================================
-// P4 /session Replay（round7 + round8 + round9）
+// P4 /session Replay（round7 + round8 + round9 + round10）
 // 目标：单命令复验 slash 直达、刷新持久化、会话隔离、401 失败链路、
-//       以及高价值 slash 宿主 wiring（floor-teleport/proxy/yt-script）。
+//       以及高价值 slash 宿主 wiring（floor-teleport/proxy/yt-script/translate）。
 // ============================================================================
 
 const __filename = fileURLToPath(import.meta.url);
@@ -53,6 +53,10 @@ const CHECK_TIMEOUT_MS = 25_000;
 const ROUND9_YT_TARGET = "https://youtu.be/dQw4w9WgXcQ";
 const ROUND9_YT_LANG = "ja";
 const ROUND9_TRANSCRIPT_SAMPLE = "P4 Round10 Transcript Line 1\nP4 Round10 Transcript Line 2";
+const ROUND10_TRANSLATE_TEXT = "P4 Round10 Translate Input";
+const ROUND10_TRANSLATE_TARGET = "zh";
+const ROUND10_TRANSLATE_PROVIDER = "session-host";
+const ROUND10_TRANSLATE_SAMPLE = "P4 Round10 Translate Output";
 const ROUND9_PROXY_PRESETS = [
   {
     id: "cfg-default",
@@ -499,6 +503,75 @@ async function expectYouTubeProviderTriggered(page, expectedUrl, expectedLang, c
   });
 }
 
+async function installTranslateProviderProbe(page) {
+  await page.evaluate((translateSample) => {
+    window.__p4TranslateProbe = { calls: [] };
+    const existingHost = window.__DREAMMINISTAGE_SESSION_HOST__;
+
+    window.__DREAMMINISTAGE_SESSION_HOST__ = {
+      ...(existingHost && typeof existingHost === "object" ? existingHost : {}),
+      translateText: (text, options) => {
+        window.__p4TranslateProbe.calls.push({
+          text,
+          options: options || null,
+        });
+        return translateSample;
+      },
+    };
+  }, ROUND10_TRANSLATE_SAMPLE);
+}
+
+async function expectTranslateProviderTriggered(
+  page,
+  expectedText,
+  expectedTarget,
+  expectedProvider,
+  checkpointName,
+) {
+  await page.waitForFunction(() => {
+    const probe = window.__p4TranslateProbe;
+    return Boolean(probe && Array.isArray(probe.calls) && probe.calls.length > 0);
+  }, undefined, { timeout: CHECK_TIMEOUT_MS });
+
+  const probeResult = await page.evaluate(() => {
+    const probe = window.__p4TranslateProbe;
+    if (!probe) return null;
+    return {
+      callCount: probe.calls.length,
+      firstCall: probe.calls[0] || null,
+    };
+  });
+
+  if (!probeResult?.firstCall) {
+    throw new Error("translate probe captured no host callback");
+  }
+
+  if (probeResult.firstCall.text !== expectedText) {
+    throw new Error(
+      `translate text mismatch: expected ${expectedText}, got ${probeResult.firstCall.text}`,
+    );
+  }
+
+  const actualTarget = probeResult.firstCall.options?.target || null;
+  if (actualTarget !== expectedTarget) {
+    throw new Error(
+      `translate target mismatch: expected ${expectedTarget}, got ${actualTarget}`,
+    );
+  }
+
+  const actualProvider = probeResult.firstCall.options?.provider || null;
+  if (actualProvider !== expectedProvider) {
+    throw new Error(
+      `translate provider mismatch: expected ${expectedProvider}, got ${actualProvider}`,
+    );
+  }
+
+  addCheckpoint(checkpointName, true, {
+    callCount: probeResult.callCount,
+    firstCall: probeResult.firstCall,
+  });
+}
+
 async function runRound9(page, payload, files) {
   await page.goto(`${BASE_URL}/session?id=${encodeURIComponent(payload.ids.sessionAId)}`, { waitUntil: "domcontentloaded" });
   await expectText(page, "P4 Round10 Opening A", "round9-open-session-a");
@@ -534,6 +607,27 @@ async function runRound9(page, payload, files) {
     "round9-yt-script-provider-success",
   );
   await page.screenshot({ path: files.round9YtProvider, fullPage: true });
+}
+
+async function runRound10(page, payload, files) {
+  await page.goto(`${BASE_URL}/session?id=${encodeURIComponent(payload.ids.sessionAId)}`, {
+    waitUntil: "domcontentloaded",
+  });
+  await expectText(page, "P4 Round10 Opening A", "round10-open-session-a");
+
+  await installTranslateProviderProbe(page);
+  await submitInput(
+    page,
+    `/translate target=${ROUND10_TRANSLATE_TARGET} provider=${ROUND10_TRANSLATE_PROVIDER} ${ROUND10_TRANSLATE_TEXT}`,
+  );
+  await expectTranslateProviderTriggered(
+    page,
+    ROUND10_TRANSLATE_TEXT,
+    ROUND10_TRANSLATE_TARGET,
+    ROUND10_TRANSLATE_PROVIDER,
+    "round10-translate-provider-success",
+  );
+  await page.screenshot({ path: files.round10TranslateProvider, fullPage: true });
 }
 
 async function main() {
@@ -623,6 +717,7 @@ async function main() {
     await runRound7(page, payload, files);
     await runRound8(page, payload, files);
     await runRound9(page, payload, files);
+    await runRound10(page, payload, files);
 
     noiseReport = await buildNoiseReport(files);
     addCheckpoint("noise-baseline-diff", !noiseReport.hasNewNoise, {

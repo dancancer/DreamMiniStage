@@ -432,6 +432,41 @@ describe("Session page slash integration", () => {
     unmountPage(rendered);
   });
 
+  it("executes /translate through injected session host bridge", async () => {
+    const translateText = vi.fn().mockResolvedValue("こんにちは");
+    (window as Window & {
+      __DREAMMINISTAGE_SESSION_HOST__?: { translateText?: typeof translateText };
+    }).__DREAMMINISTAGE_SESSION_HOST__ = {
+      translateText,
+    };
+
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/translate target=ja provider=mocker hello world");
+
+    expect(translateText).toHaveBeenCalledWith("hello world", {
+      target: "ja",
+      provider: "mocker",
+    });
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("surfaces explicit fail-fast host errors for unwired /translate", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/translate hello world");
+
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      expect.stringContaining("/translate is not wired in /session host yet"),
+    );
+
+    unmountPage(rendered);
+  });
+
   it("executes /yt-script through injected session host bridge", async () => {
     const getYouTubeTranscript = vi.fn().mockResolvedValue("line-1\nline-2");
     (window as Window & {

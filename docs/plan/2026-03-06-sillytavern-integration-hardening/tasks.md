@@ -42,3 +42,9 @@
 - [x] round9 将 `/proxy` 从 fail-fast 断言升级为“真实 preset 成功切换”断言，并校验 localStorage 同步字段。
 - [x] round9 新增 `/yt-script` provider 成功回放场景，断言 URL/lang 透传到宿主桥接回调。
 - [x] replay 产物清单与 summary 同步更新，新增 `round9-proxy-switch-pass.png` 与 `round9-yt-script-provider-pass.png`。
+
+## 7. Extension Provider 双命令闭环（2026-03-07 当前轮）
+
+- [x] 页面级集成测试补齐 `/translate` 成对守卫：provider 成功 + 未注入 fail-fast。
+- [x] `scripts/p4-session-replay-e2e.mjs` 新增 round10 `/translate` provider 成功回放，断言 text/target/provider 透传正确。
+- [x] replay 产物与 summary 清单新增 `round10-translate-provider-pass.png`，并完成一次新 run 回归。
