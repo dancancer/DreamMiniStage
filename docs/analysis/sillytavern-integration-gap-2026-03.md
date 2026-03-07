@@ -1,6 +1,6 @@
 # DreamMiniStage 对齐审计（最新）
 
-> 更新日期：2026-03-06  
+> 更新日期：2026-03-07  
 > 数据来源：`docs/analysis/sillytavern-gap-report-latest.json` + `docs/analysis/sillytavern-gap-report-latest.md`
 
 ## 1. 结论摘要
@@ -75,7 +75,7 @@
 6. 顺手修补了 Script Bridge Hook 注入漂移：`useScriptBridge` 现在会实际透传 `tempchat/translate/timed-effect` 相关回调，以及新增的 `proxy/yt-script` 注入位。
 7. `/session` 宿主接通继续推进：
    - 已接通：`/tempchat`、`/floor-teleport`、`/proxy`（接 `model-store` 读取/切换 preset，并同步 LLM storage）。
-   - Provider 模式接通：`/translate`、`/yt-script`（走 `window.__DREAMMINISTAGE_SESSION_HOST__`，宿主注入可成功；未注入保持显式 fail-fast）。
+   - Provider 模式接通：`/translate`、`/yt-script`（走 `window.__DREAMMINISTAGE_SESSION_HOST__`，宿主注入可成功；未注入保持显式 fail-fast；正式协议见 `docs/analysis/session-host-bridge/README.md`）。
    - 继续 fail-fast：`/wi-get-timed-effect`、`/wi-set-timed-effect`。
 8. 新增 bridge 注入完整性契约测试，直接守护 `CharacterChatPanel -> useScriptBridge -> ApiCallContext -> ExecutionContext` 的高价值注入位，避免再出现组件边界漏传。
 9. `/session` 页面级最小集成用例已补齐：新增 refresh-remount 场景，验证同一会话在刷新后仍可稳定执行 `/floor-teleport` 并命中消息锚点。
@@ -110,6 +110,6 @@
 
 ## 6. 下一阶段目标（短周期）
 
-1. 为 `/translate` 与 `/yt-script` 选定并落地默认 provider（或正式宿主注入协议），将当前“可注入成功”推进为“默认可用成功”。
+1. 为 `/translate` 与 `/yt-script` 选定并落地默认 provider；宿主注入协议已正式收口到 `docs/analysis/session-host-bridge/README.md`，下一步应把“可注入成功”推进为“默认可用成功”。
 2. 将 P4 round9 从 `/proxy` fail-fast 断言升级为 `/proxy` 成功切换断言，并补充 `/yt-script` provider 成功回放。
 3. `wi-* timed effect` 继续保持显式 fail-fast，直到 chat metadata 设计冻结后再接通，避免回退到多分支兼容路径。

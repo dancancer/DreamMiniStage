@@ -32,6 +32,10 @@
   - round12 在负向断言前先显式执行一次 `/proxy Default Proxy`，将回放状态重置到已知 preset，随后校验 bad preset 失败后 `model-config-storage + llmType/model/baseUrl/apiKey` 保持不变。
   - `scripts/p4-session-replay-lib.mjs` 产物清单与 summary 文案同步更新，新增截图产物：
     - `round12-proxy-unknown-preset-failfast-pass.png`
+- 本轮（Session Host 协议收口）已完成：
+  - 新增 `app/session/session-host-bridge.ts`，统一管理 `window.__DREAMMINISTAGE_SESSION_HOST__`、`translateText`、`getYouTubeTranscript` 与宿主错误明细路径，去掉 `page.tsx` 内散落的局部协议定义。
+  - 新增正式协议文档 `docs/analysis/session-host-bridge/README.md`，明确 `/translate` 与 `/yt-script` 的宿主方法签名、fail-fast 语义、推荐注入方式与兼容性边界。
+  - 新增协议级单测 `app/session/__tests__/session-host-bridge.test.ts`，并让页面级集成测试复用统一 bridge key，避免测试代码与页面实现漂移。
 - Replay 回归现状：
   - 最新通过 run：`p4r14-1772882882394`。
   - 产物目录：`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r14-1772882882394`。
@@ -40,14 +44,14 @@
   - `app/session/page.tsx` 将 `currentCharacter` 改为 `useMemo`，消除 render 周期对象重建导致的 effect 高频触发。
 - `/session` 宿主能力清单（最新）：
   - 已接通：`tempchat`、`floor-teleport`、`proxy`。
-  - provider 模式接通：`translate`、`yt-script`（依赖 `window.__DREAMMINISTAGE_SESSION_HOST__` 注入真实能力）。
+  - provider 模式接通：`translate`、`yt-script`（依赖 `window.__DREAMMINISTAGE_SESSION_HOST__` 注入真实能力；正式协议见 `docs/analysis/session-host-bridge/README.md`）。
   - 故意 fail-fast：`wi-get-timed-effect`、`wi-set-timed-effect`。
 - 本轮已验证：
-  - `pnpm vitest run app/session/__tests__/page.slash-integration.test.tsx`
-  - `pnpm p4:session-replay`（最新 run：`p4r14-1772882882394`）
+  - `pnpm vitest run app/session/__tests__/page.slash-integration.test.tsx app/session/__tests__/session-host-bridge.test.ts`
+  - `pnpm p4:session-replay`（最新 run：`p4r14-1772882882394`，本轮未重跑）
 
 ## 推荐下一步
 
-1. 为 `translate / yt-script` 选定默认 provider，或至少补一份正式的 `window.__DREAMMINISTAGE_SESSION_HOST__` 协议文档，把“可注入成功”推进到“默认可用成功”。
-2. 若继续扩 replay，优先把宿主桥接协议文档里的默认 provider 场景做成固定种子，避免 provider 成功路径只依赖临时注入探针。
+1. 在真实宿主侧为 `translate / yt-script` 选定默认 provider，并按 `docs/analysis/session-host-bridge/README.md` 的协议实现固定注入。
+2. 把默认 provider 场景做成 replay 固定种子，逐步替换当前成功路径里的临时探针注入。
 3. `wi-* timed effect` 继续维持显式 fail-fast，先冻结 metadata 结构，再一次性接通，避免临时兼容分支。

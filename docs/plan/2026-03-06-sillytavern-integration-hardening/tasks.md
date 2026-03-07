@@ -21,7 +21,7 @@
 - [x] 复用 `scripts/p4-session-replay-e2e.mjs` 增加新的 `/session` replay 场景。
   - 已新增 round9：覆盖 `/floor-teleport` 锚点滚动与 `/proxy` fail-fast 错误链路。
 - [x] 让 replay 覆盖 slash 执行、refresh 持久化、session 隔离、失败链路。
-  - round7/8 保持 slash 直达 + refresh + session 隔离 + 401 失败链路；round9-11 补宿主 wiring 的成功/失败路径。
+  - round7/8 保持 slash 直达 + refresh + session 隔离 + 401 失败链路；round9-12 补宿主 wiring 的成功/失败路径。
 - [x] 将产物写入现有 artifacts 目录，并更新 run index。
   - 最新通过 run：`p4r14-1772882882394`（`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/`）。
 
@@ -60,4 +60,10 @@
 - [x] `scripts/p4-session-replay-e2e.mjs` 新增 round12 `/proxy missing-profile` fail-fast 回放，断言页面显式暴露 `/proxy preset not found`。
 - [x] round12 在负向断言前先显式切回默认 preset，并校验 bad preset 失败后 `model-config-storage + llmType/model/baseUrl/apiKey` 保持不变，避免回放受上轮成功切换状态污染。
 - [x] replay 产物与 summary 清单新增 `round12-proxy-unknown-preset-failfast-pass.png`，并完成一次新 run 回归（`p4r14-1772882882394`）。
+
+## 10. Session Host Protocol 收口（2026-03-07 当前轮）
+
+- [x] 新增 `app/session/session-host-bridge.ts`，统一收口 `/session` 宿主桥接 window key、方法签名与错误明细路径，移除 `page.tsx` 内散落的局部协议定义。
+- [x] 新增 `docs/analysis/session-host-bridge/README.md` 作为正式协议文档，并同步更新 `app/session/README.md` 与 `docs/analysis/README.md` 入口。
+- [x] 新增协议级单测 `app/session/__tests__/session-host-bridge.test.ts`，并让页面级集成测试复用统一 bridge key，避免测试与页面协议漂移。
 

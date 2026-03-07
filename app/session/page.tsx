@@ -40,6 +40,10 @@ import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-re
 import { setString } from "@/lib/storage/client-storage";
 import { DialogueNode, DialogueTree } from "@/lib/models/node-model";
 import { buildSwitchedSessionName, buildTemporarySessionName } from "@/app/session/session-switch";
+import {
+  buildSessionSlashHostBridgeDetail,
+  resolveSessionSlashHostBridge,
+} from "@/app/session/session-host-bridge";
 import { executeSlashCommandScript } from "@/lib/slash-command";
 import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
@@ -142,17 +146,6 @@ function buildSessionSlashHostError(commandName: string, detail: string): Error 
   return new Error(`${commandName} is not wired in /session host yet: ${detail}`);
 }
 
-type SessionSlashHostBridge = {
-  translateText?: (
-    text: string,
-    options?: TranslateTextOptions,
-  ) => string | Promise<string>;
-  getYouTubeTranscript?: (
-    urlOrId: string,
-    options?: YouTubeTranscriptOptions,
-  ) => string | Promise<string>;
-};
-
 const MODEL_STORAGE_KEYS: Record<APIConfig["type"], {
   model: string;
   baseUrl: string;
@@ -177,22 +170,6 @@ function syncModelConfigToStorage(config: APIConfig): void {
       setString("apiKey", config.apiKey);
     }
   }
-}
-
-function resolveSessionSlashHostBridge(): SessionSlashHostBridge | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const candidate = (
-    window as Window & { __DREAMMINISTAGE_SESSION_HOST__?: SessionSlashHostBridge }
-  ).__DREAMMINISTAGE_SESSION_HOST__;
-
-  if (!candidate || typeof candidate !== "object") {
-    return null;
-  }
-
-  return candidate;
 }
 
 function getSessionMessageSelector(index: number): string {
@@ -512,9 +489,9 @@ function SessionPageContent() {
     text: string,
     options?: TranslateTextOptions,
   ): Promise<string> => {
-    const hostBridge = resolveSessionSlashHostBridge();
+    const hostBridge = resolveSessionSlashHostBridge(typeof window === "undefined" ? null : window);
     if (!hostBridge?.translateText) {
-      throw buildSessionSlashHostError("/translate", "window.__DREAMMINISTAGE_SESSION_HOST__.translateText");
+      throw buildSessionSlashHostError("/translate", buildSessionSlashHostBridgeDetail("translateText"));
     }
 
     const translated = await Promise.resolve(hostBridge.translateText(text, options));
@@ -528,9 +505,9 @@ function SessionPageContent() {
     urlOrId: string,
     options?: YouTubeTranscriptOptions,
   ): Promise<string> => {
-    const hostBridge = resolveSessionSlashHostBridge();
+    const hostBridge = resolveSessionSlashHostBridge(typeof window === "undefined" ? null : window);
     if (!hostBridge?.getYouTubeTranscript) {
-      throw buildSessionSlashHostError("/yt-script", "window.__DREAMMINISTAGE_SESSION_HOST__.getYouTubeTranscript");
+      throw buildSessionSlashHostError("/yt-script", buildSessionSlashHostBridgeDetail("getYouTubeTranscript"));
     }
 
     const transcript = await Promise.resolve(hostBridge.getYouTubeTranscript(urlOrId, options));

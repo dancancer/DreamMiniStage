@@ -2,6 +2,10 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import SessionPage from "../page";
+import {
+  SESSION_HOST_BRIDGE_WINDOW_KEY,
+  type SessionSlashHostBridge,
+} from "../session-host-bridge";
 
 type ModelStoreState = {
   configs: Array<{
@@ -305,6 +309,10 @@ interface RenderedPage {
   root: Root;
 }
 
+type SessionHostWindow = Window & {
+  [SESSION_HOST_BRIDGE_WINDOW_KEY]?: SessionSlashHostBridge;
+};
+
 function renderPage(): RenderedPage {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -315,6 +323,16 @@ function renderPage(): RenderedPage {
   });
 
   return { container, root };
+}
+
+function setSessionSlashHostBridge(bridge?: SessionSlashHostBridge): void {
+  const sessionWindow = window as SessionHostWindow;
+  if (!bridge) {
+    delete sessionWindow[SESSION_HOST_BRIDGE_WINDOW_KEY];
+    return;
+  }
+
+  sessionWindow[SESSION_HOST_BRIDGE_WINDOW_KEY] = bridge;
 }
 
 async function flushEffects(): Promise<void> {
@@ -362,7 +380,7 @@ describe("Session page slash integration", () => {
     mocks.modelStoreState.configs = buildModelConfigs();
     mocks.modelStoreState.activeConfigId = "cfg-default";
     window.localStorage.clear();
-    delete (window as Window & { __DREAMMINISTAGE_SESSION_HOST__?: unknown }).__DREAMMINISTAGE_SESSION_HOST__;
+    setSessionSlashHostBridge();
   });
 
   it("executes /tempchat through page host wiring and navigates to the new temp session", async () => {
@@ -434,11 +452,9 @@ describe("Session page slash integration", () => {
 
   it("executes /translate through injected session host bridge", async () => {
     const translateText = vi.fn().mockResolvedValue("こんにちは");
-    (window as Window & {
-      __DREAMMINISTAGE_SESSION_HOST__?: { translateText?: typeof translateText };
-    }).__DREAMMINISTAGE_SESSION_HOST__ = {
+    setSessionSlashHostBridge({
       translateText,
-    };
+    });
 
     const rendered = renderPage();
     await flushEffects();
@@ -469,11 +485,9 @@ describe("Session page slash integration", () => {
 
   it("executes /yt-script through injected session host bridge", async () => {
     const getYouTubeTranscript = vi.fn().mockResolvedValue("line-1\nline-2");
-    (window as Window & {
-      __DREAMMINISTAGE_SESSION_HOST__?: { getYouTubeTranscript?: typeof getYouTubeTranscript };
-    }).__DREAMMINISTAGE_SESSION_HOST__ = {
+    setSessionSlashHostBridge({
       getYouTubeTranscript,
-    };
+    });
 
     const rendered = renderPage();
     await flushEffects();
