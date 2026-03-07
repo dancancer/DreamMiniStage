@@ -85,3 +85,9 @@
 - [x] `/session` 为 `/wi-get-timed-effect` 与 `/wi-set-timed-effect` 提供真实宿主路径，并补齐页面级 / 单元级守卫：正常读写、配置缺失 fail-fast、JSONL metadata 兼容。
 - [x] round13 replay 新增 `wi-set-timed-effect` 成功 + fail-fast 回放，并完成一次新 run 回归（`p4r16-1772897017969`）。
 
+## 14. 收尾清理（2026-03-07 当前轮）
+
+- [x] replay 旧 run 目录已瘦身，只保留当前最终有效 run `p4r16-1772897017969`，其余历史产物回收到 git 历史。
+- [x] `p4-session-replay-run-index.json/.md` 已重建为仅跟踪最终有效 run，清除陈旧 stale rule 噪声。
+- [x] 清理 `openspec` 残留：仓库不存在 `openspec/` 目录，故同步收口 `.gitignore` 与 `AGENTS.md` 中对应的过期规则块。
+

@@ -69,8 +69,13 @@
   - `pnpm typecheck`
   - `pnpm p4:session-replay`（最新 run：`p4r16-1772897017969`）
 
+- 本轮（收尾清理）已完成：
+  - replay 旧 run 目录已瘦身：仅保留当前最终有效 run `p4r16-1772897017969`，其余历史产物从工作树移除，仍可通过 git 历史追溯。
+  - `p4-session-replay-run-index.json/.md` 已重建为单 run 视图，只跟踪最终有效 run，避免旧 run 与 stale rule 继续污染收尾状态。
+  - 仓库内不存在 `openspec/` 目录，因此 `.gitignore` 与 `AGENTS.md` 中对应的过期残留已一并清理。
+
 ## 推荐下一步
 
 1. 观察 `/yt-script` 默认 backend 在真实视频类型上的稳定性；如果 `Jina Reader -> active model` 对长视频或无描述视频误判偏高，再决定是否引入专门 transcript backend。
-2. 保持 `/translate`、`/yt-script`、`/wi-set-timed-effect` 的固定种子 replay，避免回到临时探针或多路径状态存储。
-3. 清理 replay 旧产物与陈旧 run 目录，只保留有效 run 集，准备收尾归档。
+2. 若要正式封板，可仅保留当前 handoff/analysis 文档并停止新增 replay 变体，进入观察期。
+3. 若后续还有需求变更，再以当前 `p4r16-1772897017969` 为新的回归基线继续迭代。

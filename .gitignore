@@ -61,7 +61,6 @@ Sgw3.card.json
 Sgw3.png
 TODO.md
 .kiro
-/openspec/
 /test-baseline-assets/
 lib/core/__tests__/prompt-assembly-output.json
 /sillytavern-plugins
