@@ -18,9 +18,10 @@ import {
 } from "./p4-session-replay-lib.mjs";
 
 // ============================================================================
-// P4 /session Replay（round7 + round8 + round9 + round10）
+// P4 /session Replay（round7 + round8 + round9 + round10 + round11）
 // 目标：单命令复验 slash 直达、刷新持久化、会话隔离、401 失败链路、
-//       以及高价值 slash 宿主 wiring（floor-teleport/proxy/yt-script/translate）。
+//       高价值 slash 宿主 wiring（floor-teleport/proxy/yt-script/translate），
+//       以及 provider 未注入时的显式 fail-fast。
 // ============================================================================
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,7 +30,7 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 
 const BASE_URL = process.env.P4_BASE_URL || "http://127.0.0.1:3303";
 const HEADLESS = process.env.P4_HEADLESS !== "false";
-const RUN_ID = process.env.P4_RUN_ID || `p4r12-${Date.now()}`;
+const RUN_ID = process.env.P4_RUN_ID || `p4r13-${Date.now()}`;
 const ARTIFACT_ROOT = path.resolve(
   REPO_ROOT,
   process.env.P4_ARTIFACT_ROOT || "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts",
@@ -57,6 +58,8 @@ const ROUND10_TRANSLATE_TEXT = "P4 Round10 Translate Input";
 const ROUND10_TRANSLATE_TARGET = "zh";
 const ROUND10_TRANSLATE_PROVIDER = "session-host";
 const ROUND10_TRANSLATE_SAMPLE = "P4 Round10 Translate Output";
+const ROUND11_TRANSLATE_TEXT = "P4 Round11 Translate FailFast";
+const ROUND11_YT_TARGET = "https://youtu.be/dQw4w9WgXcQ";
 const ROUND9_PROXY_PRESETS = [
   {
     id: "cfg-default",
@@ -630,6 +633,32 @@ async function runRound10(page, payload, files) {
   await page.screenshot({ path: files.round10TranslateProvider, fullPage: true });
 }
 
+async function runRound11(page, payload, files) {
+  await page.goto(`${BASE_URL}/session?id=${encodeURIComponent(payload.ids.sessionAId)}`, {
+    waitUntil: "domcontentloaded",
+  });
+  await expectText(page, "P4 Round10 Opening A", "round11-open-session-a");
+
+  await submitInput(page, `/translate ${ROUND11_TRANSLATE_TEXT}`);
+  await expectText(
+    page,
+    "/translate is not wired in /session host yet",
+    "round11-translate-provider-failfast",
+  );
+  await page.screenshot({ path: files.round11TranslateFailFast, fullPage: true });
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expectText(page, "P4 Round10 Opening A", "round11-reload-session-a");
+
+  await submitInput(page, `/yt-script ${ROUND11_YT_TARGET}`);
+  await expectText(
+    page,
+    "/yt-script is not wired in /session host yet",
+    "round11-yt-script-provider-failfast",
+  );
+  await page.screenshot({ path: files.round11YtFailFast, fullPage: true });
+}
+
 async function main() {
   const startedAt = nowIso();
   const files = artifactPaths(RUN_DIR);
@@ -718,6 +747,7 @@ async function main() {
     await runRound8(page, payload, files);
     await runRound9(page, payload, files);
     await runRound10(page, payload, files);
+    await runRound11(page, payload, files);
 
     noiseReport = await buildNoiseReport(files);
     addCheckpoint("noise-baseline-diff", !noiseReport.hasNewNoise, {

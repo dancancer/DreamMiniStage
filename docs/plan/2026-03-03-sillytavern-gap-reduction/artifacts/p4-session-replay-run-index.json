@@ -1,10 +1,24 @@
 {
   "version": 1,
-  "generatedAt": "2026-03-07T03:32:31.012Z",
+  "generatedAt": "2026-03-07T06:10:27.209Z",
   "staleMissThreshold": 3,
   "maxRuns": 60,
-  "latestRunId": "p4r12-1772854328527",
+  "latestRunId": "p4r13-1772863786323",
   "runs": [
+    {
+      "runId": "p4r13-1772863786323",
+      "startedAt": "2026-03-07T06:09:46.324Z",
+      "finishedAt": "2026-03-07T06:10:27.206Z",
+      "durationMs": 40882,
+      "allPassed": true,
+      "checkpointTotal": 22,
+      "checkpointPassed": 22,
+      "unknownSignatureCount": 0,
+      "hasNewNoise": false,
+      "runDir": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r13-1772863786323",
+      "summaryPath": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r13-1772863786323/summary.md",
+      "noiseReportPath": "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r13-1772863786323/round11-noise-baseline-report.md"
+    },
     {
       "runId": "p4r12-1772854328527",
       "startedAt": "2026-03-07T03:32:08.527Z",
@@ -51,72 +65,72 @@
   "ruleHealth": {
     "console": {
       "console-resource-404": {
-        "totalHits": 3,
+        "totalHits": 4,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r12-1772854328527",
-        "lastHitAt": "2026-03-07T03:32:31.012Z"
+        "lastHitRunId": "p4r13-1772863786323",
+        "lastHitAt": "2026-03-07T06:10:27.206Z"
       },
       "console-resource-401": {
-        "totalHits": 3,
+        "totalHits": 4,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r12-1772854328527",
-        "lastHitAt": "2026-03-07T03:32:31.012Z"
+        "lastHitRunId": "p4r13-1772863786323",
+        "lastHitAt": "2026-03-07T06:10:27.206Z"
       },
       "console-llm-method-failed": {
-        "totalHits": 3,
+        "totalHits": 4,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r12-1772854328527",
-        "lastHitAt": "2026-03-07T03:32:31.012Z"
+        "lastHitRunId": "p4r13-1772863786323",
+        "lastHitAt": "2026-03-07T06:10:27.206Z"
       },
       "console-llm-openai-error": {
-        "totalHits": 3,
+        "totalHits": 4,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r12-1772854328527",
-        "lastHitAt": "2026-03-07T03:32:31.012Z"
+        "lastHitRunId": "p4r13-1772863786323",
+        "lastHitAt": "2026-03-07T06:10:27.206Z"
       },
       "console-stream-no-response": {
-        "totalHits": 3,
+        "totalHits": 4,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r12-1772854328527",
-        "lastHitAt": "2026-03-07T03:32:31.012Z"
+        "lastHitRunId": "p4r13-1772863786323",
+        "lastHitAt": "2026-03-07T06:10:27.206Z"
       },
       "console-missing-node-tools": {
-        "totalHits": 3,
+        "totalHits": 4,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r12-1772854328527",
-        "lastHitAt": "2026-03-07T03:32:31.012Z"
+        "lastHitRunId": "p4r13-1772863786323",
+        "lastHitAt": "2026-03-07T06:10:27.206Z"
       }
     },
     "network": {
       "network-openai-mock-401": {
-        "totalHits": 3,
+        "totalHits": 4,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r12-1772854328527",
-        "lastHitAt": "2026-03-07T03:32:31.012Z"
+        "lastHitRunId": "p4r13-1772863786323",
+        "lastHitAt": "2026-03-07T06:10:27.206Z"
       },
       "network-openai-response-401": {
-        "totalHits": 3,
+        "totalHits": 4,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r12-1772854328527",
-        "lastHitAt": "2026-03-07T03:32:31.012Z"
+        "lastHitRunId": "p4r13-1772863786323",
+        "lastHitAt": "2026-03-07T06:10:27.206Z"
       },
       "network-background-404": {
-        "totalHits": 3,
+        "totalHits": 4,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r12-1772854328527",
-        "lastHitAt": "2026-03-07T03:32:31.012Z"
+        "lastHitRunId": "p4r13-1772863786323",
+        "lastHitAt": "2026-03-07T06:10:27.206Z"
       },
       "network-ga-request-aborted": {
-        "totalHits": 3,
+        "totalHits": 4,
         "consecutiveMisses": 0,
-        "lastHitRunId": "p4r12-1772854328527",
-        "lastHitAt": "2026-03-07T03:32:31.012Z"
+        "lastHitRunId": "p4r13-1772863786323",
+        "lastHitAt": "2026-03-07T06:10:27.206Z"
       },
       "network-session-rsc-aborted": {
-        "totalHits": 1,
-        "consecutiveMisses": 2,
-        "lastHitRunId": "p4r11-1772804943599",
-        "lastHitAt": "2026-03-06T13:49:23.654Z"
+        "totalHits": 2,
+        "consecutiveMisses": 0,
+        "lastHitRunId": "p4r13-1772863786323",
+        "lastHitAt": "2026-03-07T06:10:27.206Z"
       }
     }
   },

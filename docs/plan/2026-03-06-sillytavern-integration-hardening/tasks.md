@@ -21,9 +21,9 @@
 - [x] 复用 `scripts/p4-session-replay-e2e.mjs` 增加新的 `/session` replay 场景。
   - 已新增 round9：覆盖 `/floor-teleport` 锚点滚动与 `/proxy` fail-fast 错误链路。
 - [x] 让 replay 覆盖 slash 执行、refresh 持久化、session 隔离、失败链路。
-  - round7/8 保持 slash 直达 + refresh + session 隔离 + 401 失败链路；round9 补宿主 wiring 路径。
+  - round7/8 保持 slash 直达 + refresh + session 隔离 + 401 失败链路；round9-11 补宿主 wiring 的成功/失败路径。
 - [x] 将产物写入现有 artifacts 目录，并更新 run index。
-  - 最新通过 run：`p4r11-1772804943599`（`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/`）。
+  - 最新通过 run：`p4r13-1772863786323`（`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/`）。
 
 ## 4. 文档 / 交接
 
@@ -48,3 +48,9 @@
 - [x] 页面级集成测试补齐 `/translate` 成对守卫：provider 成功 + 未注入 fail-fast。
 - [x] `scripts/p4-session-replay-e2e.mjs` 新增 round10 `/translate` provider 成功回放，断言 text/target/provider 透传正确。
 - [x] replay 产物与 summary 清单新增 `round10-translate-provider-pass.png`，并完成一次新 run 回归。
+
+## 8. Provider Fail-Fast Replay Guard（2026-03-07 当前轮）
+
+- [x] `scripts/p4-session-replay-e2e.mjs` 新增 round11 `/translate` 未注入 provider 的 fail-fast 回放，断言 `/session` 页面显式暴露错误。
+- [x] `scripts/p4-session-replay-e2e.mjs` 新增 round11 `/yt-script` 未注入 provider 的 fail-fast 回放，避免成功路径覆盖下的宿主缺失回归漏检。
+- [x] replay 产物与 summary 清单新增 `round11-translate-provider-failfast-pass.png`、`round11-yt-script-provider-failfast-pass.png`，并完成一次新 run 回归（`p4r13-1772863786323`）。
