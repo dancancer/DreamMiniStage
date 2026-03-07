@@ -18,10 +18,10 @@ import {
 } from "./p4-session-replay-lib.mjs";
 
 // ============================================================================
-// P4 /session Replay（round7 + round8 + round9 + round10 + round11）
+// P4 /session Replay（round7 + round8 + round9 + round10 + round11 + round12）
 // 目标：单命令复验 slash 直达、刷新持久化、会话隔离、401 失败链路、
 //       高价值 slash 宿主 wiring（floor-teleport/proxy/yt-script/translate），
-//       以及 provider 未注入时的显式 fail-fast。
+//       以及 provider 未注入 / proxy bad preset 的显式 fail-fast。
 // ============================================================================
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,7 +30,7 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 
 const BASE_URL = process.env.P4_BASE_URL || "http://127.0.0.1:3303";
 const HEADLESS = process.env.P4_HEADLESS !== "false";
-const RUN_ID = process.env.P4_RUN_ID || `p4r13-${Date.now()}`;
+const RUN_ID = process.env.P4_RUN_ID || `p4r14-${Date.now()}`;
 const ARTIFACT_ROOT = path.resolve(
   REPO_ROOT,
   process.env.P4_ARTIFACT_ROOT || "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts",
@@ -60,6 +60,7 @@ const ROUND10_TRANSLATE_PROVIDER = "session-host";
 const ROUND10_TRANSLATE_SAMPLE = "P4 Round10 Translate Output";
 const ROUND11_TRANSLATE_TEXT = "P4 Round11 Translate FailFast";
 const ROUND11_YT_TARGET = "https://youtu.be/dQw4w9WgXcQ";
+const ROUND12_PROXY_MISSING_PRESET = "missing-profile";
 const ROUND9_PROXY_PRESETS = [
   {
     id: "cfg-default",
@@ -391,19 +392,8 @@ async function seedProxyPresets(page) {
   }, ROUND9_PROXY_PRESETS);
 }
 
-async function expectProxyPresetSwitched(page, expectedPreset) {
-  await page.waitForFunction((expectedId) => {
-    const raw = window.localStorage.getItem("model-config-storage");
-    if (!raw) return false;
-    try {
-      const parsed = JSON.parse(raw);
-      return parsed?.state?.activeConfigId === expectedId;
-    } catch {
-      return false;
-    }
-  }, expectedPreset.id, { timeout: CHECK_TIMEOUT_MS });
-
-  const snapshot = await page.evaluate(() => {
+async function readProxyStorageSnapshot(page) {
+  return page.evaluate(() => {
     const raw = window.localStorage.getItem("model-config-storage");
     let parsed = null;
     if (raw) {
@@ -423,10 +413,12 @@ async function expectProxyPresetSwitched(page, expectedPreset) {
       openaiApiKey: window.localStorage.getItem("openaiApiKey"),
     };
   });
+}
 
+function assertProxyPresetSnapshot(snapshot, expectedPreset, mode) {
   if (snapshot.activeConfigId !== expectedPreset.id) {
     throw new Error(
-      `Proxy preset switch mismatch: expected active=${expectedPreset.id}, got=${snapshot.activeConfigId}`,
+      `Proxy preset ${mode} mismatch: expected active=${expectedPreset.id}, got=${snapshot.activeConfigId}`,
     );
   }
   if (snapshot.llmType !== expectedPreset.type) {
@@ -449,7 +441,32 @@ async function expectProxyPresetSwitched(page, expectedPreset) {
       `Proxy apiKey mismatch: expected ${expectedPreset.apiKey}, got ${snapshot.openaiApiKey}`,
     );
   }
+}
 
+async function expectProxyPresetSwitched(page, expectedPreset) {
+  await page.waitForFunction((expectedId) => {
+    const raw = window.localStorage.getItem("model-config-storage");
+    if (!raw) return false;
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed?.state?.activeConfigId === expectedId;
+    } catch {
+      return false;
+    }
+  }, expectedPreset.id, { timeout: CHECK_TIMEOUT_MS });
+
+  const snapshot = await readProxyStorageSnapshot(page);
+  assertProxyPresetSnapshot(snapshot, expectedPreset, "switch");
+  return snapshot;
+}
+
+async function expectProxyPresetUnchanged(page, expectedPreset, checkpointName) {
+  const snapshot = await readProxyStorageSnapshot(page);
+  assertProxyPresetSnapshot(snapshot, expectedPreset, "unchanged");
+  addCheckpoint(checkpointName, true, {
+    expectedPresetId: expectedPreset.id,
+    snapshot,
+  });
   return snapshot;
 }
 
@@ -659,6 +676,34 @@ async function runRound11(page, payload, files) {
   await page.screenshot({ path: files.round11YtFailFast, fullPage: true });
 }
 
+async function runRound12(page, payload, files) {
+  await page.goto(`${BASE_URL}/session?id=${encodeURIComponent(payload.ids.sessionAId)}`, {
+    waitUntil: "domcontentloaded",
+  });
+  await expectText(page, "P4 Round10 Opening A", "round12-open-session-a");
+
+  await seedProxyPresets(page);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expectText(page, "P4 Round10 Opening A", "round12-reload-session-a");
+
+  const defaultProxyPreset = ROUND9_PROXY_PRESETS[0];
+  await submitInput(page, `/proxy ${defaultProxyPreset.name}`);
+  const defaultProxySnapshot = await expectProxyPresetSwitched(page, defaultProxyPreset);
+  addCheckpoint("round12-proxy-reset-default", true, {
+    targetPresetId: defaultProxyPreset.id,
+    snapshot: defaultProxySnapshot,
+  });
+
+  await submitInput(page, `/proxy ${ROUND12_PROXY_MISSING_PRESET}`);
+  await expectText(
+    page,
+    `/proxy preset not found: ${ROUND12_PROXY_MISSING_PRESET}`,
+    "round12-proxy-unknown-preset-failfast",
+  );
+  await expectProxyPresetUnchanged(page, defaultProxyPreset, "round12-proxy-state-unchanged");
+  await page.screenshot({ path: files.round12ProxyUnknownPresetFailFast, fullPage: true });
+}
+
 async function main() {
   const startedAt = nowIso();
   const files = artifactPaths(RUN_DIR);
@@ -748,6 +793,7 @@ async function main() {
     await runRound9(page, payload, files);
     await runRound10(page, payload, files);
     await runRound11(page, payload, files);
+    await runRound12(page, payload, files);
 
     noiseReport = await buildNoiseReport(files);
     addCheckpoint("noise-baseline-diff", !noiseReport.hasNewNoise, {

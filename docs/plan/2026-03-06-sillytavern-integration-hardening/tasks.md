@@ -23,7 +23,7 @@
 - [x] 让 replay 覆盖 slash 执行、refresh 持久化、session 隔离、失败链路。
   - round7/8 保持 slash 直达 + refresh + session 隔离 + 401 失败链路；round9-11 补宿主 wiring 的成功/失败路径。
 - [x] 将产物写入现有 artifacts 目录，并更新 run index。
-  - 最新通过 run：`p4r13-1772863786323`（`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/`）。
+  - 最新通过 run：`p4r14-1772882882394`（`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/`）。
 
 ## 4. 文档 / 交接
 
@@ -54,3 +54,10 @@
 - [x] `scripts/p4-session-replay-e2e.mjs` 新增 round11 `/translate` 未注入 provider 的 fail-fast 回放，断言 `/session` 页面显式暴露错误。
 - [x] `scripts/p4-session-replay-e2e.mjs` 新增 round11 `/yt-script` 未注入 provider 的 fail-fast 回放，避免成功路径覆盖下的宿主缺失回归漏检。
 - [x] replay 产物与 summary 清单新增 `round11-translate-provider-failfast-pass.png`、`round11-yt-script-provider-failfast-pass.png`，并完成一次新 run 回归（`p4r13-1772863786323`）。
+
+## 9. Proxy Negative Replay Guard（2026-03-07 当前轮）
+
+- [x] `scripts/p4-session-replay-e2e.mjs` 新增 round12 `/proxy missing-profile` fail-fast 回放，断言页面显式暴露 `/proxy preset not found`。
+- [x] round12 在负向断言前先显式切回默认 preset，并校验 bad preset 失败后 `model-config-storage + llmType/model/baseUrl/apiKey` 保持不变，避免回放受上轮成功切换状态污染。
+- [x] replay 产物与 summary 清单新增 `round12-proxy-unknown-preset-failfast-pass.png`，并完成一次新 run 回归（`p4r14-1772882882394`）。
+
