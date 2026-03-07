@@ -20,7 +20,7 @@ import {
 // ============================================================================
 // P4 /session Replay（round7 + round8 + round9）
 // 目标：单命令复验 slash 直达、刷新持久化、会话隔离、401 失败链路、
-//       以及高价值 slash 宿主 wiring（floor-teleport/proxy）。
+//       以及高价值 slash 宿主 wiring（floor-teleport/proxy/yt-script）。
 // ============================================================================
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,7 +29,7 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 
 const BASE_URL = process.env.P4_BASE_URL || "http://127.0.0.1:3303";
 const HEADLESS = process.env.P4_HEADLESS !== "false";
-const RUN_ID = process.env.P4_RUN_ID || `p4r11-${Date.now()}`;
+const RUN_ID = process.env.P4_RUN_ID || `p4r12-${Date.now()}`;
 const ARTIFACT_ROOT = path.resolve(
   REPO_ROOT,
   process.env.P4_ARTIFACT_ROOT || "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts",
@@ -50,6 +50,27 @@ const RUN_INDEX_MD_PATH = path.resolve(
 const STALE_RULE_MISS_THRESHOLD = Number.parseInt(process.env.P4_STALE_RULE_MISS_THRESHOLD || "3", 10);
 const RUN_INDEX_MAX_RUNS = Number.parseInt(process.env.P4_RUN_INDEX_MAX_RUNS || "60", 10);
 const CHECK_TIMEOUT_MS = 25_000;
+const ROUND9_YT_TARGET = "https://youtu.be/dQw4w9WgXcQ";
+const ROUND9_YT_LANG = "ja";
+const ROUND9_TRANSCRIPT_SAMPLE = "P4 Round10 Transcript Line 1\nP4 Round10 Transcript Line 2";
+const ROUND9_PROXY_PRESETS = [
+  {
+    id: "cfg-default",
+    name: "Default Proxy",
+    type: "openai",
+    baseUrl: "https://api.openai.com/v1",
+    model: "gpt-4o-mini",
+    apiKey: "sk-default",
+  },
+  {
+    id: "cfg-reverse",
+    name: "Claude Reverse",
+    type: "openai",
+    baseUrl: "https://api.openai.com/v1",
+    model: "gpt-4.1-mini",
+    apiKey: "sk-reverse",
+  },
+];
 
 const consoleLogs = [];
 const networkLogs = [];
@@ -350,6 +371,134 @@ async function expectTeleportTriggered(page, checkpointName) {
   });
 }
 
+async function seedProxyPresets(page) {
+  await page.evaluate((configs) => {
+    const payload = {
+      state: {
+        configs,
+        activeConfigId: configs[0]?.id || "",
+      },
+      version: 0,
+    };
+    window.localStorage.setItem("model-config-storage", JSON.stringify(payload));
+  }, ROUND9_PROXY_PRESETS);
+}
+
+async function expectProxyPresetSwitched(page, expectedPreset) {
+  await page.waitForFunction((expectedId) => {
+    const raw = window.localStorage.getItem("model-config-storage");
+    if (!raw) return false;
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed?.state?.activeConfigId === expectedId;
+    } catch {
+      return false;
+    }
+  }, expectedPreset.id, { timeout: CHECK_TIMEOUT_MS });
+
+  const snapshot = await page.evaluate(() => {
+    const raw = window.localStorage.getItem("model-config-storage");
+    let parsed = null;
+    if (raw) {
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        parsed = null;
+      }
+    }
+    return {
+      activeConfigId: parsed?.state?.activeConfigId || null,
+      llmType: window.localStorage.getItem("llmType"),
+      modelName: window.localStorage.getItem("modelName"),
+      modelBaseUrl: window.localStorage.getItem("modelBaseUrl"),
+      openaiModel: window.localStorage.getItem("openaiModel"),
+      openaiBaseUrl: window.localStorage.getItem("openaiBaseUrl"),
+      openaiApiKey: window.localStorage.getItem("openaiApiKey"),
+    };
+  });
+
+  if (snapshot.activeConfigId !== expectedPreset.id) {
+    throw new Error(
+      `Proxy preset switch mismatch: expected active=${expectedPreset.id}, got=${snapshot.activeConfigId}`,
+    );
+  }
+  if (snapshot.llmType !== expectedPreset.type) {
+    throw new Error(
+      `Proxy llmType mismatch: expected ${expectedPreset.type}, got ${snapshot.llmType}`,
+    );
+  }
+  if (snapshot.openaiModel !== expectedPreset.model || snapshot.modelName !== expectedPreset.model) {
+    throw new Error(
+      `Proxy model mismatch: expected ${expectedPreset.model}, got openaiModel=${snapshot.openaiModel}, modelName=${snapshot.modelName}`,
+    );
+  }
+  if (snapshot.openaiBaseUrl !== expectedPreset.baseUrl || snapshot.modelBaseUrl !== expectedPreset.baseUrl) {
+    throw new Error(
+      `Proxy baseUrl mismatch: expected ${expectedPreset.baseUrl}, got openaiBaseUrl=${snapshot.openaiBaseUrl}, modelBaseUrl=${snapshot.modelBaseUrl}`,
+    );
+  }
+  if (snapshot.openaiApiKey !== expectedPreset.apiKey) {
+    throw new Error(
+      `Proxy apiKey mismatch: expected ${expectedPreset.apiKey}, got ${snapshot.openaiApiKey}`,
+    );
+  }
+
+  return snapshot;
+}
+
+async function installYouTubeProviderProbe(page) {
+  await page.evaluate((transcriptSample) => {
+    window.__p4YtScriptProbe = { calls: [] };
+    window.__DREAMMINISTAGE_SESSION_HOST__ = {
+      getYouTubeTranscript: (urlOrId, options) => {
+        window.__p4YtScriptProbe.calls.push({
+          urlOrId,
+          options: options || null,
+        });
+        return transcriptSample;
+      },
+    };
+  }, ROUND9_TRANSCRIPT_SAMPLE);
+}
+
+async function expectYouTubeProviderTriggered(page, expectedUrl, expectedLang, checkpointName) {
+  await page.waitForFunction(() => {
+    const probe = window.__p4YtScriptProbe;
+    return Boolean(probe && Array.isArray(probe.calls) && probe.calls.length > 0);
+  }, undefined, { timeout: CHECK_TIMEOUT_MS });
+
+  const probeResult = await page.evaluate(() => {
+    const probe = window.__p4YtScriptProbe;
+    if (!probe) return null;
+    return {
+      callCount: probe.calls.length,
+      firstCall: probe.calls[0] || null,
+    };
+  });
+
+  if (!probeResult?.firstCall) {
+    throw new Error("yt-script probe captured no host callback");
+  }
+
+  if (probeResult.firstCall.urlOrId !== expectedUrl) {
+    throw new Error(
+      `yt-script url mismatch: expected ${expectedUrl}, got ${probeResult.firstCall.urlOrId}`,
+    );
+  }
+
+  const actualLang = probeResult.firstCall.options?.lang || null;
+  if (actualLang !== expectedLang) {
+    throw new Error(
+      `yt-script lang mismatch: expected ${expectedLang}, got ${actualLang}`,
+    );
+  }
+
+  addCheckpoint(checkpointName, true, {
+    callCount: probeResult.callCount,
+    firstCall: probeResult.firstCall,
+  });
+}
+
 async function runRound9(page, payload, files) {
   await page.goto(`${BASE_URL}/session?id=${encodeURIComponent(payload.ids.sessionAId)}`, { waitUntil: "domcontentloaded" });
   await expectText(page, "P4 Round10 Opening A", "round9-open-session-a");
@@ -360,15 +509,31 @@ async function runRound9(page, payload, files) {
   await expectTeleportTriggered(page, "round9-floor-teleport-anchor");
   await page.screenshot({ path: files.round9Teleport, fullPage: true });
 
+  await seedProxyPresets(page);
   await page.reload({ waitUntil: "domcontentloaded" });
   const refreshedTeleportIndex = await resolveTeleportTargetIndex(page);
   await installTeleportProbe(page, refreshedTeleportIndex);
   await submitInput(page, `/floor-teleport ${refreshedTeleportIndex}`);
   await expectTeleportTriggered(page, "round9-floor-teleport-refresh");
 
-  await submitInput(page, "/proxy p4-missing-preset");
-  await expectText(page, "/proxy is not wired in /session host yet", "round9-proxy-fail-fast");
-  await page.screenshot({ path: files.round9FailFast, fullPage: true });
+  const proxyTarget = ROUND9_PROXY_PRESETS[1];
+  await submitInput(page, `/proxy ${proxyTarget.name}`);
+  const proxySnapshot = await expectProxyPresetSwitched(page, proxyTarget);
+  addCheckpoint("round9-proxy-switch-success", true, {
+    targetPresetId: proxyTarget.id,
+    snapshot: proxySnapshot,
+  });
+  await page.screenshot({ path: files.round9ProxySwitch, fullPage: true });
+
+  await installYouTubeProviderProbe(page);
+  await submitInput(page, `/yt-script lang=${ROUND9_YT_LANG} ${ROUND9_YT_TARGET}`);
+  await expectYouTubeProviderTriggered(
+    page,
+    ROUND9_YT_TARGET,
+    ROUND9_YT_LANG,
+    "round9-yt-script-provider-success",
+  );
+  await page.screenshot({ path: files.round9YtProvider, fullPage: true });
 }
 
 async function main() {

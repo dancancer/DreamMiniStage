@@ -36,3 +36,9 @@
 - [x] `/session` 将 `/proxy` 从 fail-fast 升级为真实宿主路径（`model-store` 读取/切换 + localStorage 同步）。
 - [x] `/session` 为 `/translate`、`/yt-script` 接入 `window.__DREAMMINISTAGE_SESSION_HOST__` provider 通道，并保留未注入 fail-fast。
 - [x] 页面级集成测试补齐“成功 + 失败”成对守卫：`/proxy` 与 `/yt-script`。
+
+## 6. Replay 回归门对齐（2026-03-07）
+
+- [x] round9 将 `/proxy` 从 fail-fast 断言升级为“真实 preset 成功切换”断言，并校验 localStorage 同步字段。
+- [x] round9 新增 `/yt-script` provider 成功回放场景，断言 URL/lang 透传到宿主桥接回调。
+- [x] replay 产物清单与 summary 同步更新，新增 `round9-proxy-switch-pass.png` 与 `round9-yt-script-provider-pass.png`。
