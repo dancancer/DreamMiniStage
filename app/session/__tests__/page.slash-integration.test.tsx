@@ -41,6 +41,38 @@ function buildModelConfigs(): ModelStoreState["configs"] {
   ];
 }
 
+function buildTimedDialogueTree(extra?: Record<string, unknown>) {
+  return {
+    id: "session-1",
+    character_id: "char-1",
+    current_nodeId: "root",
+    nodes: [{
+      nodeId: "root",
+      parentNodeId: "root",
+      userInput: "",
+      assistantResponse: "",
+      fullResponse: "",
+      thinkingContent: "",
+      extra,
+    }],
+  };
+}
+
+function buildWorldBookEntry(overrides?: Record<string, unknown>) {
+  return {
+    entry_id: "uid-1",
+    content: "entry",
+    keys: ["alpha"],
+    selective: false,
+    constant: false,
+    position: 4,
+    enabled: true,
+    sticky: 3,
+    delay: 2,
+    ...overrides,
+  };
+}
+
 const mocks = vi.hoisted(() => {
   const modelStoreState: ModelStoreState = {
     configs: buildModelConfigs(),
@@ -66,6 +98,14 @@ const mocks = vi.hoisted(() => {
     },
     defaultTranslateText: vi.fn().mockResolvedValue("default translated"),
     defaultYouTubeTranscript: vi.fn().mockResolvedValue("default transcript"),
+    dialogueTreeState: buildTimedDialogueTree() as ReturnType<typeof buildTimedDialogueTree>,
+    worldBooks: {
+      "book-1": { entry_0: buildWorldBookEntry() },
+      "book-2": { entry_0: buildWorldBookEntry({ sticky: 0, delay: 0, cooldown: 0 }) },
+    } as Record<string, Record<string, ReturnType<typeof buildWorldBookEntry>>>,
+    getDialogueTreeById: vi.fn(),
+    updateDialogueTree: vi.fn(),
+    getWorldBook: vi.fn(),
     modelStoreState,
     dialogue: {
       messages: [
@@ -146,6 +186,19 @@ vi.mock("@/hooks/useCharacterLoader", () => ({
     dialogueData: null,
     error: null,
   }),
+}));
+
+vi.mock("@/lib/data/roleplay/character-dialogue-operation", () => ({
+  LocalCharacterDialogueOperations: {
+    getDialogueTreeById: mocks.getDialogueTreeById,
+    updateDialogueTree: mocks.updateDialogueTree,
+  },
+}));
+
+vi.mock("@/lib/data/roleplay/world-book-operation", () => ({
+  WorldBookOperations: {
+    getWorldBook: mocks.getWorldBook,
+  },
 }));
 
 vi.mock("@/lib/store/ui-store", () => ({
@@ -379,6 +432,17 @@ describe("Session page slash integration", () => {
     mocks.defaultTranslateText.mockResolvedValue("default translated");
     mocks.defaultYouTubeTranscript.mockReset();
     mocks.defaultYouTubeTranscript.mockResolvedValue("default transcript");
+    mocks.dialogueTreeState = buildTimedDialogueTree();
+    mocks.worldBooks = {
+      "book-1": { entry_0: buildWorldBookEntry() },
+      "book-2": { entry_0: buildWorldBookEntry({ sticky: 0, delay: 0, cooldown: 0 }) },
+    };
+    mocks.getDialogueTreeById.mockImplementation(async () => JSON.parse(JSON.stringify(mocks.dialogueTreeState)));
+    mocks.updateDialogueTree.mockImplementation(async (_dialogueId: string, tree: unknown) => {
+      mocks.dialogueTreeState = JSON.parse(JSON.stringify(tree));
+      return true;
+    });
+    mocks.getWorldBook.mockImplementation(async (file: string) => mocks.worldBooks[file] || null);
     setSessionSlashHostBridge(window, null);
   });
 
@@ -546,6 +610,40 @@ describe("Session page slash integration", () => {
 
     expect(mocks.toastError).toHaveBeenCalledWith(
       expect.stringContaining("/yt-script transcript not available from /session default host"),
+    );
+
+    unmountPage(rendered);
+  });
+
+  it("executes /wi-set-timed-effect through session metadata host wiring", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/wi-set-timed-effect file=book-1 uid=uid-1 effect=sticky on");
+
+    expect(mocks.updateDialogueTree).toHaveBeenCalled();
+    expect(mocks.dialogueTreeState.nodes[0]?.extra?.chat_metadata).toEqual({
+      timedWorldInfo: {
+        "book-1": {
+          "uid-1": {
+            sticky: 3,
+          },
+        },
+      },
+    });
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("surfaces explicit timed-effect configuration errors in /session", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/wi-set-timed-effect file=book-2 uid=uid-1 effect=sticky on");
+
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      expect.stringContaining("/wi-set-timed-effect effect is not configured on lore entry: sticky"),
     );
 
     unmountPage(rendered);

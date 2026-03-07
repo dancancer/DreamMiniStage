@@ -22,5 +22,5 @@
 - `session-host-defaults.ts` 已为 `/translate` 提供内建默认 provider：读取当前 active model preset，走 OpenAI/Ollama/Gemini 真实后端；默认 provider 名称为 `session-host`。
 - `session-host-defaults.ts` 已为 `/yt-script` 提供内建默认 provider：通过 Jina Reader 拉取 YouTube 页面转储，再用当前 active model 提取 transcript/lyrics；提取不到时显式 fail-fast。
 - `page.tsx` 现在会将内建默认宿主能力与 `window.__DREAMMINISTAGE_SESSION_HOST__` 注入能力合并：`/translate` 与 `/yt-script` 默认可用，外部宿主可按协议覆盖默认实现；正式协议文档见 `docs/analysis/session-host-bridge/README.md`。
-- `wi-* timed effect` 继续显式 fail-fast，等待 chat metadata 结构冻结后再接通。
+- `session-timed-world-info.ts` 已接通 `/wi-get-timed-effect` 与 `/wi-set-timed-effect`：运行时状态统一落在 dialogue root `chat_metadata.timedWorldInfo`，并按 `file -> uid -> effect` 组织。
 - `session-switch.ts` 新增 `buildTemporarySessionName`，统一临时会话命名，避免页面内继续散落字符串拼接规则。

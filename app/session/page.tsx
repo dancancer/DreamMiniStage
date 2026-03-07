@@ -45,6 +45,10 @@ import {
   resolveSessionSlashHostBridge,
 } from "@/app/session/session-host-bridge";
 import { createSessionDefaultHostBridge } from "@/app/session/session-host-defaults";
+import {
+  getSessionWorldInfoTimedEffect,
+  setSessionWorldInfoTimedEffect,
+} from "@/app/session/session-timed-world-info";
 import { executeSlashCommandScript } from "@/lib/slash-command";
 import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
@@ -562,22 +566,42 @@ function SessionPageContent() {
   }, []);
 
   const handleGetWorldInfoTimedEffect = useCallback(async (
-    _file: string,
-    _uid: string,
-    _effect: WorldInfoTimedEffectName,
-    _options?: { format?: WorldInfoTimedEffectFormat },
+    file: string,
+    uid: string,
+    effect: WorldInfoTimedEffectName,
+    options?: { format?: WorldInfoTimedEffectFormat },
   ): Promise<boolean | number> => {
-    throw buildSessionSlashHostError("/wi-get-timed-effect", "chat timed effect state");
-  }, []);
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/wi-get-timed-effect", "active dialogue session");
+    }
+
+    return getSessionWorldInfoTimedEffect({
+      dialogueId: sessionId,
+      file,
+      uid,
+      effect,
+      format: options?.format,
+    });
+  }, [sessionId]);
 
   const handleSetWorldInfoTimedEffect = useCallback(async (
-    _file: string,
-    _uid: string,
-    _effect: WorldInfoTimedEffectName,
-    _state: WorldInfoTimedEffectState,
+    file: string,
+    uid: string,
+    effect: WorldInfoTimedEffectName,
+    state: WorldInfoTimedEffectState,
   ): Promise<void> => {
-    throw buildSessionSlashHostError("/wi-set-timed-effect", "chat timed effect state");
-  }, []);
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/wi-set-timed-effect", "active dialogue session");
+    }
+
+    await setSessionWorldInfoTimedEffect({
+      dialogueId: sessionId,
+      file,
+      uid,
+      effect,
+      state,
+    });
+  }, [sessionId]);
 
   const executeSessionSlashInput = useCallback(async (script: string) => {
     const snapshot = useScriptVariables.getState().variables;
@@ -620,6 +644,7 @@ function SessionPageContent() {
 
     const executionContext: ExecutionContext = {
       characterId: characterId || undefined,
+      dialogueId: sessionId || undefined,
       messages: dialogue.messages,
       onSend: async (text, options) => dialogue.addUserMessage(text, options),
       onTrigger: async () => dialogue.triggerGeneration(),

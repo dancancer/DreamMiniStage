@@ -77,15 +77,15 @@
    - 已接通：`/tempchat`、`/floor-teleport`、`/proxy`（接 `model-store` 读取/切换 preset，并同步 LLM storage）。
    - Built-in 默认 provider：`/translate`（默认 provider=`session-host`，读取当前 active model preset，支持 openai/ollama/gemini；正式协议见 `docs/analysis/session-host-bridge/README.md`）。
    - Built-in 默认 provider：`/yt-script`（默认 provider=`session-host`，走 `Jina Reader -> active model transcript extraction`；外部宿主注入仍可覆盖默认实现）。
-   - 继续 fail-fast：`/wi-get-timed-effect`、`/wi-set-timed-effect`。
+   - 已接通：`/wi-get-timed-effect`、`/wi-set-timed-effect`（运行时状态落在 dialogue root `chat_metadata.timedWorldInfo`）。
 8. 新增 bridge 注入完整性契约测试，直接守护 `CharacterChatPanel -> useScriptBridge -> ApiCallContext -> ExecutionContext` 的高价值注入位，避免再出现组件边界漏传。
 9. `/session` 页面级最小集成用例已补齐：新增 refresh-remount 场景，验证同一会话在刷新后仍可稳定执行 `/floor-teleport` 并命中消息锚点。
-10. 缺失宿主能力已按策略分组：
+10. 宿主能力分组已收口：
    - 已有内建默认 provider：`/translate`（`session-host` 走 active model preset）。
    - 已有内建默认 provider：`/yt-script`（`session-host` 走 `Jina Reader -> active model transcript extraction`）。
    - 已接通并可回归：`/proxy`（`onSelectProxyPreset` 走页面 `model-store`）。
-   - 故意 fail-fast：`/wi-get-timed-effect`、`/wi-set-timed-effect`（缺少稳定的 chat timed effect metadata 设计，暂不引入兼容分支）。
-11. M3 回放已落地并进入可复验状态：round9 守 `/proxy` 成功切换 + `/yt-script` 默认 provider 成功，round10 守 `/translate` 默认 provider 成功，round11/12 守负向错误链路。
+   - 已接通并可回归：`/wi-get-timed-effect`、`/wi-set-timed-effect`（运行时状态落在 dialogue root `chat_metadata.timedWorldInfo`）。
+11. M3 回放已落地并进入可复验状态：round9 守 `/proxy` 成功切换 + `/yt-script` 默认 provider 成功，round10 守 `/translate` 默认 provider 成功，round11/12 守负向错误链路，round13 守 `wi-set-timed-effect` 成功/失败路径。
 12. 回放稳定性修补：`app/session/page.tsx` 将 `currentCharacter` 改为 `useMemo`，消除 header effect 的高频触发，避免 replay 中 `Maximum update depth exceeded` 噪声漂移。
 
 ### 3.3 P3（机会性补齐）
@@ -114,4 +114,4 @@
 
 1. 继续观察 `/yt-script` 默认 backend 的真实命中率；如果 `Jina Reader -> active model` 对长视频或非公开字幕视频不稳定，再决定是否引入更专门的 transcript backend。
 2. 将 `/translate` 与 `/yt-script` 默认 provider 的固定种子继续保留在 replay 中，避免回到临时探针路径。
-3. `wi-* timed effect` 继续保持显式 fail-fast，直到 chat metadata 设计冻结后再接通，避免回退到多分支兼容路径。
+3. 继续维护 `chat_metadata.timedWorldInfo` 这条单一路径，不要再引入第二套 timed effect 状态存储。

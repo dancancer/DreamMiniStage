@@ -23,7 +23,7 @@
 - [x] 让 replay 覆盖 slash 执行、refresh 持久化、session 隔离、失败链路。
   - round7/8 保持 slash 直达 + refresh + session 隔离 + 401 失败链路；round9-12 补宿主 wiring 的成功/失败路径，其中 round10 已切到 `/translate` 默认 provider 固定种子。
 - [x] 将产物写入现有 artifacts 目录，并更新 run index。
-  - 最新通过 run：`p4r15-1772894030582`（`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/`）。
+  - 最新通过 run：`p4r16-1772897017969`（`docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/`）。
 
 ## 4. 文档 / 交接
 
@@ -78,4 +78,10 @@
 - [x] `app/session/session-host-defaults.ts` 为 `/yt-script` 提供默认 provider=`session-host`：通过 `Jina Reader -> active model` 提取 transcript/lyrics，并在 reader/提取失败时显式 fail-fast。
 - [x] 页面级与默认宿主单测补齐 `/yt-script`：默认 provider 成功、默认 provider 失败、外部注入覆盖默认实现。
 - [x] round9 `/yt-script` 成功回放已从临时探针切到默认 provider 固定种子；round11 `/yt-script` 负向守卫切到默认 provider fail-fast，并完成新 run 回归（`p4r15-1772894030582`）。
+
+## 13. Timed Effect 宿主状态落地（2026-03-07 当前轮）
+
+- [x] 新增 `lib/dialogue/chat-metadata.ts` 与 `app/session/session-timed-world-info.ts`，将 timed effect 运行时状态冻结到 dialogue root `chat_metadata.timedWorldInfo` 单一路径。
+- [x] `/session` 为 `/wi-get-timed-effect` 与 `/wi-set-timed-effect` 提供真实宿主路径，并补齐页面级 / 单元级守卫：正常读写、配置缺失 fail-fast、JSONL metadata 兼容。
+- [x] round13 replay 新增 `wi-set-timed-effect` 成功 + fail-fast 回放，并完成一次新 run 回归（`p4r16-1772897017969`）。
 

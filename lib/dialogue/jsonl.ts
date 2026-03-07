@@ -192,6 +192,10 @@ function makeTurnNode(params: {
 }
 
 function makeRootNode(metadata: JsonlLine | null): DialogueNode {
+  const chatMetadata = metadata && typeof metadata.chat_metadata === "object" && metadata.chat_metadata !== null
+    ? metadata.chat_metadata as Record<string, unknown>
+    : undefined;
+
   return {
     nodeId: "root",
     parentNodeId: "root",
@@ -199,7 +203,14 @@ function makeRootNode(metadata: JsonlLine | null): DialogueNode {
     assistantResponse: "",
     fullResponse: "",
     thinkingContent: "",
-    ...(metadata ? { extra: { jsonl_metadata: metadata } } : {}),
+    ...(metadata
+      ? {
+        extra: {
+          jsonl_metadata: metadata,
+          ...(chatMetadata ? { chat_metadata: chatMetadata } : {}),
+        },
+      }
+      : {}),
   };
 }
 

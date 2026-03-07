@@ -8,6 +8,7 @@
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { getDisplayUsername } from "@/utils/username-helper";
 import { exportDialogueTreeToJsonl, importJsonlToDialogueTree } from "@/lib/dialogue/jsonl";
+import { getDialogueChatMetadata } from "@/lib/dialogue/chat-metadata";
 
 export async function exportDialogueJsonl(options: {
   dialogueId: string;
@@ -21,7 +22,12 @@ export async function exportDialogueJsonl(options: {
   }
 
   const userName = getDisplayUsername();
-  return exportDialogueTreeToJsonl(tree, { userName, characterName });
+  const chatMetadata = getDialogueChatMetadata(tree);
+  return exportDialogueTreeToJsonl(tree, {
+    userName,
+    characterName,
+    chatMetadata: Object.keys(chatMetadata).length > 0 ? chatMetadata : undefined,
+  });
 }
 
 export async function importDialogueJsonl(options: {

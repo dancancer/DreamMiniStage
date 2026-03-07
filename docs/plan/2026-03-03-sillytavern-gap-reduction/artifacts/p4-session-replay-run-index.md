@@ -1,12 +1,13 @@
 # P4 Session Replay Run Index
 
-- generatedAt: 2026-03-07T14:34:19.166Z
-- latestRunId: p4r15-1772894030582
+- generatedAt: 2026-03-07T15:24:10.079Z
+- latestRunId: p4r16-1772897017969
 - staleMissThreshold: 3
-- trackedRuns: 7
+- trackedRuns: 8
 
 ## Recent Runs
 
+- p4r16-1772897017969: pass=true, checkpoints=31/31, unknownNoise=0, duration=32.1s, summary=docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r16-1772897017969/summary.md
 - p4r15-1772894030582: pass=true, checkpoints=27/27, unknownNoise=0, duration=28.6s, summary=docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r15-1772894030582/summary.md
 - p4r15-1772890368392: pass=true, checkpoints=27/27, unknownNoise=0, duration=28.7s, summary=docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r15-1772890368392/summary.md
 - p4r14-1772882882394: pass=true, checkpoints=27/27, unknownNoise=0, duration=29.2s, summary=docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-p4r14-1772882882394/summary.md
@@ -21,4 +22,4 @@
 
 ## Stale Network Rules
 
-- network-session-rsc-aborted: misses=3, totalHits=2, lastHit=p4r13-1772863786323 @ 2026-03-07T06:10:27.206Z
+- network-session-rsc-aborted: misses=4, totalHits=2, lastHit=p4r13-1772863786323 @ 2026-03-07T06:10:27.206Z

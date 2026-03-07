@@ -80,18 +80,18 @@
       "classification": "known-noise"
     },
     {
-      "id": "network-session-rsc-aborted",
-      "eventType": "requestfailed",
-      "method": "GET",
-      "urlIncludes": "http://127.0.0.1:3303/session",
-      "errorIncludes": "net::ERR_ABORTED",
-      "classification": "known-noise"
-    },
-    {
       "id": "network-vercel-script-aborted",
       "eventType": "requestfailed",
       "method": "GET",
       "urlIncludes": "https://va.vercel-scripts.com/v1/script.debug.js",
+      "errorIncludes": "net::ERR_ABORTED",
+      "classification": "known-noise"
+    },
+    {
+      "id": "network-session-rsc-aborted",
+      "eventType": "requestfailed",
+      "method": "GET",
+      "urlIncludes": "http://127.0.0.1:3303/session",
       "errorIncludes": "net::ERR_ABORTED",
       "classification": "known-noise"
     }

@@ -18,10 +18,10 @@ import {
 } from "./p4-session-replay-lib.mjs";
 
 // ============================================================================
-// P4 /session Replay（round7 + round8 + round9 + round10 + round11 + round12）
+// P4 /session Replay（round7 + round8 + round9 + round10 + round11 + round12 + round13）
 // 目标：单命令复验 slash 直达、刷新持久化、会话隔离、401 失败链路、
-//       高价值 slash 宿主 wiring（floor-teleport/proxy/yt-script/translate），
-//       以及 provider 未注入 / proxy bad preset 的显式 fail-fast。
+//       高价值 slash 宿主 wiring（floor-teleport/proxy/yt-script/translate/wi-*），
+//       以及默认 provider / bad preset / timed effect 配置错误的显式 fail-fast。
 // ============================================================================
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,7 +30,7 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 
 const BASE_URL = process.env.P4_BASE_URL || "http://127.0.0.1:3303";
 const HEADLESS = process.env.P4_HEADLESS !== "false";
-const RUN_ID = process.env.P4_RUN_ID || `p4r15-${Date.now()}`;
+const RUN_ID = process.env.P4_RUN_ID || `p4r16-${Date.now()}`;
 const ARTIFACT_ROOT = path.resolve(
   REPO_ROOT,
   process.env.P4_ARTIFACT_ROOT || "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts",
@@ -66,6 +66,9 @@ const ROUND9_YT_CANONICAL_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 const SESSION_YOUTUBE_TRANSCRIPT_SYSTEM_PROMPT = "You extract only the spoken transcript or song lyrics from a YouTube reader page dump. Return only the transcript text. If the source does not contain a transcript or lyrics, return exactly __NO_TRANSCRIPT_AVAILABLE__.";
 const SESSION_NO_TRANSCRIPT_TOKEN = "__NO_TRANSCRIPT_AVAILABLE__";
 const ROUND12_PROXY_MISSING_PRESET = "missing-profile";
+const ROUND13_WI_FILE = "book-1";
+const ROUND13_WI_UNCONFIGURED_FILE = "book-2";
+const ROUND13_WI_UID = "uid-1";
 const ROUND9_PROXY_PRESETS = [
   {
     id: "cfg-default",
@@ -93,6 +96,9 @@ const checkpoints = [];
 const translationRequests = [];
 const transcriptRequests = [];
 const jinaReaderRequests = [];
+const DB_NAME = "CharacterAppDB";
+const WORLD_BOOK_STORE = "world_book";
+const DIALOGUE_STORE = "character_dialogues";
 
 function nowIso() {
   return new Date().toISOString();
@@ -384,6 +390,137 @@ async function expectTeleportTriggered(page, checkpointName) {
   addCheckpoint(checkpointName, true, {
     callCount: probeResult.callCount,
     firstCall: probeResult.firstCall,
+  });
+}
+
+async function seedWorldBook(page, key, entries) {
+  await page.evaluate(async ({ databaseName, storeName, key: targetKey, entries: targetEntries }) => {
+    await new Promise((resolve, reject) => {
+      const request = indexedDB.open(databaseName);
+      request.onerror = () => reject(request.error || new Error("Failed to open IndexedDB"));
+      request.onsuccess = () => {
+        const db = request.result;
+        const tx = db.transaction(storeName, "readwrite");
+        tx.objectStore(storeName).put(targetEntries, targetKey);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error || new Error("Failed to seed world book"));
+        tx.onabort = () => reject(tx.error || new Error("World book seed aborted"));
+      };
+    });
+  }, {
+    databaseName: DB_NAME,
+    storeName: WORLD_BOOK_STORE,
+    key,
+    entries,
+  });
+}
+
+async function readTimedWorldInfoState(page, dialogueId) {
+  return page.evaluate(async ({ databaseName, storeName, dialogueId: targetDialogueId }) => {
+    return await new Promise((resolve, reject) => {
+      const request = indexedDB.open(databaseName);
+      request.onerror = () => reject(request.error || new Error("Failed to open IndexedDB"));
+      request.onsuccess = () => {
+        const db = request.result;
+        const tx = db.transaction(storeName, "readonly");
+        const readRequest = tx.objectStore(storeName).get(targetDialogueId);
+        readRequest.onerror = () => reject(readRequest.error || new Error("Failed to read dialogue tree"));
+        readRequest.onsuccess = () => {
+          const tree = readRequest.result;
+          const rootNode = tree?.nodes?.find?.((node) => node?.nodeId === "root") || null;
+          const extra = rootNode?.extra || {};
+          const direct = extra.chat_metadata || null;
+          const jsonl = extra.jsonl_metadata?.chat_metadata || null;
+          resolve((direct || jsonl || {}).timedWorldInfo || null);
+        };
+      };
+    });
+  }, {
+    databaseName: DB_NAME,
+    storeName: DIALOGUE_STORE,
+    dialogueId,
+  });
+}
+
+async function expectTimedWorldInfoEffect(page, dialogueId, file, uid, effect, expectedValue, checkpointName) {
+  await page.waitForFunction(async ({ databaseName, storeName, dialogueId: targetDialogueId, file: targetFile, uid: targetUid, effect: targetEffect, expectedValue: targetValue }) => {
+    const state = await new Promise((resolve, reject) => {
+      const request = indexedDB.open(databaseName);
+      request.onerror = () => reject(request.error || new Error("Failed to open IndexedDB"));
+      request.onsuccess = () => {
+        const db = request.result;
+        const tx = db.transaction(storeName, "readonly");
+        const readRequest = tx.objectStore(storeName).get(targetDialogueId);
+        readRequest.onerror = () => reject(readRequest.error || new Error("Failed to read dialogue tree"));
+        readRequest.onsuccess = () => {
+          const tree = readRequest.result;
+          const rootNode = tree?.nodes?.find?.((node) => node?.nodeId === "root") || null;
+          const extra = rootNode?.extra || {};
+          const direct = extra.chat_metadata || null;
+          const jsonl = extra.jsonl_metadata?.chat_metadata || null;
+          resolve((direct || jsonl || {}).timedWorldInfo || null);
+        };
+      };
+    });
+
+    return state?.[targetFile]?.[targetUid]?.[targetEffect] === targetValue;
+  }, {
+    databaseName: DB_NAME,
+    storeName: DIALOGUE_STORE,
+    dialogueId,
+    file,
+    uid,
+    effect,
+    expectedValue,
+  }, { timeout: CHECK_TIMEOUT_MS });
+
+  const state = await readTimedWorldInfoState(page, dialogueId);
+  addCheckpoint(checkpointName, true, {
+    file,
+    uid,
+    effect,
+    expectedValue,
+    state,
+  });
+}
+
+async function expectTimedWorldInfoCleared(page, dialogueId, file, uid, effect, checkpointName) {
+  await page.waitForFunction(async ({ databaseName, storeName, dialogueId: targetDialogueId, file: targetFile, uid: targetUid, effect: targetEffect }) => {
+    const state = await new Promise((resolve, reject) => {
+      const request = indexedDB.open(databaseName);
+      request.onerror = () => reject(request.error || new Error("Failed to open IndexedDB"));
+      request.onsuccess = () => {
+        const db = request.result;
+        const tx = db.transaction(storeName, "readonly");
+        const readRequest = tx.objectStore(storeName).get(targetDialogueId);
+        readRequest.onerror = () => reject(readRequest.error || new Error("Failed to read dialogue tree"));
+        readRequest.onsuccess = () => {
+          const tree = readRequest.result;
+          const rootNode = tree?.nodes?.find?.((node) => node?.nodeId === "root") || null;
+          const extra = rootNode?.extra || {};
+          const direct = extra.chat_metadata || null;
+          const jsonl = extra.jsonl_metadata?.chat_metadata || null;
+          resolve((direct || jsonl || {}).timedWorldInfo || null);
+        };
+      };
+    });
+
+    return !state?.[targetFile]?.[targetUid]?.[targetEffect];
+  }, {
+    databaseName: DB_NAME,
+    storeName: DIALOGUE_STORE,
+    dialogueId,
+    file,
+    uid,
+    effect,
+  }, { timeout: CHECK_TIMEOUT_MS });
+
+  const state = await readTimedWorldInfoState(page, dialogueId);
+  addCheckpoint(checkpointName, true, {
+    file,
+    uid,
+    effect,
+    state,
   });
 }
 
@@ -700,6 +837,71 @@ async function runRound12(page, payload, files) {
   await page.screenshot({ path: files.round12ProxyUnknownPresetFailFast, fullPage: true });
 }
 
+async function runRound13(page, payload, files) {
+  await page.goto(`${BASE_URL}/session?id=${encodeURIComponent(payload.ids.sessionAId)}`, {
+    waitUntil: "domcontentloaded",
+  });
+  await expectText(page, "P4 Round10 Opening A", "round13-open-session-a");
+
+  await seedWorldBook(page, ROUND13_WI_FILE, {
+    entry_0: {
+      entry_id: ROUND13_WI_UID,
+      content: "P4 timed effect entry",
+      keys: ["alpha"],
+      selective: false,
+      constant: false,
+      position: 4,
+      enabled: true,
+      sticky: 3,
+      delay: 2,
+    },
+  });
+  await seedWorldBook(page, ROUND13_WI_UNCONFIGURED_FILE, {
+    entry_0: {
+      entry_id: ROUND13_WI_UID,
+      content: "P4 timed effect empty entry",
+      keys: ["beta"],
+      selective: false,
+      constant: false,
+      position: 4,
+      enabled: true,
+      sticky: 0,
+      delay: 0,
+      cooldown: 0,
+    },
+  });
+
+  await submitInput(page, `/wi-set-timed-effect file=${ROUND13_WI_FILE} uid=${ROUND13_WI_UID} effect=sticky on`);
+  await expectTimedWorldInfoEffect(
+    page,
+    payload.ids.sessionAId,
+    ROUND13_WI_FILE,
+    ROUND13_WI_UID,
+    "sticky",
+    3,
+    "round13-wi-set-sticky-on",
+  );
+  await page.screenshot({ path: files.round13TimedEffectSuccess, fullPage: true });
+
+  await submitInput(page, `/wi-set-timed-effect file=${ROUND13_WI_FILE} uid=${ROUND13_WI_UID} effect=sticky toggle`);
+  await expectTimedWorldInfoCleared(
+    page,
+    payload.ids.sessionAId,
+    ROUND13_WI_FILE,
+    ROUND13_WI_UID,
+    "sticky",
+    "round13-wi-toggle-sticky-off",
+  );
+
+  await submitInput(page, `/wi-set-timed-effect file=${ROUND13_WI_UNCONFIGURED_FILE} uid=${ROUND13_WI_UID} effect=sticky on`);
+  await expectText(
+    page,
+    "/wi-set-timed-effect effect is not configured on lore entry: sticky",
+    "round13-wi-unconfigured-failfast",
+  );
+  await page.screenshot({ path: files.round13TimedEffectFailFast, fullPage: true });
+}
+
 async function main() {
   const startedAt = nowIso();
   const files = artifactPaths(RUN_DIR);
@@ -888,6 +1090,7 @@ async function main() {
     await runRound10(page, payload, files);
     await runRound11(page, payload, files);
     await runRound12(page, payload, files);
+    await runRound13(page, payload, files);
 
     noiseReport = await buildNoiseReport(files);
     addCheckpoint("noise-baseline-diff", !noiseReport.hasNewNoise, {
