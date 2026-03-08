@@ -7,7 +7,8 @@
 
 ## Build, Test, and Development Commands
 - `pnpm install` install dependencies (preferred tool); `pnpm dev` run the Next dev server at `http://localhost:3000`.
-- `pnpm build` production build; `pnpm lint` / `pnpm lint:fix` enforce style; `pnpm test` run Vitest suite.
+- `pnpm build` production build; `pnpm lint` / `pnpm lint:fix` enforce style; `pnpm test` run the full `vitest run` suite.
+- `pnpm verify:stage` run the stage exit quality gate (`lint` + `typecheck` + `vitest run` + `build`); every阶段完成后必须执行，未通过不得进入阶段 review、PR 或下一阶段。
 - `pnpm build:pwa` generate PWA static output; `pnpm preview` serves the `out/` directory (after `build:pwa` or other export).
 - Desktop packaging via `pnpm pake-mac|pake-linux|pake-win`; container run with `docker-compose up --build`.
 
@@ -78,13 +79,13 @@ import { cn } from "@/lib/utils";
 ## Testing Guidelines
 - Vitest + jsdom; tests are `.test.ts[x]` (see `components/__tests__/ChatHtmlBubble.test.ts`).
 - Add or extend tests for new logic and edge cases (string parsing, provider selection, state transitions). Run `pnpm test` locally before submitting.
-- **AI 执行测试时必须使用 `pnpm vitest run <test-file>` 而非 `pnpm test`**，因为 `pnpm test` 会启动 watch 模式，导致进程不会自动退出，AI 会陷入长时间等待。`vitest run` 会在测试完成后自动退出。
+- AI 做定向验证时优先使用 `pnpm vitest run <test-file>`；阶段完成验收时必须额外执行一次 `pnpm verify:stage`。
 
 ## Commit & Pull Request Guidelines
 - Follow conventional commits seen in history (`feat:`, `fix:`, `docs:`, `refactor:`). Keep messages concise and scoped.
 - `sillytavern-plugins/*` 目录视为外部子仓工作区：**默认禁止修改其内容、禁止在主仓提交中更新子仓指针**。若仅涉及文档整理，请迁移到主仓 `docs/`（建议放 `docs/archive/.../upstream/`）后提交，保持子仓干净不变。
 - PRs should include a brief summary, linked issue/reference, testing notes, and screenshots/gifs for UI changes. Mention any required env vars or migration steps.
-- Ensure `pnpm lint` and `pnpm test` pass; update docs when behavior or setup changes.
+- Ensure `pnpm lint` and `pnpm test` pass; 阶段完成时还必须执行 `pnpm verify:stage`，并在当前阶段文档中记录结果；update docs when behavior or setup changes.
 
 ## Security & Configuration Tips
 - Never commit secrets; keep tokens in `.env.local`. Remember `NEXT_PUBLIC_*` values ship to clients—use server-side proxies for sensitive keys.

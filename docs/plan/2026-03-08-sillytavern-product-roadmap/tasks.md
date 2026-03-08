@@ -51,6 +51,8 @@
 
 ## 8. 阶段回顾机制（强制）
 
+- [x] 建立统一阶段质检门 `pnpm verify:stage`（lint、typecheck、vitest run、build）。
+- [x] 将“每阶段完成后必须执行 `pnpm verify:stage`，未通过不得进入 review/PR/下一阶段”写入规划、计划与 `AGENTS.md`。
 - [x] 每个阶段都必须从最新主干签出新的 `codex/` 前缀阶段分支。
 - [ ] 当前阶段完成后，必须基于该阶段分支提交 PR；PR 未合入前不得进入下一阶段开发。
 - [ ] 下一阶段必须在当前阶段 PR 合入主干后，重新从最新主干签出新分支。

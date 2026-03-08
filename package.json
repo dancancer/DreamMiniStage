@@ -27,7 +27,8 @@
     "pake-win": "pake out/index.html --name DreamMiniStage --use-local-file --icon ./public/icon.ico",
     "pake-linux": "pake out/index.html --name DreamMiniStage --use-local-file --icon ./public/icon.png",
     "prepare": "husky",
-    "serena": "uv run --directory /Users/xupeng/mycode/serena serena-mcp-server --transport sse --port 9122 --context ide-assistant --project $(pwd)"
+    "serena": "uv run --directory /Users/xupeng/mycode/serena serena-mcp-server --transport sse --port 9122 --context ide-assistant --project $(pwd)",
+    "verify:stage": "node scripts/verify-stage-quality.mjs"
   },
   "dependencies": {
     "@fal-ai/client": "^1.7.2",
