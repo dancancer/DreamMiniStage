@@ -265,9 +265,62 @@ export interface ChatMessageLike {
 }
 
 export function estimateMessageTokens(text: string): number {
-  const cjkCount = (text.match(/[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]/g) || []).length;
+  const cjkCount = (text.match(/[一-鿿぀-ヿ가-힯]/g) || []).length;
   const otherCount = text.length - cjkCount;
   return Math.ceil(cjkCount / 1.5 + otherCount / 4);
+}
+
+function trimTextToTokenBudget(text: string, tokenBudget: number): string {
+  if (tokenBudget <= 0) return "";
+  if (estimateMessageTokens(text) <= tokenBudget) return text;
+
+  let left = 0;
+  let right = text.length;
+  let best = "";
+
+  while (left <= right) {
+    const middle = Math.floor((left + right) / 2);
+    const candidate = text.slice(0, middle);
+    const tokens = estimateMessageTokens(candidate);
+
+    if (tokens <= tokenBudget) {
+      best = candidate;
+      left = middle + 1;
+    } else {
+      right = middle - 1;
+    }
+  }
+
+  return best.trim();
+}
+
+function fitMessageToBudget<T extends ChatMessageLike>(
+  message: T,
+  tokenBudget: number,
+): T | null {
+  if (tokenBudget <= 0) return null;
+
+  const content = message.content || "";
+  if (estimateMessageTokens(content) <= tokenBudget) {
+    return { ...message };
+  }
+
+  const trimmedContent = trimTextToTokenBudget(content, tokenBudget);
+  if (!trimmedContent) {
+    return null;
+  }
+
+  return {
+    ...message,
+    content: trimmedContent,
+  };
+}
+
+function sumMessageTokens(messages: readonly ChatMessageLike[]): number {
+  return messages.reduce(
+    (total, message) => total + estimateMessageTokens(message.content || ""),
+    0,
+  );
 }
 
 export function applyContextWindowToMessages<T extends ChatMessageLike>(
@@ -281,32 +334,55 @@ export function applyContextWindowToMessages<T extends ChatMessageLike>(
 
   const reservedOutput = Math.max(settings?.maxTokens ?? 0, 0);
   const availableInputBudget = Math.max(contextWindow - reservedOutput, 0);
-  if (availableInputBudget === 0) {
-    return messages.length > 0 ? [messages[messages.length - 1]] : [];
+  if (availableInputBudget <= 0) {
+    return [];
   }
 
-  const systemTokenCost = messages.reduce((total, message) => {
-    if (message.role !== "system") return total;
-    return total + estimateMessageTokens(message.content || "");
-  }, 0);
+  const keptByIndex = new Map<number, T>();
+  let usedTokens = 0;
 
-  const conversationBudget = Math.max(availableInputBudget - systemTokenCost, 0);
-  const keepConversation = new Set<number>();
-  let usedBudget = 0;
+  for (const [index, message] of messages.entries()) {
+    if (message.role !== "system") continue;
+
+    const fitted = fitMessageToBudget(message, availableInputBudget - usedTokens);
+    if (!fitted) {
+      break;
+    }
+
+    keptByIndex.set(index, fitted);
+    usedTokens += estimateMessageTokens(fitted.content || "");
+    if (usedTokens >= availableInputBudget) {
+      return messages.flatMap((_, currentIndex) => {
+        const kept = keptByIndex.get(currentIndex);
+        return kept ? [kept] : [];
+      });
+    }
+  }
 
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = messages[index];
     if (message.role === "system") continue;
 
-    const tokenCost = estimateMessageTokens(message.content || "");
-    if (keepConversation.size === 0 || usedBudget + tokenCost <= conversationBudget) {
-      keepConversation.add(index);
-      usedBudget += tokenCost;
+    const fitted = fitMessageToBudget(message, availableInputBudget - usedTokens);
+    if (!fitted) {
+      continue;
+    }
+
+    keptByIndex.set(index, fitted);
+    usedTokens += estimateMessageTokens(fitted.content || "");
+    if (usedTokens >= availableInputBudget) {
+      break;
     }
   }
 
-  return messages.filter((message, index) => {
-    if (message.role === "system") return true;
-    return keepConversation.has(index);
+  const finalMessages = messages.flatMap((_, index) => {
+    const kept = keptByIndex.get(index);
+    return kept ? [kept] : [];
   });
+  const totalTokens = sumMessageTokens(finalMessages);
+  if (totalTokens > availableInputBudget) {
+    throw new Error("applyContextWindowToMessages exceeded token budget");
+  }
+
+  return finalMessages;
 }

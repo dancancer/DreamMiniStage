@@ -32,3 +32,19 @@
 - 质检内容固定为：`pnpm lint` -> `pnpm typecheck` -> `pnpm vitest run` -> `pnpm build`
 - 本次实际执行结果：lint 通过、typecheck 通过、test 通过、build 通过
 - 已修复历史阻塞项：`/Users/xupeng/mycode/DreamMiniStage/lib/slash-command/__tests__/pipe-propagation.property.test.ts` 中的 `/setvar` 简写与字符串归一化问题，当前阶段已满足全局质检门
+
+## Review Follow-up（2026-03-08）
+
+- 已根据新一轮 review 修复 4 个确认成立的问题：
+  - `lib/model-runtime.ts`：`contextWindow` 裁剪改为按原始索引保留消息，避免打乱 prompt 顺序，同时继续保持预算硬约束。
+  - `hooks/useCharacterDialogue.ts`：`/trigger` 路径现已继续传递 `advanced`，保证 continue generation 与普通发送/regen 语义一致。
+  - `lib/adapters/import/preset-import.ts`：导入 preset 时会优先保留当前 app-format 的嵌套 `sampling`，再用 legacy ST 顶层字段补全缺失项。
+  - `lib/nodeflow/LLMNode/LLMNodeTools.ts`：OpenAI/Claude 在未显式配置时不再覆盖底层默认 timeout，避免近乎无限的挂起等待。
+- `timeout` 真实聊天链路已继续补齐到 `function/dialogue/chat.ts`、`lib/workflow/examples/DialogueWorkflow.ts`、`lib/workflow/examples/RAGWorkflow.ts` 与 `lib/nodeflow/LLMNode/LLMNode.ts`。
+- 已新增/扩展定向测试：
+  - `lib/__tests__/model-runtime.test.ts`
+  - `lib/adapters/__tests__/preset-import.property.test.ts`
+  - `lib/workflow/__tests__/dialogue-workflow-validation.test.ts`
+  - `function/dialogue/__tests__/chat-first-message.test.ts`
+- 修复后已重新执行 `pnpm verify:stage`，结果为 lint / typecheck / test / build 全部通过。
+

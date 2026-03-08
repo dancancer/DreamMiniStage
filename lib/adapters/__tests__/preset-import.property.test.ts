@@ -350,3 +350,44 @@ describe("Preset Import Sampling Params", () => {
     });
   });
 });
+
+describe("Preset Import Sampling Compatibility", () => {
+  it("保留当前 app-format 的嵌套 sampling 字段", () => {
+    const result = normalizePreset({
+      name: "nested-sampling",
+      prompts: [],
+      sampling: {
+        temperature: 0.4,
+        maxTokens: 123,
+        timeout: 9000,
+      },
+    });
+
+    expect(result.sampling).toEqual({
+      temperature: 0.4,
+      maxTokens: 123,
+      timeout: 9000,
+    });
+  });
+
+  it("嵌套 sampling 优先于 legacy 顶层 ST 字段", () => {
+    const result = normalizePreset({
+      name: "sampling-precedence",
+      prompts: [],
+      sampling: {
+        temperature: 0.4,
+        maxTokens: 123,
+      },
+      temperature: 0.9,
+      openai_max_tokens: 512,
+      top_p: 0.8,
+    });
+
+    expect(result.sampling).toEqual({
+      temperature: 0.4,
+      maxTokens: 123,
+      topP: 0.8,
+    });
+  });
+});
+

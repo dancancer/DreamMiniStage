@@ -349,6 +349,7 @@ export function useCharacterDialogue({
       baseUrl,
       apiKey,
       llmType,
+      advanced,
       responseLength,
       fastModel: fastModelEnabled,
       onError,

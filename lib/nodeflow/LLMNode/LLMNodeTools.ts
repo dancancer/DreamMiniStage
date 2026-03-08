@@ -87,7 +87,7 @@ export interface LLMConfig {
 const DEFAULT_LLM_SETTINGS = {
   temperature: 0.7,
   maxTokens: undefined,
-  timeout: 1000000000,
+  timeout: undefined,
   maxRetries: 0,
   topP: 0.7,
   frequencyPenalty: 0,
@@ -484,7 +484,7 @@ export class LLMNodeTools extends NodeTool {
         },
         temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
         maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
-        timeout: config.timeout ?? DEFAULT_LLM_SETTINGS.timeout,
+        timeout: config.timeout,
         maxRetries: config.maxRetries ?? DEFAULT_LLM_SETTINGS.maxRetries,
         topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
         frequencyPenalty: config.frequencyPenalty ?? DEFAULT_LLM_SETTINGS.frequencyPenalty,

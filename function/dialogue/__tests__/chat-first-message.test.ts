@@ -276,6 +276,7 @@ describe("handleCharacterChatRequest 模型参数透传", () => {
       temperature: 0.35,
       contextWindow: 8192,
       maxTokens: 640,
+      timeout: 15000,
       maxRetries: 3,
       topP: 0.88,
       frequencyPenalty: 0.2,
@@ -284,6 +285,31 @@ describe("handleCharacterChatRequest 模型参数透传", () => {
       repeatPenalty: 1.08,
       streaming: false,
       streamUsage: false,
+    }));
+  });
+
+  it("显式非流式请求不应被 preset 的 streaming 默认值升级为 SSE", async () => {
+    getActivePresetSampling.mockResolvedValue({ streaming: true });
+
+    const response = await handleCharacterChatRequest({
+      username: "user",
+      dialogueId: "session-advanced",
+      characterId: "char-1",
+      message: "hi",
+      modelName: "gpt-4o-mini",
+      baseUrl: "https://api.example.com/v1",
+      apiKey: "key",
+      llmType: "openai",
+      language: "zh",
+      number: 200,
+      nodeId: "assistant-advanced",
+      fastModel: false,
+      streaming: false,
+    });
+
+    expect(response.headers.get("Content-Type")).toContain("application/json");
+    expect(executeMock).toHaveBeenCalledWith(expect.objectContaining({
+      streaming: true,
     }));
   });
 });

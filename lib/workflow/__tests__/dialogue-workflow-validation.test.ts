@@ -152,6 +152,7 @@ describe("Phase 1: 模型高级参数流转", () => {
     const advancedFields = [
       "contextWindow",
       "maxTokens",
+      "timeout",
       "maxRetries",
       "topP",
       "frequencyPenalty",

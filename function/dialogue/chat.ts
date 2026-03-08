@@ -104,7 +104,8 @@ export async function handleCharacterChatRequest(payload: {
         request: advanced,
         preset: presetSampling,
       });
-      const effectiveStreaming = resolvedAdvanced.streaming ?? streaming;
+      const responseStreaming = streaming;
+      const modelStreaming = resolvedAdvanced.streaming ?? responseStreaming;
       const effectiveStreamUsage = resolvedAdvanced.streamUsage ?? true;
 
       await ensureDialogueTreeWithOpening({
@@ -125,7 +126,7 @@ export async function handleCharacterChatRequest(payload: {
       // ═══════════════════════════════════════════════════════════════════════════
       // 流式响应模式：返回 SSE 流
       // ═══════════════════════════════════════════════════════════════════════════
-      if (effectiveStreaming) {
+      if (responseStreaming) {
         return handleStreamingResponse({
           dialogueId,
           characterId,
@@ -160,6 +161,7 @@ export async function handleCharacterChatRequest(payload: {
         llmType: llmType as "openai" | "ollama" | "gemini",
         temperature: resolvedAdvanced.temperature,
         maxTokens: resolvedAdvanced.maxTokens ?? number,
+        timeout: resolvedAdvanced.timeout,
         maxRetries: resolvedAdvanced.maxRetries,
         topP: resolvedAdvanced.topP,
         frequencyPenalty: resolvedAdvanced.frequencyPenalty,
@@ -167,7 +169,7 @@ export async function handleCharacterChatRequest(payload: {
         topK: resolvedAdvanced.topK,
         repeatPenalty: resolvedAdvanced.repeatPenalty,
         contextWindow: resolvedAdvanced.contextWindow,
-        streaming: effectiveStreaming,
+        streaming: modelStreaming,
         streamUsage: effectiveStreamUsage, // 确保token usage追踪
         number,
         fastModel,  
@@ -464,6 +466,7 @@ async function handleStreamingResponse(params: StreamingParams): Promise<Respons
           llmType,
           temperature: advanced?.temperature,
           maxTokens: advanced?.maxTokens ?? number,
+          timeout: advanced?.timeout,
           maxRetries: advanced?.maxRetries,
           topP: advanced?.topP,
           frequencyPenalty: advanced?.frequencyPenalty,

@@ -29,6 +29,7 @@ export class LLMNode extends NodeBase {
     const temperature = input.temperature;
     const contextWindow = input.contextWindow;
     const maxTokens = input.maxTokens;
+    const timeout = input.timeout;
     const maxRetries = input.maxRetries;
     const topP = input.topP;
     const frequencyPenalty = input.frequencyPenalty;
@@ -76,6 +77,7 @@ export class LLMNode extends NodeBase {
         temperature,
         contextWindow,
         maxTokens,
+        timeout,
         maxRetries,
         topP,
         frequencyPenalty,

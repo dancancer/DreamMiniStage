@@ -48,6 +48,7 @@ export interface CorrectRAGWorkflowParams {
   temperature?: number;
   contextWindow?: number;
   maxTokens?: number;
+  timeout?: number;
   maxRetries?: number;
   topP?: number;
   frequencyPenalty?: number;
@@ -125,6 +126,7 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
             "temperature", 
             "contextWindow",
             "maxTokens",
+            "timeout",
             "maxRetries",
             "topP",
             "frequencyPenalty",
@@ -152,6 +154,7 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
             "temperature", 
             "contextWindow",
             "maxTokens",
+            "timeout",
             "maxRetries",
             "topP",
             "frequencyPenalty",
@@ -240,7 +243,7 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["regex-1"],
           initParams: [],
-          inputFields: ["messages", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "contextWindow", "maxTokens", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "language", "streaming", "streamUsage", "dialogueKey", "characterId"],
+          inputFields: ["messages", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "contextWindow", "maxTokens", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "language", "streaming", "streamUsage", "dialogueKey", "characterId"],
           outputFields: ["llmResponse"],
         },
         {
