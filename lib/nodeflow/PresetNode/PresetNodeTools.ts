@@ -20,6 +20,7 @@ import {
   persistVariables,
 } from "@/lib/core/macro-evaluator-manager";
 import type { STCombinedPreset, STOpenAIPreset, STSyspromptPreset, STPrompt, MacroEnv, ChatMessage } from "@/lib/core/st-preset-types";
+import { DEFAULT_SAMPLING_PARAMS } from "@/lib/core/st-preset-types";
 import type { Preset, PresetPrompt } from "@/lib/models/preset-model";
 import { getVectorMemoryManager } from "@/lib/vector-memory/manager";
 
@@ -262,7 +263,7 @@ export class PresetNodeTools extends NodeTool {
   /**
    * 将用户预设转换为 STOpenAIPreset 格式
    */
-  private static convertToSTOpenAIPreset(_preset: Preset, orderedPrompts: PresetPrompt[]): STOpenAIPreset {
+  private static convertToSTOpenAIPreset(preset: Preset, orderedPrompts: PresetPrompt[]): STOpenAIPreset {
     const prompts: STPrompt[] = orderedPrompts.map(p => ({
       identifier: p.identifier,
       name: p.name,
@@ -287,13 +288,15 @@ export class PresetNodeTools extends NodeTool {
     return {
       prompts,
       prompt_order: promptOrder,
-      temperature: 1,
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      openai_max_context: 4095,
-      openai_max_tokens: 300,
-      stream_openai: true,
+      temperature: preset.sampling?.temperature ?? DEFAULT_SAMPLING_PARAMS.temperature,
+      top_p: preset.sampling?.topP ?? DEFAULT_SAMPLING_PARAMS.top_p,
+      top_k: preset.sampling?.topK,
+      frequency_penalty: preset.sampling?.frequencyPenalty ?? DEFAULT_SAMPLING_PARAMS.frequency_penalty,
+      presence_penalty: preset.sampling?.presencePenalty ?? DEFAULT_SAMPLING_PARAMS.presence_penalty,
+      repetition_penalty: preset.sampling?.repeatPenalty,
+      openai_max_context: preset.sampling?.contextWindow ?? DEFAULT_SAMPLING_PARAMS.openai_max_context,
+      openai_max_tokens: preset.sampling?.maxTokens ?? DEFAULT_SAMPLING_PARAMS.openai_max_tokens,
+      stream_openai: preset.sampling?.streaming ?? true,
       squash_system_messages: false,
     };
   }
@@ -326,12 +329,7 @@ export class PresetNodeTools extends NodeTool {
           { identifier: "jailbreak", enabled: true },
         ],
       }],
-      temperature: 1,
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      openai_max_context: 4095,
-      openai_max_tokens: 300,
+      ...DEFAULT_SAMPLING_PARAMS,
       stream_openai: true,
       squash_system_messages: false,
     };

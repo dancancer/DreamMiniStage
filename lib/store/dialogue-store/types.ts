@@ -7,6 +7,7 @@
  */
 
 import type { DialogueMessage, OpeningMessage, OpeningPayload } from "@/types/character-dialogue";
+import type { ModelAdvancedSettings } from "@/lib/model-runtime";
 import type { SendOptions } from "@/lib/slash-command/types";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -41,6 +42,7 @@ export interface LLMConfig {
   llmType: "openai" | "ollama" | "gemini";
   responseLength: number;
   fastModel: boolean;
+  advanced?: ModelAdvancedSettings;
 }
 
 export interface InitDialogueParams extends LLMConfig {

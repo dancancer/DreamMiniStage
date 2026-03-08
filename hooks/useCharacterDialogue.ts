@@ -154,7 +154,7 @@ export function useCharacterDialogue({
 
   const handleInitializeNewDialogue = useCallback(
     async (charId: string, sessId?: string) => {
-      const { llmType, modelName, baseUrl, apiKey } = readLlmConfig();
+      const { llmType, modelName, baseUrl, apiKey, advanced } = readLlmConfig();
       const key = sessId || charId;
       await initializeNewDialogue({
         dialogueKey: key,
@@ -164,6 +164,7 @@ export function useCharacterDialogue({
         baseUrl,
         apiKey,
         llmType,
+        advanced,
         responseLength,
         fastModel: fastModelEnabled,
       });
@@ -175,7 +176,7 @@ export function useCharacterDialogue({
     async (message: string) => {
       if (!storeKey || !characterId) return;
 
-      const { llmType, modelName, baseUrl, apiKey } = readLlmConfig();
+      const { llmType, modelName, baseUrl, apiKey, advanced } = readLlmConfig();
       await sendMessage({
         dialogueKey: storeKey,
         characterId,
@@ -185,6 +186,7 @@ export function useCharacterDialogue({
         baseUrl,
         apiKey,
         llmType,
+        advanced,
         responseLength,
         fastModel: fastModelEnabled,
         onError,
@@ -214,13 +216,14 @@ export function useCharacterDialogue({
     async (nodeId: string) => {
       if (!storeKey || !characterId) return;
 
-      const { llmType, modelName, baseUrl, apiKey } = readLlmConfig();
+      const { llmType, modelName, baseUrl, apiKey, advanced } = readLlmConfig();
       await regenerateMessage(storeKey, characterId, nodeId, {
         language,
         modelName,
         baseUrl,
         apiKey,
         llmType,
+        advanced,
         responseLength,
         fastModel: fastModelEnabled,
         onError,
@@ -337,7 +340,7 @@ export function useCharacterDialogue({
   const triggerGeneration = useCallback(async () => {
     if (!storeKey || !characterId) return;
 
-    const { llmType, modelName, baseUrl, apiKey } = readLlmConfig();
+    const { llmType, modelName, baseUrl, apiKey, advanced } = readLlmConfig();
     await triggerGenerationStore({
       dialogueKey: storeKey,
       characterId,

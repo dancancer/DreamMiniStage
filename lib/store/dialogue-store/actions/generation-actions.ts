@@ -16,6 +16,7 @@ import { EVENT_TYPES } from "@/lib/events/types";
 import { extractNodeIdFromMessageId } from "@/utils/message-id";
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { buildProcessedDialogue } from "@/function/dialogue/processed-dialogue";
+import { resolveStreamingEnabled, type ModelAdvancedSettings } from "@/lib/model-runtime";
 import type {
   DialogueMessage,
   SendMessageParams,
@@ -29,17 +30,6 @@ import type { OpeningPayload } from "@/types/character-dialogue";
    核心生成逻辑 - 好品味：统一抽象，消除特殊情况
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/** 从 localStorage 读取流式开关状态 */
-function isStreamingEnabled(): boolean {
-  if (typeof window === "undefined") return true;
-  try {
-    const stored = localStorage.getItem("streamingEnabled");
-    return stored === null ? true : stored === "true";
-  } catch {
-    return true;
-  }
-}
-
 interface GenerateOptions {
   dialogueKey: string;
   characterId: string;
@@ -51,6 +41,7 @@ interface GenerateOptions {
   llmType: "openai" | "ollama" | "gemini";
   responseLength: number;
   fastModel: boolean;
+  advanced?: ModelAdvancedSettings;
   pendingOpening: OpeningPayload | undefined;
   generationType: "normal" | "continue";
   onError?: (message: string) => void;
@@ -104,7 +95,7 @@ async function generateResponse(
       characterId,
       message: userMessage,
       ...llmParams,
-      streaming: isStreamingEnabled(),
+      streaming: resolveStreamingEnabled(llmParams.advanced),
       number: llmParams.responseLength,
       nodeId,
       openingMessage: pendingOpening,
@@ -569,7 +560,7 @@ export async function regenerateMessage(
       return;
     }
 
-    const { llmType, modelName, baseUrl, apiKey, responseLength, fastModel, language, onError } = params;
+    const { llmType, modelName, baseUrl, apiKey, responseLength, fastModel, language, onError, advanced } = params;
     const username = getDisplayUsername();
     const newNodeId = uuidv4();
 
@@ -604,10 +595,11 @@ export async function regenerateMessage(
       apiKey,
       llmType,
       language,
-      streaming: isStreamingEnabled(),
+      streaming: resolveStreamingEnabled(advanced),
       number: responseLength,
       nodeId: newNodeId,
       fastModel,
+      advanced,
       parentNodeId: node.parentNodeId,
     });
 

@@ -126,7 +126,13 @@
     "topKDescription": "将标记选择限制为 K 个最可能的标记。较低的值使输出更加集中。",
     "repeatPenalty": "重复惩罚",
     "repeatPenaltyDescription": "惩罚重复的标记。较高的值会减少 Ollama 模型中的重复。",
-    "optional": "可选项，留空使用默认值"
+    "optional": "可选项，留空使用默认值",
+    "contextWindow": "上下文窗口",
+    "contextWindowDescription": "请求发送前允许保留的上下文 token 预算上限。",
+    "streaming": "流式输出",
+    "streamingDescription": "在聊天界面中按 token 流式显示模型输出。",
+    "streamUsage": "流式用量统计",
+    "streamUsageDescription": "在流式模式下继续记录 token 用量。"
   },
   "sessionList": {
     "loading": "召唤历史卷轴中...",
@@ -428,7 +434,7 @@
     "loadingTimeHint": "首次加载时间在 5-40 秒之间，角色卡内容越大加载时间越长，如果长时间未加载，请检查 API 配置是否正确",
     "error": "错误",
     "characterNotFound": "未找到角色",
-    "loading":"加载中……正在解析状态，请稍等……",
+    "loading": "加载中……正在解析状态，请稍等……",
     "worldBook": "世界书",
     "regex": "正则脚本",
     "preset": "预设",
@@ -839,9 +845,9 @@
     "entryCount": "条目数量",
     "createdAt": "创建时间",
     "sourceCharacter": "来源角色",
-  "filterBy": "筛选方式",
-  "all": "全部",
-  "filterAll": "全部",
+    "filterBy": "筛选方式",
+    "all": "全部",
+    "filterAll": "全部",
     "filterEnabled": "已启用",
     "filterDisabled": "已禁用",
     "filterConstant": "常量",
@@ -1029,7 +1035,7 @@
     "subtitle": "选择您的平台下载 DreamMiniStage 应用：",
     "platforms": {
       "ios": "iOS",
-      "android": "Android", 
+      "android": "Android",
       "windows": "Windows",
       "macos": "macOS"
     },

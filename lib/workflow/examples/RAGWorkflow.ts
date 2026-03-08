@@ -46,6 +46,7 @@ export interface CorrectRAGWorkflowParams {
   baseUrl?: string;
   llmType?: "openai" | "ollama" | "gemini";
   temperature?: number;
+  contextWindow?: number;
   maxTokens?: number;
   maxRetries?: number;
   topP?: number;
@@ -122,6 +123,14 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
             "baseUrl", 
             "llmType", 
             "temperature", 
+            "contextWindow",
+            "maxTokens",
+            "maxRetries",
+            "topP",
+            "frequencyPenalty",
+            "presencePenalty",
+            "topK",
+            "repeatPenalty",
             "fastModel",
             "maxMemories",
             "enableMemoryStorage",
@@ -141,6 +150,14 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
             "baseUrl", 
             "llmType", 
             "temperature", 
+            "contextWindow",
+            "maxTokens",
+            "maxRetries",
+            "topP",
+            "frequencyPenalty",
+            "presencePenalty",
+            "topK",
+            "repeatPenalty",
             "fastModel",
             "maxMemories",
             "enableMemoryStorage",
@@ -223,7 +240,7 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["regex-1"],
           initParams: [],
-          inputFields: ["messages", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "language", "streaming", "streamUsage", "dialogueKey", "characterId"],
+          inputFields: ["messages", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "contextWindow", "maxTokens", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "language", "streaming", "streamUsage", "dialogueKey", "characterId"],
           outputFields: ["llmResponse"],
         },
         {

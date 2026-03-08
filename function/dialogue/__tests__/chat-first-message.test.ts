@@ -15,11 +15,18 @@ const switchBranch = vi.fn();
 const updateNodeInDialogueTree = vi.fn();
 const ingestMock = vi.fn();
 const processMessageVariables = vi.fn();
+const getActivePresetSampling = vi.fn();
 
 vi.mock("@/lib/workflow/examples/DialogueWorkflow", () => ({
   DialogueWorkflow: vi.fn().mockImplementation(() => ({
     execute: executeMock,
   })),
+}));
+
+vi.mock("@/lib/data/roleplay/preset-operation", () => ({
+  PresetOperations: {
+    getActivePresetSampling: (...args: unknown[]) => getActivePresetSampling(...args),
+  },
 }));
 
 vi.mock("@/lib/vector-memory/manager", () => ({
@@ -53,6 +60,7 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
     updateNodeInDialogueTree.mockReset();
     ingestMock.mockReset();
     processMessageVariables.mockReset();
+    getActivePresetSampling.mockReset();
 
     getDialogueTreeById
       .mockResolvedValueOnce(null) // ensure tree missing at first
@@ -78,6 +86,7 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
       current_nodeId: "assistant-1",
     });
 
+    getActivePresetSampling.mockResolvedValue(undefined);
     executeMock.mockResolvedValue({
       outputData: {
         thinkingContent: "think",
@@ -89,6 +98,7 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
     });
 
     ingestMock.mockResolvedValue(undefined);
+    getActivePresetSampling.mockResolvedValue(undefined);
     processMessageVariables.mockResolvedValue(undefined);
   });
 
@@ -158,6 +168,7 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
     addNodeToDialogueTree.mockReset();
     updateNodeInDialogueTree.mockReset();
     executeMock.mockReset();
+    getActivePresetSampling.mockReset();
 
     getDialogueTreeById.mockResolvedValue({
       id: "session-fail",
@@ -199,5 +210,80 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
     );
     expect(updateNodeInDialogueTree).not.toHaveBeenCalled();
     expect(createDialogueTree).not.toHaveBeenCalled();
+  });
+});
+
+describe("handleCharacterChatRequest 模型参数透传", () => {
+  beforeEach(() => {
+    executeMock.mockReset();
+    getDialogueTreeById.mockReset();
+    createDialogueTree.mockReset();
+    addNodeToDialogueTree.mockReset();
+    updateNodeInDialogueTree.mockReset();
+    getActivePresetSampling.mockReset();
+
+    getDialogueTreeById.mockResolvedValue({
+      id: "session-advanced",
+      character_id: "char-1",
+      nodes: [],
+      current_nodeId: "root",
+    });
+    addNodeToDialogueTree.mockResolvedValue("assistant-advanced");
+    updateNodeInDialogueTree.mockResolvedValue(true);
+    getActivePresetSampling.mockResolvedValue(undefined);
+    executeMock.mockResolvedValue({
+      outputData: {
+        thinkingContent: "",
+        screenContent: "reply",
+        fullResponse: "reply",
+        nextPrompts: [],
+        event: "",
+      },
+    });
+  });
+
+  it("将高级设置从请求透传到 DialogueWorkflow", async () => {
+    await handleCharacterChatRequest({
+      username: "user",
+      dialogueId: "session-advanced",
+      characterId: "char-1",
+      message: "hi",
+      modelName: "gpt-4o-mini",
+      baseUrl: "https://api.example.com/v1",
+      apiKey: "key",
+      llmType: "openai",
+      language: "zh",
+      number: 200,
+      nodeId: "assistant-advanced",
+      fastModel: false,
+      advanced: {
+        temperature: 0.35,
+        contextWindow: 8192,
+        maxTokens: 640,
+        timeout: 15000,
+        maxRetries: 3,
+        topP: 0.88,
+        frequencyPenalty: 0.2,
+        presencePenalty: 0.1,
+        topK: 50,
+        repeatPenalty: 1.08,
+        streaming: false,
+        streamUsage: false,
+      },
+    });
+
+    expect(executeMock).toHaveBeenCalledWith(expect.objectContaining({
+      temperature: 0.35,
+      contextWindow: 8192,
+      maxTokens: 640,
+      maxRetries: 3,
+      topP: 0.88,
+      frequencyPenalty: 0.2,
+      presencePenalty: 0.1,
+      topK: 50,
+      repeatPenalty: 1.08,
+      streaming: false,
+      streamUsage: false,
+    }));
   });
 });

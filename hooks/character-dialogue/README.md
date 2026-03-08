@@ -10,3 +10,7 @@
 |------|------|------|
 | `message-utils.ts` | 工具函数 | 消息处理工具 |
 | `useDialoguePreferences.ts` | Hook | 对话偏好设置 |
+
+## 最新变更（2026-03-08）
+
+- `useDialoguePreferences.ts` 改为从 `model-store` 读取当前激活模型配置与高级参数，避免 runtime 再从分散 localStorage key 组装配置。

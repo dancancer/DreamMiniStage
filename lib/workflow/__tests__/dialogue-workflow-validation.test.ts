@@ -140,3 +140,30 @@ describe("Task 8: DialogueWorkflow 更新验证", () => {
     });
   });
 });
+
+describe("Phase 1: 模型高级参数流转", () => {
+  it("DialogueWorkflow 应将高级采样参数从入口流转到 LLM 节点", () => {
+    const workflow = new DialogueWorkflow();
+    const config = (workflow as unknown as { config: { nodes: Array<{ name: string; inputFields: string[]; outputFields: string[]; initParams: string[] }> } }).config;
+
+    const entryNode = config.nodes.find((node) => node.name === "userInput");
+    const llmNode = config.nodes.find((node) => node.name === "llm");
+
+    const advancedFields = [
+      "contextWindow",
+      "maxTokens",
+      "maxRetries",
+      "topP",
+      "frequencyPenalty",
+      "presencePenalty",
+      "topK",
+      "repeatPenalty",
+    ];
+
+    for (const field of advancedFields) {
+      expect(entryNode?.initParams).toContain(field);
+      expect(entryNode?.outputFields).toContain(field);
+      expect(llmNode?.inputFields).toContain(field);
+    }
+  });
+});

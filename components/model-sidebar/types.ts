@@ -1,27 +1,24 @@
 /**
- * @input  React, UI 基础组件
+ * @input  React, UI 基础组件, lib/model-runtime
  * @output LLMType, APIConfig, SidebarState, SidebarActions, SidebarHelpers, SidebarViewProps
  * @pos    模型配置侧边栏组件
  * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
  */
 
 import type { KeyboardEvent, MouseEvent } from "react";
+import type {
+  APIConfig,
+  BooleanModelSettingKey,
+  LLMType,
+  ModelAdvancedSettings,
+  NumericModelSettingKey,
+} from "@/lib/model-runtime";
 
 // ╔════════════════════════════════════════╗
 // ║ Model Sidebar 视图层共享类型定义        ║
 // ╚════════════════════════════════════════╝
 
-export type LLMType = "openai" | "ollama" | "gemini";
-
-export interface APIConfig {
-  id: string;
-  name: string;
-  type: LLMType;
-  baseUrl: string;
-  model: string;
-  apiKey?: string;
-  availableModels?: string[];
-}
+export type { APIConfig, LLMType } from "@/lib/model-runtime";
 
 export interface SidebarState {
   configs: APIConfig[];
@@ -38,6 +35,7 @@ export interface SidebarState {
   apiKey: string;
   availableModels: string[];
   modelListEmpty: boolean;
+  advancedSettings: ModelAdvancedSettings;
   saveSuccess: boolean;
   getModelListSuccess: boolean;
   getModelListError: boolean;
@@ -66,6 +64,8 @@ export interface SidebarActions {
   setModel: (value: string) => void;
   handleInlineModelChange: (value: string) => void;
   handleTestModel: () => void;
+  setAdvancedNumberSetting: (key: NumericModelSettingKey, value: string) => void;
+  setAdvancedBooleanSetting: (key: BooleanModelSettingKey, value: boolean) => void;
 }
 
 export interface SidebarHelpers {

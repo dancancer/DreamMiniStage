@@ -6,6 +6,7 @@
  */
 
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
+import { PresetOperations } from "@/lib/data/roleplay/preset-operation";
 import { ParsedResponse } from "@/lib/models/parsed-response";
 import { DialogueWorkflow, DialogueWorkflowParams } from "@/lib/workflow/examples/DialogueWorkflow";
 import { getCurrentSystemPresetType } from "@/function/preset/download";
@@ -16,6 +17,8 @@ import {
   formatSSEData,
   formatSSEDone,
 } from "@/lib/streaming";
+import { resolveModelAdvancedSettings } from "@/lib/model-runtime";
+import type { ModelAdvancedSettings } from "@/lib/model-runtime";
 
 /**
  * ╔══════════════════════════════════════════════════════════════════════════╗
@@ -59,6 +62,7 @@ export async function handleCharacterChatRequest(payload: {
   number?: number;
   nodeId: string;
   fastModel: boolean;
+  advanced?: ModelAdvancedSettings;
   openingMessage?: OpeningPayload;
   parentNodeId?: string;
 }): Promise<Response> {
@@ -77,6 +81,7 @@ export async function handleCharacterChatRequest(payload: {
       nodeId,
       fastModel = false,
       streaming = false,
+      advanced,
       openingMessage,
       parentNodeId,
     } = payload;
@@ -94,6 +99,14 @@ export async function handleCharacterChatRequest(payload: {
       .trim();
 
     try {
+      const presetSampling = await PresetOperations.getActivePresetSampling();
+      const resolvedAdvanced = resolveModelAdvancedSettings({
+        request: advanced,
+        preset: presetSampling,
+      });
+      const effectiveStreaming = resolvedAdvanced.streaming ?? streaming;
+      const effectiveStreamUsage = resolvedAdvanced.streamUsage ?? true;
+
       await ensureDialogueTreeWithOpening({
         dialogueId,
         characterId,
@@ -112,7 +125,7 @@ export async function handleCharacterChatRequest(payload: {
       // ═══════════════════════════════════════════════════════════════════════════
       // 流式响应模式：返回 SSE 流
       // ═══════════════════════════════════════════════════════════════════════════
-      if (streaming) {
+      if (effectiveStreaming) {
         return handleStreamingResponse({
           dialogueId,
           characterId,
@@ -126,6 +139,7 @@ export async function handleCharacterChatRequest(payload: {
           language,
           number,
           fastModel,
+          advanced: resolvedAdvanced,
           nodeId,
         });
       }
@@ -144,9 +158,17 @@ export async function handleCharacterChatRequest(payload: {
         apiKey,
         baseUrl,
         llmType: llmType as "openai" | "ollama" | "gemini",
-        temperature: 0.7,
-        streaming,
-        streamUsage: true, // 确保token usage追踪
+        temperature: resolvedAdvanced.temperature,
+        maxTokens: resolvedAdvanced.maxTokens ?? number,
+        maxRetries: resolvedAdvanced.maxRetries,
+        topP: resolvedAdvanced.topP,
+        frequencyPenalty: resolvedAdvanced.frequencyPenalty,
+        presencePenalty: resolvedAdvanced.presencePenalty,
+        topK: resolvedAdvanced.topK,
+        repeatPenalty: resolvedAdvanced.repeatPenalty,
+        contextWindow: resolvedAdvanced.contextWindow,
+        streaming: effectiveStreaming,
+        streamUsage: effectiveStreamUsage, // 确保token usage追踪
         number,
         fastModel,  
         systemPresetType: getCurrentSystemPresetType(),
@@ -398,6 +420,7 @@ interface StreamingParams {
   language: "zh" | "en";
   number: number;
   fastModel: boolean;
+  advanced?: ModelAdvancedSettings;
   nodeId: string;
 }
 
@@ -415,6 +438,7 @@ async function handleStreamingResponse(params: StreamingParams): Promise<Respons
     language,
     number,
     fastModel,
+    advanced,
     nodeId,
   } = params;
 
@@ -438,9 +462,17 @@ async function handleStreamingResponse(params: StreamingParams): Promise<Respons
           apiKey,
           baseUrl,
           llmType,
-          temperature: 0.7,
-          streaming: false, // workflow 内部不使用流式
-          streamUsage: true,
+          temperature: advanced?.temperature,
+          maxTokens: advanced?.maxTokens ?? number,
+          maxRetries: advanced?.maxRetries,
+          topP: advanced?.topP,
+          frequencyPenalty: advanced?.frequencyPenalty,
+          presencePenalty: advanced?.presencePenalty,
+          topK: advanced?.topK,
+          repeatPenalty: advanced?.repeatPenalty,
+          contextWindow: advanced?.contextWindow,
+          streaming: advanced?.streaming ?? false, // workflow 内部不使用流式
+          streamUsage: advanced?.streamUsage ?? true,
           number,
           fastModel,
           systemPresetType: getCurrentSystemPresetType(),

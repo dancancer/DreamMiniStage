@@ -14,22 +14,13 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { APIConfig, LLMType } from "@/lib/model-runtime";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    类型定义
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export type LLMType = "openai" | "ollama" | "gemini";
-
-export interface APIConfig {
-  id: string;
-  name: string;
-  type: LLMType;
-  baseUrl: string;
-  model: string;
-  apiKey?: string;
-  availableModels?: string[];
-}
+export type { APIConfig, LLMType } from "@/lib/model-runtime";
 
 interface ModelState {
   // ========== 状态 ==========

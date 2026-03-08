@@ -38,7 +38,9 @@ export interface LLMConfig {
   baseUrl?: string;
   llmType: "openai" | "ollama" | "gemini" | "claude";
   temperature?: number;
+  contextWindow?: number;
   maxTokens?: number;
+  timeout?: number;
   maxRetries?: number;
   topP?: number;
   frequencyPenalty?: number;
@@ -481,6 +483,8 @@ export class LLMNodeTools extends NodeTool {
           baseURL: config.baseUrl?.trim() || undefined,
         },
         temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
+        maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
+        timeout: config.timeout ?? DEFAULT_LLM_SETTINGS.timeout,
         maxRetries: config.maxRetries ?? DEFAULT_LLM_SETTINGS.maxRetries,
         topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
         frequencyPenalty: config.frequencyPenalty ?? DEFAULT_LLM_SETTINGS.frequencyPenalty,
@@ -494,6 +498,8 @@ export class LLMNodeTools extends NodeTool {
         baseUrl: config.baseUrl?.trim() || "http://localhost:11434",
         temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
         topK: config.topK ?? DEFAULT_LLM_SETTINGS.topK,
+        numCtx: config.contextWindow,
+        numPredict: config.maxTokens,
         topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
         frequencyPenalty: config.frequencyPenalty ?? DEFAULT_LLM_SETTINGS.frequencyPenalty,
         presencePenalty: config.presencePenalty ?? DEFAULT_LLM_SETTINGS.presencePenalty,

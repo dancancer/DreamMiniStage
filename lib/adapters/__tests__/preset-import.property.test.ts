@@ -320,3 +320,33 @@ describe("Preset Import Pipeline", () => {
     expect(result.name).toBe("Imported Preset");
   });
 });
+
+describe("Preset Import Sampling Params", () => {
+  it("保留 ST 预设中的采样参数并转换为统一 runtime 字段", () => {
+    const preset = normalizePreset({
+      name: "sampling",
+      prompts: [],
+      temperature: 1.25,
+      top_p: 0.9,
+      top_k: 42,
+      frequency_penalty: 0.3,
+      presence_penalty: 0.4,
+      repetition_penalty: 1.12,
+      openai_max_context: 8192,
+      openai_max_tokens: 512,
+      stream_openai: false,
+    });
+
+    expect(preset.sampling).toEqual({
+      temperature: 1.25,
+      topP: 0.9,
+      topK: 42,
+      frequencyPenalty: 0.3,
+      presencePenalty: 0.4,
+      repeatPenalty: 1.12,
+      contextWindow: 8192,
+      maxTokens: 512,
+      streaming: false,
+    });
+  });
+});

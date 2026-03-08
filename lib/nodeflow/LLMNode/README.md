@@ -11,3 +11,7 @@ LLM 调用节点。核心节点，负责调用各类 LLM API。
 | `LLMNode.ts` | 节点实现 | LLM 节点主逻辑 |
 | `LLMNodeTools.ts` | 工具函数 | LLM 调用工具 |
 | `model-invokers.ts` | 核心 | 各模型调用器实现 |
+
+## 最新变更（2026-03-08）
+
+- `LLMNode.ts` 与 `LLMNodeTools.ts` 现已接收并执行上下文窗口、最大输出、top_p/top_k、penalty、timeout、max retries 等高级参数。

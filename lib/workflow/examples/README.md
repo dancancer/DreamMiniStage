@@ -10,3 +10,7 @@
 |------|------|------|
 | `DialogueWorkflow.ts` | 示例 | 对话工作流示例 |
 | `RAGWorkflow.ts` | 示例 | RAG 检索增强工作流 |
+
+## 最新变更（2026-03-08）
+
+- `DialogueWorkflow.ts` 与 `RAGWorkflow.ts` 已扩展模型高级参数字段流转，确保入口配置可以抵达 `LLMNode`。

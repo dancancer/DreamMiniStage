@@ -10,6 +10,7 @@ import { ChevronRight, Plus, CheckCircle2, XCircle, Loader2 } from "lucide-react
 import { cn } from "@/lib/utils";
 import type { LLMType, SidebarViewProps } from "./types";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 
 // ╔════════════════════════════════════════╗
 // ║ 桌面端模型侧边栏视图（纯展示层）            ║
@@ -43,6 +44,7 @@ export function DesktopSidebarView(props: SidebarViewProps) {
     apiKey,
     availableModels,
     modelListEmpty,
+    advancedSettings,
     saveSuccess,
     getModelListSuccess,
     getModelListError,
@@ -71,6 +73,8 @@ export function DesktopSidebarView(props: SidebarViewProps) {
     setModel,
     handleInlineModelChange,
     handleTestModel,
+    setAdvancedNumberSetting,
+    setAdvancedBooleanSetting,
   } = actions;
 
   const { describeLlmType, getBaseUrlPlaceholder, getModelPlaceholder } = helpers;
@@ -85,6 +89,24 @@ export function DesktopSidebarView(props: SidebarViewProps) {
     isPanel ? "w-full bg-background" : "w-64",
     isOpen ? "opacity-100" : "opacity-0",
   );
+
+  const advancedNumberFields = [
+    { key: "contextWindow", label: t("llmSettings.contextWindow") || "Context Window", description: t("llmSettings.contextWindowDescription") || "Upper bound for prompt context tokens.", step: "1", inputMode: "numeric" as const },
+    { key: "maxTokens", label: t("llmSettings.maxTokens") || "Max Tokens", description: t("llmSettings.maxTokensDescription") || "Maximum number of tokens to generate.", step: "1", inputMode: "numeric" as const },
+    { key: "temperature", label: t("llmSettings.temperature") || "Temperature", description: t("llmSettings.temperatureDescription") || "Controls randomness.", step: "0.1", inputMode: "decimal" as const },
+    { key: "topP", label: t("llmSettings.topP") || "Top P", description: t("llmSettings.topPDescription") || "Controls nucleus sampling diversity.", step: "0.01", inputMode: "decimal" as const },
+    { key: "topK", label: t("llmSettings.topK") || "Top K", description: t("llmSettings.topKDescription") || "Limits candidate tokens.", step: "1", inputMode: "numeric" as const },
+    { key: "frequencyPenalty", label: t("llmSettings.frequencyPenalty") || "Frequency Penalty", description: t("llmSettings.frequencyPenaltyDescription") || "Penalizes repeated frequency.", step: "0.1", inputMode: "decimal" as const },
+    { key: "presencePenalty", label: t("llmSettings.presencePenalty") || "Presence Penalty", description: t("llmSettings.presencePenaltyDescription") || "Encourages new topics.", step: "0.1", inputMode: "decimal" as const },
+    { key: "repeatPenalty", label: t("llmSettings.repeatPenalty") || "Repeat Penalty", description: t("llmSettings.repeatPenaltyDescription") || "Reduces repetition.", step: "0.1", inputMode: "decimal" as const },
+    { key: "timeout", label: t("llmSettings.timeout") || "Timeout", description: t("llmSettings.timeoutDescription") || "Request timeout in milliseconds.", step: "1000", inputMode: "numeric" as const },
+    { key: "maxRetries", label: t("llmSettings.maxRetries") || "Max Retries", description: t("llmSettings.maxRetriesDescription") || "Retry count when requests fail.", step: "1", inputMode: "numeric" as const },
+  ] as const;
+
+  const advancedToggleFields = [
+    { key: "streaming", label: t("llmSettings.streaming") || "Streaming", description: t("llmSettings.streamingDescription") || "Stream model output into the chat UI." },
+    { key: "streamUsage", label: t("llmSettings.streamUsage") || "Stream Usage", description: t("llmSettings.streamUsageDescription") || "Capture token usage during streaming responses." },
+  ] as const;
 
   return (
     <div className={containerClassName}>
@@ -371,6 +393,56 @@ export function DesktopSidebarView(props: SidebarViewProps) {
                 )}
               </div>
 
+              <div className="mb-4 sm:mb-4 mb-3 rounded-md border border-border bg-card/40 p-2.5 sm:p-2.5 p-2">
+                <div className="mb-2 flex items-center justify-between">
+                  <div>
+                    <div className={`text-cream text-xs sm:text-xs text-2xs font-medium ${fontClass}`}>
+                      {t("llmSettings.advancedParams") || "Advanced Parameters"}
+                    </div>
+                    <p className={`mt-0.5 text-[10px] sm:text-[10px] text-[9px] text-text-muted ${fontClass}`}>
+                      {t("llmSettings.optional") || "Optional; leave empty to use defaults"}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:gap-2">
+                  {advancedNumberFields.map((field) => (
+                    <label key={field.key} className="block rounded-md border border-border/60 bg-background/60 p-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`text-xs sm:text-xs text-2xs text-cream ${fontClass}`}>{field.label}</span>
+                        <input
+                          type="number"
+                          inputMode={field.inputMode}
+                          step={field.step}
+                          value={advancedSettings[field.key] ?? ""}
+                          onChange={(e) => setAdvancedNumberSetting(field.key, e.target.value)}
+                          className="w-28 rounded border border-border bg-card px-2 py-1 text-right text-xs sm:text-xs text-2xs text-text focus:border-primary focus:outline-none"
+                          placeholder={t("llmSettings.optional") || "Optional"}
+                        />
+                      </div>
+                      <p className={`mt-1 text-[10px] sm:text-[10px] text-[9px] text-text-muted ${fontClass}`}>
+                        {field.description}
+                      </p>
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-2 space-y-2">
+                  {advancedToggleFields.map((field) => (
+                    <div key={field.key} className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/60 p-2">
+                      <div>
+                        <div className={`text-xs sm:text-xs text-2xs text-cream ${fontClass}`}>{field.label}</div>
+                        <p className={`mt-1 text-[10px] sm:text-[10px] text-[9px] text-text-muted ${fontClass}`}>
+                          {field.description}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={advancedSettings[field.key] ?? true}
+                        onCheckedChange={(checked) => setAdvancedBooleanSetting(field.key, checked)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex gap-2 sm:gap-2 gap-1">
                 <Button
                   onClick={(e) => {trackButtonClick("ModelSidebar", "创建配置"); e.stopPropagation(); handleSave();}}
@@ -392,6 +464,43 @@ export function DesktopSidebarView(props: SidebarViewProps) {
 
           {!showNewConfigForm && activeConfigId && (
             <div className="space-y-3 sm:space-y-3 space-y-2">
+              <div className="rounded-md border border-border bg-card/40 p-2.5 sm:p-2.5 p-2">
+                <div className={`text-cream text-xs sm:text-xs text-2xs font-medium ${fontClass}`}>
+                  {t("llmSettings.advancedParams") || "Advanced Parameters"}
+                </div>
+                <p className={`mt-0.5 text-[10px] sm:text-[10px] text-[9px] text-text-muted ${fontClass}`}>
+                  {t("llmSettings.optional") || "Optional; leave empty to use defaults"}
+                </p>
+                <div className="mt-2 grid grid-cols-1 gap-2">
+                  {advancedNumberFields.map((field) => (
+                    <label key={field.key} className="block rounded-md border border-border/60 bg-background/60 p-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`text-xs sm:text-xs text-2xs text-cream ${fontClass}`}>{field.label}</span>
+                        <input
+                          type="number"
+                          inputMode={field.inputMode}
+                          step={field.step}
+                          value={advancedSettings[field.key] ?? ""}
+                          onChange={(e) => setAdvancedNumberSetting(field.key, e.target.value)}
+                          className="w-28 rounded border border-border bg-card px-2 py-1 text-right text-xs sm:text-xs text-2xs text-text focus:border-primary focus:outline-none"
+                          placeholder={t("llmSettings.optional") || "Optional"}
+                        />
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-2 space-y-2">
+                  {advancedToggleFields.map((field) => (
+                    <div key={field.key} className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/60 p-2">
+                      <span className={`text-xs sm:text-xs text-2xs text-cream ${fontClass}`}>{field.label}</span>
+                      <Switch
+                        checked={advancedSettings[field.key] ?? true}
+                        onCheckedChange={(checked) => setAdvancedBooleanSetting(field.key, checked)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
               <div className="relative">
                 <Button
                   onClick={(e) => {trackButtonClick("ModelSidebar", "保存配置"); e.stopPropagation(); handleSave();}}

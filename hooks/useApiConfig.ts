@@ -16,7 +16,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { trackButtonClick } from "@/utils/google-analytics";
-import { setString } from "@/lib/storage/client-storage";
+import { syncModelConfigToStorage } from "@/lib/model-runtime";
 import { useModelStore, type APIConfig } from "@/lib/store/model-store";
 
 // ============================================================================
@@ -189,14 +189,5 @@ export function useApiConfig(): UseApiConfigReturn {
 // ============================================================================
 
 function syncConfigToStorage(config: APIConfig): void {
-  setString("llmType", config.type);
-  setString(config.type === "openai" ? "openaiBaseUrl" : "ollamaBaseUrl", config.baseUrl);
-  setString(config.type === "openai" ? "openaiModel" : "ollamaModel", config.model);
-  setString("modelName", config.model);
-  setString("modelBaseUrl", config.baseUrl);
-
-  if (config.type === "openai" && config.apiKey) {
-    setString("openaiApiKey", config.apiKey);
-    setString("apiKey", config.apiKey);
-  }
+  syncModelConfigToStorage(config);
 }
