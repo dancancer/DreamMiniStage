@@ -38,7 +38,9 @@ export interface LLMConfig {
   baseUrl?: string;
   llmType: "openai" | "ollama" | "gemini" | "claude";
   temperature?: number;
+  contextWindow?: number;
   maxTokens?: number;
+  timeout?: number;
   maxRetries?: number;
   topP?: number;
   frequencyPenalty?: number;
@@ -85,7 +87,7 @@ export interface LLMConfig {
 const DEFAULT_LLM_SETTINGS = {
   temperature: 0.7,
   maxTokens: undefined,
-  timeout: 1000000000,
+  timeout: undefined,
   maxRetries: 0,
   topP: 0.7,
   frequencyPenalty: 0,
@@ -481,6 +483,8 @@ export class LLMNodeTools extends NodeTool {
           baseURL: config.baseUrl?.trim() || undefined,
         },
         temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
+        maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
+        timeout: config.timeout,
         maxRetries: config.maxRetries ?? DEFAULT_LLM_SETTINGS.maxRetries,
         topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
         frequencyPenalty: config.frequencyPenalty ?? DEFAULT_LLM_SETTINGS.frequencyPenalty,
@@ -494,6 +498,8 @@ export class LLMNodeTools extends NodeTool {
         baseUrl: config.baseUrl?.trim() || "http://localhost:11434",
         temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
         topK: config.topK ?? DEFAULT_LLM_SETTINGS.topK,
+        numCtx: config.contextWindow,
+        numPredict: config.maxTokens,
         topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
         frequencyPenalty: config.frequencyPenalty ?? DEFAULT_LLM_SETTINGS.frequencyPenalty,
         presencePenalty: config.presencePenalty ?? DEFAULT_LLM_SETTINGS.presencePenalty,
@@ -505,6 +511,7 @@ export class LLMNodeTools extends NodeTool {
         apiKey: config.apiKey,
         model: safeModel || "gemini-1.5-flash",
         baseUrl: config.baseUrl,
+        timeout: config.timeout,
         temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
         maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
         topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,

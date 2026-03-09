@@ -17,6 +17,7 @@ export interface GeminiConfig {
   apiKey: string;
   model: string;
   baseUrl?: string;
+  timeout?: number;
   temperature?: number;
   maxTokens?: number;
   topP?: number;
@@ -78,7 +79,7 @@ export function createGeminiRunnable(config: GeminiConfig) {
 
   return RunnableLambda.from(async (input: GeminiInput) => {
     const { system, user } = normalizePrompt(input);
-    const { client, requestOptions } = createClient(config.apiKey, config.baseUrl);
+    const { client, requestOptions } = createClient(config.apiKey, config.baseUrl, config.timeout);
 
     const model = client.getGenerativeModel({
       model: safeModel,
@@ -110,7 +111,7 @@ export async function callGeminiOnce(input: {
   config: GeminiConfig;
 }): Promise<string> {
   const { system, user, config } = input;
-  const { client, requestOptions } = createClient(config.apiKey, config.baseUrl);
+  const { client, requestOptions } = createClient(config.apiKey, config.baseUrl, config.timeout);
   const safeModel = config.model?.trim() || "gemini-1.5-flash";
 
   const model = client.getGenerativeModel({
@@ -140,11 +141,20 @@ export async function callGeminiOnce(input: {
    辅助函数
    ─────────────────────────────────────────────────────────────────────────── */
 
-function createClient(apiKey: string, baseUrl?: string) {
+function createClient(apiKey: string, baseUrl?: string, timeout?: number) {
   const client = new GoogleGenerativeAI(apiKey);
-  const trimmedBase = baseUrl?.trim();
-  const requestOptions = trimmedBase ? { baseUrl: trimmedBase } : undefined;
+  const requestOptions = buildRequestOptions(baseUrl, timeout);
   return { client, requestOptions };
+}
+
+function buildRequestOptions(baseUrl?: string, timeout?: number) {
+  const trimmedBase = baseUrl?.trim();
+  const requestOptions = {
+    ...(trimmedBase ? { baseUrl: trimmedBase } : {}),
+    ...(typeof timeout === "number" ? { timeout } : {}),
+  };
+
+  return Object.keys(requestOptions).length > 0 ? requestOptions : undefined;
 }
 
 function buildGenerationConfig(config: GeminiConfig) {

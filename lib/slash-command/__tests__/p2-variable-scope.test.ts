@@ -208,6 +208,15 @@ describe("P2 scoped variable commands", () => {
     expect(getResult.errorMessage).toContain("JSON array");
   });
 
+  it("setvar 支持单个 key=value 简写并保留字符串原样", async () => {
+    const { ctx } = createScopedContext();
+    const parsed = parseSlashCommands("/setvar foo=00|/getvar foo");
+    const result = await executeSlashCommands(parsed.commands, ctx);
+
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("00");
+  });
+
   it("setvar 对旧式多 named-args 批量写入做 fail-fast", async () => {
     const { ctx } = createScopedContext();
     const parsed = parseSlashCommands("/setvar name=Bob age=30");

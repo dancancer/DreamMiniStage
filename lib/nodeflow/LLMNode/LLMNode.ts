@@ -3,6 +3,7 @@ import { NodeConfig, NodeInput, NodeOutput, NodeCategory } from "@/lib/nodeflow/
 import { LLMNodeTools } from "./LLMNodeTools";
 import { NodeToolRegistry } from "../NodeTool";
 import { getScriptToolsAsOpenAI } from "@/hooks/script-bridge";
+import { applyContextWindowToMessages } from "@/lib/model-runtime";
 
 export class LLMNode extends NodeBase {
   static readonly nodeName = "llm";
@@ -26,6 +27,15 @@ export class LLMNode extends NodeBase {
     const baseUrl = input.baseUrl;
     const llmType = input.llmType || "openai";
     const temperature = input.temperature;
+    const contextWindow = input.contextWindow;
+    const maxTokens = input.maxTokens;
+    const timeout = input.timeout;
+    const maxRetries = input.maxRetries;
+    const topP = input.topP;
+    const frequencyPenalty = input.frequencyPenalty;
+    const presencePenalty = input.presencePenalty;
+    const topK = input.topK;
+    const repeatPenalty = input.repeatPenalty;
     const language = input.language || "zh";
     const streaming = input.streaming || false;
     const streamUsage = input.streamUsage ?? true;
@@ -52,6 +62,11 @@ export class LLMNode extends NodeBase {
       throw new Error("messages[] is required for LLMNode");
     }
 
+    const finalMessages = applyContextWindowToMessages(messages, {
+      contextWindow: typeof contextWindow === "number" ? contextWindow : undefined,
+      maxTokens: typeof maxTokens === "number" ? maxTokens : undefined,
+    });
+
     const llmResponse = await this.executeTool(
       "invokeLLM",
       {
@@ -60,12 +75,21 @@ export class LLMNode extends NodeBase {
         baseUrl,
         llmType,
         temperature,
+        contextWindow,
+        maxTokens,
+        timeout,
+        maxRetries,
+        topP,
+        frequencyPenalty,
+        presencePenalty,
+        topK,
+        repeatPenalty,
         language,
         streaming,
         streamUsage,
         dialogueKey,
         characterId,
-        messages,
+        messages: finalMessages,
         // 后处理选项
         promptNames,
         postProcessingMode,

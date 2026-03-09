@@ -19,3 +19,7 @@
 | `regex-script-operation.ts` | 操作类 | 正则脚本操作 |
 | `session-operation.ts` | 操作类 | 会话操作 |
 | `world-book-operation.ts` | 操作类 | 世界书操作 |
+
+## 最新变更（2026-03-08）
+
+- `preset-operation.ts` 现已保留 ST 预设中的关键采样参数，导入后不会再丢失 `openai_max_context`、`openai_max_tokens`、`temperature`、`top_p` 等信息。

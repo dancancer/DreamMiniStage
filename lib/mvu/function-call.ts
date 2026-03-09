@@ -7,6 +7,7 @@
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
+import { SchemaType } from "@google/generative-ai";
 import type { MvuData, CommandResult } from "./types";
 import { updateVariablesFromMessage } from "./core/executor";
 
@@ -75,6 +76,29 @@ export function getMvuTool(): OpenAITool {
     type: "function",
     function: MVU_VARIABLE_UPDATE_FUNCTION,
   };
+}
+
+export function toGeminiMvuToolDeclaration() {
+  return [{
+    functionDeclarations: [{
+      name: MVU_VARIABLE_UPDATE_FUNCTION.name,
+      description: MVU_VARIABLE_UPDATE_FUNCTION.description,
+      parameters: {
+        type: SchemaType.OBJECT,
+        properties: {
+          analysis: {
+            type: SchemaType.STRING,
+            description: MVU_VARIABLE_UPDATE_FUNCTION.parameters.properties.analysis.description,
+          },
+          delta: {
+            type: SchemaType.STRING,
+            description: MVU_VARIABLE_UPDATE_FUNCTION.parameters.properties.delta.description,
+          },
+        },
+        required: ["analysis", "delta"],
+      },
+    }],
+  }];
 }
 
 // ============================================================================

@@ -1,5 +1,5 @@
 /**
- * @input  (none)
+ * @input  lib/model-runtime
  * @output DialogueMessage, OpeningMessage, OpeningPayload, Character, LLMType, LLMConfig, UseCharacterDialogueOptions, UseCharacterDialogueReturn
  * @pos    类型定义层 - 角色对话核心类型：消息、开场白、LLM 配置、Hook 接口
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
@@ -9,6 +9,8 @@
  * ║  角色对话相关的共享类型：消息、开场白、LLM 配置、Hook 返回值                   ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
+
+import type { ModelAdvancedSettings } from "@/lib/model-runtime";
 
 export interface DialogueMessage {
   id: string;
@@ -48,6 +50,7 @@ export interface LLMConfig {
   modelName: string;
   baseUrl: string;
   apiKey: string;
+  advanced?: ModelAdvancedSettings;
 }
 
 export interface UseCharacterDialogueOptions {

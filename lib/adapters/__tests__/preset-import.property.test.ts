@@ -320,3 +320,74 @@ describe("Preset Import Pipeline", () => {
     expect(result.name).toBe("Imported Preset");
   });
 });
+
+describe("Preset Import Sampling Params", () => {
+  it("保留 ST 预设中的采样参数并转换为统一 runtime 字段", () => {
+    const preset = normalizePreset({
+      name: "sampling",
+      prompts: [],
+      temperature: 1.25,
+      top_p: 0.9,
+      top_k: 42,
+      frequency_penalty: 0.3,
+      presence_penalty: 0.4,
+      repetition_penalty: 1.12,
+      openai_max_context: 8192,
+      openai_max_tokens: 512,
+      stream_openai: false,
+    });
+
+    expect(preset.sampling).toEqual({
+      temperature: 1.25,
+      topP: 0.9,
+      topK: 42,
+      frequencyPenalty: 0.3,
+      presencePenalty: 0.4,
+      repeatPenalty: 1.12,
+      contextWindow: 8192,
+      maxTokens: 512,
+      streaming: false,
+    });
+  });
+});
+
+describe("Preset Import Sampling Compatibility", () => {
+  it("保留当前 app-format 的嵌套 sampling 字段", () => {
+    const result = normalizePreset({
+      name: "nested-sampling",
+      prompts: [],
+      sampling: {
+        temperature: 0.4,
+        maxTokens: 123,
+        timeout: 9000,
+      },
+    });
+
+    expect(result.sampling).toEqual({
+      temperature: 0.4,
+      maxTokens: 123,
+      timeout: 9000,
+    });
+  });
+
+  it("嵌套 sampling 优先于 legacy 顶层 ST 字段", () => {
+    const result = normalizePreset({
+      name: "sampling-precedence",
+      prompts: [],
+      sampling: {
+        temperature: 0.4,
+        maxTokens: 123,
+      },
+      temperature: 0.9,
+      openai_max_tokens: 512,
+      top_p: 0.8,
+    });
+
+    expect(result.sampling).toEqual({
+      temperature: 0.4,
+      maxTokens: 123,
+      topP: 0.8,
+    });
+  });
+});
+

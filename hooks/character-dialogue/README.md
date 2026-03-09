@@ -10,3 +10,11 @@
 |------|------|------|
 | `message-utils.ts` | 工具函数 | 消息处理工具 |
 | `useDialoguePreferences.ts` | Hook | 对话偏好设置 |
+
+## 最新变更（2026-03-09）
+
+- `useDialoguePreferences.ts` 不再用聊天页全局 `streamingEnabled` 覆盖激活模型配置，流式开关改回以当前模型配置为唯一事实源。
+
+## 之前变更（2026-03-08）
+
+- `useDialoguePreferences.ts` 改为从 `model-store` 读取当前激活模型配置与高级参数，避免 runtime 再从分散 localStorage key 组装配置。

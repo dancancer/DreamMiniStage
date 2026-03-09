@@ -14,6 +14,7 @@ import {
 } from "@/lib/data/local-storage";
 import { Preset, PresetPrompt } from "@/lib/models/preset-model";
 import { importPreset as normalizePresetData, type NormalizedPreset } from "@/lib/adapters/import/preset-import";
+import { normalizeModelAdvancedSettings, type ModelAdvancedSettings } from "@/lib/model-runtime";
 import { sortPrompts, getPromptsFromBestGroup } from "@/lib/core/prompt/sorting";
 
 export class PresetOperations {
@@ -53,6 +54,20 @@ export class PresetOperations {
     } catch (error) {
       console.error("Error getting preset:", error);
       return null;
+    }
+  }
+
+  static async getActivePresetSampling(): Promise<ModelAdvancedSettings | undefined> {
+    try {
+      const presets = await this.getAllPresets();
+      const activePreset = presets.find((preset) => preset.enabled !== false);
+      if (!activePreset?.sampling) {
+        return undefined;
+      }
+      return normalizeModelAdvancedSettings(activePreset.sampling);
+    } catch (error) {
+      console.error("Error getting active preset sampling:", error);
+      return undefined;
     }
   }
 
@@ -146,6 +161,7 @@ export class PresetOperations {
         name: customName || normalized.name,
         enabled: true,
         prompts: normalized.prompts,
+        sampling: normalized.sampling,
         // 不再保留 prompt_order，只使用 group_id/position
       };
 

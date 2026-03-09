@@ -34,10 +34,10 @@ import { useUIStore } from "@/lib/store/ui-store";
 import { useUserStore } from "@/lib/store/user-store";
 import { useSessionStore } from "@/lib/store/session-store";
 import { useScriptVariables } from "@/lib/store/script-variables";
-import { useModelStore, type APIConfig } from "@/lib/store/model-store";
+import { useModelStore } from "@/lib/store/model-store";
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
-import { setString } from "@/lib/storage/client-storage";
+import { syncModelConfigToStorage } from "@/lib/model-runtime";
 import { DialogueNode, DialogueTree } from "@/lib/models/node-model";
 import { buildSwitchedSessionName, buildTemporarySessionName } from "@/app/session/session-switch";
 import {
@@ -149,32 +149,6 @@ function buildDialogueTreeSnapshot(
 
 function buildSessionSlashHostError(commandName: string, detail: string): Error {
   return new Error(`${commandName} is not wired in /session host yet: ${detail}`);
-}
-
-const MODEL_STORAGE_KEYS: Record<APIConfig["type"], {
-  model: string;
-  baseUrl: string;
-  apiKey?: string;
-}> = {
-  openai: { model: "openaiModel", baseUrl: "openaiBaseUrl", apiKey: "openaiApiKey" },
-  ollama: { model: "ollamaModel", baseUrl: "ollamaBaseUrl" },
-  gemini: { model: "geminiModel", baseUrl: "geminiBaseUrl", apiKey: "geminiApiKey" },
-};
-
-function syncModelConfigToStorage(config: APIConfig): void {
-  const keys = MODEL_STORAGE_KEYS[config.type];
-  setString("llmType", config.type);
-  setString("modelName", config.model);
-  setString("modelBaseUrl", config.baseUrl);
-  setString(keys.model, config.model);
-  setString(keys.baseUrl, config.baseUrl);
-
-  if (keys.apiKey && typeof config.apiKey === "string") {
-    setString(keys.apiKey, config.apiKey);
-    if (config.apiKey.trim().length > 0) {
-      setString("apiKey", config.apiKey);
-    }
-  }
 }
 
 function getSessionMessageSelector(index: number): string {

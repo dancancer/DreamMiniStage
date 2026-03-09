@@ -15,17 +15,18 @@ import type { ExecutionContext, VariableScope } from "@/lib/slash-command/types"
 
 /** /setvar key=value 或 /setvar key value - 设置变量 */
 export const handleSetVar: CommandHandler = async (args, namedArgs, ctx, pipe) => {
-  assertSupportedNamedArgs(namedArgs, ["key", "value", "index", "as"], "setvar");
+  const resolvedNamedArgs = normalizeAssignmentNamedArgs(namedArgs, args, pipe);
+  assertSupportedNamedArgs(resolvedNamedArgs, ["key", "value", "index", "as"], "setvar");
 
-  const key = resolveVariableKey(args, namedArgs);
+  const key = resolveVariableKey(args, resolvedNamedArgs);
   if (!key) return pipe;
 
-  const value = resolveVariableValue(args, namedArgs, pipe);
+  const value = resolveVariableValue(args, resolvedNamedArgs, pipe);
   if (value === undefined) return pipe;
 
-  const index = resolveVariableIndex(namedArgs);
+  const index = resolveVariableIndex(resolvedNamedArgs);
   if (index !== undefined) {
-    setIndexedScopedVariable(ctx, "local", key, index, value, namedArgs.as);
+    setIndexedScopedVariable(ctx, "local", key, index, value, resolvedNamedArgs.as);
     return String(value);
   }
 
@@ -77,17 +78,18 @@ export const handleDumpVar: CommandHandler = async (_args, _namedArgs, ctx, pipe
 
 /** /setglobalvar key value - 设置全局变量 */
 export const handleSetGlobalVar: CommandHandler = async (args, namedArgs, ctx, pipe) => {
-  assertSupportedNamedArgs(namedArgs, ["key", "value", "index", "as"], "setglobalvar");
+  const resolvedNamedArgs = normalizeAssignmentNamedArgs(namedArgs, args, pipe);
+  assertSupportedNamedArgs(resolvedNamedArgs, ["key", "value", "index", "as"], "setglobalvar");
 
-  const key = resolveVariableKey(args, namedArgs);
+  const key = resolveVariableKey(args, resolvedNamedArgs);
   if (!key) return pipe;
 
-  const value = resolveVariableValue(args, namedArgs, pipe);
+  const value = resolveVariableValue(args, resolvedNamedArgs, pipe);
   if (value === undefined) return pipe;
 
-  const index = resolveVariableIndex(namedArgs);
+  const index = resolveVariableIndex(resolvedNamedArgs);
   if (index !== undefined) {
-    setIndexedScopedVariable(ctx, "global", key, index, value, namedArgs.as);
+    setIndexedScopedVariable(ctx, "global", key, index, value, resolvedNamedArgs.as);
     return String(value);
   }
 
@@ -259,6 +261,32 @@ function resolveVariableValue(
 
 function resolveVariableIndex(namedArgs: Record<string, string>): string | undefined {
   return namedArgs.index;
+}
+
+function normalizeAssignmentNamedArgs(
+  namedArgs: Record<string, string>,
+  args: string[],
+  pipe: string,
+): Record<string, string> {
+  if (args.length > 0) {
+    return namedArgs;
+  }
+
+  const entries = Object.entries(namedArgs);
+  if (entries.length !== 1) {
+    return namedArgs;
+  }
+
+  const [[key, value]] = entries;
+  if (key === "key" && pipe) {
+    return namedArgs;
+  }
+
+  if (["value", "index", "as"].includes(key)) {
+    return namedArgs;
+  }
+
+  return { key, value };
 }
 
 function assertSupportedNamedArgs(
@@ -715,12 +743,7 @@ function normalizeReadValue(value: unknown): string {
     return "";
   }
 
-  const numberValue = Number(value);
-  if (Number.isNaN(numberValue)) {
-    return value;
-  }
-
-  return String(numberValue);
+  return value;
 }
 
 function scopedGet(ctx: ExecutionContext, scope: VariableScope, key: string): unknown {

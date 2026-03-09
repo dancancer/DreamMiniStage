@@ -17,3 +17,7 @@
 | `ui-store.ts` | 存储 | UI 状态 |
 | `user-store.ts` | 存储 | 用户状态 |
 | `dialogue-store/` | 子目录 | 对话状态（重构版） |
+
+## 最新变更（2026-03-08）
+
+- `model-store.ts` 现已把模型高级参数（context window / max tokens / penalties / streaming 等）并入同一配置对象，作为会话生成链路的单一状态源。

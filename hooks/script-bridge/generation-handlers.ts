@@ -10,6 +10,7 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
+import { resolveModelAdvancedSettings } from "@/lib/model-runtime";
 import { useModelStore } from "@/lib/store/model-store";
 import { handleCharacterChatRequest } from "@/function/dialogue/chat";
 import type { ApiCallContext, ApiHandlerMap } from "./types";
@@ -56,6 +57,13 @@ async function generate(args: unknown[], ctx: ApiCallContext) {
           baseUrl: customApi.apiurl || activeConfig?.baseUrl || "",
           model: customApi.model || activeConfig?.model || "",
           apiKey: customApi.key || activeConfig?.apiKey || "",
+          advanced: resolveModelAdvancedSettings({
+            request: {
+              temperature: typeof customApi.temperature === "number" ? customApi.temperature : undefined,
+              maxTokens: typeof customApi.max_tokens === "number" ? customApi.max_tokens : undefined,
+            },
+            session: activeConfig?.advanced,
+          }),
         }
       : activeConfig;
 
@@ -82,9 +90,10 @@ async function generate(args: unknown[], ctx: ApiCallContext) {
         llmType: effectiveConfig.type,
         streaming: Boolean(config?.should_stream ?? config?.stream),
         language: "zh",
-        number: customApi?.max_tokens || 200,
+        number: customApi?.max_tokens || effectiveConfig.advanced?.maxTokens || 200,
         nodeId: generationId,
         fastModel: false,
+        advanced: effectiveConfig.advanced,
       }),
       abortPromise,
     ]);

@@ -11,7 +11,7 @@
  */
 
 import { ChatOpenAI } from "@langchain/openai";
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createGeminiRunnable } from "@/lib/core/gemini-client";
 import { getTextContent } from "@/lib/core/prompt/post-processor";
 import { convertForClaude, convertForGoogle } from "@/lib/core/prompt/converters";
@@ -23,6 +23,7 @@ import {
   extractMvuToolCall,
   functionCallToUpdateContent,
   MVU_VARIABLE_UPDATE_FUNCTION,
+  toGeminiMvuToolDeclaration,
   type ToolCallBatches,
   type OpenAITool,
 } from "@/lib/mvu/function-call";
@@ -128,7 +129,12 @@ export async function invokeClaudeModel(
       baseURL: config.baseUrl?.trim() || undefined,
     },
     temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
+    maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
+    timeout: config.timeout,
     maxRetries: config.maxRetries ?? DEFAULT_LLM_SETTINGS.maxRetries,
+    topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
+    frequencyPenalty: config.frequencyPenalty,
+    presencePenalty: config.presencePenalty,
     streaming: config.streaming ?? DEFAULT_LLM_SETTINGS.streaming,
     streamUsage: config.streamUsage ?? DEFAULT_LLM_SETTINGS.streamUsage,
   });
@@ -229,7 +235,12 @@ export async function invokeClaudeModelStream(
       baseURL: config.baseUrl?.trim() || undefined,
     },
     temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
+    maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
+    timeout: config.timeout,
     maxRetries: config.maxRetries ?? DEFAULT_LLM_SETTINGS.maxRetries,
+    topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
+    frequencyPenalty: config.frequencyPenalty,
+    presencePenalty: config.presencePenalty,
     streaming: true,
     streamUsage: true,
   });
@@ -295,35 +306,17 @@ export async function invokeGeminiModel(
   // ═══════════════════════════════════════════════════════════════════════════
   if (config.mvuToolEnabled) {
     const client = new GoogleGenerativeAI(config.apiKey);
-    const requestOptions = config.baseUrl?.trim() ? { baseUrl: config.baseUrl.trim() } : undefined;
-
-    // 转换 MVU 工具为 Gemini 格式
-    const geminiTools = [{
-      functionDeclarations: [{
-        name: MVU_VARIABLE_UPDATE_FUNCTION.name,
-        description: MVU_VARIABLE_UPDATE_FUNCTION.description,
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {
-            analysis: {
-              type: SchemaType.STRING,
-              description: MVU_VARIABLE_UPDATE_FUNCTION.parameters.properties.analysis.description,
-            },
-            delta: {
-              type: SchemaType.STRING,
-              description: MVU_VARIABLE_UPDATE_FUNCTION.parameters.properties.delta.description,
-            },
-          },
-          required: ["analysis", "delta"],
-        },
-      }],
-    }];
+    const requestOptions = {
+      ...(config.baseUrl?.trim() ? { baseUrl: config.baseUrl.trim() } : {}),
+      ...(typeof config.timeout === "number" ? { timeout: config.timeout } : {}),
+    };
+    const resolvedRequestOptions = Object.keys(requestOptions).length > 0 ? requestOptions : undefined;
 
     const model = client.getGenerativeModel({
       model: config.modelName || "gemini-1.5-flash",
       systemInstruction: systemText,
-      tools: geminiTools,
-    }, requestOptions);
+      tools: toGeminiMvuToolDeclaration(),
+    }, resolvedRequestOptions);
 
     const generationConfig: Record<string, number> = {};
     if (config.temperature !== undefined) generationConfig.temperature = config.temperature;
@@ -384,6 +377,7 @@ export async function invokeGeminiModel(
     apiKey: config.apiKey,
     model: config.modelName || "gemini-1.5-flash",
     baseUrl: config.baseUrl,
+    timeout: config.timeout,
     temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
     maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
     topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,

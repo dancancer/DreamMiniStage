@@ -16,7 +16,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { trackButtonClick } from "@/utils/google-analytics";
-import { setString } from "@/lib/storage/client-storage";
+import { syncModelConfigToStorage } from "@/lib/model-runtime";
 import { useModelStore, type APIConfig } from "@/lib/store/model-store";
 
 // ============================================================================
@@ -33,6 +33,7 @@ interface UseApiConfigReturn {
   getCurrentConfig: () => APIConfig | undefined;
   handleConfigSelect: (configId: string) => Promise<void>;
   handleModelSwitch: (configId: string, modelName?: string) => void;
+  setActiveConfigStreaming: (streaming: boolean) => void;
   showApiDropdown: boolean;
   setShowApiDropdown: (show: boolean) => void;
   showModelDropdown: boolean;
@@ -89,53 +90,72 @@ export function useApiConfig(): UseApiConfigReturn {
     [configs, activeConfigId]
   );
 
-  // 选择配置（第一层下拉）
-  const handleConfigSelect = useCallback(async (configId: string) => {
-    const selectedConfig = configs.find((c) => c.id === configId);
-    if (!selectedConfig) return;
-
-    // 懒加载可用模型
-    if (!selectedConfig.availableModels) {
-      const models = await fetchAvailableModels(selectedConfig);
-      updateConfig(configId, { availableModels: models });
-    }
-
-    const configForUse = configs.find((c) => c.id === configId) || selectedConfig;
-
-    // 单模型直接切换，多模型显示第二层下拉
-    if (configForUse.availableModels?.length === 1) {
-      handleModelSwitch(configId, configForUse.availableModels[0]);
-      setShowApiDropdown(false);
-      setShowModelDropdown(false);
-    } else {
-      setSelectedConfigId(configId);
-      setShowModelDropdown(true);
-      setShowApiDropdown(false);
-    }
-  }, [configs, updateConfig]);
-
   // 切换模型
   const handleModelSwitch = useCallback((configId: string, modelName?: string) => {
     const selectedConfig = configs.find((c) => c.id === configId);
     if (!selectedConfig) return;
 
-    // 更新模型配置
-    if (modelName && modelName !== selectedConfig.model) {
-      const actualModelName = modelName === "default" ? (selectedConfig.model || "default") : modelName;
-      updateConfig(configId, { model: actualModelName });
+    const actualModelName = modelName === "default" ? (selectedConfig.model || "default") : modelName;
+    const nextConfig = actualModelName && actualModelName !== selectedConfig.model
+      ? { ...selectedConfig, model: actualModelName }
+      : selectedConfig;
+
+    if (nextConfig.model !== selectedConfig.model) {
+      updateConfig(configId, { model: nextConfig.model });
     }
 
     setActiveConfig(configId);
-    const configAfterUpdate = configs.find((c) => c.id === configId) || selectedConfig;
+    const configAfterUpdate = useModelStore.getState().getConfigById(configId) || nextConfig;
     setCurrentModel(configAfterUpdate.model);
-
-    // 同步到各存储键
-    syncConfigToStorage(configAfterUpdate);
+    syncModelConfigToStorage(configAfterUpdate);
 
     setShowApiDropdown(false);
     setShowModelDropdown(false);
     trackButtonClick("CharacterChat", "切换模型");
   }, [configs, updateConfig, setActiveConfig]);
+
+  // 选择配置（第一层下拉）
+  const handleConfigSelect = useCallback(async (configId: string) => {
+    const selectedConfig = configs.find((c) => c.id === configId);
+    if (!selectedConfig) return;
+
+    if (!selectedConfig.availableModels) {
+      const models = await fetchAvailableModels(selectedConfig);
+      updateConfig(configId, { availableModels: models });
+    }
+
+    const freshConfigs = useModelStore.getState().configs;
+    const configForUse = freshConfigs.find((c) => c.id === configId) || selectedConfig;
+
+    if (configForUse.availableModels?.length === 1) {
+      handleModelSwitch(configId, configForUse.availableModels[0]);
+      setShowApiDropdown(false);
+      setShowModelDropdown(false);
+      return;
+    }
+
+    setSelectedConfigId(configId);
+    setShowModelDropdown(true);
+    setShowApiDropdown(false);
+  }, [configs, handleModelSwitch, updateConfig]);
+
+  const setActiveConfigStreaming = useCallback((streaming: boolean) => {
+    const activeConfig = configs.find((c) => c.id === activeConfigId);
+    if (!activeConfig) return;
+    if (activeConfig.advanced?.streaming === streaming) return;
+
+    const nextAdvanced = {
+      ...activeConfig.advanced,
+      streaming,
+    };
+    const nextConfig = {
+      ...activeConfig,
+      advanced: nextAdvanced,
+    };
+
+    updateConfig(activeConfigId, { advanced: nextAdvanced });
+    syncModelConfigToStorage(nextConfig);
+  }, [activeConfigId, configs, updateConfig]);
 
   // ═══════════════════════════════════════════════════════════════
   // 初始化：从 Store 同步当前模型
@@ -175,6 +195,7 @@ export function useApiConfig(): UseApiConfigReturn {
     getCurrentConfig,
     handleConfigSelect,
     handleModelSwitch,
+    setActiveConfigStreaming,
     showApiDropdown,
     setShowApiDropdown,
     showModelDropdown,
@@ -184,19 +205,3 @@ export function useApiConfig(): UseApiConfigReturn {
   };
 }
 
-// ============================================================================
-//                              辅助函数
-// ============================================================================
-
-function syncConfigToStorage(config: APIConfig): void {
-  setString("llmType", config.type);
-  setString(config.type === "openai" ? "openaiBaseUrl" : "ollamaBaseUrl", config.baseUrl);
-  setString(config.type === "openai" ? "openaiModel" : "ollamaModel", config.model);
-  setString("modelName", config.model);
-  setString("modelBaseUrl", config.baseUrl);
-
-  if (config.type === "openai" && config.apiKey) {
-    setString("openaiApiKey", config.apiKey);
-    setString("apiKey", config.apiKey);
-  }
-}

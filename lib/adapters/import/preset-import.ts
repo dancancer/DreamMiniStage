@@ -9,6 +9,12 @@
 
 import type { ImportAdapter } from "./types";
 import { createImportPipeline, isNonNullObject } from "./types";
+import {
+  convertPresetToModelAdvancedSettings,
+  normalizeModelAdvancedSettings,
+  resolveModelAdvancedSettings,
+  type ModelAdvancedSettings,
+} from "@/lib/model-runtime";
 import type { Preset, PresetPrompt, PromptOrderGroup } from "@/lib/models/preset-model";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -37,6 +43,16 @@ interface RawPreset {
   name?: string;
   prompts?: RawPresetPrompt[];
   prompt_order?: PromptOrderGroup[];
+  temperature?: number;
+  top_p?: number;
+  top_k?: number;
+  frequency_penalty?: number;
+  presence_penalty?: number;
+  repetition_penalty?: number;
+  openai_max_context?: number;
+  openai_max_tokens?: number;
+  stream_openai?: boolean;
+  sampling?: Partial<ModelAdvancedSettings>;
   [key: string]: unknown;
 }
 
@@ -210,11 +226,20 @@ export function normalizePreset(raw: RawPreset): NormalizedPreset {
     );
   }
 
+  const currentSampling = isNonNullObject(raw.sampling)
+    ? normalizeModelAdvancedSettings(raw.sampling as Partial<ModelAdvancedSettings>)
+    : undefined;
+  const legacySampling = convertPresetToModelAdvancedSettings(raw);
+
   return {
     id: raw.id as string | undefined,
     name: raw.name ?? "Imported Preset",
     enabled: raw.enabled as boolean | undefined,
     prompts: normalizedPrompts,
+    sampling: resolveModelAdvancedSettings({
+      request: currentSampling,
+      preset: legacySampling,
+    }),
     created_at: raw.created_at as string | undefined,
     updated_at: raw.updated_at as string | undefined,
   };

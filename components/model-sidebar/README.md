@@ -11,3 +11,11 @@
 | `DesktopSidebarView.tsx` | 组件 | 桌面端侧边栏视图 |
 | `MobileSidebarView.tsx` | 组件 | 移动端侧边栏视图 |
 | `types.ts` | 类型定义 | 侧边栏类型 |
+
+## 最新变更（2026-03-09）
+
+- 桌面端与移动端侧边栏现在按后端能力过滤高级参数；仅展示真正接线的 timeout / retry / sampling / stream usage 选项，避免 UI 承诺大于实际行为。
+
+## 之前变更（2026-03-08）
+
+- 桌面端与移动端模型侧边栏均新增模型高级设置 UI，可直接编辑上下文窗口、最大输出、采样参数、超时、重试与 streaming 开关。

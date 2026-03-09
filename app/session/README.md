@@ -24,3 +24,7 @@
 - `page.tsx` 现在会将内建默认宿主能力与 `window.__DREAMMINISTAGE_SESSION_HOST__` 注入能力合并：`/translate` 与 `/yt-script` 默认可用，外部宿主可按协议覆盖默认实现；正式协议文档见 `docs/analysis/session-host-bridge/README.md`。
 - `session-timed-world-info.ts` 已接通 `/wi-get-timed-effect` 与 `/wi-set-timed-effect`：运行时状态统一落在 dialogue root `chat_metadata.timedWorldInfo`，并按 `file -> uid -> effect` 组织。
 - `session-switch.ts` 新增 `buildTemporarySessionName`，统一临时会话命名，避免页面内继续散落字符串拼接规则。
+
+## 最新变更（2026-03-08）补充
+
+- `page.tsx` 继续复用统一的 `syncModelConfigToStorage`，确保 `/session` 切换模型 preset 时，基础字段与高级参数一并同步到运行时存储。
