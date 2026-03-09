@@ -48,3 +48,26 @@
   - `function/dialogue/__tests__/chat-first-message.test.ts`
 - 修复后已重新执行 `pnpm verify:stage`，结果为 lint / typecheck / test / build 全部通过。
 
+## Code Quality Follow-up（2026-03-09）
+
+- 已根据 `phase1-code-quality-review.md` 修复本轮确认成立的 code quality 阻塞项：
+  - `function/dialogue/chat.ts` 已拆为 `chat.ts`、`chat-shared.ts`、`chat-streaming.ts`；流式模式已明确标注为 buffered chunked delivery。
+  - `hooks/useModelSidebarConfig.ts` 已拆出 `helpers.ts`、`model-list.ts`、`test-model.ts`，主 hook 重新压回 400 行以内。
+  - `lib/nodeflow/LLMNode/model-invokers.ts` 的 Gemini MVU 工具声明已提取到 `lib/mvu/function-call.ts`，同一份 schema 供 OpenAI / Gemini 复用。
+  - `lib/model-runtime.ts` 已移除 `resolveModelAdvancedSettings` 的冗余外层 normalize，并为 `syncModelConfigToStorage` 的双写 key 补充注释；provider 参数支持矩阵已拆到 `lib/model-runtime-support.ts`，保证核心 runtime 文件重新回到 400 行以内。
+  - `hooks/useApiConfig.ts` 已移除 `syncConfigToStorage` 空包装，并修复 `handleConfigSelect` 在 `await` 之后读取 stale configs 的问题。
+- 当前关键文件行数已满足硬性指标：
+  - `function/dialogue/chat.ts`：251 行
+  - `hooks/useModelSidebarConfig.ts`：384 行
+  - `lib/nodeflow/LLMNode/model-invokers.ts`：400 行
+  - `lib/model-runtime.ts`：397 行
+- 已新增/扩展本轮定向测试：
+  - `lib/__tests__/model-runtime.test.ts`
+  - `hooks/__tests__/useModelSidebarConfig.helpers.test.ts`
+  - `function/dialogue/__tests__/chat-first-message.test.ts`
+- 本轮实际验证结果：
+  - `pnpm vitest run lib/__tests__/model-runtime.test.ts hooks/__tests__/useModelSidebarConfig.helpers.test.ts hooks/character-dialogue/__tests__/useDialoguePreferences.test.ts function/dialogue/__tests__/chat-first-message.test.ts components/__tests__/CharacterChatPanel.bridge.test.tsx lib/workflow/__tests__/dialogue-workflow-validation.test.ts`
+  - `pnpm typecheck`
+  - `pnpm lint`
+  - `pnpm verify:stage`
+- 上述命令均已通过；当前阶段在已 review 的行为与代码质量项上已形成闭环，可继续推进 PR 准备。

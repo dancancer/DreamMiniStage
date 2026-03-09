@@ -178,6 +178,7 @@ export class CharacterDialogue {
         apiKey: apiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "",
         model: safeModel || "gemini-1.5-flash",
         baseUrl: baseUrl?.trim() || process.env.NEXT_PUBLIC_GEMINI_API_BASE_URL || "",
+        timeout: llmSettings.timeout,
         temperature: llmSettings.temperature,
         maxTokens: llmSettings.maxTokens,
         topP: llmSettings.topP,

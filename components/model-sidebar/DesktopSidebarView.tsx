@@ -8,6 +8,7 @@
 import React from "react";
 import { ChevronRight, Plus, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supportsModelAdvancedBooleanSetting, supportsModelAdvancedNumberSetting } from "@/lib/model-runtime-support";
 import type { LLMType, SidebarViewProps } from "./types";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -107,6 +108,13 @@ export function DesktopSidebarView(props: SidebarViewProps) {
     { key: "streaming", label: t("llmSettings.streaming") || "Streaming", description: t("llmSettings.streamingDescription") || "Stream model output into the chat UI." },
     { key: "streamUsage", label: t("llmSettings.streamUsage") || "Stream Usage", description: t("llmSettings.streamUsageDescription") || "Capture token usage during streaming responses." },
   ] as const;
+
+  const visibleAdvancedNumberFields = advancedNumberFields.filter((field) =>
+    supportsModelAdvancedNumberSetting(llmType, field.key),
+  );
+  const visibleAdvancedToggleFields = advancedToggleFields.filter((field) =>
+    supportsModelAdvancedBooleanSetting(llmType, field.key),
+  );
 
   return (
     <div className={containerClassName}>
@@ -405,7 +413,7 @@ export function DesktopSidebarView(props: SidebarViewProps) {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-2 sm:gap-2">
-                  {advancedNumberFields.map((field) => (
+                  {visibleAdvancedNumberFields.map((field) => (
                     <label key={field.key} className="block rounded-md border border-border/60 bg-background/60 p-2">
                       <div className="flex items-center justify-between gap-2">
                         <span className={`text-xs sm:text-xs text-2xs text-cream ${fontClass}`}>{field.label}</span>
@@ -426,7 +434,7 @@ export function DesktopSidebarView(props: SidebarViewProps) {
                   ))}
                 </div>
                 <div className="mt-2 space-y-2">
-                  {advancedToggleFields.map((field) => (
+                  {visibleAdvancedToggleFields.map((field) => (
                     <div key={field.key} className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/60 p-2">
                       <div>
                         <div className={`text-xs sm:text-xs text-2xs text-cream ${fontClass}`}>{field.label}</div>
@@ -472,7 +480,7 @@ export function DesktopSidebarView(props: SidebarViewProps) {
                   {t("llmSettings.optional") || "Optional; leave empty to use defaults"}
                 </p>
                 <div className="mt-2 grid grid-cols-1 gap-2">
-                  {advancedNumberFields.map((field) => (
+                  {visibleAdvancedNumberFields.map((field) => (
                     <label key={field.key} className="block rounded-md border border-border/60 bg-background/60 p-2">
                       <div className="flex items-center justify-between gap-2">
                         <span className={`text-xs sm:text-xs text-2xs text-cream ${fontClass}`}>{field.label}</span>
@@ -490,7 +498,7 @@ export function DesktopSidebarView(props: SidebarViewProps) {
                   ))}
                 </div>
                 <div className="mt-2 space-y-2">
-                  {advancedToggleFields.map((field) => (
+                  {visibleAdvancedToggleFields.map((field) => (
                     <div key={field.key} className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/60 p-2">
                       <span className={`text-xs sm:text-xs text-2xs text-cream ${fontClass}`}>{field.label}</span>
                       <Switch

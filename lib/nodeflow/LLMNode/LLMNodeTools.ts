@@ -511,6 +511,7 @@ export class LLMNodeTools extends NodeTool {
         apiKey: config.apiKey,
         model: safeModel || "gemini-1.5-flash",
         baseUrl: config.baseUrl,
+        timeout: config.timeout,
         temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
         maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
         topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,

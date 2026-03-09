@@ -55,8 +55,8 @@ export const MODEL_ADVANCED_STORAGE_KEYS = {
   presencePenalty: "presencePenalty",
   topK: "topK",
   repeatPenalty: "repeatPenalty",
-  streaming: "streamingEnabled",
-  streamUsage: "streamUsageEnabled",
+  streaming: "modelStreamingEnabled",
+  streamUsage: "modelStreamUsageEnabled",
 } as const;
 
 export type NumericModelSettingKey = Exclude<keyof ModelAdvancedSettings, "streaming" | "streamUsage">;
@@ -90,9 +90,7 @@ const NUMERIC_SETTING_KEYS: NumericModelSettingKey[] = [
 
 const BOOLEAN_SETTING_KEYS: BooleanModelSettingKey[] = ["streaming", "streamUsage"];
 
-function pickDefined<T>(...values: Array<T | undefined>): T | undefined {
-  return values.find((value) => value !== undefined);
-}
+const pickDefined = <T>(...values: Array<T | undefined>): T | undefined => values.find((value) => value !== undefined);
 
 function parseStoredNumber(key: string): number | undefined {
   const raw = getString(key);
@@ -175,7 +173,7 @@ export function resolveModelAdvancedSettings(input: {
   const session = normalizeModelAdvancedSettings(input.session);
   const preset = normalizeModelAdvancedSettings(input.preset);
 
-  return normalizeModelAdvancedSettings({
+  return {
     temperature: pickDefined(request.temperature, session.temperature, preset.temperature),
     contextWindow: pickDefined(request.contextWindow, session.contextWindow, preset.contextWindow),
     maxTokens: pickDefined(request.maxTokens, session.maxTokens, preset.maxTokens),
@@ -196,7 +194,7 @@ export function resolveModelAdvancedSettings(input: {
     repeatPenalty: pickDefined(request.repeatPenalty, session.repeatPenalty, preset.repeatPenalty),
     streaming: pickDefined(request.streaming, session.streaming, preset.streaming),
     streamUsage: pickDefined(request.streamUsage, session.streamUsage, preset.streamUsage),
-  });
+  };
 }
 
 export function readStoredModelAdvancedSettings(): ModelAdvancedSettings {
@@ -216,6 +214,12 @@ export function readStoredModelAdvancedSettings(): ModelAdvancedSettings {
   });
 }
 
+/**
+ * 同步模型配置到 localStorage。
+ *
+ * 这里同时写入规范 key 与尚未迁移走的 type-specific key，
+ * 直到现有读取路径全部收口到 model-store 为止。
+ */
 export function syncModelConfigToStorage(config: APIConfig): void {
   const keys = MODEL_STORAGE_KEYS[config.type];
   const advanced = normalizeModelAdvancedSettings(config.advanced);
@@ -251,13 +255,8 @@ export function syncModelConfigToStorage(config: APIConfig): void {
   writeOptionalBoolean(MODEL_ADVANCED_STORAGE_KEYS.streamUsage, advanced.streamUsage);
 }
 
-export function resolveStreamingEnabled(settings?: Partial<ModelAdvancedSettings>): boolean {
-  return settings?.streaming ?? true;
-}
-
-export function resolveStreamUsageEnabled(settings?: Partial<ModelAdvancedSettings>): boolean {
-  return settings?.streamUsage ?? true;
-}
+export const resolveStreamingEnabled = (settings?: Partial<ModelAdvancedSettings>): boolean => settings?.streaming ?? true;
+export const resolveStreamUsageEnabled = (settings?: Partial<ModelAdvancedSettings>): boolean => settings?.streamUsage ?? true;
 
 export interface ChatMessageLike {
   role: string;
@@ -323,6 +322,22 @@ function sumMessageTokens(messages: readonly ChatMessageLike[]): number {
   );
 }
 
+function findRequiredMessageIndex(messages: readonly ChatMessageLike[]): number {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index].role === "user") {
+      return index;
+    }
+  }
+
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index].role !== "system") {
+      return index;
+    }
+  }
+
+  return messages.length > 0 ? messages.length - 1 : -1;
+}
+
 export function applyContextWindowToMessages<T extends ChatMessageLike>(
   messages: readonly T[],
   settings?: Pick<ModelAdvancedSettings, "contextWindow" | "maxTokens">,
@@ -333,37 +348,30 @@ export function applyContextWindowToMessages<T extends ChatMessageLike>(
   }
 
   const reservedOutput = Math.max(settings?.maxTokens ?? 0, 0);
-  const availableInputBudget = Math.max(contextWindow - reservedOutput, 0);
+  const availableInputBudget = contextWindow - reservedOutput;
   if (availableInputBudget <= 0) {
-    return [];
+    throw new Error("contextWindow must be greater than maxTokens");
   }
 
   const keptByIndex = new Map<number, T>();
   let usedTokens = 0;
 
-  for (const [index, message] of messages.entries()) {
-    if (message.role !== "system") continue;
-
-    const fitted = fitMessageToBudget(message, availableInputBudget - usedTokens);
-    if (!fitted) {
-      break;
+  const requiredIndex = findRequiredMessageIndex(messages);
+  if (requiredIndex >= 0) {
+    const requiredMessage = fitMessageToBudget(messages[requiredIndex], availableInputBudget);
+    if (!requiredMessage) {
+      throw new Error("latest user turn cannot fit into available context budget");
     }
-
-    keptByIndex.set(index, fitted);
-    usedTokens += estimateMessageTokens(fitted.content || "");
-    if (usedTokens >= availableInputBudget) {
-      return messages.flatMap((_, currentIndex) => {
-        const kept = keptByIndex.get(currentIndex);
-        return kept ? [kept] : [];
-      });
-    }
+    keptByIndex.set(requiredIndex, requiredMessage);
+    usedTokens += estimateMessageTokens(requiredMessage.content || "");
   }
 
   for (let index = messages.length - 1; index >= 0; index -= 1) {
-    const message = messages[index];
-    if (message.role === "system") continue;
+    if (index === requiredIndex) {
+      continue;
+    }
 
-    const fitted = fitMessageToBudget(message, availableInputBudget - usedTokens);
+    const fitted = fitMessageToBudget(messages[index], availableInputBudget - usedTokens);
     if (!fitted) {
       continue;
     }
@@ -379,6 +387,7 @@ export function applyContextWindowToMessages<T extends ChatMessageLike>(
     const kept = keptByIndex.get(index);
     return kept ? [kept] : [];
   });
+
   const totalTokens = sumMessageTokens(finalMessages);
   if (totalTokens > availableInputBudget) {
     throw new Error("applyContextWindowToMessages exceeded token budget");

@@ -18,6 +18,7 @@ vi.mock("@/hooks/useApiConfig", () => ({
     getCurrentConfig: () => undefined,
     handleConfigSelect: vi.fn(),
     handleModelSwitch: vi.fn(),
+    setActiveConfigStreaming: vi.fn(),
     showApiDropdown: false,
     setShowApiDropdown: vi.fn(),
     showModelDropdown: false,

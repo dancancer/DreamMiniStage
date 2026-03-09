@@ -34,6 +34,7 @@ import type {
   YouTubeTranscriptOptions,
 } from "@/lib/slash-command/types";
 import { useLocalStorageBoolean } from "@/hooks/useLocalStorage";
+import { resolveStreamingEnabled } from "@/lib/model-runtime";
 import UserNameSettingModal from "@/components/UserNameSettingModal";
 import ScriptDebugPanel from "@/components/ScriptDebugPanel";
 import type { TavernHelperScript } from "@/lib/models/character-model";
@@ -239,11 +240,12 @@ export default function CharacterChatPanel({
   const [showScriptDebugPanel, setShowScriptDebugPanel] = useState(false);
   const [lastSwipeTarget, setLastSwipeTarget] = useState<string | null>(null);
   const [currentDisplayName, setCurrentDisplayName] = useState("");
-  const { value: streamingEnabled, setValue: setStreamingEnabled } = useLocalStorageBoolean("streamingEnabled", true);
   const { value: fastModelEnabled, setValue: setFastModelEnabled } = useLocalStorageBoolean("fastModelEnabled", true);
 
   // ========== 自定义 Hooks ==========
   const apiConfig = useApiConfig();
+  const currentConfig = apiConfig.getCurrentConfig();
+  const streamingEnabled = resolveStreamingEnabled(currentConfig?.advanced);
   // ─── Slash Command 回调适配，优先使用外部传入，否则回退到基础 onSend/onTrigger ───
   const handleSendAs = useCallback(async (role: string, text: string) => {
     if (onSendAs) return onSendAs(role, text);
@@ -361,8 +363,8 @@ export default function CharacterChatPanel({
   }, []);
 
   const handleToggleStreaming = useCallback(() => {
-    setStreamingEnabled((prev) => !prev);
-  }, [setStreamingEnabled]);
+    apiConfig.setActiveConfigStreaming(!streamingEnabled);
+  }, [apiConfig, streamingEnabled]);
 
   const handleToggleFastModel = useCallback(() => {
     setFastModelEnabled((prev) => !prev);

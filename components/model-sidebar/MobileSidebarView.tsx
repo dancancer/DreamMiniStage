@@ -7,6 +7,7 @@
 
 import React from "react";
 import { X, Plus, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { supportsModelAdvancedBooleanSetting, supportsModelAdvancedNumberSetting } from "@/lib/model-runtime-support";
 import type { LLMType, SidebarViewProps } from "./types";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -96,6 +97,13 @@ export function MobileSidebarView(props: SidebarViewProps) {
     { key: "streaming", label: t("llmSettings.streaming") || "Streaming", description: t("llmSettings.streamingDescription") || "Stream model output into the chat UI." },
     { key: "streamUsage", label: t("llmSettings.streamUsage") || "Stream Usage", description: t("llmSettings.streamUsageDescription") || "Capture token usage during streaming responses." },
   ] as const;
+
+  const visibleAdvancedNumberFields = advancedNumberFields.filter((field) =>
+    supportsModelAdvancedNumberSetting(llmType, field.key),
+  );
+  const visibleAdvancedToggleFields = advancedToggleFields.filter((field) =>
+    supportsModelAdvancedBooleanSetting(llmType, field.key),
+  );
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm">
@@ -391,7 +399,7 @@ export function MobileSidebarView(props: SidebarViewProps) {
                     </p>
                   </div>
                   <div className="space-y-3">
-                    {advancedNumberFields.map((field) => (
+                    {visibleAdvancedNumberFields.map((field) => (
                       <label key={field.key} className="block rounded-md border border-border/60 bg-background/60 p-3">
                         <div className="flex items-center justify-between gap-3">
                           <span className={`text-sm text-cream ${fontClass}`}>{field.label}</span>
@@ -410,7 +418,7 @@ export function MobileSidebarView(props: SidebarViewProps) {
                     ))}
                   </div>
                   <div className="mt-3 space-y-3">
-                    {advancedToggleFields.map((field) => (
+                    {visibleAdvancedToggleFields.map((field) => (
                       <div key={field.key} className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/60 p-3">
                         <div>
                           <div className={`text-sm text-cream ${fontClass}`}>{field.label}</div>
@@ -453,7 +461,7 @@ export function MobileSidebarView(props: SidebarViewProps) {
                     {t("llmSettings.optional") || "Optional; leave empty to use defaults"}
                   </p>
                   <div className="mt-3 space-y-3">
-                    {advancedNumberFields.map((field) => (
+                    {visibleAdvancedNumberFields.map((field) => (
                       <label key={field.key} className="block rounded-md border border-border/60 bg-background/60 p-3">
                         <div className="flex items-center justify-between gap-3">
                           <span className={`text-sm text-cream ${fontClass}`}>{field.label}</span>
@@ -471,7 +479,7 @@ export function MobileSidebarView(props: SidebarViewProps) {
                     ))}
                   </div>
                   <div className="mt-3 space-y-3">
-                    {advancedToggleFields.map((field) => (
+                    {visibleAdvancedToggleFields.map((field) => (
                       <div key={field.key} className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/60 p-3">
                         <span className={`text-sm text-cream ${fontClass}`}>{field.label}</span>
                         <Switch
