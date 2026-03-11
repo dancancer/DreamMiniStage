@@ -135,6 +135,7 @@ export async function invokeClaudeModel(
     topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
     frequencyPenalty: config.frequencyPenalty,
     presencePenalty: config.presencePenalty,
+    stop: config.stopStrings,
     streaming: config.streaming ?? DEFAULT_LLM_SETTINGS.streaming,
     streamUsage: config.streamUsage ?? DEFAULT_LLM_SETTINGS.streamUsage,
   });
@@ -241,6 +242,7 @@ export async function invokeClaudeModelStream(
     topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
     frequencyPenalty: config.frequencyPenalty,
     presencePenalty: config.presencePenalty,
+    stop: config.stopStrings,
     streaming: true,
     streamUsage: true,
   });
@@ -318,11 +320,14 @@ export async function invokeGeminiModel(
       tools: toGeminiMvuToolDeclaration(),
     }, resolvedRequestOptions);
 
-    const generationConfig: Record<string, number> = {};
+    const generationConfig: Record<string, unknown> = {};
     if (config.temperature !== undefined) generationConfig.temperature = config.temperature;
     if (config.maxTokens !== undefined) generationConfig.maxOutputTokens = config.maxTokens;
     if (config.topP !== undefined) generationConfig.topP = config.topP;
     if (config.topK !== undefined) generationConfig.topK = config.topK;
+    if (Array.isArray(config.stopStrings) && config.stopStrings.length > 0) {
+      generationConfig.stopSequences = config.stopStrings;
+    }
 
     const result = await model.generateContent({
       contents,
@@ -382,6 +387,7 @@ export async function invokeGeminiModel(
     maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
     topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
     topK: config.topK ?? DEFAULT_LLM_SETTINGS.topK,
+    stopSequences: config.stopStrings,
   });
 
   // 将转换后的消息传递给 Gemini
