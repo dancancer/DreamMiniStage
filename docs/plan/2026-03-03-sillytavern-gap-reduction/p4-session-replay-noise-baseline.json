@@ -80,6 +80,14 @@
       "classification": "known-noise"
     },
     {
+      "id": "network-ga-script-aborted",
+      "eventType": "requestfailed",
+      "method": "GET",
+      "urlIncludes": "https://www.googletagmanager.com/gtag/js",
+      "errorIncludes": "net::ERR_ABORTED",
+      "classification": "known-noise"
+    },
+    {
       "id": "network-vercel-script-aborted",
       "eventType": "requestfailed",
       "method": "GET",

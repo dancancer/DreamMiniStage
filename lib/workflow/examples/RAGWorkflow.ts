@@ -244,6 +244,7 @@ export class CorrectRAGWorkflow extends BaseWorkflow {
           next: ["regex-1"],
           initParams: [],
           inputFields: ["messages", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "contextWindow", "maxTokens", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "language", "streaming", "streamUsage", "dialogueKey", "characterId"],
+          optionalInputFields: ["temperature", "contextWindow", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty"],
           outputFields: ["llmResponse"],
         },
         {

@@ -187,6 +187,7 @@ export class DialogueWorkflow extends BaseWorkflow {
           next: ["regex-1"],
           initParams: [],
           inputFields: ["messages", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "contextWindow", "maxTokens", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "language", "streaming", "streamUsage", "dialogueKey", "characterId", "stopStrings", "promptNames", "postProcessingMode", "effectivePromptConfig"],
+          optionalInputFields: ["temperature", "contextWindow", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "stopStrings", "promptNames", "postProcessingMode", "effectivePromptConfig"],
           outputFields: ["llmResponse"],
         },
         {

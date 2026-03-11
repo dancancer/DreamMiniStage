@@ -15,6 +15,7 @@ export interface WorkflowNode {
   next: string[];
   initParams: string[];
   inputFields: string[];
+  optionalInputFields?: string[];
   outputFields: string[];
   inputMapping?: Record<string, string>;
 }

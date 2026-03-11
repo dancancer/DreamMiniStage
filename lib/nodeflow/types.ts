@@ -12,6 +12,7 @@ export interface NodeConfig {
   next?: string[];
   initParams?: string[];
   inputFields?: string[];
+  optionalInputFields?: string[];
   outputFields?: string[];
   inputMapping?: Record<string, string>;
 }

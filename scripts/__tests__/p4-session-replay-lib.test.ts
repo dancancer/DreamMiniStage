@@ -27,6 +27,42 @@ describe("analyzeNoiseBaseline", () => {
   });
 });
 
+describe("analyzeNoiseBaseline network noise rules", () => {
+  it("classifies googletagmanager script aborts as known noise when baseline includes the rule", () => {
+    const report = analyzeNoiseBaseline({
+      baseline: {
+        version: 1,
+        consoleRules: [],
+        networkRules: [
+          {
+            id: "network-ga-script-aborted",
+            eventType: "requestfailed",
+            method: "GET",
+            urlIncludes: "https://www.googletagmanager.com/gtag/js",
+            errorIncludes: "net::ERR_ABORTED",
+            classification: "known-noise",
+          },
+        ],
+      },
+      consoleEvents: [],
+      networkEvents: [
+        {
+          eventType: "requestfailed",
+          method: "GET",
+          url: "https://www.googletagmanager.com/gtag/js?id=G-KDEPSL9CJG",
+          status: null,
+          error: "net::ERR_ABORTED",
+        },
+      ],
+    });
+
+    expect(report.unknownSignatureCount).toBe(0);
+    expect(report.network.known).toEqual([
+      expect.objectContaining({ id: "network-ga-script-aborted", count: 1 }),
+    ]);
+  });
+});
+
 describe("buildReplayRunIndex", () => {
   function makeSummary(runId: string, finishedAt: string) {
     return {
