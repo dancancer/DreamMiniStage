@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import {
-  getActiveModel,
+  getPromptModelValue,
   getActivePromptPresetInfo,
   getPromptInstructState,
   getPromptPostProcessingValue,
@@ -9,7 +9,7 @@ import {
   listPromptPresets,
   selectPromptContextPreset,
   selectPromptPresetByName,
-  setActiveModel,
+  setPromptModelValue,
   setPromptEntriesEnabled,
   setPromptPostProcessingValue,
   setPromptStopStrings,
@@ -24,8 +24,8 @@ export function usePromptConfigCallbacks() {
     setStopStrings: setPromptStopStrings,
     getPromptPostProcessing: getPromptPostProcessingValue,
     setPromptPostProcessing: setPromptPostProcessingValue,
-    getModel: getActiveModel,
-    setModel: setActiveModel,
+    getModel: getPromptModelValue,
+    setModel: setPromptModelValue,
     getPreset: getActivePromptPresetInfo,
     setPreset: async (name: string) => {
       await selectPromptPresetByName(name);

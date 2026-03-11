@@ -118,7 +118,7 @@ function parseSegment(segment: string, context: ParseContext): ParseResult<AstNo
   }
   const name = head.value.slice(1).toLowerCase();
   const args: string[] = [];
-  const namedArgs: Record<string, string> = {};
+  const namedArgs: Record<string, string> = Object.create(null);
   const namedArgumentList: CommandNode["namedArgumentList"] = [];
   const unnamedArgumentList: CommandNode["unnamedArgumentList"] = [];
   const blocks: BlockArgument[] = [];

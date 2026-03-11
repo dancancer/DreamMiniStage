@@ -138,6 +138,18 @@ describe("Property 2: Pipe Propagation in Command Sequences", () => {
     );
   });
 
+  it("treats __proto__ as a plain variable key in setvar/getvar pipes", async () => {
+    const parsed = parseSlashCommands("/setvar __proto__=A|/getvar __proto__");
+
+    expect(parsed.isError).toBe(false);
+
+    const ctx = createMinimalContext();
+    const result = await executeSlashCommands(parsed.commands, ctx);
+
+    expect(result.isError).toBe(false);
+    expect(result.pipe).toBe("A");
+  });
+
   /**
    * **Feature: sillytavern-compat, Property 2: Pipe Propagation**
    * **Validates: Requirements 1.2**

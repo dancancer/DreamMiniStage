@@ -30,10 +30,12 @@ import {
   getActiveModel,
   getActivePromptPreset,
   getActivePromptPresetInfo,
+  getPromptModelValue,
   listPromptEntries,
   listPromptPresets,
   resolvePromptRuntimeConfig,
   setActiveModel,
+  setPromptModelValue,
   setPromptEntriesEnabled,
 } from "@/lib/prompt-config/service";
 import { createDefaultPromptBehaviorState } from "@/lib/prompt-config/state";
@@ -52,6 +54,57 @@ describe("prompt-config service", () => {
     useModelStore.setState({
       configs: [],
       activeConfigId: "",
+    });
+    window.localStorage.clear();
+  });
+
+  it("updates only the cached preset name when the active preset is renamed", async () => {
+    usePromptConfigStore.setState({
+      activePresetId: "preset-a",
+      activePresetName: "Old Name",
+      context: {
+        ...DEFAULT_CONTEXT_PRESET,
+        name: "Manual Context",
+        story_string: "manual story",
+      },
+      sysprompt: {
+        enabled: true,
+        name: "Manual Prompt",
+        content: "manual system",
+        post_history: "manual post",
+      },
+    });
+
+    getPreset.mockResolvedValue({
+      id: "preset-a",
+      name: "New Name",
+      enabled: true,
+      prompts: [],
+      context: {
+        ...DEFAULT_CONTEXT_PRESET,
+        name: "Preset Context",
+        story_string: "preset story",
+      },
+      sysprompt: {
+        name: "Preset Prompt",
+        content: "preset system",
+        post_history: "preset post",
+      },
+    });
+
+    const activePreset = await getActivePromptPreset();
+
+    expect(activePreset?.name).toBe("New Name");
+    expect(usePromptConfigStore.getState().activePresetName).toBe("New Name");
+    expect(usePromptConfigStore.getState().context).toMatchObject({
+      name: "Manual Context",
+      story_string: "manual story",
+    });
+    expect(usePromptConfigStore.getState().sysprompt).toMatchObject({
+      enabled: true,
+      name: "Manual Prompt",
+      content: "manual system",
+      post_history: "manual post",
     });
   });
 
@@ -140,6 +193,50 @@ describe("prompt-config service", () => {
     });
   });
 
+  it("drops deleted preset overrides before resolving the next runtime config", async () => {
+    usePromptConfigStore.setState({
+      activePresetId: "preset-deleted",
+      activePresetName: "Deleted Preset",
+      context: {
+        ...DEFAULT_CONTEXT_PRESET,
+        name: "Deleted Context",
+        story_string: "deleted story",
+      },
+      sysprompt: {
+        enabled: true,
+        name: "Deleted Prompt",
+        content: "deleted system",
+        post_history: "deleted post",
+      },
+    });
+
+    getPreset.mockResolvedValue(null);
+    getAllPresets.mockResolvedValue([]);
+    getCharacterById.mockResolvedValue({
+      data: {
+        name: "角色",
+      },
+    });
+
+    const runtime = await resolvePromptRuntimeConfig({
+      characterId: "char-1",
+      username: "用户",
+    });
+
+    expect(runtime.contextPreset).toMatchObject({
+      name: DEFAULT_CONTEXT_PRESET.name,
+      story_string: DEFAULT_CONTEXT_PRESET.story_string,
+    });
+    expect(runtime.sysprompt).toMatchObject({
+      enabled: false,
+      name: "Default",
+      content: "",
+      post_history: "",
+    });
+    expect(usePromptConfigStore.getState().activePresetId).toBeNull();
+    expect(usePromptConfigStore.getState().activePresetName).toBeNull();
+  });
+
   it("derives runtime stop strings from the resolved context preset", async () => {
     usePromptConfigStore.setState({
       context: {
@@ -221,6 +318,16 @@ describe("prompt-config service", () => {
       id: "config-a",
       model: "gpt-4.1-nano",
     }));
+  });
+
+  it("falls back to slash model storage when no active model config exists", () => {
+    expect(getPromptModelValue()).toBe("");
+
+    const updated = setPromptModelValue("  gpt-4.1-mini  ");
+
+    expect(updated).toBe("gpt-4.1-mini");
+    expect(getPromptModelValue()).toBe("gpt-4.1-mini");
+    expect(syncModelConfigToStorage).not.toHaveBeenCalled();
   });
 
   it("returns the active preset info for slash hosts", async () => {

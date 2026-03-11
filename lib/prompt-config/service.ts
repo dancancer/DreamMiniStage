@@ -18,6 +18,8 @@ import {
 import { useModelStore } from "@/lib/store/model-store";
 import { getPromptConfigSnapshot, usePromptConfigStore } from "@/lib/store/prompt-config-store";
 
+const MODEL_STORAGE_KEY = "dreamministage.current-model";
+
 export interface PromptPresetInfo {
   name: string;
   type: "openai";
@@ -134,14 +136,19 @@ export async function getActivePromptPreset(): Promise<Preset | null> {
   const byId = await getPromptPresetById(snapshot.activePresetId);
   if (isEnabledPreset(byId)) {
     if (snapshot.activePresetName !== byId.name) {
-      syncPromptPresetStore(byId);
+      usePromptConfigStore.setState((state) => ({
+        ...state,
+        activePresetName: byId.name,
+      }));
     }
     return byId;
   }
 
   const presets = await PresetOperations.getAllPresets();
   const activePreset = presets.find((preset) => isEnabledPreset(preset)) || null;
-  syncPromptPresetStore(activePreset);
+  if (activePreset || snapshot.activePresetId) {
+    syncPromptPresetStore(activePreset);
+  }
   return activePreset;
 }
 
@@ -240,6 +247,53 @@ export function setActiveModel(model: string): string {
   updateConfig(active.id, { model: nextModel });
   syncModelConfigToStorage({ ...active, model: nextModel });
   return nextModel;
+}
+
+function readModelFallback(): string {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  try {
+    return (window.localStorage.getItem(MODEL_STORAGE_KEY) || "").trim();
+  } catch {
+    return "";
+  }
+}
+
+function writeModelFallback(model: string): string {
+  if (typeof window === "undefined") {
+    return model;
+  }
+
+  try {
+    window.localStorage.setItem(MODEL_STORAGE_KEY, model);
+  } catch {
+    // ignore storage failures and still return normalized value
+  }
+
+  return model;
+}
+
+export function getPromptModelValue(): string {
+  try {
+    return getActiveModel();
+  } catch {
+    return readModelFallback();
+  }
+}
+
+export function setPromptModelValue(model: string): string {
+  const nextModel = model.trim();
+  if (!nextModel) {
+    throw new Error("/model requires model name");
+  }
+
+  try {
+    return setActiveModel(nextModel);
+  } catch {
+    return writeModelFallback(nextModel);
+  }
 }
 
 export async function getActivePromptPresetInfo(): Promise<PromptPresetInfo | undefined> {
@@ -348,8 +402,8 @@ export async function resolvePromptRuntimeConfig(input: {
   username?: string;
 }): Promise<ResolvedPromptRuntimeConfig> {
   const { characterId, username } = input;
-  const snapshot = getPromptConfigSnapshot();
   const activePreset = await getActivePromptPreset();
+  const snapshot = getPromptConfigSnapshot();
   const character = await LocalCharacterRecordOperations.getCharacterById(characterId);
   const charName = character?.data?.data?.name || character?.data?.name || characterId;
   const userName = username?.trim() || "用户";

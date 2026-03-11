@@ -23,7 +23,7 @@ import { executeSlashCommandScript } from "@/lib/slash-command/executor";
 import { getAudioManager } from "@/lib/audio/store";
 import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
 import {
-  getActiveModel,
+  getPromptModelValue,
   getActivePromptPresetInfo,
   getPromptInstructState,
   getPromptPostProcessingValue,
@@ -32,7 +32,7 @@ import {
   listPromptPresets,
   selectPromptContextPreset,
   selectPromptPresetByName,
-  setActiveModel,
+  setPromptModelValue,
   setPromptEntriesEnabled,
   setPromptPostProcessingValue,
   setPromptStopStrings,
@@ -798,8 +798,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const defaultSetStopStrings = (stopStrings: string[]): string[] => {
     return setPromptStopStrings(stopStrings);
   };
-  const defaultGetModel = (): string => getActiveModel();
-  const defaultSetModel = (model: string): string => setActiveModel(model);
+  const defaultGetModel = (): string => getPromptModelValue();
+  const defaultSetModel = (model: string): string => setPromptModelValue(model);
   const onGetInstructMode = ctx.onGetInstructMode ?? defaultGetInstructMode;
   const onSetInstructMode = ctx.onSetInstructMode ?? defaultSetInstructMode;
   const onGetStopStrings = ctx.onGetStopStrings ?? defaultGetStopStrings;
