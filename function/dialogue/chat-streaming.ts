@@ -34,11 +34,12 @@ export interface StreamingParams {
   number: number;
   fastModel: boolean;
   advanced?: ModelAdvancedSettings;
+  promptRuntime: import("@/lib/prompt-config/state").ResolvedPromptRuntimeConfig;
   nodeId: string;
 }
 
 export async function handleStreamingResponse(params: StreamingParams): Promise<Response> {
-  const { dialogueId, characterId, message, originalMessage, username, modelName, baseUrl, apiKey, llmType, language, number, fastModel, advanced, nodeId } = params;
+  const { dialogueId, characterId, message, originalMessage, username, modelName, baseUrl, apiKey, llmType, language, number, fastModel, advanced, promptRuntime, nodeId } = params;
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
@@ -58,6 +59,7 @@ export async function handleStreamingResponse(params: StreamingParams): Promise<
           baseUrl,
           llmType,
           advanced,
+          promptRuntime,
           number,
           fastModel,
         }));

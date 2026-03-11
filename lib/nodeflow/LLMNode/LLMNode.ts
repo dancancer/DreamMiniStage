@@ -41,6 +41,8 @@ export class LLMNode extends NodeBase {
     const streamUsage = input.streamUsage ?? true;
     const dialogueKey = input.dialogueKey;
     const characterId = input.characterId;
+    const stopStrings = input.stopStrings as string[] | undefined;
+    const effectivePromptConfig = input.effectivePromptConfig;
 
     /* ─────────────────────────────────────────────────────────────────────────
        后处理选项 (Requirements: 7.1, 8.1)
@@ -90,6 +92,8 @@ export class LLMNode extends NodeBase {
         dialogueKey,
         characterId,
         messages: finalMessages,
+        stopStrings,
+        effectivePromptConfig,
         // 后处理选项
         promptNames,
         postProcessingMode,

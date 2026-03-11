@@ -20,6 +20,7 @@ export abstract class NodeBase {
     this.params = {
       initParams: config.initParams || [],
       inputFields: config.inputFields || [],
+      optionalInputFields: config.optionalInputFields || [],
       outputFields: config.outputFields || [],
       inputMapping: config.inputMapping || {},
     };
@@ -32,6 +33,10 @@ export abstract class NodeBase {
   
   protected getInputFields(): string[] {
     return this.getConfigValue("inputFields") || [];
+  }
+
+  protected getOptionalInputFields(): Set<string> {
+    return new Set(this.getConfigValue<string[]>("optionalInputFields") || []);
   }
 
   protected getOutputFields(): string[] {
@@ -108,6 +113,7 @@ export abstract class NodeBase {
     const resolvedInput: NodeInput = {};
     const initParams = this.getInitParams();
     const inputFields = this.getInputFields();
+    const optionalInputFields = this.getOptionalInputFields();
     const inputMapping = this.getConfigValue<Record<string, string>>("inputMapping") || {};
 
     for (const fieldName of initParams) {
@@ -123,8 +129,10 @@ export abstract class NodeBase {
       
       if (context.hasCache(workflowFieldName)) {
         resolvedInput[nodeFieldName] = context.getCache(workflowFieldName) as NodeValue;
-      } else {
+      } else if (!optionalInputFields.has(workflowFieldName)) {
         console.warn(`Node ${this.id}: Required input '${workflowFieldName}' (mapped to node field '${nodeFieldName}') not found in cache`);
+      } else {
+        continue;
       }
     }
 

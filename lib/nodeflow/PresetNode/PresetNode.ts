@@ -20,7 +20,7 @@ import { NodeBase } from "@/lib/nodeflow/NodeBase";
 import { NodeConfig, NodeInput, NodeOutput, NodeCategory } from "@/lib/nodeflow/types";
 import { PresetNodeTools } from "./PresetNodeTools";
 import { NodeToolRegistry } from "../NodeTool";
-import type { ChatMessage } from "@/lib/core/st-preset-types";
+import type { ChatMessage, PromptNames, PostProcessingMode, STContextPreset, STSyspromptPreset } from "@/lib/core/st-preset-types";
 
 export class PresetNode extends NodeBase {
   static readonly nodeName = "preset";
@@ -51,6 +51,10 @@ export class PresetNode extends NodeBase {
     const systemPresetType = input.systemPresetType || "mirror_realm";
     const dialogueKey = input.dialogueKey;
     const currentUserInput = input.currentUserInput;
+    const contextPreset = input.contextPreset as STContextPreset | undefined;
+    const sysprompt = input.sysprompt as (STSyspromptPreset & { enabled?: boolean }) | undefined;
+    const promptNames = input.promptNames as PromptNames | undefined;
+    const postProcessingMode = input.postProcessingMode as PostProcessingMode | undefined;
 
     // 新增：从 HistoryPreNode 接收结构化历史消息
     // Requirements: 2.6
@@ -75,7 +79,11 @@ export class PresetNode extends NodeBase {
       systemPresetType,
       dialogueKey,
       currentUserInput,
-      chatHistoryMessages, // 传递历史消息给 Tools
+      chatHistoryMessages,
+      contextPreset,
+      sysprompt,
+      promptNames,
+      postProcessingMode,
     ) as { messages: ChatMessage[]; presetId?: string };
 
     return {

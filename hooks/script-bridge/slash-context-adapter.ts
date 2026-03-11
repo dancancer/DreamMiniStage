@@ -22,7 +22,22 @@ import type {
 import { executeSlashCommandScript } from "@/lib/slash-command/executor";
 import { getAudioManager } from "@/lib/audio/store";
 import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
-import { PresetOperations } from "@/lib/data/roleplay/preset-operation";
+import {
+  getPromptModelValue,
+  getActivePromptPresetInfo,
+  getPromptInstructState,
+  getPromptPostProcessingValue,
+  getPromptStopStrings,
+  listPromptEntries,
+  listPromptPresets,
+  selectPromptContextPreset,
+  selectPromptPresetByName,
+  setPromptModelValue,
+  setPromptEntriesEnabled,
+  setPromptPostProcessingValue,
+  setPromptStopStrings,
+  updatePromptInstructState,
+} from "@/lib/prompt-config/service";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import {
   isVectorMemoryEnabled,
@@ -286,14 +301,11 @@ async function defaultCloseCurrentChat(): Promise<void> {
   closeButton.click();
 }
 
-const CUSTOM_STOP_STRINGS_STORAGE_KEY = "dreamministage.custom-stop-strings";
-const MODEL_STORAGE_KEY = "dreamministage.current-model";
 const AUTHOR_NOTE_STORAGE_KEY = "dreamministage.author-note";
 const PERSONA_NAME_STORAGE_KEY = "dreamministage.persona-name";
 const PERSONA_LOCK_STORAGE_KEY = "dreamministage.persona-lock";
 const CONNECTION_PROFILES_STORAGE_KEY = "dreamministage.connection-profiles";
 const CONNECTION_PROFILE_SELECTED_KEY = "dreamministage.connection-profile-selected";
-const PROMPT_POST_PROCESSING_STORAGE_KEY = "dreamministage.prompt-post-processing";
 const AUTHOR_NOTE_INJECTION_PREFIX = "note_injection";
 
 const DEFAULT_AUTHOR_NOTE_STATE: AuthorNoteState = {
@@ -309,35 +321,6 @@ const DEFAULT_PERSONA_LOCK_STATE: Record<PersonaLockType, boolean> = {
   character: false,
   default: false,
 };
-
-function readStringArrayFromStorage(storageKey: string): string[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const raw = window.localStorage.getItem(storageKey);
-    if (!raw || raw.trim().length === 0) {
-      return [];
-    }
-
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-    return parsed.map((item) => String(item));
-  } catch {
-    return [];
-  }
-}
-
-function writeStringArrayToStorage(storageKey: string, values: string[]): string[] {
-  const normalized = values.map((item) => String(item));
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(storageKey, JSON.stringify(normalized));
-  }
-  return normalized;
-}
 
 function readStringFromStorage(storageKey: string): string {
   if (typeof window === "undefined") {
@@ -696,8 +679,15 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onGetYouTubeTranscript = ctx.onGetYouTubeTranscript;
   const onGetImageGenerationConfig = ctx.onGetImageGenerationConfig;
   const onSetImageGenerationConfig = ctx.onSetImageGenerationConfig;
-  const onGetInstructMode = ctx.onGetInstructMode;
-  const onSetInstructMode = ctx.onSetInstructMode;
+  const defaultGetInstructMode = () => {
+    return getPromptInstructState();
+  };
+  const defaultSetInstructMode = (patch: { enabled?: boolean; preset?: string }) => {
+    return updatePromptInstructState({
+      enabled: patch.enabled,
+      preset: patch.preset,
+    });
+  };
   const defaultGetAuthorNoteState = (): AuthorNoteState => readAuthorNoteStateFromStorage();
   const defaultSetAuthorNoteState = (
     patch: Partial<AuthorNoteState>,
@@ -793,10 +783,10 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     return profiles.find((profile) => profile.id === selectedId);
   };
   const defaultGetPromptPostProcessing = (): string => {
-    return readStringFromStorage(PROMPT_POST_PROCESSING_STORAGE_KEY);
+    return getPromptPostProcessingValue();
   };
   const defaultSetPromptPostProcessing = (value: string): string => {
-    return writeStringToStorage(PROMPT_POST_PROCESSING_STORAGE_KEY, value.trim());
+    return setPromptPostProcessingValue(value.trim());
   };
   const defaultGetPersonaLockState = (
     options?: { type?: PersonaLockType },
@@ -804,14 +794,14 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     const type = options?.type || "chat";
     return readPersonaLockStateFromStorage()[type];
   };
-  const defaultGetStopStrings = (): string[] => readStringArrayFromStorage(CUSTOM_STOP_STRINGS_STORAGE_KEY);
+  const defaultGetStopStrings = (): string[] => getPromptStopStrings();
   const defaultSetStopStrings = (stopStrings: string[]): string[] => {
-    return writeStringArrayToStorage(CUSTOM_STOP_STRINGS_STORAGE_KEY, stopStrings);
+    return setPromptStopStrings(stopStrings);
   };
-  const defaultGetModel = (): string => readStringFromStorage(MODEL_STORAGE_KEY);
-  const defaultSetModel = (model: string): string => {
-    return writeStringToStorage(MODEL_STORAGE_KEY, model);
-  };
+  const defaultGetModel = (): string => getPromptModelValue();
+  const defaultSetModel = (model: string): string => setPromptModelValue(model);
+  const onGetInstructMode = ctx.onGetInstructMode ?? defaultGetInstructMode;
+  const onSetInstructMode = ctx.onSetInstructMode ?? defaultSetInstructMode;
   const onGetStopStrings = ctx.onGetStopStrings ?? defaultGetStopStrings;
   const onSetStopStrings = ctx.onSetStopStrings ?? defaultSetStopStrings;
   const onGetModel = ctx.onGetModel ?? defaultGetModel;
@@ -988,6 +978,9 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onPlayNotificationSound = ctx.onPlayNotificationSound;
   const onShowGallery = ctx.onShowGallery;
   const onUploadExpressionAsset = ctx.onUploadExpressionAsset;
+  const onSelectContextPreset = ctx.onSelectContextPreset ?? ((name?: string) => {
+    return selectPromptContextPreset(name);
+  });
   const onSetExpression = ctx.onSetExpression;
   const onSetExpressionFolderOverride = ctx.onSetExpressionFolderOverride;
   const onGetLastExpression = ctx.onGetLastExpression;
@@ -995,7 +988,6 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onClassifyExpression = ctx.onClassifyExpression;
   const onJumpToMessage = ctx.onJumpToMessage;
   const onRenderChatMessages = ctx.onRenderChatMessages;
-  const onSelectContextPreset = ctx.onSelectContextPreset;
   const onSwitchCharacter = ctx.onSwitchCharacter;
   const onRenameCurrentCharacter = ctx.onRenameCurrentCharacter;
   const onParseReasoningBlock = ctx.onParseReasoningBlock;
@@ -1149,90 +1141,13 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
 
   const setVectorMaxEntries = (value: number): number => setVectorMaxEntriesSetting(value);
 
-  const getPreset = async (): Promise<PresetInfo | undefined> => {
-    const presets = await PresetOperations.getAllPresets();
-    const active = presets.find((p) => p.enabled !== false);
-    return active ? { name: active.name, type: "openai" } : undefined;
-  };
+  const getPreset = async (): Promise<PresetInfo | undefined> => getActivePromptPresetInfo();
 
   const setPreset = async (name: string): Promise<void> => {
-    const presets = await PresetOperations.getAllPresets();
-    const target = presets.find((p) => p.name === name);
-    if (!target?.id) return;
-    for (const p of presets) {
-      if (p.id && p.id !== target.id && p.enabled !== false) {
-        await PresetOperations.updatePreset(p.id, { enabled: false });
-      }
-    }
-    await PresetOperations.updatePreset(target.id, { enabled: true });
+    await selectPromptPresetByName(name);
   };
 
-  const listPresets = async (): Promise<PresetInfo[]> => {
-    const presets = await PresetOperations.getAllPresets();
-    return presets.map((p) => ({ name: p.name, type: "openai" as const }));
-  };
-
-  const getActivePreset = async () => {
-    const presets = await PresetOperations.getAllPresets();
-    return presets.find((preset) => preset.enabled !== false && typeof preset.id === "string");
-  };
-
-  const listPromptEntries = async () => {
-    const activePreset = await getActivePreset();
-    if (!activePreset) {
-      return [];
-    }
-
-    return (activePreset.prompts || [])
-      .map((prompt) => {
-        const identifier = (prompt.identifier || "").trim();
-        if (!identifier) {
-          return null;
-        }
-
-        const normalizedName = (prompt.name || identifier).trim();
-        return {
-          identifier,
-          name: normalizedName || identifier,
-          enabled: prompt.enabled !== false,
-        };
-      })
-      .filter((entry): entry is { identifier: string; name: string; enabled: boolean } => !!entry);
-  };
-
-  const setPromptEntriesEnabled = async (
-    updates: Array<{ identifier: string; enabled: boolean }>,
-  ): Promise<void> => {
-    if (updates.length === 0) {
-      return;
-    }
-
-    const activePreset = await getActivePreset();
-    if (!activePreset?.id) {
-      throw new Error("active preset is not available");
-    }
-
-    const enabledMap = new Map(
-      updates.map((item) => [item.identifier, item.enabled] as const),
-    );
-    const nextPrompts = (activePreset.prompts || []).map((prompt) => {
-      const identifier = (prompt.identifier || "").trim();
-      if (!identifier || !enabledMap.has(identifier)) {
-        return prompt;
-      }
-      return {
-        ...prompt,
-        enabled: enabledMap.get(identifier),
-      };
-    });
-
-    const saved = await PresetOperations.updatePreset(activePreset.id, {
-      prompts: nextPrompts,
-    });
-    if (!saved) {
-      throw new Error("failed to update prompt entries");
-    }
-  };
+  const listPresets = async (): Promise<PresetInfo[]> => listPromptPresets();
 
   const playAudio = (url: string, audioOptions?: { volume?: number; loop?: boolean }) => {
     const audioManager = getAudioManager();

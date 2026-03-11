@@ -12,6 +12,8 @@
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
+import type { EffectivePromptConfigSummary } from "@/lib/prompt-config/state";
+
 /* ═══════════════════════════════════════════════════════════════════════════
    核心数据模型
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -53,6 +55,7 @@ export interface PromptData {
     readonly dialogueKey: string;
     readonly modelName: string;
     readonly temperature?: number;
+    readonly effectiveConfig?: EffectivePromptConfigSummary;
   };
   /** 消息列表（用于卡片展示，与 LLM API 格式对应） */
   readonly messages: readonly PromptMessage[];

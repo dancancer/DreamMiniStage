@@ -22,6 +22,7 @@ export interface GeminiConfig {
   maxTokens?: number;
   topP?: number;
   topK?: number;
+  stopSequences?: string[];
 }
 
 /**
@@ -158,11 +159,14 @@ function buildRequestOptions(baseUrl?: string, timeout?: number) {
 }
 
 function buildGenerationConfig(config: GeminiConfig) {
-  const generationConfig: Record<string, number> = {};
+  const generationConfig: Record<string, unknown> = {};
   if (config.temperature !== undefined) generationConfig.temperature = config.temperature;
   if (config.maxTokens !== undefined) generationConfig.maxOutputTokens = config.maxTokens;
   if (config.topP !== undefined) generationConfig.topP = config.topP;
   if (config.topK !== undefined) generationConfig.topK = config.topK;
+  if (Array.isArray(config.stopSequences) && config.stopSequences.length > 0) {
+    generationConfig.stopSequences = config.stopSequences;
+  }
   return generationConfig;
 }
 

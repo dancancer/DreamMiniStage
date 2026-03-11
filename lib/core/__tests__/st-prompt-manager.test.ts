@@ -105,6 +105,55 @@ describe("STPromptManager", () => {
   });
 
   describe("消息构建", () => {
+    it("应该让 example_separator 和 chat_start 影响最终消息", () => {
+      preset.openai.prompts.push(
+        {
+          identifier: "dialogueExamples",
+          name: "Dialogue Examples",
+          role: "system",
+          marker: true,
+          system_prompt: true,
+        },
+        {
+          identifier: "chatHistory",
+          name: "Chat History",
+          role: "system",
+          marker: true,
+          system_prompt: true,
+        },
+      );
+      preset.openai.prompt_order[0].order.push(
+        { identifier: "dialogueExamples", enabled: true },
+        { identifier: "chatHistory", enabled: true },
+      );
+      preset.context = {
+        ...preset.context,
+        example_separator: "<EXAMPLE_SEP>",
+        chat_start: "<CHAT_START>",
+      };
+      manager = new STPromptManager(preset);
+
+      const env: MacroEnv = {
+        user: "玩家",
+        char: "角色",
+        mesExamples: "示例对话",
+        chatHistoryMessages: [
+          { role: "assistant", content: "历史回复" },
+        ],
+        userInput: "当前输入",
+      };
+
+      const messages = manager.buildMessages(env);
+      const contents = messages.map((message) => message.content);
+      const exampleIndex = contents.findIndex((content) => content.includes("<EXAMPLE_SEP>"));
+      const chatStartIndex = contents.findIndex((content) => content.includes("<CHAT_START>"));
+      const historyIndex = contents.findIndex((content) => content.includes("历史回复"));
+
+      expect(exampleIndex).toBeGreaterThan(-1);
+      expect(contents[exampleIndex]).toContain("示例对话");
+      expect(chatStartIndex).toBeGreaterThan(-1);
+      expect(historyIndex).toBeGreaterThan(chatStartIndex);
+    });
     it("应该构建有效的消息数组", () => {
       const env: MacroEnv = {
         user: "玩家",

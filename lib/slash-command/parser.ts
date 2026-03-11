@@ -65,7 +65,7 @@ function parseArguments(argsStr: string): {
   unnamedArgumentList: SlashCommand["unnamedArgumentList"];
 } {
   const args: string[] = [];
-  const namedArgs: Record<string, string> = {};
+  const namedArgs: Record<string, string> = Object.create(null);
   const namedArgumentList: NonNullable<SlashCommand["namedArgumentList"]> = [];
   const unnamedArgumentList: NonNullable<SlashCommand["unnamedArgumentList"]> = [];
   

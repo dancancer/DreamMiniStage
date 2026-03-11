@@ -6,6 +6,8 @@
  */
 
 import { PresetOperations } from "@/lib/data/roleplay/preset-operation";
+import { selectPromptPresetById } from "@/lib/prompt-config/service";
+import { usePromptConfigStore } from "@/lib/store/prompt-config-store";
 import { Preset } from "@/lib/models/preset-model";
 
 export async function getAllPresets() {
@@ -59,25 +61,21 @@ export async function deletePreset(presetId: string) {
 
 export async function togglePresetEnabled(presetId: string, enabled: boolean) {
   try {
-
     if (enabled) {
-      const allPresets = await PresetOperations.getAllPresets();
-
-      for (const preset of allPresets) {
-        if (preset.id && preset.id !== presetId && preset.enabled !== false) {
-          const disableSuccess = await PresetOperations.updatePreset(preset.id, { enabled: false });
-          if (!disableSuccess) {
-            console.warn(`Failed to disable preset ${preset.id} while enabling ${presetId}`);
-          }
-        }
-      }
+      await selectPromptPresetById(presetId);
+      return { success: true };
     }
 
-    const success = await PresetOperations.updatePreset(presetId, { enabled });
+    const success = await PresetOperations.updatePreset(presetId, { enabled: false });
     if (!success) {
       return { success: false, error: "Failed to toggle preset" };
     }
-    
+
+    const state = usePromptConfigStore.getState();
+    if (state.activePresetId === presetId) {
+      state.clearActivePreset();
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Error toggling preset:", error);

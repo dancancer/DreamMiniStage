@@ -19,8 +19,8 @@ import {
   getEvaluatorForDialogue,
   persistVariables,
 } from "@/lib/core/macro-evaluator-manager";
-import type { STCombinedPreset, STOpenAIPreset, STSyspromptPreset, STPrompt, MacroEnv, ChatMessage } from "@/lib/core/st-preset-types";
-import { DEFAULT_SAMPLING_PARAMS } from "@/lib/core/st-preset-types";
+import type { STCombinedPreset, STOpenAIPreset, STPrompt, MacroEnv, ChatMessage, PromptNames, PostProcessingMode, STContextPreset, STSyspromptPreset } from "@/lib/core/st-preset-types";
+import { DEFAULT_CONTEXT_PRESET, DEFAULT_SAMPLING_PARAMS } from "@/lib/core/st-preset-types";
 import type { Preset, PresetPrompt } from "@/lib/models/preset-model";
 import { getVectorMemoryManager } from "@/lib/vector-memory/manager";
 
@@ -71,7 +71,11 @@ export class PresetNodeTools extends NodeTool {
     _systemPresetType: SystemPresetType = "none",
     dialogueKey?: string,
     currentUserInput?: string,
-    chatHistoryMessages?: ChatMessage[], // 新增：来自 HistoryPreNode
+    chatHistoryMessages?: ChatMessage[],
+    contextPreset?: STContextPreset,
+    sysprompt?: STSyspromptPreset & { enabled?: boolean },
+    promptNames?: PromptNames,
+    postProcessingMode?: PostProcessingMode,
   ): Promise<{ messages: ChatMessage[]; presetId?: string }> {
     try {
       /* ═══════════════════════════════════════════════════════════════════════
@@ -89,15 +93,16 @@ export class PresetNodeTools extends NodeTool {
          2. 加载预设配置
          ═══════════════════════════════════════════════════════════════════════ */
 
-      const { openaiPreset, presetId } = await this.loadUserEnabledPreset();
-      const isUserPreset = presetId !== "default";
-
-      // 内置 Sysprompt 已移除，统一为空
-      const syspromptPreset = { name: "None", content: "", post_history: "" };
+      const { openaiPreset, presetId, presetContext, presetSysprompt } = await this.loadUserEnabledPreset();
+      const effectiveContext = contextPreset || presetContext;
+      const effectiveSysprompt = sysprompt?.enabled === false
+        ? undefined
+        : sysprompt || presetSysprompt;
 
       const combinedPreset: STCombinedPreset = {
         openai: openaiPreset,
-        sysprompt: syspromptPreset,
+        context: effectiveContext,
+        sysprompt: effectiveSysprompt,
       };
 
       /* ═══════════════════════════════════════════════════════════════════════
@@ -175,9 +180,15 @@ export class PresetNodeTools extends NodeTool {
         vectorMemoryText = vectorRetrieval.formattedText;
       }
 
-      const messages = isUserPreset
-        ? promptManager.buildMessages(env, { userInput: currentUserInput })
-        : promptManager.buildMessagesWithSysprompt(env, { userInput: currentUserInput });
+      const messages = promptManager.buildMessagesWithSysprompt(env, {
+        userInput: currentUserInput,
+        promptNames,
+        postProcessingMode,
+      });
+      const contextMessage = this.buildContextPresetMessage(promptManager, env, effectiveContext);
+      if (contextMessage) {
+        messages.unshift(contextMessage);
+      }
 
       // 首轮对话不注入向量记忆，避免干扰预设首包
       if (vectorMemoryText) {
@@ -212,11 +223,60 @@ export class PresetNodeTools extends NodeTool {
     }
   }
 
+  private static buildContextPresetMessage(
+    promptManager: STPromptManager,
+    env: MacroEnv,
+    contextPreset?: STContextPreset,
+  ): ChatMessage | null {
+    if (!contextPreset) {
+      return null;
+    }
+
+    const isDefaultContext = contextPreset.name === DEFAULT_CONTEXT_PRESET.name
+      && contextPreset.story_string === DEFAULT_CONTEXT_PRESET.story_string;
+    if (isDefaultContext) {
+      return null;
+    }
+
+    const position = contextPreset.story_string_position ?? DEFAULT_CONTEXT_PRESET.story_string_position;
+    const depth = contextPreset.story_string_depth ?? DEFAULT_CONTEXT_PRESET.story_string_depth;
+    const supportsPlacement = position === DEFAULT_CONTEXT_PRESET.story_string_position
+      && depth === DEFAULT_CONTEXT_PRESET.story_string_depth;
+    if (!supportsPlacement) {
+      throw new Error(
+        `Unsupported context preset placement for '${contextPreset.name}': ` +
+        `story_string_position=${position}, story_string_depth=${depth}`,
+      );
+    }
+
+    const content = promptManager.renderStoryString(env).trim();
+    if (!content) {
+      return null;
+    }
+
+    const role = contextPreset.story_string_role === 1
+      ? "user"
+      : contextPreset.story_string_role === 2
+        ? "assistant"
+        : "system";
+
+    return {
+      role,
+      content,
+      name: contextPreset.name,
+    };
+  }
+
   /**
    * 加载用户导入且启用的预设
    * 优先从 IndexedDB 加载，回退到内置默认预设
    */
-  private static async loadUserEnabledPreset(): Promise<{ openaiPreset: STOpenAIPreset; presetId: string }> {
+  private static async loadUserEnabledPreset(): Promise<{
+    openaiPreset: STOpenAIPreset;
+    presetId: string;
+    presetContext?: STContextPreset;
+    presetSysprompt?: STSyspromptPreset;
+  }> {
     try {
       // 1. 查找用户启用的预设
       const allPresets = await PresetOperations.getAllPresets();
@@ -226,7 +286,7 @@ export class PresetNodeTools extends NodeTool {
         console.log(`[PresetNodeTools] Preset: ${p.name}, enabled=${p.enabled}, id=${p.id}, prompts=${p.prompts?.length}, prompt_order=${p.prompt_order?.length}`);
       }
       
-      const enabledPreset = allPresets.find(preset => preset.enabled === true);
+      const enabledPreset = allPresets.find((preset) => preset.enabled !== false);
 
       if (enabledPreset && enabledPreset.id) {
         console.log(`[PresetNodeTools] Using user enabled preset: ${enabledPreset.name} (${enabledPreset.id})`);
@@ -241,7 +301,12 @@ export class PresetNodeTools extends NodeTool {
           const openaiPreset = this.convertToSTOpenAIPreset(enabledPreset, orderedPrompts);
           console.log(`[PresetNodeTools] Converted to STOpenAIPreset with ${openaiPreset.prompts.length} prompts`);
 
-          return { openaiPreset, presetId: enabledPreset.id };
+          return {
+            openaiPreset,
+            presetId: enabledPreset.id,
+            presetContext: enabledPreset.context,
+            presetSysprompt: enabledPreset.sysprompt,
+          };
         } else {
           console.warn(`[PresetNodeTools] No ordered prompts found for preset ${enabledPreset.id}`);
         }

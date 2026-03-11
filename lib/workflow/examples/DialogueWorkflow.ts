@@ -11,6 +11,8 @@ import { PluginNode } from "@/lib/nodeflow/PluginNode/PluginNode";
 import { PluginMessageNode } from "@/lib/nodeflow/PluginNode/PluginMessageNode";
 import { OutputNode } from "@/lib/nodeflow/OutputNode/OutputNode";
 import type { SystemPresetType } from "@/lib/nodeflow/PresetNode/PresetNodeTools";
+import type { PromptNames, PostProcessingMode, STContextPreset, STSyspromptPreset } from "@/lib/core/st-preset-types";
+import type { EffectivePromptConfigSummary } from "@/lib/prompt-config/state";
 
 /**
  * ╔══════════════════════════════════════════════════════════════════════════╗
@@ -44,6 +46,12 @@ export interface DialogueWorkflowParams extends WorkflowParams {
   streamUsage?: boolean;
   fastModel?: boolean;
   systemPresetType?: SystemPresetType;
+  contextPreset?: STContextPreset;
+  sysprompt?: STSyspromptPreset & { enabled?: boolean };
+  stopStrings?: string[];
+  promptNames?: PromptNames;
+  postProcessingMode?: PostProcessingMode;
+  effectivePromptConfig?: EffectivePromptConfigSummary;
 }
 
 export class DialogueWorkflow extends BaseWorkflow {
@@ -95,9 +103,9 @@ export class DialogueWorkflow extends BaseWorkflow {
           name: "userInput",
           category: NodeCategory.ENTRY,
           next: ["plugin-message-1"],
-          initParams: ["dialogueKey", "characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "contextWindow", "maxTokens", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "fastModel", "systemPresetType", "streaming", "streamUsage"],
+          initParams: ["dialogueKey", "characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "contextWindow", "maxTokens", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "fastModel", "systemPresetType", "streaming", "streamUsage", "contextPreset", "sysprompt", "stopStrings", "promptNames", "postProcessingMode", "effectivePromptConfig"],
           inputFields: [],
-          outputFields: ["dialogueKey", "characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "contextWindow", "maxTokens", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "fastModel", "systemPresetType", "streaming", "streamUsage"],
+          outputFields: ["dialogueKey", "characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "contextWindow", "maxTokens", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "fastModel", "systemPresetType", "streaming", "streamUsage", "contextPreset", "sysprompt", "stopStrings", "promptNames", "postProcessingMode", "effectivePromptConfig"],
         },
 
         /* ═══════════════════════════════════════════════════════════════════
@@ -110,7 +118,7 @@ export class DialogueWorkflow extends BaseWorkflow {
           next: ["history-pre-1"],
           initParams: [],
           inputFields: ["dialogueKey", "characterId", "userInput"],
-          outputFields: ["dialogueKey", "characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "contextWindow", "maxTokens", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "fastModel", "systemPresetType", "streaming", "streamUsage"],
+          outputFields: ["dialogueKey", "characterId", "userInput", "number", "language", "username", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "contextWindow", "maxTokens", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "fastModel", "systemPresetType", "streaming", "streamUsage", "contextPreset", "sysprompt", "stopStrings", "promptNames", "postProcessingMode", "effectivePromptConfig"],
         },
 
         /* ═══════════════════════════════════════════════════════════════════
@@ -141,7 +149,7 @@ export class DialogueWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["context-1"],
           initParams: [],
-          inputFields: ["characterId", "language", "username", "number", "fastModel", "systemPresetType", "dialogueKey", "userInput", "chatHistoryMessages"],
+          inputFields: ["characterId", "language", "username", "number", "fastModel", "systemPresetType", "dialogueKey", "userInput", "chatHistoryMessages", "contextPreset", "sysprompt", "promptNames", "postProcessingMode"],
           outputFields: ["messages", "presetId"],
           inputMapping: {
             "userInput": "currentUserInput",
@@ -178,7 +186,8 @@ export class DialogueWorkflow extends BaseWorkflow {
           category: NodeCategory.MIDDLE,
           next: ["regex-1"],
           initParams: [],
-          inputFields: ["messages", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "contextWindow", "maxTokens", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "language", "streaming", "streamUsage", "dialogueKey", "characterId"],
+          inputFields: ["messages", "modelName", "apiKey", "baseUrl", "llmType", "temperature", "contextWindow", "maxTokens", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "language", "streaming", "streamUsage", "dialogueKey", "characterId", "stopStrings", "promptNames", "postProcessingMode", "effectivePromptConfig"],
+          optionalInputFields: ["temperature", "contextWindow", "timeout", "maxRetries", "topP", "frequencyPenalty", "presencePenalty", "topK", "repeatPenalty", "stopStrings", "promptNames", "postProcessingMode", "effectivePromptConfig"],
           outputFields: ["llmResponse"],
         },
         {

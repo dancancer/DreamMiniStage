@@ -132,7 +132,7 @@ export class PromptInterceptorImpl implements PromptInterceptor {
     if (typeof window === "undefined") return;
 
     this.boundEventHandler = (e: Event) => {
-      const { dialogueKey, characterId, modelName, timestamp, messages } =
+      const { dialogueKey, characterId, modelName, timestamp, messages, effectiveConfig } =
         (e as CustomEvent).detail;
       
       const config = this.interceptors.get(dialogueKey);
@@ -168,7 +168,13 @@ export class PromptInterceptorImpl implements PromptInterceptor {
         userMessage,
         fullPrompt,
         images: extractImages(fullPrompt),
-        metadata: { characterId, dialogueKey, modelName, temperature: 0.7 },
+        metadata: {
+          characterId,
+          dialogueKey,
+          modelName,
+          temperature: 0.7,
+          effectiveConfig,
+        },
         messages: promptMessages,
       };
 

@@ -10,6 +10,7 @@ import { getCurrentSystemPresetType } from "@/function/preset/download";
 import { getVectorMemoryManager } from "@/lib/vector-memory/manager";
 import { DialogueWorkflowParams } from "@/lib/workflow/examples/DialogueWorkflow";
 import type { ModelAdvancedSettings } from "@/lib/model-runtime";
+import type { ResolvedPromptRuntimeConfig } from "@/lib/prompt-config/state";
 
 export interface DialogueWorkflowResult {
   outputData: {
@@ -32,6 +33,7 @@ export interface DialogueWorkflowParamInput {
   baseUrl: string;
   llmType: "openai" | "ollama" | "gemini";
   advanced?: ModelAdvancedSettings;
+  promptRuntime: ResolvedPromptRuntimeConfig;
   number: number;
   fastModel: boolean;
 }
@@ -60,7 +62,21 @@ export function isDialogueWorkflowResult(result: unknown): result is DialogueWor
 export function buildDialogueWorkflowParams(
   input: DialogueWorkflowParamInput,
 ): DialogueWorkflowParams {
-  const { dialogueId, characterId, userInput, language, username, modelName, apiKey, baseUrl, llmType, advanced, number, fastModel } = input;
+  const {
+    dialogueId,
+    characterId,
+    userInput,
+    language,
+    username,
+    modelName,
+    apiKey,
+    baseUrl,
+    llmType,
+    advanced,
+    promptRuntime,
+    number,
+    fastModel,
+  } = input;
 
   return {
     dialogueKey: dialogueId,
@@ -87,6 +103,12 @@ export function buildDialogueWorkflowParams(
     number,
     fastModel,
     systemPresetType: getCurrentSystemPresetType(),
+    contextPreset: promptRuntime.contextPreset,
+    sysprompt: promptRuntime.sysprompt,
+    stopStrings: promptRuntime.stopStrings,
+    promptNames: promptRuntime.promptNames,
+    postProcessingMode: promptRuntime.postProcessingMode,
+    effectivePromptConfig: promptRuntime.effectiveConfig,
   };
 }
 

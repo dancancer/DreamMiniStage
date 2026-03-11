@@ -38,6 +38,7 @@ import { useModelStore } from "@/lib/store/model-store";
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import { syncModelConfigToStorage } from "@/lib/model-runtime";
+import { usePromptConfigCallbacks } from "@/hooks/prompt-config/use-prompt-config-callbacks";
 import { DialogueNode, DialogueTree } from "@/lib/models/node-model";
 import { buildSwitchedSessionName, buildTemporarySessionName } from "@/app/session/session-switch";
 import {
@@ -558,6 +559,8 @@ function SessionPageContent() {
     });
   }, [sessionId]);
 
+  const promptCallbacks = usePromptConfigCallbacks();
+
   const handleSetWorldInfoTimedEffect = useCallback(async (
     file: string,
     uid: string,
@@ -636,6 +639,7 @@ function SessionPageContent() {
       unhideMessages: handleUnhideMessages,
       translateText: handleTranslateText,
       getYouTubeTranscript: handleGetYouTubeTranscript,
+      ...promptCallbacks,
       selectProxyPreset: handleSelectProxyPreset,
       getWorldInfoTimedEffect: handleGetWorldInfoTimedEffect,
       setWorldInfoTimedEffect: handleSetWorldInfoTimedEffect,
@@ -760,6 +764,7 @@ function SessionPageContent() {
     handleUnhideMessages,
     handleTranslateText,
     handleGetYouTubeTranscript,
+    promptCallbacks,
     handleSelectProxyPreset,
     handleGetWorldInfoTimedEffect,
     handleSetWorldInfoTimedEffect,

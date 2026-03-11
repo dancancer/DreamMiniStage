@@ -792,6 +792,20 @@ describe("Property 5: Marker Env 回退", () => {
 const validNameArb = fc.string({ minLength: 1, maxLength: 30 })
   .filter(s => s.trim().length > 0);
 
+/**
+ * 生成在宏展开与模板噪声清理后仍保留内容的字符串
+ *
+ * Property 6 断言的是 name 保留，而不是空内容过滤。
+ * 像 `${ }` 这类输入虽然原始字符串非空，但经 STMacroEvaluator 清理后会变成空串，
+ * PromptManager 会按设计直接跳过该消息。
+ */
+const renderableContentArb = fc.string({ minLength: 1, maxLength: 50 })
+  .filter((content) => content.trim().length > 0)
+  .filter((content) => {
+    const evaluator = new STMacroEvaluator();
+    return evaluator.evaluate(content, createBaseEnv()).trim().length > 0;
+  });
+
 /** 生成可选的 name 字段（undefined 或有效字符串） */
 const optionalNameArb = fc.option(validNameArb, { nil: undefined });
 
@@ -861,7 +875,7 @@ describe("Property 6: Name 保留", () => {
    */
   it("5.1: 有 name 字段的 prompt → 输出消息包含相同 name", () => {
     fc.assert(
-      fc.property(validNameArb, nonEmptyContentArb, (name, content) => {
+      fc.property(validNameArb, renderableContentArb, (name, content) => {
         const preset = createPresetWithName(name, content);
         const manager = createPromptManagerFromOpenAI(preset, undefined, new STMacroEvaluator());
 
@@ -888,7 +902,7 @@ describe("Property 6: Name 保留", () => {
    */
   it("5.2: 无 name 字段的 prompt → 输出消息不包含 name", () => {
     fc.assert(
-      fc.property(nonEmptyContentArb, (content) => {
+      fc.property(renderableContentArb, (content) => {
         const preset = createPresetWithOptionalName(false, "", content);
         const manager = createPromptManagerFromOpenAI(preset, undefined, new STMacroEvaluator());
 

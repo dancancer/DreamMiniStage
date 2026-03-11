@@ -225,11 +225,18 @@ export class STPromptManager {
       // ═══════════════════════════════════════════════════════════════════════
       if (prompt.identifier === ST_PROMPT_IDENTIFIERS.CHAT_HISTORY) {
         const history = effectiveEnv.chatHistoryMessages || [];
+        const hasCurrentUserInput = Boolean(effectiveEnv.userInput?.trim());
+        const chatStartMessage = this.buildChatStartMessage(history.length > 0 || hasCurrentUserInput);
+
+        if (chatStartMessage) {
+          relativeMessages.push(chatStartMessage);
+        }
+
         relativeMessages.push(...history);
-        
+
         // 将当前用户输入作为最后一条 user 消息
-        if (effectiveEnv.userInput?.trim()) {
-          relativeMessages.push({ role: "user", content: effectiveEnv.userInput });
+        if (hasCurrentUserInput) {
+          relativeMessages.push({ role: "user", content: effectiveEnv.userInput! });
         }
         continue;
       }
@@ -237,10 +244,14 @@ export class STPromptManager {
       const message = this.processPrompt(prompt, effectiveEnv);
       if (!message) continue;
 
+      const decoratedMessage = prompt.identifier === ST_PROMPT_IDENTIFIERS.DIALOGUE_EXAMPLES
+        ? this.decorateDialogueExamplesMessage(message)
+        : message;
+
       if (prompt.injection_position === 1 && prompt.injection_depth !== undefined) {
-        absoluteInjections.push({ message, depth: prompt.injection_depth, order: prompt.injection_order || 0 });
+        absoluteInjections.push({ message: decoratedMessage, depth: prompt.injection_depth, order: prompt.injection_order || 0 });
       } else {
-        relativeMessages.push(message);
+        relativeMessages.push(decoratedMessage);
       }
     }
 
@@ -269,6 +280,36 @@ export class STPromptManager {
     }
 
     return finalMessages as ExtendedChatMessage[];
+  }
+
+  private decorateDialogueExamplesMessage(message: ChatMessageWithMeta): ChatMessageWithMeta {
+    const separator = String(this.getExampleSeparator() || "").trim();
+    if (!separator || separator === DEFAULT_CONTEXT_PRESET.example_separator || !message.content.trim()) {
+      return message;
+    }
+
+    return {
+      ...message,
+      content: `${separator}
+${message.content}`,
+    };
+  }
+
+  private buildChatStartMessage(hasConversation: boolean): ChatMessageWithMeta | null {
+    if (!hasConversation) {
+      return null;
+    }
+
+    const chatStart = String(this.getChatStart() || "").trim();
+    if (!chatStart || chatStart === DEFAULT_CONTEXT_PRESET.chat_start) {
+      return null;
+    }
+
+    return {
+      role: "system",
+      content: chatStart,
+      identifier: "chatStart",
+    };
   }
 
   /**

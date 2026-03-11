@@ -6,6 +6,7 @@ import { postProcessMessages, getTextContent } from "@/lib/core/prompt/post-proc
 import { invokeClaudeModel, invokeGeminiModel, invokeClaudeModelStream, type StreamingCallbacks } from "./model-invokers";
 import { extractTokenUsage, type TokenUsage } from "@/lib/adapters/token-usage";
 import type { PromptNames, ExtendedChatMessage, PostProcessingMode } from "@/lib/core/st-preset-types";
+import type { EffectivePromptConfigSummary } from "@/lib/prompt-config/state";
 import {
   getMvuTool,
   extractMvuToolCall,
@@ -53,6 +54,8 @@ export interface LLMConfig {
   dialogueKey?: string;
   characterId?: string;
   messages?: Array<{ role: string; content: string }>;
+  stopStrings?: string[];
+  effectivePromptConfig?: EffectivePromptConfigSummary;
 
   /* ─────────────────────────────────────────────────────────────────────────
      后处理选项 (Requirements: 7.1, 8.1)
@@ -270,6 +273,7 @@ export class LLMNodeTools extends NodeTool {
             modelName: config.modelName,
             timestamp: Date.now(),
             messages: finalMessages,
+            effectiveConfig: config.effectivePromptConfig,
           },
         });
         window.dispatchEvent(promptEvent);
@@ -450,6 +454,7 @@ export class LLMNodeTools extends NodeTool {
             modelName: config.modelName,
             timestamp: Date.now(),
             messages: finalMessages,
+            effectiveConfig: config.effectivePromptConfig,
           },
         });
         window.dispatchEvent(promptEvent);
@@ -489,6 +494,7 @@ export class LLMNodeTools extends NodeTool {
         topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
         frequencyPenalty: config.frequencyPenalty ?? DEFAULT_LLM_SETTINGS.frequencyPenalty,
         presencePenalty: config.presencePenalty ?? DEFAULT_LLM_SETTINGS.presencePenalty,
+        stop: config.stopStrings,
         streaming: config.streaming ?? DEFAULT_LLM_SETTINGS.streaming,
         streamUsage: config.streamUsage ?? DEFAULT_LLM_SETTINGS.streamUsage,
       });
@@ -504,6 +510,7 @@ export class LLMNodeTools extends NodeTool {
         frequencyPenalty: config.frequencyPenalty ?? DEFAULT_LLM_SETTINGS.frequencyPenalty,
         presencePenalty: config.presencePenalty ?? DEFAULT_LLM_SETTINGS.presencePenalty,
         repeatPenalty: config.repeatPenalty ?? DEFAULT_LLM_SETTINGS.repeatPenalty,
+        stop: config.stopStrings,
         streaming: config.streaming ?? DEFAULT_LLM_SETTINGS.streaming,
       });
     } else if (config.llmType === "gemini") {
@@ -516,6 +523,7 @@ export class LLMNodeTools extends NodeTool {
         maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
         topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
         topK: config.topK ?? DEFAULT_LLM_SETTINGS.topK,
+        stopSequences: config.stopStrings,
       });
     } else {
       throw new Error(`Unsupported LLM type: ${config.llmType}`);

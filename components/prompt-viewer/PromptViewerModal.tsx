@@ -277,7 +277,10 @@ function ContentArea({
   // ========== 正常内容渲染 ==========
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto space-y-4 p-4">
+      {promptData.metadata.effectiveConfig && (
+        <EffectiveConfigCard config={promptData.metadata.effectiveConfig} />
+      )}
       <PromptContent
         messages={promptData.messages}
         content={promptData.fullPrompt}
@@ -295,6 +298,35 @@ function ContentArea({
 /* ═══════════════════════════════════════════════════════════════════════════
    状态组件
    ═══════════════════════════════════════════════════════════════════════════ */
+
+function EffectiveConfigCard({
+  config,
+}: {
+  config: NonNullable<NonNullable<ReturnType<typeof usePromptData>>["metadata"]["effectiveConfig"]>;
+}) {
+  const items = [
+    ["Preset", config.presetName || "未启用"],
+    ["Instruct", config.instructEnabled ? (config.instructPreset || "已启用") : "关闭"],
+    ["Context", config.contextName],
+    ["Sysprompt", config.syspromptEnabled ? config.syspromptName : "关闭"],
+    ["Post", config.promptPostProcessing],
+    ["Stops", config.stopStrings.length > 0 ? config.stopStrings.join(" | ") : "无"],
+  ] as const;
+
+  return (
+    <div className="rounded-lg border border-border bg-muted/30 p-4">
+      <div className="mb-3 text-sm font-medium text-foreground">最终生效配置</div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {items.map(([label, value]) => (
+          <div key={label} className="space-y-1">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+            <div className="text-sm text-foreground break-words">{value}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function LoadingState() {
   return (
