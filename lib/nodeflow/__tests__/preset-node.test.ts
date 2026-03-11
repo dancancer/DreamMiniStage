@@ -12,7 +12,9 @@
 
 import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
-import type { ChatMessage, MacroEnv } from "@/lib/core/st-preset-types";
+import { STPromptManager } from "@/lib/core/prompt";
+import { DEFAULT_CONTEXT_PRESET, type ChatMessage, type MacroEnv } from "@/lib/core/st-preset-types";
+import { PresetNodeTools } from "@/lib/nodeflow/PresetNode/PresetNodeTools";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    测试数据生成器
@@ -414,5 +416,38 @@ describe("PresetNodeTools 代码一致性验证", () => {
     });
 
     expect(envWithUndefined.chatHistoryMessages).toEqual([]);
+  });
+});
+
+describe("PresetNode context preset placement", () => {
+  it("fails fast when imported context preset uses unsupported placement", () => {
+    const contextPreset = {
+      ...DEFAULT_CONTEXT_PRESET,
+      name: "Depth Context",
+      story_string: "{{description}}",
+      story_string_position: 1,
+      story_string_depth: 3,
+    };
+    const manager = new STPromptManager({
+      openai: {
+        prompts: [],
+        prompt_order: [],
+      },
+      context: contextPreset,
+    });
+
+    expect(() => (
+      PresetNodeTools as unknown as {
+        buildContextPresetMessage: (
+          promptManager: STPromptManager,
+          env: MacroEnv,
+          context: typeof contextPreset,
+        ) => unknown;
+      }
+    ).buildContextPresetMessage(manager, {
+      user: "用户",
+      char: "角色",
+      description: "描述",
+    }, contextPreset)).toThrow(/Unsupported context preset placement/);
   });
 });

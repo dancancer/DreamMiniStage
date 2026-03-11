@@ -162,6 +162,8 @@ export class PresetOperations {
         enabled: true,
         prompts: normalized.prompts,
         sampling: normalized.sampling,
+        context: normalized.context,
+        sysprompt: normalized.sysprompt,
         // 不再保留 prompt_order，只使用 group_id/position
       };
 

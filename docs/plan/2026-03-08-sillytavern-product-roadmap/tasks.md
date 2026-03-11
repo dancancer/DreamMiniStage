@@ -16,10 +16,10 @@
 
 ## 3. Phase 2：Prompt 行为产品面
 
-- [ ] 统一 Prompt 行为状态源（preset / instruct / sysprompt / context / stop strings）。
-- [ ] 增加对应 UI 面板。
-- [ ] 保证 UI 与 slash 命令操作同一状态源。
-- [ ] 增加 prompt viewer 的最终生效配置展示。
+- [x] 统一 Prompt 行为状态源（preset / instruct / sysprompt / context / stop strings）。
+- [x] 增加对应 UI 面板。
+- [x] 保证 UI 与 slash 命令操作同一状态源。
+- [x] 增加 prompt viewer 的最终生效配置展示。
 
 ## 4. Phase 3：会话、消息、群聊、Quick Reply
 

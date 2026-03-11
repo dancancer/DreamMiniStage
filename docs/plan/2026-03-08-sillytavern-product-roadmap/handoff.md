@@ -71,3 +71,66 @@
   - `pnpm lint`
   - `pnpm verify:stage`
 - 上述命令均已通过；当前阶段在已 review 的行为与代码质量项上已形成闭环，可继续推进 PR 准备。
+
+
+## Phase 2 已完成内容（2026-03-09）
+
+- 已创建阶段分支 `codex/phase-2-prompt-product-surface`，本轮实现按新的阶段分支推进。
+- 新增 `lib/store/prompt-config-store.ts`、`lib/prompt-config/state.ts`、`lib/prompt-config/service.ts`、`lib/prompt-config/catalog.ts`，把 `preset / instruct / sysprompt / context / stop strings / prompt post-processing` 收口到单一状态源。
+- `function/preset/global.ts` 与 `hooks/script-bridge/slash-context-adapter.ts` 已改为复用 prompt-config 单路径：
+  - `/preset`、`/instruct*`、`/context`、`/prompt-post-processing`、`/custom-stop-strings`、`/sysprompt*` 不再各自漂浮在独立 localStorage key 上。
+  - `/model` 的默认宿主也改为直连 `model-store`，避免脚本路径与产品路径分叉。
+- `app/session/page.tsx` 的真实 slash 宿主已补齐 prompt 相关回调：聊天页面中的 slash 输入与脚本桥宿主现在操作同一批 Prompt 行为状态。
+- `components/prompt-config/PromptBehaviorPanel.tsx` 已接入 `AdvancedSettingsEditor`，提供可见的 Prompt 行为产品面：
+  - 当前预设切换
+  - instruct 开关与模板
+  - context preset 选择与 story string 编辑
+  - sysprompt 开关、名称、system content、post-history content
+  - stop strings 与 prompt post-processing
+  - 最终生效配置摘要
+- `function/dialogue/chat.ts` / `chat-streaming.ts` / `chat-shared.ts` / `DialogueWorkflow` / `PresetNode` / `LLMNode` 已补齐 Prompt 行为运行时透传：
+  - instruct 通过 post-processing 真正影响最终 messages 结构
+  - sysprompt 真正进入 prompt 构建
+  - custom stop strings 真正进入 OpenAI / Claude / Ollama / Gemini 调用
+  - context preset 在非默认模板下会生成额外 story string 注入
+- `Prompt Viewer` 已显示本次请求最终生效配置，便于验证 preset / instruct / context / sysprompt / stop strings / post-processing 的真实落点。
+- ST preset 导入链路现已保留 `context` / `sysprompt` 结构，不再只保存 prompts 与 sampling。
+
+## Phase 2 验证（2026-03-09）
+
+- `pnpm vitest run function/dialogue/__tests__/chat-first-message.test.ts lib/slash-command/__tests__/p3-sysprompt-command-gaps.test.ts lib/slash-command/__tests__/p3-profile-prompt-command-gaps.test.ts lib/workflow/__tests__/dialogue-workflow-validation.test.ts components/__tests__/PromptViewerModal.test.tsx lib/core/__tests__/st-prompt-manager.test.ts`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm verify:stage`
+
+## Phase 2 新增/更新测试覆盖
+
+- `function/dialogue/__tests__/chat-first-message.test.ts`：断言真实聊天入口在 Phase 2 之后仍保持模型参数透传，并兼容新的 prompt runtime 注入。
+- `lib/slash-command/__tests__/p3-sysprompt-command-gaps.test.ts`：断言 `/sysprompt*` 命令簇与新的 prompt-config 状态源保持一致。
+- `lib/slash-command/__tests__/p3-profile-prompt-command-gaps.test.ts`：验证 `/prompt-post-processing` 命令继续可用，并已接入统一状态源。
+- `lib/workflow/__tests__/dialogue-workflow-validation.test.ts`：继续覆盖工作流字段流转，确保 Phase 2 新字段没有破坏原有节点顺序与参数闭环。
+- `components/__tests__/PromptViewerModal.test.tsx`：确认 Prompt Viewer 弹窗仍可正常渲染，并兼容新的最终生效配置展示。
+- `lib/core/__tests__/st-prompt-manager.test.ts`：回归验证 marker 行为未被 Phase 2 的 context product surface 改坏。
+
+## Phase 2 仍需注意
+
+- 当前 context preset 先提供了最小产品面与真实 runtime 注入，但仍只内建了少量模板；后续如果要进一步对齐上游，需要补齐更完整的 preset 集和更细粒度的 story_string 布局控制。
+- Prompt Viewer 现在已经展示最终生效配置，但仍然是“摘要视图”；若后续需要做作者级调试，还可以继续扩展为逐来源 diff。
+
+
+## Phase 2 Review Fix-up（2026-03-11）
+
+- 已根据最新 review 继续修复 3 个确认成立/部分成立的问题：
+  - `lib/prompt-config/service.ts`：`getActivePromptPreset()` 不再盲信 `prompt-config-store` 中缓存的 `activePresetId`；若该 preset 在持久层里已被禁用，会自动回退到当前真正启用的 preset，并同步修正 store，避免 `handleCharacterChatRequest()` 与 `PresetNodeTools.loadUserEnabledPreset()` 读取到不同 preset。
+  - `lib/nodeflow/PresetNode/PresetNodeTools.ts`：对于导入 context preset 中当前尚未支持的 `story_string_position` / `story_string_depth` 组合，改为显式 fail-fast；不再静默 `unshift` 到消息最前面，避免悄悄篡改上游 placement 语义。
+  - `lib/api/backends.ts`：`AnthropicClient.chatStream()` 已补齐 `stop_sequences: params.stop`，使 Claude 的 stop strings 在非流式与流式路径上保持一致。
+- 已新增定向回归测试：
+  - `lib/prompt-config/__tests__/service.test.ts`：断言缓存 preset 已禁用时，会回退到真正 active preset 并同步 store。
+  - `lib/nodeflow/__tests__/preset-node.test.ts`：断言非默认 context placement 当前会显式 fail-fast，而不是静默降级。
+  - `lib/api/__tests__/backends.test.ts`：断言 `AnthropicClient.chatStream()` 会发送 `stop_sequences`。
+- 本轮验证结果：
+  - `pnpm vitest run lib/prompt-config/__tests__/service.test.ts lib/nodeflow/__tests__/preset-node.test.ts lib/api/__tests__/backends.test.ts function/dialogue/__tests__/chat-first-message.test.ts lib/slash-command/__tests__/p3-sysprompt-command-gaps.test.ts lib/workflow/__tests__/dialogue-workflow-validation.test.ts`
+  - `pnpm typecheck`
+  - `pnpm lint`
+  - `pnpm verify:stage`
+- 上述命令均已通过；当前 Phase 2 在这轮 review 提出的状态一致性、context placement 保护、Claude stop strings 一致性问题上已形成闭环。

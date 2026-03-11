@@ -13,9 +13,10 @@
  */
 
 import React, { useState } from "react";
-import { Layers, Palette, X } from "lucide-react";
+import { Layers, MessageSquareText, Palette } from "lucide-react";
 import { useLanguage } from "@/app/i18n";
 import { TagColorEditor } from "@/components/TagColorEditor";
+import { PromptBehaviorPanel } from "@/components/prompt-config/PromptBehaviorPanel";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,7 +40,7 @@ interface AdvancedSettingsEditorProps {
 
 const AdvancedSettingsEditor: React.FC<AdvancedSettingsEditorProps> = ({ isOpen, onClose, onViewSwitch }) => {
   const { t, fontClass, serifFontClass } = useLanguage();
-  const [activeTab, setActiveTab] = useState<string>("tagColors");
+  const [activeTab, setActiveTab] = useState<string>("promptBehavior");
 
   // ========== 渲染 ==========
 
@@ -71,6 +72,20 @@ const AdvancedSettingsEditor: React.FC<AdvancedSettingsEditorProps> = ({ isOpen,
               <Button
                 variant="ghost"
                 className={`h-auto w-full justify-start px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-2xs sm:text-sm font-medium ${fontClass} ${
+                  activeTab === "promptBehavior"
+                    ? "bg-primary/20 text-primary-200 border border-primary-600/30"
+                    : "text-neutral-400 hover:bg-neutral-700/40 hover:text-neutral-200"
+                }`}
+                onClick={() => setActiveTab("promptBehavior")}
+              >
+                <div className="flex items-center space-x-1 sm:space-x-2">
+                  <MessageSquareText className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary-400" />
+                  <span className="truncate">Prompt 行为</span>
+                </div>
+              </Button>
+              <Button
+                variant="ghost"
+                className={`h-auto w-full justify-start px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-2xs sm:text-sm font-medium ${fontClass} ${
                   activeTab === "tagColors"
                     ? "bg-primary/20 text-primary-200 border border-primary-600/30"
                     : "text-neutral-400 hover:bg-neutral-700/40 hover:text-neutral-200"
@@ -88,9 +103,10 @@ const AdvancedSettingsEditor: React.FC<AdvancedSettingsEditorProps> = ({ isOpen,
           <div className="flex-1 overflow-y-auto p-2 sm:p-6 bg-neutral-900/30 fantasy-scrollbar relative">
             <div className="absolute inset-0 bg-primary/5 opacity-30"></div>
             <div className="relative z-10">
+              {activeTab === "promptBehavior" && <PromptBehaviorPanel />}
               {activeTab === "tagColors" && (
                 <TagColorEditor
-                  onSave={(colors) => {
+                  onSave={() => {
                   }}
                   onViewSwitch={onViewSwitch}
                 />

@@ -6,12 +6,12 @@
  */
 
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
-import { PresetOperations } from "@/lib/data/roleplay/preset-operation";
 import { ParsedResponse } from "@/lib/models/parsed-response";
 import { DialogueWorkflow } from "@/lib/workflow/examples/DialogueWorkflow";
 import { prepareOpeningGreeting, type OpeningPayload } from "@/function/dialogue/opening";
 import { resolveModelAdvancedSettings } from "@/lib/model-runtime";
 import type { ModelAdvancedSettings } from "@/lib/model-runtime";
+import { getActivePromptPreset, resolvePromptRuntimeConfig } from "@/lib/prompt-config/service";
 import {
   buildDialogueWorkflowParams,
   isDialogueWorkflowResult,
@@ -69,10 +69,14 @@ export async function handleCharacterChatRequest(payload: {
     }
 
     try {
-      const presetSampling = await PresetOperations.getActivePresetSampling();
+      const activePromptPreset = await getActivePromptPreset();
+      const promptRuntime = await resolvePromptRuntimeConfig({
+        characterId,
+        username,
+      });
       const resolvedAdvanced = resolveModelAdvancedSettings({
         request: advanced,
-        preset: presetSampling,
+        preset: activePromptPreset?.sampling,
       });
       const responseStreaming = streaming;
       const modelStreaming = resolvedAdvanced.streaming ?? responseStreaming;
@@ -103,6 +107,7 @@ export async function handleCharacterChatRequest(payload: {
           number,
           fastModel,
           advanced: resolvedAdvanced,
+          promptRuntime,
           nodeId,
         });
       }
@@ -123,6 +128,7 @@ export async function handleCharacterChatRequest(payload: {
           streaming: modelStreaming,
           streamUsage: effectiveStreamUsage,
         },
+        promptRuntime,
         number,
         fastModel,
       }));

@@ -6,6 +6,7 @@
  */
 
 import type { ModelAdvancedSettings } from "@/lib/model-runtime";
+import type { STContextPreset, STSyspromptPreset } from "@/lib/core/st-preset-types";
 
 export interface PresetPrompt {
   identifier: string;
@@ -39,6 +40,8 @@ export interface Preset {
   prompts: PresetPrompt[];
   prompt_order?: PromptOrderGroup[];
   sampling?: ModelAdvancedSettings;
+  context?: STContextPreset;
+  sysprompt?: STSyspromptPreset;
   created_at?: string;
   updated_at?: string;
 }

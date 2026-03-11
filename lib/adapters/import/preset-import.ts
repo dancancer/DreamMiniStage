@@ -15,6 +15,11 @@ import {
   resolveModelAdvancedSettings,
   type ModelAdvancedSettings,
 } from "@/lib/model-runtime";
+import {
+  DEFAULT_CONTEXT_PRESET,
+  type STContextPreset,
+  type STSyspromptPreset,
+} from "@/lib/core/st-preset-types";
 import type { Preset, PresetPrompt, PromptOrderGroup } from "@/lib/models/preset-model";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -53,6 +58,8 @@ interface RawPreset {
   openai_max_tokens?: number;
   stream_openai?: boolean;
   sampling?: Partial<ModelAdvancedSettings>;
+  context?: Partial<STContextPreset>;
+  sysprompt?: Partial<STSyspromptPreset>;
   [key: string]: unknown;
 }
 
@@ -156,6 +163,65 @@ export function convertPromptOrder(
  *
  * - 确保 group_id/position 存在
  */
+function normalizeContextPresetField(value: unknown): STContextPreset | undefined {
+  if (!isNonNullObject(value)) {
+    return undefined;
+  }
+
+  const preset = value as Partial<STContextPreset>;
+  const storyString = typeof preset.story_string === "string"
+    ? preset.story_string
+    : DEFAULT_CONTEXT_PRESET.story_string;
+  const exampleSeparator = typeof preset.example_separator === "string"
+    ? preset.example_separator
+    : DEFAULT_CONTEXT_PRESET.example_separator;
+  const chatStart = typeof preset.chat_start === "string"
+    ? preset.chat_start
+    : DEFAULT_CONTEXT_PRESET.chat_start;
+
+  return {
+    ...DEFAULT_CONTEXT_PRESET,
+    ...preset,
+    name: String(preset.name || DEFAULT_CONTEXT_PRESET.name).trim() || DEFAULT_CONTEXT_PRESET.name,
+    story_string: storyString,
+    example_separator: exampleSeparator,
+    chat_start: chatStart,
+    use_stop_strings: preset.use_stop_strings === true,
+    names_as_stop_strings: preset.names_as_stop_strings !== false,
+    story_string_position: typeof preset.story_string_position === "number"
+      ? preset.story_string_position
+      : DEFAULT_CONTEXT_PRESET.story_string_position,
+    story_string_depth: typeof preset.story_string_depth === "number"
+      ? preset.story_string_depth
+      : DEFAULT_CONTEXT_PRESET.story_string_depth,
+    story_string_role: typeof preset.story_string_role === "number"
+      ? preset.story_string_role
+      : DEFAULT_CONTEXT_PRESET.story_string_role,
+    always_force_name2: preset.always_force_name2 !== false,
+    trim_sentences: preset.trim_sentences === true,
+    single_line: preset.single_line === true,
+  };
+}
+
+function normalizeSyspromptField(value: unknown): STSyspromptPreset | undefined {
+  if (!isNonNullObject(value)) {
+    return undefined;
+  }
+
+  const preset = value as Partial<STSyspromptPreset>;
+  const content = String(preset.content || "");
+  const postHistory = String(preset.post_history || "");
+  if (content.trim().length === 0 && postHistory.trim().length === 0) {
+    return undefined;
+  }
+
+  return {
+    name: String(preset.name || "Default").trim() || "Default",
+    content,
+    post_history: postHistory,
+  };
+}
+
 function normalizePrompt(prompt: RawPresetPrompt & {
   group_id?: string | number;
   position?: number;
@@ -240,6 +306,8 @@ export function normalizePreset(raw: RawPreset): NormalizedPreset {
       request: currentSampling,
       preset: legacySampling,
     }),
+    context: normalizeContextPresetField(raw.context),
+    sysprompt: normalizeSyspromptField(raw.sysprompt),
     created_at: raw.created_at as string | undefined,
     updated_at: raw.updated_at as string | undefined,
   };

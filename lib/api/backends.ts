@@ -295,6 +295,7 @@ export class AnthropicClient implements ApiClient {
         system: systemPrompt,
         messages: this.transformMessages(messages),
         temperature: params.temperature,
+        stop_sequences: params.stop,
         stream: true,
       }),
     });

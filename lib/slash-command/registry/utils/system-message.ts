@@ -7,9 +7,11 @@
  */
 
 import type { ExecutionContext, SendOptions } from "../../types";
+import {
+  getPromptSyspromptState,
+  setPromptSyspromptState,
+} from "@/lib/prompt-config/service";
 
-const SYSPROMPT_NAME_STORAGE_KEY = "dreamministage.sysprompt.name";
-const SYSPROMPT_ENABLED_STORAGE_KEY = "dreamministage.sysprompt.enabled";
 const SYSTEM_NARRATOR_NAME_STORAGE_KEY = "dreamministage.system-narrator.name";
 
 export const DEFAULT_SYSTEM_NARRATOR_NAME = "System";
@@ -24,45 +26,25 @@ function hasStorage(): boolean {
 }
 
 export function readSystemPromptStateFromStorage(): StoredSystemPromptState {
-  if (!hasStorage()) {
-    return { enabled: false, name: "" };
-  }
-
-  try {
-    return {
-      enabled: window.localStorage.getItem(SYSPROMPT_ENABLED_STORAGE_KEY) === "true",
-      name: window.localStorage.getItem(SYSPROMPT_NAME_STORAGE_KEY) || "",
-    };
-  } catch {
-    return { enabled: false, name: "" };
-  }
+  const current = getPromptSyspromptState();
+  return {
+    enabled: current.enabled,
+    name: current.name,
+  };
 }
 
 export function writeSystemPromptStateToStorage(
   patch: Partial<StoredSystemPromptState>,
 ): StoredSystemPromptState {
-  const current = readSystemPromptStateFromStorage();
-  const next: StoredSystemPromptState = {
-    enabled: patch.enabled ?? current.enabled,
-    name: typeof patch.name === "string" ? patch.name.trim() : current.name,
+  const next = setPromptSyspromptState({
+    enabled: patch.enabled,
+    name: patch.name,
+  });
+
+  return {
+    enabled: next.enabled,
+    name: next.name,
   };
-
-  if (!hasStorage()) {
-    return next;
-  }
-
-  try {
-    window.localStorage.setItem(SYSPROMPT_ENABLED_STORAGE_KEY, String(next.enabled));
-    if (next.name) {
-      window.localStorage.setItem(SYSPROMPT_NAME_STORAGE_KEY, next.name);
-    } else {
-      window.localStorage.removeItem(SYSPROMPT_NAME_STORAGE_KEY);
-    }
-  } catch {
-    // 忽略存储失败，调用方仍拿到规范化快照
-  }
-
-  return next;
 }
 
 export function readSystemNarratorNameFromStorage(): string {

@@ -15,7 +15,36 @@ const switchBranch = vi.fn();
 const updateNodeInDialogueTree = vi.fn();
 const ingestMock = vi.fn();
 const processMessageVariables = vi.fn();
-const getActivePresetSampling = vi.fn();
+const getActivePromptPreset = vi.fn();
+const resolvePromptRuntimeConfig = vi.fn();
+
+const DEFAULT_PROMPT_RUNTIME = {
+  contextPreset: {
+    name: "Default",
+    story_string: "",
+    example_separator: "***",
+    chat_start: "***",
+  },
+  sysprompt: { enabled: false, name: "Default", content: "", post_history: "" },
+  stopStrings: [],
+  promptNames: {
+    charName: "char-1",
+    userName: "user",
+    groupNames: [],
+    startsWithGroupName: () => false,
+  },
+  postProcessingMode: "none",
+  effectiveConfig: {
+    presetName: null,
+    instructEnabled: false,
+    instructPreset: null,
+    promptPostProcessing: "none",
+    contextName: "Default",
+    syspromptEnabled: false,
+    syspromptName: "Default",
+    stopStrings: [],
+  },
+};
 
 vi.mock("@/lib/workflow/examples/DialogueWorkflow", () => ({
   DialogueWorkflow: vi.fn().mockImplementation(() => ({
@@ -23,10 +52,9 @@ vi.mock("@/lib/workflow/examples/DialogueWorkflow", () => ({
   })),
 }));
 
-vi.mock("@/lib/data/roleplay/preset-operation", () => ({
-  PresetOperations: {
-    getActivePresetSampling: (...args: unknown[]) => getActivePresetSampling(...args),
-  },
+vi.mock("@/lib/prompt-config/service", () => ({
+  getActivePromptPreset: (...args: unknown[]) => getActivePromptPreset(...args),
+  resolvePromptRuntimeConfig: (...args: unknown[]) => resolvePromptRuntimeConfig(...args),
 }));
 
 vi.mock("@/lib/vector-memory/manager", () => ({
@@ -60,7 +88,8 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
     updateNodeInDialogueTree.mockReset();
     ingestMock.mockReset();
     processMessageVariables.mockReset();
-    getActivePresetSampling.mockReset();
+    getActivePromptPreset.mockReset();
+    resolvePromptRuntimeConfig.mockReset();
 
     getDialogueTreeById
       .mockResolvedValueOnce(null) // ensure tree missing at first
@@ -86,7 +115,8 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
       current_nodeId: "assistant-1",
     });
 
-    getActivePresetSampling.mockResolvedValue(undefined);
+    getActivePromptPreset.mockResolvedValue(null);
+    resolvePromptRuntimeConfig.mockResolvedValue(DEFAULT_PROMPT_RUNTIME);
     executeMock.mockResolvedValue({
       outputData: {
         thinkingContent: "think",
@@ -98,7 +128,6 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
     });
 
     ingestMock.mockResolvedValue(undefined);
-    getActivePresetSampling.mockResolvedValue(undefined);
     processMessageVariables.mockResolvedValue(undefined);
   });
 
@@ -168,7 +197,8 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
     addNodeToDialogueTree.mockReset();
     updateNodeInDialogueTree.mockReset();
     executeMock.mockReset();
-    getActivePresetSampling.mockReset();
+    getActivePromptPreset.mockReset();
+    resolvePromptRuntimeConfig.mockReset();
 
     getDialogueTreeById.mockResolvedValue({
       id: "session-fail",
@@ -179,6 +209,8 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
 
     executeMock.mockResolvedValue(undefined);
     addNodeToDialogueTree.mockResolvedValue("pending-node");
+    getActivePromptPreset.mockResolvedValue(null);
+    resolvePromptRuntimeConfig.mockResolvedValue(DEFAULT_PROMPT_RUNTIME);
 
     const response = await handleCharacterChatRequest({
       username: "user",
@@ -220,7 +252,8 @@ describe("handleCharacterChatRequest 模型参数透传", () => {
     createDialogueTree.mockReset();
     addNodeToDialogueTree.mockReset();
     updateNodeInDialogueTree.mockReset();
-    getActivePresetSampling.mockReset();
+    getActivePromptPreset.mockReset();
+    resolvePromptRuntimeConfig.mockReset();
 
     getDialogueTreeById.mockResolvedValue({
       id: "session-advanced",
@@ -230,7 +263,8 @@ describe("handleCharacterChatRequest 模型参数透传", () => {
     });
     addNodeToDialogueTree.mockResolvedValue("assistant-advanced");
     updateNodeInDialogueTree.mockResolvedValue(true);
-    getActivePresetSampling.mockResolvedValue(undefined);
+    getActivePromptPreset.mockResolvedValue(null);
+    resolvePromptRuntimeConfig.mockResolvedValue(DEFAULT_PROMPT_RUNTIME);
     executeMock.mockResolvedValue({
       outputData: {
         thinkingContent: "",
@@ -289,7 +323,7 @@ describe("handleCharacterChatRequest 模型参数透传", () => {
   });
 
   it("显式非流式请求不应被 preset 的 streaming 默认值升级为 SSE", async () => {
-    getActivePresetSampling.mockResolvedValue({ streaming: true });
+    getActivePromptPreset.mockResolvedValue({ sampling: { streaming: true } });
 
     const response = await handleCharacterChatRequest({
       username: "user",

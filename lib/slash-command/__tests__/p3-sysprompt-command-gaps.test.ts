@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { executeSlashCommandScript } from "../executor";
 import type { ExecutionContext } from "../types";
+import { createDefaultPromptBehaviorState } from "@/lib/prompt-config/state";
+import { usePromptConfigStore } from "@/lib/store/prompt-config-store";
 
 function createContext(partial?: Partial<ExecutionContext>): ExecutionContext {
   return {
@@ -22,6 +24,7 @@ function createContext(partial?: Partial<ExecutionContext>): ExecutionContext {
 describe("P3 sysprompt command gaps", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    usePromptConfigStore.setState(createDefaultPromptBehaviorState());
   });
 
   it("/sysprompt 命令簇共享单一路径状态与别名", async () => {
@@ -46,8 +49,8 @@ describe("P3 sysprompt command gaps", () => {
     expect(enableAlias).toMatchObject({ isError: false, pipe: "true" });
     expect(state).toMatchObject({ isError: false, pipe: "true" });
     expect(toggleOff).toMatchObject({ isError: false, pipe: "false" });
-    expect(window.localStorage.getItem("dreamministage.sysprompt.name")).toBe("Story Core");
-    expect(window.localStorage.getItem("dreamministage.sysprompt.enabled")).toBe("false");
+    expect(usePromptConfigStore.getState().sysprompt.name).toBe("Story Core");
+    expect(usePromptConfigStore.getState().sysprompt.enabled).toBe(false);
   });
 
   it("/sysname 会驱动 /sys 的系统旁白显示名", async () => {
