@@ -65,3 +65,5 @@ TODO.md
 lib/core/__tests__/prompt-assembly-output.json
 /sillytavern-plugins
 .claude
+
+/.artifacts/

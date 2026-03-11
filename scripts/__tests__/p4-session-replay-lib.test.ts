@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeNoiseBaseline, buildReplayRunIndex } from "../p4-session-replay-lib.mjs";
+import { analyzeNoiseBaseline, buildReplayRunIndex, renderReplayFailureDigest, renderReplayJobSummaryMarkdown, resolveReplayArtifactLayout } from "../p4-session-replay-lib.mjs";
 
 describe("analyzeNoiseBaseline", () => {
   it("returns per-rule audit with unused rule ids", () => {
@@ -116,5 +116,56 @@ describe("buildReplayRunIndex", () => {
     expect(second.staleRules.network.map((item) => item.id)).toEqual(["network-a"]);
     expect(second.runs.map((item) => item.runId)).toEqual(["run-b", "run-a"]);
     expect(second.latestRunId).toBe("run-b");
+  });
+});
+
+
+describe("resolveReplayArtifactLayout", () => {
+  it("defaults runtime artifacts to .artifacts/p4-session-replay", () => {
+    const layout = resolveReplayArtifactLayout("/repo");
+
+    expect(layout.artifactRoot).toBe("/repo/.artifacts/p4-session-replay");
+    expect(layout.runIndexJsonPath).toBe("/repo/.artifacts/p4-session-replay/p4-session-replay-run-index.json");
+    expect(layout.runIndexMdPath).toBe("/repo/.artifacts/p4-session-replay/p4-session-replay-run-index.md");
+  });
+});
+
+describe("replay failure digest rendering", () => {
+  function makeFailedSummary() {
+    return {
+      runId: "p4r16-123",
+      error: "Error: Noise baseline drift: 1 new signatures",
+      runDir: ".artifacts/p4-session-replay/p4-session-replay-p4r16-123",
+      noiseReportPath: ".artifacts/p4-session-replay/p4-session-replay-p4r16-123/round13-noise-baseline-report.md",
+      noiseBaseline: {
+        unknownSignatureCount: 2,
+        console: {
+          unknown: [{ signature: "warning|Node llm-1: Required input 'topP' not found", count: 2 }],
+        },
+        network: {
+          unknown: [{ signature: "requestfailed|none|GET|https://example.com/script.js|net::ERR_ABORTED", count: 1 }],
+        },
+      },
+    };
+  }
+
+  it("renders actionable plain-text digest for CI logs", () => {
+    const digest = renderReplayFailureDigest(makeFailedSummary());
+
+    expect(digest).toContain("[p4-session-replay] Failure digest");
+    expect(digest).toContain("- runId: p4r16-123");
+    expect(digest).toContain("- artifacts: .artifacts/p4-session-replay/p4-session-replay-p4r16-123");
+    expect(digest).toContain("- unknownSignatureCount: 2");
+    expect(digest).toContain("Console New Signatures");
+    expect(digest).toContain("Network New Signatures");
+  });
+
+  it("renders markdown digest for GitHub step summary", () => {
+    const digest = renderReplayJobSummaryMarkdown(makeFailedSummary());
+
+    expect(digest).toContain("## P4 Session Replay Failure");
+    expect(digest).toContain("- runId: `p4r16-123`");
+    expect(digest).toContain("### Console New Signatures");
+    expect(digest).toContain("### Network New Signatures");
   });
 });

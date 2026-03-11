@@ -11,9 +11,11 @@ import {
   artifactPaths,
   buildReplayRunIndex,
   buildPayload,
+  renderReplayFailureDigest,
   renderReplayRunIndexMarkdown,
   renderNoiseReportMarkdown,
   renderSummaryMarkdown,
+  resolveReplayArtifactLayout,
   seedIndexedDb,
 } from "./p4-session-replay-lib.mjs";
 
@@ -31,23 +33,17 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 const BASE_URL = process.env.P4_BASE_URL || "http://127.0.0.1:3303";
 const HEADLESS = process.env.P4_HEADLESS !== "false";
 const RUN_ID = process.env.P4_RUN_ID || `p4r16-${Date.now()}`;
+const REPLAY_LAYOUT = resolveReplayArtifactLayout(REPO_ROOT, process.env.P4_ARTIFACT_ROOT);
 const ARTIFACT_ROOT = path.resolve(
-  REPO_ROOT,
-  process.env.P4_ARTIFACT_ROOT || "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts",
+  REPLAY_LAYOUT.artifactRoot,
 );
 const RUN_DIR = path.join(ARTIFACT_ROOT, `p4-session-replay-${RUN_ID}`);
 const NOISE_BASELINE_PATH = path.resolve(
   REPO_ROOT,
   process.env.P4_NOISE_BASELINE_PATH || "docs/plan/2026-03-03-sillytavern-gap-reduction/p4-session-replay-noise-baseline.json",
 );
-const RUN_INDEX_JSON_PATH = path.resolve(
-  REPO_ROOT,
-  process.env.P4_RUN_INDEX_JSON_PATH || "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.json",
-);
-const RUN_INDEX_MD_PATH = path.resolve(
-  REPO_ROOT,
-  process.env.P4_RUN_INDEX_MD_PATH || "docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-run-index.md",
-);
+const RUN_INDEX_JSON_PATH = path.resolve(REPO_ROOT, process.env.P4_RUN_INDEX_JSON_PATH || REPLAY_LAYOUT.runIndexJsonPath);
+const RUN_INDEX_MD_PATH = path.resolve(REPO_ROOT, process.env.P4_RUN_INDEX_MD_PATH || REPLAY_LAYOUT.runIndexMdPath);
 const STALE_RULE_MISS_THRESHOLD = Number.parseInt(process.env.P4_STALE_RULE_MISS_THRESHOLD || "3", 10);
 const RUN_INDEX_MAX_RUNS = Number.parseInt(process.env.P4_RUN_INDEX_MAX_RUNS || "60", 10);
 const CHECK_TIMEOUT_MS = 25_000;
@@ -1160,6 +1156,7 @@ async function main() {
     await writeText(files.summaryMd, renderSummaryMarkdown(summary, files, REPO_ROOT));
 
     console.error(`[p4-session-replay] FAILED: ${summary.error}`);
+    console.error(renderReplayFailureDigest(summary));
     return 1;
   } finally {
     if (browser) await browser.close();

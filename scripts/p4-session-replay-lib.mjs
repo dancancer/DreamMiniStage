@@ -4,6 +4,19 @@ import path from "node:path";
 // P4 Session Replay Helpers
 // ============================================================================
 
+const DEFAULT_REPLAY_ARTIFACT_ROOT_RELATIVE = ".artifacts/p4-session-replay";
+const DEFAULT_REPLAY_RUN_INDEX_JSON = "p4-session-replay-run-index.json";
+const DEFAULT_REPLAY_RUN_INDEX_MD = "p4-session-replay-run-index.md";
+
+export function resolveReplayArtifactLayout(repoRoot, artifactRootInput = DEFAULT_REPLAY_ARTIFACT_ROOT_RELATIVE) {
+  const artifactRoot = path.resolve(repoRoot, artifactRootInput);
+  return {
+    artifactRoot,
+    runIndexJsonPath: path.join(artifactRoot, DEFAULT_REPLAY_RUN_INDEX_JSON),
+    runIndexMdPath: path.join(artifactRoot, DEFAULT_REPLAY_RUN_INDEX_MD),
+  };
+}
+
 export function buildPayload(runId, nowIso) {
   const characterId = "p4-round10-character";
   const now = nowIso();
@@ -135,6 +148,77 @@ export function artifactPaths(runDir) {
     summaryJson: path.join(runDir, "summary.json"),
     summaryMd: path.join(runDir, "summary.md"),
   };
+}
+
+function getUnknownEntries(summary, channel) {
+  const entries = summary?.noiseBaseline?.[channel]?.unknown;
+  return Array.isArray(entries) ? entries : [];
+}
+
+function pushUnknownDigest(lines, title, entries, maxEntries) {
+  if (entries.length === 0) return;
+  lines.push(title);
+  for (const entry of entries.slice(0, maxEntries)) {
+    lines.push(`- x ${entry.count} ${entry.signature}`);
+  }
+  if (entries.length > maxEntries) {
+    lines.push(`- ... ${entries.length - maxEntries} more`);
+  }
+  lines.push("");
+}
+
+export function renderReplayFailureDigest(summary, options = {}) {
+  const maxEntries = Number.isInteger(options.maxEntries) && options.maxEntries > 0 ? options.maxEntries : 5;
+  const consoleUnknown = getUnknownEntries(summary, "console");
+  const networkUnknown = getUnknownEntries(summary, "network");
+  const lines = [
+    "[p4-session-replay] Failure digest",
+    `- runId: ${summary?.runId || "n/a"}`,
+    `- error: ${summary?.error || "n/a"}`,
+    `- artifacts: ${summary?.runDir || "n/a"}`,
+    `- unknownSignatureCount: ${summary?.noiseBaseline?.unknownSignatureCount ?? "n/a"}`,
+    `- noiseReport: ${summary?.noiseReportPath || "n/a"}`,
+    "",
+  ];
+
+  pushUnknownDigest(lines, "Console New Signatures", consoleUnknown, maxEntries);
+  pushUnknownDigest(lines, "Network New Signatures", networkUnknown, maxEntries);
+
+  return lines.join("\n").trimEnd();
+}
+
+export function renderReplayJobSummaryMarkdown(summary, options = {}) {
+  const maxEntries = Number.isInteger(options.maxEntries) && options.maxEntries > 0 ? options.maxEntries : 5;
+  const consoleUnknown = getUnknownEntries(summary, "console");
+  const networkUnknown = getUnknownEntries(summary, "network");
+  const lines = [
+    `## P4 Session Replay ${summary?.allPassed ? "Success" : "Failure"}`,
+    `- runId: \`${summary?.runId || "n/a"}\``,
+    `- allPassed: \`${summary?.allPassed ? "true" : "false"}\``,
+    `- unknown signatures: \`${summary?.noiseBaseline?.unknownSignatureCount ?? "n/a"}\``,
+    `- artifacts: \`${summary?.runDir || "n/a"}\``,
+    `- noise report: \`${summary?.noiseReportPath || "n/a"}\``,
+  ];
+
+  if (summary?.error) {
+    lines.push(`- error: \`${summary.error}\``);
+  }
+
+  lines.push("");
+
+  if (consoleUnknown.length > 0) {
+    lines.push("### Console New Signatures", ...consoleUnknown.slice(0, maxEntries).map((entry) => `- x ${entry.count} \`${entry.signature}\``), "");
+  }
+
+  if (networkUnknown.length > 0) {
+    lines.push("### Network New Signatures", ...networkUnknown.slice(0, maxEntries).map((entry) => `- x ${entry.count} \`${entry.signature}\``), "");
+  }
+
+  if (consoleUnknown.length === 0 && networkUnknown.length === 0) {
+    lines.push("### New Signatures", "- (none)", "");
+  }
+
+  return lines.join("\n").trimEnd();
 }
 
 function normalizeUrl(url) {

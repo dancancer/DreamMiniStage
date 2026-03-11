@@ -46,10 +46,14 @@ jobs:
       - name: Run P4 session replay
         run: pnpm p4:session-replay
 
+      - name: Write replay step summary
+        if: always()
+        run: node scripts/p4-session-replay-ci-summary.mjs
+
       - name: Upload replay artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: p4-session-replay-artifacts
-          path: docs/plan/2026-03-03-sillytavern-gap-reduction/artifacts/p4-session-replay-*
+          path: .artifacts/p4-session-replay/*
           if-no-files-found: warn
