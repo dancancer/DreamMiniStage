@@ -141,6 +141,7 @@ export function convertPromptOrder(
 
   for (const prompt of prompts) {
     if (!processedIds.has(prompt.identifier)) {
+      processedIds.add(prompt.identifier);
       result.push(
         normalizePrompt({
           ...prompt,
