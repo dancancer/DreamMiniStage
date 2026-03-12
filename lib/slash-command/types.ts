@@ -515,6 +515,13 @@ export interface ExecutionContext {
   forceSaveChat?: () => void | Promise<void>;
   hideMessages?: (startIndex: number) => void | Promise<void>;
   unhideMessages?: () => void | Promise<void>;
+  createCheckpoint?: (messageId: string, requestedName?: string) => string | Promise<string>;
+  createBranch?: (messageId: string) => string | Promise<string>;
+  getCheckpoint?: (messageId: string) => string | Promise<string>;
+  listCheckpoints?: (options?: { links?: boolean }) => Array<number | string> | Promise<Array<number | string>>;
+  goCheckpoint?: (messageId: string) => string | Promise<string>;
+  exitCheckpoint?: () => string | Promise<string>;
+  getCheckpointParent?: () => string | Promise<string>;
   getCurrentCharacter?: () => CharacterSummary | undefined | Promise<CharacterSummary | undefined>;
   renameCurrentCharacter?: (
     name: string,

@@ -134,3 +134,47 @@
   - `pnpm lint`
   - `pnpm verify:stage`
 - 上述命令均已通过；当前 Phase 2 在这轮 review 提出的状态一致性、context placement 保护、Claude stop strings 一致性问题上已形成闭环。
+
+
+## Phase 3 Batch 1 已完成内容（2026-03-11）
+
+- `/session` 已接入第一批 Quick Reply 宿主能力：`/qr`、`/qr-set*`、`/qr-chat-set*`、`/qr-list`、`/qr-get`、`/qr-create`、`/qr-update`、`/qr-delete`、`/qr-context*`、`/qr-set-create|update|delete` 现在都走真实页面状态，而不是只停留在 slash/bridge 空接口。
+- 新增 `lib/quick-reply/store.ts`，把 Quick Reply 集合定义、全局/会话启用状态、上下文集合绑定、`nosend` 行为收口到单一状态源，并通过持久化保存。
+- 新增 `components/quick-reply/QuickReplyPanel.tsx`，在真实聊天输入区提供最小产品面：可见按钮带、集合创建、集合启停、会话级启用、回复创建与删除。
+- Quick Reply 执行链路已对齐真实 `/session` 行为：普通文本会直接发送；`nosend` 集合会回填输入框；以 `/` 开头的回复会继续通过当前 slash 宿主执行；context set 绑定会在执行时激活对应会话集合。
+- `CharacterChatPanel` 已开放 `footerSlot`，避免把 Quick Reply 逻辑硬塞进控制面板，保持输入区扩展点单一而直白。
+
+## Phase 3 Batch 1 验证（2026-03-11）
+
+- `pnpm vitest run lib/quick-reply/__tests__/store.test.ts components/__tests__/QuickReplyPanel.test.tsx app/session/__tests__/page.slash-integration.test.tsx`
+- `pnpm typecheck`
+- `pnpm lint`
+
+
+## Phase 3 Batch 2 已完成内容（2026-03-12）
+
+- 新增 `lib/group-chat/store.ts`，把群聊成员状态按 `dialogueId` 收口到单一持久化状态源，当前最小模型覆盖：成员查看、成员加入/移除、成员启停、成员顺序调整，以及 slash 所需的 `name/index/id/avatar` 字段读取。
+- `/session` 真实 slash 宿主已接通群成员链路：`/member-add`、`/member-remove`、`/member-up`、`/member-down`、`/member-peek`、`/member-count`、`/member-get`、`/disable`、`/enable` 现在会直接命中真实页面状态，而不是只停留在命令层 mock callback。
+- 新增 `components/group-chat/GroupMemberPanel.tsx`，在聊天输入区旁提供最小产品面：成员列表、启用/停用、上移/下移、加入/移除；与 Quick Reply 并排作为 `/session` 的编排入口。
+- `app/session/page.tsx` 与 `components/CharacterChatPanel.tsx` 已继续补齐群聊宿主回调透传，确保页面 slash 输入和角色脚本桥共享同一组群成员状态。
+
+## Phase 3 Batch 2 验证（2026-03-12）
+
+- `pnpm vitest run lib/group-chat/__tests__/store.test.ts components/__tests__/GroupMemberPanel.test.tsx app/session/__tests__/page.slash-integration.test.tsx`
+- `pnpm typecheck`
+- `pnpm lint`
+
+
+## Phase 3 Batch 3 已完成内容（2026-03-12）
+
+- 新增 `lib/checkpoint/store.ts`，把 `/checkpoint-*` 与 `/branch-create` 从 slash handler 内部临时内存态提升为按 `dialogueId` 持久化的真实宿主状态，覆盖 checkpoint 建立、branch 建立、当前分支、父会话与消息到 checkpoint 的绑定。
+- `lib/slash-command/registry/handlers/core.ts` 现已优先使用宿主注入的 checkpoint / branch 回调；`/session` 路径下这些命令不再只依赖命令层局部 `Map`，而是命中真实页面状态。
+- `app/session/page.tsx` 已补齐 checkpoint 宿主实现：`/branch-create`、`/checkpoint-create|get|list|go|exit|parent` 现在都通过 `useCheckpointStore` 工作；`/swipe` 也已通过页面集成测试确认继续走真实 `dialogue.handleSwipe` 宿主。
+- 新增 `components/checkpoint/CheckpointPanel.tsx`，在聊天输入区旁展示当前分支与已挂接的 checkpoint 列表，避免这批能力继续停留在纯 slash 黑盒里。
+- `components/CharacterChatPanel.tsx`、`hooks/useScriptBridge.ts`、`hooks/script-bridge/slash-context-adapter.ts` 已继续透传 checkpoint / branch 宿主回调，保证页面 slash 路径与脚本桥共享同一组会话编排状态。
+
+## Phase 3 Batch 3 验证（2026-03-12）
+
+- `pnpm vitest run lib/checkpoint/__tests__/store.test.ts components/__tests__/CheckpointPanel.test.tsx app/session/__tests__/page.slash-integration.test.tsx`
+- `pnpm typecheck`
+- `pnpm lint`

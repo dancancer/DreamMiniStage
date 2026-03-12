@@ -23,8 +23,8 @@
 
 ## 4. Phase 3：会话、消息、群聊、Quick Reply
 
-- [ ] 设计 Quick Reply 产品面与状态模型。
-- [ ] 设计群聊基础产品面与状态模型。
+- [x] 设计 Quick Reply 产品面与状态模型。
+- [x] 设计群聊基础产品面与状态模型。
 - [ ] 对齐 swipe / branch / message mutation / JSONL 行为。
 - [ ] 将相关宿主能力接入真实 `/session` 页面。
 

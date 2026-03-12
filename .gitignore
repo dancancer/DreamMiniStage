@@ -67,3 +67,7 @@ lib/core/__tests__/prompt-assembly-output.json
 .claude
 
 /.artifacts/
+
+/.worktrees/
+
+/test-baseline-assets

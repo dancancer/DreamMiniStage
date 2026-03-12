@@ -80,6 +80,13 @@ interface UseScriptBridgeOptions {
   onForceSaveChat?: () => void | Promise<void>;
   onHideMessages?: (startIndex: number) => void | Promise<void>;
   onUnhideMessages?: () => void | Promise<void>;
+  onCreateCheckpoint?: (messageId: string, requestedName?: string) => string | Promise<string>;
+  onCreateBranch?: (messageId: string) => string | Promise<string>;
+  onGetCheckpoint?: (messageId: string) => string | Promise<string>;
+  onListCheckpoints?: (options?: { links?: boolean }) => Array<number | string> | Promise<Array<number | string>>;
+  onGoCheckpoint?: (messageId: string) => string | Promise<string>;
+  onExitCheckpoint?: () => string | Promise<string>;
+  onGetCheckpointParent?: () => string | Promise<string>;
   onDuplicateCharacter?: () => string | void | Promise<string | void>;
   onNewChat?: (options?: { deleteCurrentChat?: boolean }) => void | Promise<void>;
   onTranslateText?: (
@@ -110,6 +117,17 @@ interface UseScriptBridgeOptions {
   onAddGroupMember?: (
     target: string,
   ) => string | number | void | Promise<string | number | void>;
+  onRemoveGroupMember?: (
+    target: string,
+  ) => string | number | void | Promise<string | number | void>;
+  onMoveGroupMember?: (
+    target: string,
+    direction: "up" | "down",
+  ) => string | number | void | Promise<string | number | void>;
+  onPeekGroupMember?: (
+    target: string,
+  ) => string | number | void | Promise<string | number | void>;
+  onGetGroupMemberCount?: () => number | Promise<number>;
   onSetGroupMemberEnabled?: (
     target: string,
     enabled: boolean,
@@ -288,6 +306,13 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onForceSaveChat,
     onHideMessages,
     onUnhideMessages,
+    onCreateCheckpoint,
+    onCreateBranch,
+    onGetCheckpoint,
+    onListCheckpoints,
+    onGoCheckpoint,
+    onExitCheckpoint,
+    onGetCheckpointParent,
     onDuplicateCharacter,
     onNewChat,
     onTranslateText,
@@ -297,6 +322,10 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onSetWorldInfoTimedEffect,
     onGetGroupMember,
     onAddGroupMember,
+    onRemoveGroupMember,
+    onMoveGroupMember,
+    onPeekGroupMember,
+    onGetGroupMemberCount,
     onSetGroupMemberEnabled,
     onAddSwipe,
     onExecuteQuickReplyByIndex,
@@ -450,6 +479,13 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onForceSaveChat,
           onHideMessages,
           onUnhideMessages,
+          onCreateCheckpoint,
+          onCreateBranch,
+          onGetCheckpoint,
+          onListCheckpoints,
+          onGoCheckpoint,
+          onExitCheckpoint,
+          onGetCheckpointParent,
           onDuplicateCharacter,
           onNewChat,
           onTranslateText,
@@ -459,6 +495,10 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onSetWorldInfoTimedEffect,
           onGetGroupMember,
           onAddGroupMember,
+          onRemoveGroupMember,
+          onMoveGroupMember,
+          onPeekGroupMember,
+          onGetGroupMemberCount,
           onSetGroupMemberEnabled,
           onAddSwipe,
           onExecuteQuickReplyByIndex,
@@ -546,6 +586,13 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onForceSaveChat,
       onHideMessages,
       onUnhideMessages,
+      onCreateCheckpoint,
+      onCreateBranch,
+      onGetCheckpoint,
+      onListCheckpoints,
+      onGoCheckpoint,
+      onExitCheckpoint,
+      onGetCheckpointParent,
       onDuplicateCharacter,
       onNewChat,
       onTranslateText,
@@ -555,6 +602,10 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onSetWorldInfoTimedEffect,
       onGetGroupMember,
       onAddGroupMember,
+      onRemoveGroupMember,
+      onMoveGroupMember,
+      onPeekGroupMember,
+      onGetGroupMemberCount,
       onSetGroupMemberEnabled,
       onAddSwipe,
       onExecuteQuickReplyByIndex,
