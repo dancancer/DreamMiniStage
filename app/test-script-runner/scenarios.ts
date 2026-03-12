@@ -38,7 +38,7 @@ const scenarioDefinitions: P4ScenarioDefinition[] = [
     assetReferences: [
       "test-baseline-assets/character-card/Sgw3.card.json",
     ],
-    expectation: "registerFunctionTool -> invokeFunctionTool 返回 iframe 回调结果",
+    expectation: "registerFunctionTool 走默认 host 路径，invokeFunctionTool 返回 iframe 回调结果",
     category: "happy-path",
   },
   {
@@ -66,7 +66,7 @@ const scenarioDefinitions: P4ScenarioDefinition[] = [
     assetReferences: [
       "test-baseline-assets/preset/夏瑾 Pro - Beta 0.70.json",
     ],
-    expectation: "audioimport/audioplay/event-emit 全链路执行且事件可观测",
+    expectation: "audio host 默认可用，audioimport/audioplay/event-emit 全链路执行且事件可观测",
     category: "happy-path",
   },
   {

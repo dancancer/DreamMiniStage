@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { SCRIPT_HOST_CAPABILITY_MATRIX } from "@/hooks/script-bridge/host-capability-matrix";
+import { resolveHostCapabilityState } from "@/hooks/script-bridge/host-debug-resolver";
 import {
   buildSessionSlashHostBridgeDetail,
   resolveSessionSlashHostBridge,
@@ -55,5 +57,37 @@ describe("session-host-bridge", () => {
     expect(buildSessionSlashHostBridgeDetail("getYouTubeTranscript")).toBe(
       "window.__DREAMMINISTAGE_SESSION_HOST__.getYouTubeTranscript",
     );
+  });
+
+  it("keeps default, conditional, and fail-fast host semantics explainable", () => {
+    const audioCapability = SCRIPT_HOST_CAPABILITY_MATRIX.find(
+      (capability) => capability.area === "audio",
+    );
+    const clipboardCapability = SCRIPT_HOST_CAPABILITY_MATRIX.find(
+      (capability) => capability.area === "clipboard",
+    );
+    const extensionCapability = SCRIPT_HOST_CAPABILITY_MATRIX.find(
+      (capability) => capability.area === "extension-state",
+    );
+
+    expect(audioCapability).toBeDefined();
+    expect(clipboardCapability).toBeDefined();
+    expect(extensionCapability).toBeDefined();
+
+    expect(resolveHostCapabilityState(audioCapability!)).toMatchObject({
+      resolvedPath: "session-default",
+      outcome: "supported",
+    });
+    expect(
+      resolveHostCapabilityState(clipboardCapability!, { hasInjectedHost: true }),
+    ).toMatchObject({
+      resolvedPath: "api-context",
+      outcome: "supported",
+    });
+    expect(resolveHostCapabilityState(extensionCapability!)).toMatchObject({
+      resolvedPath: "fail-fast",
+      outcome: "fail-fast",
+      reason: extensionCapability?.failFastReason,
+    });
   });
 });

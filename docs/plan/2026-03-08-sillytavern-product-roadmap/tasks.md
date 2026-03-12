@@ -37,10 +37,11 @@
 
 ## 6. Phase 5：JS-Slash-Runner 宿主完成度
 
-- [ ] 整理宿主能力矩阵与 fail-fast 矩阵。
-- [ ] 增强 Script Debugger。
+- [x] 整理宿主能力矩阵与 fail-fast 矩阵。
+- [x] 增强 Script Debugger。
 - [ ] 拉通高价值宿主能力的真实产品路径。
 - [ ] 明确哪些能力默认支持、条件支持、显式不支持。
+- [x] Phase 5 Batch 1：完成 `tool registration / audio / extension-state / clipboard` 这组首批宿主语义切片的矩阵建模、调试可视化与定向验证。
 
 ## 7. Phase 6：MagVarUpdate 产品化
 

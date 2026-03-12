@@ -287,3 +287,41 @@
   - 提交 PR
   - 等待合入
   - 从最新 `main` 重开下一阶段分支
+
+## Phase 5 Batch 1 已完成内容（2026-03-12）
+
+- 已在 `codex/phase-5-js-slash-runner-host` 分支启动下一阶段，并使用独立 worktree 推进当前批次。
+- 新增 `hooks/script-bridge/host-capability-matrix.ts`，把 `JS-Slash-Runner` 首批宿主能力切片的产品语义收口为单一事实源；当前覆盖：
+  - `tool-registration`
+  - `extension-state`
+  - `clipboard`
+  - `audio`
+- 新增 `hooks/script-bridge/host-debug-resolver.ts` 与 `hooks/script-bridge/host-debug-state.ts`，把“默认支持 / 条件支持 / fail-fast”解析与最近 API 观察、运行时计数收口到最小调试状态层。
+- `hooks/script-bridge/index.ts` 与 `hooks/useScriptBridge.ts` 现已接通首批 host-debug 观察路径：
+  - 高价值 API 调用会记录 `method / capability / resolvedPath / outcome / timestamp`
+  - 运行时会同步 `toolRegistrations / eventListeners / hasHostOverrides`
+- `components/ScriptDebugPanel.tsx` 已从“只看脚本状态”升级为四段式最小宿主调试面板：
+  - `Host Capability`
+  - `Recent API Calls`
+  - `Runtime State`
+  - `Script Status`
+- `/session` 级验证已补齐两类口径：
+  - `app/session/__tests__/session-host-bridge.test.ts`：显式验证 `default / conditional / fail-fast` 三类宿主语义
+  - `app/session/__tests__/page.slash-integration.test.tsx`：验证真实页面会把 `hostDebug` payload 传入 `ScriptDebugPanel`
+- `app/test-script-runner/scenarios.ts` 已同步更新首批场景描述，明确 `tool registration` 与 `audio` 当前属于默认宿主路径。
+
+## Phase 5 Batch 1 验证（2026-03-12）
+
+- `pnpm vitest run hooks/script-bridge/__tests__/host-capability-matrix.test.ts`
+- `pnpm vitest run hooks/script-bridge/__tests__/host-debug-resolver.test.ts`
+- `pnpm vitest run hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
+- `pnpm vitest run components/__tests__/ScriptDebugPanel.test.tsx`
+- `pnpm vitest run app/session/__tests__/session-host-bridge.test.ts app/session/__tests__/page.slash-integration.test.tsx hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
+
+## Phase 5 Batch 1 当前边界（2026-03-12）
+
+- 本轮只完成了首批切片的宿主语义建模与调试可视化，不宣称整个 Phase 5 已收口。
+- 仍待后续批次继续推进的项包括：
+  - 更大范围的高价值宿主产品路径拉通
+  - 更完整的默认支持 / 条件支持 / 显式不支持清单
+  - 把 batch 1 的调试状态继续扩到更多 `JS-Slash-Runner` 能力域

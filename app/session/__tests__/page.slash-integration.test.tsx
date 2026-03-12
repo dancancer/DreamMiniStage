@@ -102,6 +102,7 @@ const mocks = vi.hoisted(() => {
     },
     defaultTranslateText: vi.fn().mockResolvedValue("default translated"),
     defaultYouTubeTranscript: vi.fn().mockResolvedValue("default transcript"),
+    latestScriptDebugProps: undefined as undefined | Record<string, unknown>,
     dialogueTreeState: buildTimedDialogueTree() as ReturnType<typeof buildTimedDialogueTree>,
     worldBooks: {
       "book-1": { entry_0: buildWorldBookEntry() },
@@ -318,7 +319,12 @@ vi.mock("@/utils/username-helper", () => ({
 }));
 
 vi.mock("@/components/UserNameSettingModal", () => ({ default: () => null }));
-vi.mock("@/components/ScriptDebugPanel", () => ({ default: () => null }));
+vi.mock("@/components/ScriptDebugPanel", () => ({
+  default: (props: Record<string, unknown>) => {
+    mocks.latestScriptDebugProps = props;
+    return null;
+  },
+}));
 
 vi.mock("@/components/character-chat", async () => {
   const ReactModule = await import("react");
@@ -436,6 +442,7 @@ describe("Session page slash integration", () => {
     mocks.defaultTranslateText.mockResolvedValue("default translated");
     mocks.defaultYouTubeTranscript.mockReset();
     mocks.defaultYouTubeTranscript.mockResolvedValue("default transcript");
+    mocks.latestScriptDebugProps = undefined;
     mocks.dialogueTreeState = buildTimedDialogueTree();
     mocks.worldBooks = {
       "book-1": { entry_0: buildWorldBookEntry() },
@@ -839,6 +846,24 @@ describe("Session page slash integration", () => {
     expect(mocks.toastError).toHaveBeenCalledWith(
       expect.stringContaining("/yt-script transcript not available from /session default host"),
     );
+
+    unmountPage(rendered);
+  });
+
+  it("passes host-debug payload into ScriptDebugPanel from the live /session host", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    expect(mocks.latestScriptDebugProps).toMatchObject({
+      hostDebug: {
+        recentApiCalls: [],
+        runtimeState: {
+          toolRegistrations: 0,
+          eventListeners: 0,
+          hasHostOverrides: false,
+        },
+      },
+    });
 
     unmountPage(rendered);
   });

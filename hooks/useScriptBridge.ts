@@ -223,6 +223,8 @@ interface UseScriptBridgeOptions {
     text: string,
     options?: ExpressionClassifyOptions,
   ) => string | Promise<string>;
+  onGetClipboardText?: () => string | Promise<string>;
+  onSetClipboardText?: (text: string) => void | Promise<void>;
   onImportVariables?: (
     from: string,
     mappings: ImportVariableMapping[],
@@ -240,6 +242,16 @@ interface UseScriptBridgeOptions {
   ) => string | number | null | undefined | Promise<string | number | null | undefined>;
   onPickIcon?: () => string | false | Promise<string | false>;
   onIsMobile?: () => boolean | Promise<boolean>;
+  onIsExtensionInstalled?: (
+    extensionName: string,
+  ) => boolean | Promise<boolean>;
+  onGetExtensionEnabledState?: (
+    extensionName: string,
+  ) => boolean | Promise<boolean>;
+  onSetExtensionEnabled?: (
+    extensionName: string,
+    enabled: boolean,
+  ) => string | Promise<string>;
   onJumpToMessage?: (index: number) => void | Promise<void>;
   onRenderChatMessages?: (
     count: number,
@@ -357,12 +369,17 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onGetLastExpression,
     onListExpressions,
     onClassifyExpression,
+    onGetClipboardText,
+    onSetClipboardText,
     onImportVariables,
     onShowGallery,
     onUploadExpressionAsset,
     onShowPopup,
     onPickIcon,
     onIsMobile,
+    onIsExtensionInstalled,
+    onGetExtensionEnabledState,
+    onSetExtensionEnabled,
     onJumpToMessage,
     onRenderChatMessages,
     onSwitchCharacter,
@@ -556,12 +573,17 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onGetLastExpression,
           onListExpressions,
           onClassifyExpression,
+          onGetClipboardText,
+          onSetClipboardText,
           onImportVariables,
           onShowGallery,
           onUploadExpressionAsset,
           onShowPopup,
           onPickIcon,
           onIsMobile,
+          onIsExtensionInstalled,
+          onGetExtensionEnabledState,
+          onSetExtensionEnabled,
           onJumpToMessage,
           onRenderChatMessages,
           onSwitchCharacter: onSwitchCharacter ? handleCharacterSwitch : undefined,
@@ -664,12 +686,17 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onGetLastExpression,
       onListExpressions,
       onClassifyExpression,
+      onGetClipboardText,
+      onSetClipboardText,
       onImportVariables,
       onShowGallery,
       onUploadExpressionAsset,
       onShowPopup,
       onPickIcon,
       onIsMobile,
+      onIsExtensionInstalled,
+      onGetExtensionEnabledState,
+      onSetExtensionEnabled,
       onJumpToMessage,
       onRenderChatMessages,
       onSwitchCharacter,
