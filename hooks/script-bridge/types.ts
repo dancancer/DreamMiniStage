@@ -105,6 +105,13 @@ export interface ApiCallContext {
   onForceSaveChat?: () => void | Promise<void>;
   onHideMessages?: (startIndex: number) => void | Promise<void>;
   onUnhideMessages?: () => void | Promise<void>;
+  onCreateCheckpoint?: (messageId: string, requestedName?: string) => string | Promise<string>;
+  onCreateBranch?: (messageId: string) => string | Promise<string>;
+  onGetCheckpoint?: (messageId: string) => string | Promise<string>;
+  onListCheckpoints?: (options?: { links?: boolean }) => Array<number | string> | Promise<Array<number | string>>;
+  onGoCheckpoint?: (messageId: string) => string | Promise<string>;
+  onExitCheckpoint?: () => string | Promise<string>;
+  onGetCheckpointParent?: () => string | Promise<string>;
   onDuplicateCharacter?: () => string | void | Promise<string | void>;
   onNewChat?: (options?: { deleteCurrentChat?: boolean }) => void | Promise<void>;
   onGenerateImage?: (

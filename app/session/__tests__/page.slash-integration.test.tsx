@@ -1,6 +1,10 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { resetQuickReplyStore, useQuickReplyStore } from "@/lib/quick-reply/store";
+import { resetGroupChatStore, useGroupChatStore } from "@/lib/group-chat/store";
+import { resetCheckpointStore, useCheckpointStore } from "@/lib/checkpoint/store";
+import { clearPromptInjections, listPromptInjections } from "@/lib/slash-command/prompt-injection-store";
 import SessionPage from "../page";
 import {
   setSessionSlashHostBridge,
@@ -443,7 +447,15 @@ describe("Session page slash integration", () => {
       return true;
     });
     mocks.getWorldBook.mockImplementation(async (file: string) => mocks.worldBooks[file] || null);
+    mocks.dialogue.messages = [
+      { id: "m0", role: "assistant", content: "hello" },
+      { id: "m1", role: "assistant", content: "world" },
+    ];
     setSessionSlashHostBridge(window, null);
+    resetQuickReplyStore();
+    resetGroupChatStore();
+    resetCheckpointStore();
+    clearPromptInjections();
   });
 
   it("executes /tempchat through page host wiring and navigates to the new temp session", async () => {
@@ -508,6 +520,222 @@ describe("Session page slash integration", () => {
 
     expect(mocks.toastError).toHaveBeenCalledWith(
       expect.stringContaining("/proxy preset not found: missing-profile"),
+    );
+
+    unmountPage(rendered);
+  });
+
+  it("executes /qr through session quick reply host wiring", async () => {
+    const store = useQuickReplyStore.getState();
+    store.createQuickReplySet("Main", {});
+    store.createQuickReply("Main", "Hello", "hello from quick reply", {});
+    store.addGlobalQuickReplySet("Main", { visible: true });
+
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/qr 0");
+
+    expect(mocks.dialogue.addUserMessage).toHaveBeenCalledWith("hello from quick reply", undefined);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("executes /qr with nosend set by seeding the chat input", async () => {
+    const store = useQuickReplyStore.getState();
+    store.createQuickReplySet("Draft", { nosend: true });
+    store.createQuickReply("Draft", "Outline", "draft reply", {});
+    store.addGlobalQuickReplySet("Draft", { visible: true });
+
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/qr 0");
+
+    expect(mocks.dialogue.addUserMessage).not.toHaveBeenCalled();
+    expect(rendered.container.querySelector("[data-testid='session-input']")?.getAttribute("value")).toBe("draft reply");
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("executes injected quick replies by writing prompt injections instead of chat messages", async () => {
+    const store = useQuickReplyStore.getState();
+    store.createQuickReplySet("InjectSet", { inject: true, before: true });
+    store.createQuickReply("InjectSet", "InjectMe", "stay in prompt", {});
+    store.addGlobalQuickReplySet("InjectSet", { visible: true });
+
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/qr 0");
+
+    expect(mocks.dialogue.addUserMessage).not.toHaveBeenCalled();
+    expect(listPromptInjections({ dialogueId: "session-1" })).toEqual([
+      expect.objectContaining({
+        content: "stay in prompt",
+        position: "before",
+      }),
+    ]);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("executes /swipe through session host wiring", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/swipe prev");
+
+    expect(mocks.dialogue.handleSwipe).toHaveBeenCalledWith("prev");
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("applies setChatMessages to the live session dialogue", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent("DreamMiniStage:setChatMessages", {
+        detail: {
+          characterId: "char-1",
+          messages: [{
+            message_id: "m1",
+            message: "patched world",
+            role: "assistant",
+            name: "Narrator",
+          }],
+          options: {
+            refresh: "affected",
+          },
+        },
+      }));
+    });
+
+    expect(mocks.dialogue.setMessages).toHaveBeenCalledWith([
+      { id: "m0", role: "assistant", content: "hello" },
+      { id: "m1", role: "assistant", content: "patched world", name: "Narrator" },
+    ]);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("applies createChatMessages to the live session dialogue", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent("DreamMiniStage:createChatMessages", {
+        detail: {
+          characterId: "char-1",
+          messages: [{
+            id: "m2",
+            role: "user",
+            content: "new turn",
+          }],
+        },
+      }));
+    });
+
+    expect(mocks.dialogue.setMessages).toHaveBeenCalledWith([
+      { id: "m0", role: "assistant", content: "hello" },
+      { id: "m1", role: "assistant", content: "world" },
+      { id: "m2", role: "user", content: "new turn" },
+    ]);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("applies deleteChatMessages to the live session dialogue", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent("DreamMiniStage:deleteChatMessages", {
+        detail: {
+          characterId: "char-1",
+          messageIds: ["m0"],
+        },
+      }));
+    });
+
+    expect(mocks.dialogue.setMessages).toHaveBeenCalledWith([
+      { id: "m1", role: "assistant", content: "world" },
+    ]);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("routes refreshOneMessage to the live session dialogue refresh path", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent("DreamMiniStage:refreshOneMessage", {
+        detail: {
+          characterId: "char-1",
+          message_id: "m1",
+          index: 1,
+          message: { id: "m1", role: "assistant", content: "world" },
+        },
+      }));
+    });
+
+    expect(mocks.dialogue.handleRegenerate).toHaveBeenCalledWith("m1");
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("executes /branch-create and /checkpoint-* through session checkpoint host wiring", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/branch-create 1");
+    await submitSlash("/checkpoint-create mes=0 story-turn");
+    await submitSlash("/checkpoint-go 1");
+
+    expect(useCheckpointStore.getState().getCheckpoint("session-1", "m1")).toBe("branch-1");
+    expect(useCheckpointStore.getState().getCheckpoint("session-1", "m0")).toBe("story-turn");
+    expect(useCheckpointStore.getState().getCurrentCheckpoint("session-1")).toBe("branch-1");
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("executes /member-* through session group host wiring", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/member-add Alice");
+    await submitSlash("/member-add Bob");
+    await submitSlash("/disable Bob");
+    await submitSlash("/member-up Bob");
+
+    expect(useGroupChatStore.getState().listGroupMembers("session-1").map((member) => `${member.name}:${member.enabled}`)).toEqual([
+      "Bob:false",
+      "Alice:true",
+    ]);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("surfaces explicit group-member host errors in /session", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/member-remove Missing");
+
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      expect.stringContaining("Group member not found"),
     );
 
     unmountPage(rendered);
@@ -650,39 +878,25 @@ describe("Session page slash integration", () => {
   });
 
   it("keeps slash jump behavior after refresh remount for the same session", async () => {
-    const firstRender = renderPage();
-    await flushEffects();
-
-    const firstTarget = firstRender.container.querySelector("[data-session-message-index='1']");
-    if (!(firstTarget instanceof HTMLDivElement)) {
-      throw new Error("first render target message should exist");
-    }
-    const firstScrollIntoView = vi.fn();
-    Object.defineProperty(firstTarget, "scrollIntoView", {
-      value: firstScrollIntoView,
+    const globalScrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      value: globalScrollIntoView,
       configurable: true,
     });
 
+    const firstRender = renderPage();
+    await flushEffects();
+
     await submitSlash("/floor-teleport 1");
-    expect(firstScrollIntoView).toHaveBeenCalledTimes(1);
+    expect(globalScrollIntoView).toHaveBeenCalledTimes(1);
     unmountPage(firstRender);
 
     const refreshedRender = renderPage();
     await flushEffects();
 
-    const refreshedTarget = refreshedRender.container.querySelector("[data-session-message-index='1']");
-    if (!(refreshedTarget instanceof HTMLDivElement)) {
-      throw new Error("refreshed target message should exist");
-    }
-    const refreshedScrollIntoView = vi.fn();
-    Object.defineProperty(refreshedTarget, "scrollIntoView", {
-      value: refreshedScrollIntoView,
-      configurable: true,
-    });
-
     await submitSlash("/floor-teleport 1");
 
-    expect(refreshedScrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "center" });
+    expect(globalScrollIntoView).toHaveBeenNthCalledWith(2, { behavior: "smooth", block: "center" });
     expect(mocks.toastError).not.toHaveBeenCalled();
 
     unmountPage(refreshedRender);

@@ -20,6 +20,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/app/i18n";
 import CharacterChatPanel from "@/components/CharacterChatPanel";
+import QuickReplyPanel from "@/components/quick-reply/QuickReplyPanel";
+import GroupMemberPanel from "@/components/group-chat/GroupMemberPanel";
+import CheckpointPanel from "@/components/checkpoint/CheckpointPanel";
 import WorldBookEditor from "@/components/WorldBookEditor";
 import RegexScriptEditor from "@/components/RegexScriptEditor";
 import PresetEditor from "@/components/PresetEditor";
@@ -33,6 +36,9 @@ import { useCharacterLoader } from "@/hooks/useCharacterLoader";
 import { useUIStore } from "@/lib/store/ui-store";
 import { useUserStore } from "@/lib/store/user-store";
 import { useSessionStore } from "@/lib/store/session-store";
+import { useQuickReplyStore } from "@/lib/quick-reply/store";
+import { useGroupChatStore } from "@/lib/group-chat/store";
+import { useCheckpointStore } from "@/lib/checkpoint/store";
 import { useScriptVariables } from "@/lib/store/script-variables";
 import { useModelStore } from "@/lib/store/model-store";
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
@@ -156,6 +162,142 @@ function getSessionMessageSelector(index: number): string {
   return `[data-session-message-index="${index}"]`;
 }
 
+type SessionMutableMessage = DialogueMessage & {
+  data?: Record<string, unknown>;
+  extra?: Record<string, unknown>;
+};
+
+interface SessionSetChatMessagesDetail {
+  characterId?: string;
+  messages?: Array<{
+    message_id?: string | number;
+    message?: string;
+    name?: string;
+    role?: string;
+    data?: Record<string, unknown>;
+    extra?: Record<string, unknown>;
+  }>;
+}
+
+interface SessionCreateChatMessagesDetail {
+  characterId?: string;
+  messages?: Array<{
+    id?: string;
+    role?: string;
+    content?: string;
+  }>;
+}
+
+interface SessionDeleteChatMessagesDetail {
+  characterId?: string;
+  messageIds?: string[];
+}
+
+interface SessionRefreshOneMessageDetail {
+  characterId?: string;
+  message_id?: string;
+}
+
+function shouldHandleSessionMessageEvent(
+  detailCharacterId: string | undefined,
+  currentCharacterId: string | null,
+): boolean {
+  if (!currentCharacterId) {
+    return false;
+  }
+  if (!detailCharacterId) {
+    return true;
+  }
+  return detailCharacterId === currentCharacterId;
+}
+
+function findSessionMessageIndex(
+  messages: DialogueMessage[],
+  rawMessageId: string | number | undefined,
+): number {
+  const messageId = String(rawMessageId || "").trim();
+  if (!messageId) {
+    throw new Error("message_id is required");
+  }
+
+  const index = messages.findIndex((message) => message.id === messageId);
+  if (index < 0) {
+    throw new Error(`Session message not found: ${messageId}`);
+  }
+  return index;
+}
+
+function applySessionMessagePatches(
+  messages: DialogueMessage[],
+  patches: SessionSetChatMessagesDetail["messages"],
+): DialogueMessage[] {
+  if (!patches?.length) {
+    return messages;
+  }
+
+  const nextMessages = messages.map((message) => ({ ...message })) as SessionMutableMessage[];
+  for (const patch of patches) {
+    const index = findSessionMessageIndex(nextMessages, patch?.message_id);
+    const current = nextMessages[index];
+    if (!current) {
+      throw new Error(`Session message not found: ${patch?.message_id}`);
+    }
+
+    nextMessages[index] = {
+      ...current,
+      ...(patch?.message !== undefined ? { content: patch.message } : {}),
+      ...(patch?.name !== undefined ? { name: patch.name } : {}),
+      ...(patch?.role !== undefined ? { role: patch.role } : {}),
+      ...(patch?.data !== undefined ? { data: patch.data } : {}),
+      ...(patch?.extra !== undefined ? { extra: patch.extra } : {}),
+    };
+  }
+
+  return nextMessages;
+}
+
+function appendSessionMessages(
+  messages: DialogueMessage[],
+  created: SessionCreateChatMessagesDetail["messages"],
+): DialogueMessage[] {
+  if (!created?.length) {
+    return messages;
+  }
+
+  const appended = created.map((message, index) => {
+    const role = message?.role?.trim();
+    const content = message?.content?.trim();
+    if (!role || !content) {
+      throw new Error(`createChatMessages requires role/content at index ${index}`);
+    }
+
+    return {
+      id: String(message.id || `${Date.now()}-${index}-${role}`),
+      role,
+      content,
+    } satisfies DialogueMessage;
+  });
+
+  return [...messages, ...appended];
+}
+
+function removeSessionMessages(
+  messages: DialogueMessage[],
+  messageIds: string[] | undefined,
+): DialogueMessage[] {
+  if (!messageIds?.length) {
+    return messages;
+  }
+
+  const missing = messageIds.find((messageId) => !messages.some((message) => message.id === messageId));
+  if (missing) {
+    throw new Error(`Session message not found: ${missing}`);
+  }
+
+  const deleted = new Set(messageIds);
+  return messages.filter((message) => !deleted.has(message.id));
+}
+
 function SessionPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -224,6 +366,9 @@ function SessionPageContent() {
     onError: toast.error,
     t,
   });
+  const dialogueMessages = dialogue.messages;
+  const setDialogueMessages = dialogue.setMessages;
+  const regenerateDialogueMessage = dialogue.handleRegenerate;
   const setScriptVariable = useScriptVariables((state) => state.setVariable);
   const deleteScriptVariable = useScriptVariables((state) => state.deleteVariable);
 
@@ -335,6 +480,82 @@ function SessionPageContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayUsername, sessionId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleSetChatMessages = (event: Event) => {
+      try {
+        const detail = (event as CustomEvent<SessionSetChatMessagesDetail>).detail;
+        if (!shouldHandleSessionMessageEvent(detail?.characterId, characterId)) {
+          return;
+        }
+        setDialogueMessages(applySessionMessagePatches(dialogueMessages, detail?.messages));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to apply setChatMessages");
+      }
+    };
+
+    const handleCreateChatMessages = (event: Event) => {
+      try {
+        const detail = (event as CustomEvent<SessionCreateChatMessagesDetail>).detail;
+        if (!shouldHandleSessionMessageEvent(detail?.characterId, characterId)) {
+          return;
+        }
+        setDialogueMessages(appendSessionMessages(dialogueMessages, detail?.messages));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to apply createChatMessages");
+      }
+    };
+
+    const handleDeleteChatMessages = (event: Event) => {
+      try {
+        const detail = (event as CustomEvent<SessionDeleteChatMessagesDetail>).detail;
+        if (!shouldHandleSessionMessageEvent(detail?.characterId, characterId)) {
+          return;
+        }
+        setDialogueMessages(removeSessionMessages(dialogueMessages, detail?.messageIds));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to apply deleteChatMessages");
+      }
+    };
+
+    const handleRefreshOneMessage = (event: Event) => {
+      try {
+        const detail = (event as CustomEvent<SessionRefreshOneMessageDetail>).detail;
+        if (!shouldHandleSessionMessageEvent(detail?.characterId, characterId)) {
+          return;
+        }
+
+        const index = findSessionMessageIndex(dialogueMessages, detail?.message_id);
+        const message = dialogueMessages[index];
+        if (!message) {
+          throw new Error(`Session message not found: ${detail?.message_id}`);
+        }
+        if (message.role !== "assistant") {
+          throw new Error(`refreshOneMessage only supports assistant messages: ${message.id}`);
+        }
+
+        void regenerateDialogueMessage(extractNodeIdFromMessageId(message.id));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to refresh message");
+      }
+    };
+
+    window.addEventListener("DreamMiniStage:setChatMessages", handleSetChatMessages as EventListener);
+    window.addEventListener("DreamMiniStage:createChatMessages", handleCreateChatMessages as EventListener);
+    window.addEventListener("DreamMiniStage:deleteChatMessages", handleDeleteChatMessages as EventListener);
+    window.addEventListener("DreamMiniStage:refreshOneMessage", handleRefreshOneMessage as EventListener);
+
+    return () => {
+      window.removeEventListener("DreamMiniStage:setChatMessages", handleSetChatMessages as EventListener);
+      window.removeEventListener("DreamMiniStage:createChatMessages", handleCreateChatMessages as EventListener);
+      window.removeEventListener("DreamMiniStage:deleteChatMessages", handleDeleteChatMessages as EventListener);
+      window.removeEventListener("DreamMiniStage:refreshOneMessage", handleRefreshOneMessage as EventListener);
+    };
+  }, [characterId, dialogueMessages, regenerateDialogueMessage, setDialogueMessages]);
 
   const resolveCharacterSwitchTarget = useCallback(async (target: string): Promise<string> => {
     const normalized = target.trim();
@@ -453,6 +674,60 @@ function SessionPageContent() {
     await LocalCharacterDialogueOperations.updateDialogueTree(sessionId, nextTree);
   }, [sessionId, characterId, dialogue.messages]);
 
+  const handleCreateCheckpoint = useCallback(async (
+    messageId: string,
+    requestedName?: string,
+  ): Promise<string> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/checkpoint-create", "active dialogue session");
+    }
+    return useCheckpointStore.getState().createCheckpoint(sessionId, messageId, requestedName);
+  }, [sessionId]);
+
+  const handleCreateBranch = useCallback(async (messageId: string): Promise<string> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/branch-create", "active dialogue session");
+    }
+    return useCheckpointStore.getState().createBranch(sessionId, messageId, sessionId);
+  }, [sessionId]);
+
+  const handleGetCheckpoint = useCallback(async (messageId: string): Promise<string> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/checkpoint-get", "active dialogue session");
+    }
+    return useCheckpointStore.getState().getCheckpoint(sessionId, messageId);
+  }, [sessionId]);
+
+  const handleListCheckpoints = useCallback(async (
+    options?: { links?: boolean },
+  ): Promise<Array<number | string>> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/checkpoint-list", "active dialogue session");
+    }
+    return useCheckpointStore.getState().listCheckpoints(sessionId, dialogue.messages, options?.links ?? false);
+  }, [sessionId, dialogue.messages]);
+
+  const handleGoCheckpoint = useCallback(async (messageId: string): Promise<string> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/checkpoint-go", "active dialogue session");
+    }
+    return useCheckpointStore.getState().goCheckpoint(sessionId, messageId, sessionId);
+  }, [sessionId]);
+
+  const handleExitCheckpoint = useCallback(async (): Promise<string> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/checkpoint-exit", "active dialogue session");
+    }
+    return useCheckpointStore.getState().exitCheckpoint(sessionId);
+  }, [sessionId]);
+
+  const handleGetCheckpointParent = useCallback(async (): Promise<string> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/checkpoint-parent", "active dialogue session");
+    }
+    return useCheckpointStore.getState().getCheckpointParent(sessionId);
+  }, [sessionId]);
+
   const handleOpenTemporaryChat = useCallback(async (): Promise<void> => {
     if (!characterId) {
       throw new Error("Character ID is required to open temporary chat");
@@ -559,6 +834,64 @@ function SessionPageContent() {
     });
   }, [sessionId]);
 
+  const handleGetGroupMember = useCallback(async (
+    target: string,
+    field: "name" | "index" | "id" | "avatar",
+  ): Promise<string | number> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/getmember", "active dialogue session");
+    }
+    return useGroupChatStore.getState().getGroupMember(sessionId, target, field);
+  }, [sessionId]);
+
+  const handleGetGroupMemberCount = useCallback(async (): Promise<number> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/countmember", "active dialogue session");
+    }
+    return useGroupChatStore.getState().getGroupMemberCount(sessionId);
+  }, [sessionId]);
+
+  const handleAddGroupMember = useCallback(async (target: string): Promise<string> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/addmember", "active dialogue session");
+    }
+    return useGroupChatStore.getState().addGroupMember(sessionId, target);
+  }, [sessionId]);
+
+  const handleRemoveGroupMember = useCallback(async (target: string): Promise<string> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/member-remove", "active dialogue session");
+    }
+    return useGroupChatStore.getState().removeGroupMember(sessionId, target);
+  }, [sessionId]);
+
+  const handleMoveGroupMember = useCallback(async (
+    target: string,
+    direction: "up" | "down",
+  ): Promise<number> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/member-up", "active dialogue session");
+    }
+    return useGroupChatStore.getState().moveGroupMember(sessionId, target, direction);
+  }, [sessionId]);
+
+  const handlePeekGroupMember = useCallback(async (target: string): Promise<string> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError("/member-peek", "active dialogue session");
+    }
+    return useGroupChatStore.getState().peekGroupMember(sessionId, target);
+  }, [sessionId]);
+
+  const handleSetGroupMemberEnabled = useCallback(async (
+    target: string,
+    enabled: boolean,
+  ): Promise<string> => {
+    if (!sessionId) {
+      throw buildSessionSlashHostError(enabled ? "/enable" : "/disable", "active dialogue session");
+    }
+    return useGroupChatStore.getState().setGroupMemberEnabled(sessionId, target, enabled);
+  }, [sessionId]);
+
   const promptCallbacks = usePromptConfigCallbacks();
 
   const handleSetWorldInfoTimedEffect = useCallback(async (
@@ -619,7 +952,39 @@ function SessionPageContent() {
       deleteScriptVariable(key, "global");
     };
 
-    const executionContext: ExecutionContext = {
+    const quickReplyStore = useQuickReplyStore.getState();
+    let executionContext: ExecutionContext;
+
+    const executeVisibleQuickReply = async (index: number): Promise<string> => {
+      const entry = quickReplyStore.resolveVisibleQuickReply(sessionId || undefined, index);
+      if (sessionId) {
+        quickReplyStore.activateContextSets(sessionId, entry.reply);
+      }
+
+      const payload = entry.reply.message.trim();
+      if (!payload) {
+        return "";
+      }
+      if (entry.set.nosend) {
+        setUserInput(payload);
+        return payload;
+      }
+      if (entry.set.inject) {
+        await executionContext.injectPrompt?.(payload, {
+          position: entry.set.before ? "before" : "in_chat",
+        });
+        return payload;
+      }
+      if (payload.startsWith("/")) {
+        return executionContext.runSlashCommand
+          ? executionContext.runSlashCommand(payload)
+          : "";
+      }
+      await dialogue.addUserMessage(payload, undefined);
+      return payload;
+    };
+
+    executionContext = {
       characterId: characterId || undefined,
       dialogueId: sessionId || undefined,
       messages: dialogue.messages,
@@ -633,6 +998,13 @@ function SessionPageContent() {
       getCurrentChatName: () => currentSessionName || sessionId || "",
       renameCurrentChat: handleRenameChat,
       setInputText: async (text) => setUserInput(text),
+      createCheckpoint: handleCreateCheckpoint,
+      createBranch: handleCreateBranch,
+      getCheckpoint: handleGetCheckpoint,
+      listCheckpoints: handleListCheckpoints,
+      goCheckpoint: handleGoCheckpoint,
+      exitCheckpoint: handleExitCheckpoint,
+      getCheckpointParent: handleGetCheckpointParent,
       openTemporaryChat: handleOpenTemporaryChat,
       forceSaveChat: handleForceSaveChat,
       hideMessages: handleHideMessages,
@@ -643,6 +1015,13 @@ function SessionPageContent() {
       selectProxyPreset: handleSelectProxyPreset,
       getWorldInfoTimedEffect: handleGetWorldInfoTimedEffect,
       setWorldInfoTimedEffect: handleSetWorldInfoTimedEffect,
+      getGroupMember: handleGetGroupMember,
+      getGroupMemberCount: handleGetGroupMemberCount,
+      addGroupMember: handleAddGroupMember,
+      removeGroupMember: handleRemoveGroupMember,
+      moveGroupMember: handleMoveGroupMember,
+      peekGroupMember: handlePeekGroupMember,
+      setGroupMemberEnabled: handleSetGroupMemberEnabled,
       jumpToMessage: handleJumpToMessage,
       renameCurrentCharacter: handleRenameCurrentCharacter,
       getMessageReasoning: async (index) => {
@@ -681,6 +1060,39 @@ function SessionPageContent() {
           dialogueId: sessionId || undefined,
         });
       },
+      executeQuickReplyByIndex: executeVisibleQuickReply,
+      toggleGlobalQuickReplySet: async (name, options) => quickReplyStore.toggleGlobalQuickReplySet(name, options),
+      addGlobalQuickReplySet: async (name, options) => quickReplyStore.addGlobalQuickReplySet(name, options),
+      removeGlobalQuickReplySet: async (name) => quickReplyStore.removeGlobalQuickReplySet(name),
+      toggleChatQuickReplySet: async (name, options) => quickReplyStore.toggleChatQuickReplySet(sessionId || "", name, options),
+      addChatQuickReplySet: async (name, options) => quickReplyStore.addChatQuickReplySet(sessionId || "", name, options),
+      removeChatQuickReplySet: async (name) => quickReplyStore.removeChatQuickReplySet(sessionId || "", name),
+      listQuickReplySets: async (scope) => quickReplyStore.listQuickReplySets(scope, sessionId || undefined),
+      listQuickReplies: async (setName) => quickReplyStore.listQuickReplies(setName),
+      getQuickReply: async (setName, target) => quickReplyStore.getQuickReply(setName, target),
+      createQuickReply: async (setName, label, message, options) => {
+        quickReplyStore.createQuickReply(setName, label, message, options);
+      },
+      updateQuickReply: async (setName, target, options) => {
+        quickReplyStore.updateQuickReply(setName, target, options);
+      },
+      deleteQuickReply: async (setName, target) => quickReplyStore.deleteQuickReply(setName, target),
+      addQuickReplyContextSet: async (setName, target, contextSetName, options) => {
+        quickReplyStore.addQuickReplyContextSet(setName, target, contextSetName, options);
+      },
+      removeQuickReplyContextSet: async (setName, target, contextSetName) => {
+        quickReplyStore.removeQuickReplyContextSet(setName, target, contextSetName);
+      },
+      clearQuickReplyContextSets: async (setName, target) => {
+        quickReplyStore.clearQuickReplyContextSets(setName, target);
+      },
+      createQuickReplySet: async (name, options) => {
+        quickReplyStore.createQuickReplySet(name, options);
+      },
+      updateQuickReplySet: async (name, options) => {
+        quickReplyStore.updateQuickReplySet(name, options);
+      },
+      deleteQuickReplySet: async (name) => quickReplyStore.deleteQuickReplySet(name, sessionId || undefined),
       switchCharacter: handleSwitchCharacter,
       getVariable,
       setVariable,
@@ -758,6 +1170,13 @@ function SessionPageContent() {
     sessionId,
     handleSwitchCharacter,
     handleRenameChat,
+    handleCreateCheckpoint,
+    handleCreateBranch,
+    handleGetCheckpoint,
+    handleListCheckpoints,
+    handleGoCheckpoint,
+    handleExitCheckpoint,
+    handleGetCheckpointParent,
     handleOpenTemporaryChat,
     handleForceSaveChat,
     handleHideMessages,
@@ -768,11 +1187,27 @@ function SessionPageContent() {
     handleSelectProxyPreset,
     handleGetWorldInfoTimedEffect,
     handleSetWorldInfoTimedEffect,
+    handleGetGroupMember,
+    handleGetGroupMemberCount,
+    handleAddGroupMember,
+    handleRemoveGroupMember,
+    handleMoveGroupMember,
+    handlePeekGroupMember,
+    handleSetGroupMemberEnabled,
     handleJumpToMessage,
     handleRenameCurrentCharacter,
     setScriptVariable,
     deleteScriptVariable,
   ]);
+
+  const handleExecuteQuickReplyPanel = useCallback(async (index: number): Promise<void> => {
+    try {
+      await executeSessionSlashInput(`/qr ${index}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(errorMessage);
+    }
+  }, [executeSessionSlashInput]);
 
   // ========== 提交消息 ==========
   const handleSubmit = useCallback(
@@ -935,6 +1370,13 @@ function SessionPageContent() {
             onContinue={dialogue.triggerGeneration}
             onSwipe={dialogue.handleSwipe}
             onRenameChat={handleRenameChat}
+            onCreateCheckpoint={handleCreateCheckpoint}
+            onCreateBranch={handleCreateBranch}
+            onGetCheckpoint={handleGetCheckpoint}
+            onListCheckpoints={handleListCheckpoints}
+            onGoCheckpoint={handleGoCheckpoint}
+            onExitCheckpoint={handleExitCheckpoint}
+            onGetCheckpointParent={handleGetCheckpointParent}
             onOpenTemporaryChat={handleOpenTemporaryChat}
             onForceSaveChat={handleForceSaveChat}
             onHideMessages={handleHideMessages}
@@ -944,11 +1386,31 @@ function SessionPageContent() {
             onSelectProxyPreset={handleSelectProxyPreset}
             onGetWorldInfoTimedEffect={handleGetWorldInfoTimedEffect}
             onSetWorldInfoTimedEffect={handleSetWorldInfoTimedEffect}
+            onGetGroupMember={handleGetGroupMember}
+            onAddGroupMember={handleAddGroupMember}
+            onRemoveGroupMember={handleRemoveGroupMember}
+            onMoveGroupMember={handleMoveGroupMember}
+            onPeekGroupMember={handlePeekGroupMember}
+            onGetGroupMemberCount={handleGetGroupMemberCount}
+            onSetGroupMemberEnabled={handleSetGroupMemberEnabled}
             onJumpToMessage={handleJumpToMessage}
             onSwitchCharacter={handleSwitchCharacter}
             onRenameCurrentCharacter={handleRenameCurrentCharacter}
             onExportJsonl={dialogue.exportJsonl}
             onImportJsonl={dialogue.importJsonl}
+            footerSlot={(
+              <>
+                <QuickReplyPanel
+                  dialogueId={sessionId || undefined}
+                  onExecuteQuickReply={handleExecuteQuickReplyPanel}
+                />
+                <GroupMemberPanel dialogueId={sessionId || undefined} />
+                <CheckpointPanel
+                  dialogueId={sessionId || undefined}
+                  messages={dialogue.messages}
+                />
+              </>
+            )}
           />
         ) : characterView === "worldbook" ? (
           <WorldBookEditor

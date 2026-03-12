@@ -672,6 +672,13 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onForceSaveChat = ctx.onForceSaveChat;
   const onHideMessages = ctx.onHideMessages;
   const onUnhideMessages = ctx.onUnhideMessages;
+  const onCreateCheckpoint = ctx.onCreateCheckpoint;
+  const onCreateBranch = ctx.onCreateBranch;
+  const onGetCheckpoint = ctx.onGetCheckpoint;
+  const onListCheckpoints = ctx.onListCheckpoints;
+  const onGoCheckpoint = ctx.onGoCheckpoint;
+  const onExitCheckpoint = ctx.onExitCheckpoint;
+  const onGetCheckpointParent = ctx.onGetCheckpointParent;
   const onDuplicateCharacter = ctx.onDuplicateCharacter;
   const onNewChat = ctx.onNewChat;
   const onGenerateImage = ctx.onGenerateImage;
@@ -1574,6 +1581,13 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     forceSaveChat: onForceSaveChat,
     hideMessages: onHideMessages,
     unhideMessages: onUnhideMessages,
+    createCheckpoint: onCreateCheckpoint,
+    createBranch: onCreateBranch,
+    getCheckpoint: onGetCheckpoint,
+    listCheckpoints: onListCheckpoints,
+    goCheckpoint: onGoCheckpoint,
+    exitCheckpoint: onExitCheckpoint,
+    getCheckpointParent: onGetCheckpointParent,
     duplicateCharacter: onDuplicateCharacter,
     createNewChat: onNewChat,
     generateImage: onGenerateImage,

@@ -134,3 +134,156 @@
   - `pnpm lint`
   - `pnpm verify:stage`
 - 上述命令均已通过；当前 Phase 2 在这轮 review 提出的状态一致性、context placement 保护、Claude stop strings 一致性问题上已形成闭环。
+
+
+## Phase 3 Batch 1 已完成内容（2026-03-11）
+
+- `/session` 已接入第一批 Quick Reply 宿主能力：`/qr`、`/qr-set*`、`/qr-chat-set*`、`/qr-list`、`/qr-get`、`/qr-create`、`/qr-update`、`/qr-delete`、`/qr-context*`、`/qr-set-create|update|delete` 现在都走真实页面状态，而不是只停留在 slash/bridge 空接口。
+- 新增 `lib/quick-reply/store.ts`，把 Quick Reply 集合定义、全局/会话启用状态、上下文集合绑定、`nosend` 行为收口到单一状态源，并通过持久化保存。
+- 新增 `components/quick-reply/QuickReplyPanel.tsx`，在真实聊天输入区提供最小产品面：可见按钮带、集合创建、集合启停、会话级启用、回复创建与删除。
+- Quick Reply 执行链路已对齐真实 `/session` 行为：普通文本会直接发送；`nosend` 集合会回填输入框；以 `/` 开头的回复会继续通过当前 slash 宿主执行；context set 绑定会在执行时激活对应会话集合。
+- `CharacterChatPanel` 已开放 `footerSlot`，避免把 Quick Reply 逻辑硬塞进控制面板，保持输入区扩展点单一而直白。
+
+## Phase 3 Batch 1 验证（2026-03-11）
+
+- `pnpm vitest run lib/quick-reply/__tests__/store.test.ts components/__tests__/QuickReplyPanel.test.tsx app/session/__tests__/page.slash-integration.test.tsx`
+- `pnpm typecheck`
+- `pnpm lint`
+
+
+## Phase 3 Batch 2 已完成内容（2026-03-12）
+
+- 新增 `lib/group-chat/store.ts`，把群聊成员状态按 `dialogueId` 收口到单一持久化状态源，当前最小模型覆盖：成员查看、成员加入/移除、成员启停、成员顺序调整，以及 slash 所需的 `name/index/id/avatar` 字段读取。
+- `/session` 真实 slash 宿主已接通群成员链路：`/member-add`、`/member-remove`、`/member-up`、`/member-down`、`/member-peek`、`/member-count`、`/member-get`、`/disable`、`/enable` 现在会直接命中真实页面状态，而不是只停留在命令层 mock callback。
+- 新增 `components/group-chat/GroupMemberPanel.tsx`，在聊天输入区旁提供最小产品面：成员列表、启用/停用、上移/下移、加入/移除；与 Quick Reply 并排作为 `/session` 的编排入口。
+- `app/session/page.tsx` 与 `components/CharacterChatPanel.tsx` 已继续补齐群聊宿主回调透传，确保页面 slash 输入和角色脚本桥共享同一组群成员状态。
+
+## Phase 3 Batch 2 验证（2026-03-12）
+
+- `pnpm vitest run lib/group-chat/__tests__/store.test.ts components/__tests__/GroupMemberPanel.test.tsx app/session/__tests__/page.slash-integration.test.tsx`
+- `pnpm typecheck`
+- `pnpm lint`
+
+
+## Phase 3 Batch 3 已完成内容（2026-03-12）
+
+- 新增 `lib/checkpoint/store.ts`，把 `/checkpoint-*` 与 `/branch-create` 从 slash handler 内部临时内存态提升为按 `dialogueId` 持久化的真实宿主状态，覆盖 checkpoint 建立、branch 建立、当前分支、父会话与消息到 checkpoint 的绑定。
+- `lib/slash-command/registry/handlers/core.ts` 现已优先使用宿主注入的 checkpoint / branch 回调；`/session` 路径下这些命令不再只依赖命令层局部 `Map`，而是命中真实页面状态。
+- `app/session/page.tsx` 已补齐 checkpoint 宿主实现：`/branch-create`、`/checkpoint-create|get|list|go|exit|parent` 现在都通过 `useCheckpointStore` 工作；`/swipe` 也已通过页面集成测试确认继续走真实 `dialogue.handleSwipe` 宿主。
+- 新增 `components/checkpoint/CheckpointPanel.tsx`，在聊天输入区旁展示当前分支与已挂接的 checkpoint 列表，避免这批能力继续停留在纯 slash 黑盒里。
+- `components/CharacterChatPanel.tsx`、`hooks/useScriptBridge.ts`、`hooks/script-bridge/slash-context-adapter.ts` 已继续透传 checkpoint / branch 宿主回调，保证页面 slash 路径与脚本桥共享同一组会话编排状态。
+
+## Phase 3 Batch 3 验证（2026-03-12）
+
+- `pnpm vitest run lib/checkpoint/__tests__/store.test.ts components/__tests__/CheckpointPanel.test.tsx app/session/__tests__/page.slash-integration.test.tsx`
+- `pnpm typecheck`
+- `pnpm lint`
+
+
+## Phase 3 Batch 4 Fix-up 已完成内容（2026-03-12）
+
+- `app/session/page.tsx` 已把 Quick Reply 的执行优先级继续收紧为 `nosend -> inject -> slash/plain message`；`inject` 集合现在会写入真实 prompt injection 宿主，而不是误落成聊天消息。
+- `lib/quick-reply/store.ts` 已新增单点可见集合解析；同一集合若同时在 `global/chat` 激活，会以 chat 作用域覆盖 global，避免按钮重复与执行目标漂移。
+- `components/quick-reply/QuickReplyPanel.tsx` 已改为直接复用 store 的可见回复结果，产品面与 slash 执行看到的是同一批 Quick Reply。
+- `lib/group-chat/store.ts` 已拆分群成员 `name` / `id` 查找规则：用户输入优先命中显示名称，仅在无同名成员时才回退到内部 id；名称唯一性检查也只针对显示名称，避免“成员名称撞上自动 id”时删错人。
+- `tasks.md` 已同步更新：Phase 3 的“将相关宿主能力接入真实 `/session` 页面”现已完成，剩余未完成项收敛到 `message mutation / JSONL` 这批后续对齐工作。
+
+## Phase 3 Batch 4 Fix-up 验证（2026-03-12）
+
+- `pnpm vitest run app/session/__tests__/page.slash-integration.test.tsx components/__tests__/QuickReplyPanel.test.tsx lib/quick-reply/__tests__/store.test.ts components/__tests__/GroupMemberPanel.test.tsx lib/group-chat/__tests__/store.test.ts`
+
+## Phase 3 Batch 4 新增/更新测试覆盖
+
+- `app/session/__tests__/page.slash-integration.test.tsx`：断言 `/qr 0` 命中 `inject` 集合时，会写入 prompt injection store，且不会追加用户消息。
+- `components/__tests__/QuickReplyPanel.test.tsx`：断言同一集合在 `global/chat` 双作用域同时启用时，面板不会渲染重复按钮。
+- `lib/quick-reply/__tests__/store.test.ts`：断言可见 Quick Reply 解析会对同名集合去重，并让 chat 作用域覆盖 global。
+- `components/__tests__/GroupMemberPanel.test.tsx`：断言当成员显示名称恰好等于另一成员的自动 id 文本时，移除操作仍优先命中显示名称。
+- `lib/group-chat/__tests__/store.test.ts`：断言群成员显示名称与内部 id 文本是两个不同概念，删除时不会把二者混为一谈。
+
+
+## Phase 3 Batch 5 已完成内容（2026-03-12）
+
+- `app/session/page.tsx` 已开始真实消费脚本桥接层的消息编辑事件：`DreamMiniStage:setChatMessages`、`DreamMiniStage:createChatMessages`、`DreamMiniStage:deleteChatMessages`、`DreamMiniStage:refreshOneMessage` 不再停留在 bridge 协议层，而是会落到当前 `/session` 的 `dialogue` 宿主状态。
+- `setChatMessages` 现已按消息 `id` 单路径定位并更新当前页面消息；消息 id 不存在时显式 fail-fast，不做静默跳过。
+- `createChatMessages` 现已把桥接层传入的 `role/content/id` 追加到真实页面消息数组；`deleteChatMessages` 现已按消息 id 删除当前会话消息。
+- `refreshOneMessage` 当前先走最小真实宿主：定位当前页面消息，并将 assistant 消息转到现有 `dialogue.handleRegenerate()` 路径，避免事件继续在 `/session` 中被吞掉。
+- 本轮完成后，Phase 3 剩余未对齐项进一步收敛到 `JSONL` 进出一致性；`message mutation` 已不再只是脚本桥接能力。
+
+## Phase 3 Batch 5 验证（2026-03-12）
+
+- `pnpm vitest run app/session/__tests__/page.slash-integration.test.tsx hooks/script-bridge/__tests__/message-handlers-compat.test.ts app/session/__tests__/session-host-bridge.test.ts`
+
+## Phase 3 Batch 5 新增/更新测试覆盖
+
+- `app/session/__tests__/page.slash-integration.test.tsx`：断言 `/session` 页面会真实消费 `setChatMessages/createChatMessages/deleteChatMessages/refreshOneMessage` 四类事件，而不是只保留桥接层协议。
+
+
+## Phase 3 当前交接状态（2026-03-12）
+
+- 当前 `/session` 宿主侧已经完成的闭环包括：Quick Reply、group members、checkpoint / branch、message mutation。Phase 3 剩余主缺口已经明确收敛到 `JSONL` 进出一致性，不建议在这一阶段再横向扩散到别的产品面。
+- `message mutation` 这轮已确认不是“桥接层可调用、页面没响应”的假闭环：`setChatMessages`、`createChatMessages`、`deleteChatMessages`、`refreshOneMessage` 已有真实页面回归保护，相关事件会命中 `dialogue` 宿主状态。
+- 本轮在执行 `pnpm verify:stage` 时额外暴露出一条与当前功能无关但会阻塞阶段门的属性测试问题：`lib/core/__tests__/trim-string-filter.property.test.ts` 中某条 property 把 `_` 同时当分隔符和可生成 pattern，导致断言自身不成立。该问题已通过收紧生成器（禁止 pattern 含 `_`）修复；生产代码未改动。
+- 最新阶段门证据已经重跑且通过：
+  - `pnpm vitest run app/session/__tests__/page.slash-integration.test.tsx hooks/script-bridge/__tests__/message-handlers-compat.test.ts app/session/__tests__/session-host-bridge.test.ts`
+  - `pnpm verify:stage`
+  - 结果：`lint` / `typecheck` / `vitest run` / `build` 全部通过
+
+## Phase 3 下一步建议（2026-03-12）
+
+- 下一批工作建议只聚焦 `JSONL` 进出一致性，不再并行掺入新的 slash 宿主能力。
+- 当前最值得优先核对的 JSONL 差距不是“能不能导入导出”，而是“导入后保留下来的 metadata / chat_metadata / swipe 语义，是否会在后续导出中继续稳定表达”。
+- 现状判断：
+  - `hooks/useCharacterDialogue.ts` 已把 `导入 JSONL / 导出 JSONL` 接到真实 `/session` 控制面。
+  - `function/dialogue/jsonl.ts` 与 `lib/dialogue/jsonl.ts` 已支持核心聊天结构与 swipe。
+  - 但 [CHAT_JSONL_IMPORT_EXPORT.md](/Users/xupeng/mycode/DreamMiniStage/docs/CHAT_JSONL_IMPORT_EXPORT.md) 仍明确写着“导出时目前不回填到 JSONL（只导出核心字段）”，这正是路线图里还未收口的差距。
+- 推荐下一轮直接围绕这条差距做最小闭环：
+  - 先补 round-trip 定向测试
+  - 再决定保留哪些 metadata 字段进入导出
+  - 最后更新文档与阶段任务状态
+
+
+## Phase 3 Batch 6 已完成内容（2026-03-12）
+
+- `lib/dialogue/jsonl.ts` 已补齐 JSONL round-trip 的单路径保留逻辑：根 header 会从 `root.extra.jsonl_metadata` 回填原始 metadata，并继续以当前运行时 `chat_metadata` 为准覆盖导出结果。
+- turn 节点现在会在导入时把 user / assistant 两侧各自的 JSONL 扩展字段收口到 `extra.jsonl_message`；后续导出会按原始消息位置回填，不再只输出核心 `mes/is_user/swipes` 字段。
+- 旧数据路径也保持单路收敛：若历史树节点里只有顶层 assistant `extra`，导出仍会将其视为 assistant 侧 JSONL 扩展字段，避免已经导入过的会话再次导出时继续丢字段。
+- `docs/CHAT_JSONL_IMPORT_EXPORT.md` 与 `tasks.md` 已同步更新；Phase 3 的 `swipe / branch / message mutation / JSONL` 对齐项现已全部收口。
+
+## Phase 3 Batch 6 验证（2026-03-12）
+
+- `pnpm vitest run lib/dialogue/__tests__/swipe-jsonl.test.ts`
+
+## Phase 3 Batch 6 新增/更新测试覆盖
+
+- `lib/dialogue/__tests__/swipe-jsonl.test.ts`：断言带有 `create_date/scenario/chat_metadata` 的 header，以及 `name/send_date/extra` 等消息扩展字段，在 `import -> export` 后保持稳定表达，不再被导出链路吞掉。
+
+## Phase 3 Review 结论（2026-03-12）
+
+- 正式阶段 review 已补齐，见 `docs/plan/2026-03-08-sillytavern-product-roadmap/phase3-review-result.md`。
+- review 结论不是 “Phase 3 仍有功能缺口”，而是 “Phase 3 功能闭环已完成，阶段流程尚未收口”。
+- 当前方向校准：
+  - 不再把 slash/bridge 可调用误当成产品能力完成。
+  - `/session` 真实宿主闭环是本阶段真正的交付，不建议继续横向扩展新的 Phase 3 能力。
+- 当前问题清单：
+  - 工作区尚未整理成最终提交边界。
+  - 本地无 `gh`，PR 创建状态无法直接核验。
+  - 在 PR 合入前，不应启动下一阶段实现。
+- 剩余优先级重排：
+  1. 整理当前变更集并形成清晰提交边界。
+  2. 基于 `codex/phase-3-session-quickreply` 提交 PR。
+  3. PR 合入 `main` 后，再从最新主干切下一阶段分支。
+- 下一阶段目标建议改为优先推进 `Phase 5：JS-Slash-Runner 宿主完成度`，继续沿用“真实宿主责任边界”而不是“命令覆盖率”思路。
+
+## Phase 3 PR 收尾清单（2026-03-12）
+
+- 已新增 `docs/plan/2026-03-08-sillytavern-product-roadmap/phase3-pr-closeout.md`，集中记录：
+  - 当前分支事实
+  - 已通过的验证命令
+  - 工作区文件分类
+  - 建议的提交边界
+  - PR 标题/描述骨架
+- 当前剩余工作已经明确收敛为工程流程，不再是功能开发：
+  - 整理提交
+  - 提交 PR
+  - 等待合入
+  - 从最新 `main` 重开下一阶段分支

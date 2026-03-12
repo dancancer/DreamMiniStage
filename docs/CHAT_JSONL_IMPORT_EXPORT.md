@@ -37,8 +37,8 @@
 ### 限制与兼容性说明
 
 - 未支持/未识别字段采用确定性映射：
-  - 导入时：写入对应节点的 `extra`（用于调试/兼容保留）
-  - 导出时：目前不回填到 JSONL（只导出核心字段）
+  - 导入时：保留到根节点 `extra.jsonl_metadata` 或 turn 节点 `extra.jsonl_message`
+  - 导出时：会按原始 header / user / assistant 位置回填，保证 round-trip 不丢失已保留字段
 - `is_system` 目前不做专用通道处理（按普通 assistant 文本导入/导出）。
 - 群聊字段会被忽略。
 

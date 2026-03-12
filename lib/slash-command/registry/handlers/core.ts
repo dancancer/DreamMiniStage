@@ -242,23 +242,30 @@ function nextLinkName(session: CheckpointSessionState, prefix: "checkpoint" | "b
 
 /** /checkpoint-create [name] - 在目标消息上创建 checkpoint */
 export const handleCheckpointCreate: CommandHandler = async (args, namedArgs, ctx, pipe) => {
-  const session = getCheckpointSession(ctx);
   const rawIndex = namedArgs.mesId ?? namedArgs.mes;
   const { messageId } = resolveCheckpointMessage(ctx, rawIndex, "/checkpoint-create");
+  const requestedName = (args.join(" ") || pipe || "").trim() || undefined;
 
-  const requestedName = (args.join(" ") || pipe || "").trim();
+  if (ctx.createCheckpoint) {
+    return Promise.resolve(ctx.createCheckpoint(messageId, requestedName));
+  }
+
+  const session = getCheckpointSession(ctx);
   const checkpointName = requestedName || nextLinkName(session, "checkpoint");
-
   session.messageToCheckpoint.set(messageId, checkpointName);
   return checkpointName;
 };
 
 /** /branch-create [mesId] - 在目标消息创建分支并进入分支会话 */
 export const handleBranchCreate: CommandHandler = async (args, namedArgs, ctx, pipe) => {
-  const session = getCheckpointSession(ctx);
   const rawIndex = pickMessageIndexSource(namedArgs.mesId, namedArgs.mes, args[0], pipe);
   const { messageId } = resolveCheckpointMessage(ctx, rawIndex, "/branch-create");
 
+  if (ctx.createBranch) {
+    return Promise.resolve(ctx.createBranch(messageId));
+  }
+
+  const session = getCheckpointSession(ctx);
   const branchName = nextLinkName(session, "branch");
   session.messageToCheckpoint.set(messageId, branchName);
   session.currentCheckpoint = branchName;
@@ -268,17 +275,23 @@ export const handleBranchCreate: CommandHandler = async (args, namedArgs, ctx, p
 
 /** /checkpoint-get [mesId] - 获取目标消息关联的 checkpoint 名称 */
 export const handleCheckpointGet: CommandHandler = async (args, namedArgs, ctx, pipe) => {
-  const session = getCheckpointSession(ctx);
   const rawIndex = pickMessageIndexSource(namedArgs.mesId, namedArgs.mes, args[0], pipe);
   const { messageId } = resolveCheckpointMessage(ctx, rawIndex, "/checkpoint-get");
+  if (ctx.getCheckpoint) {
+    return Promise.resolve(ctx.getCheckpoint(messageId));
+  }
+  const session = getCheckpointSession(ctx);
   return session.messageToCheckpoint.get(messageId) ?? "";
 };
 
 /** /checkpoint-list [links=true|false] - 列出当前会话的 checkpoint */
 export const handleCheckpointList: CommandHandler = async (_args, namedArgs, ctx, _pipe) => {
-  const session = getCheckpointSession(ctx);
   const links = parseBoolean(namedArgs.links, false) ?? false;
+  if (ctx.listCheckpoints) {
+    return JSON.stringify(await Promise.resolve(ctx.listCheckpoints({ links })));
+  }
 
+  const session = getCheckpointSession(ctx);
   const result: Array<number | string> = [];
   const messages = ctx.messages ?? [];
   messages.forEach((message, index) => {
@@ -294,10 +307,14 @@ export const handleCheckpointList: CommandHandler = async (_args, namedArgs, ctx
 
 /** /checkpoint-go [mesId] - 进入目标消息关联的 checkpoint */
 export const handleCheckpointGo: CommandHandler = async (args, namedArgs, ctx, pipe) => {
-  const session = getCheckpointSession(ctx);
   const rawIndex = pickMessageIndexSource(namedArgs.mesId, namedArgs.mes, args[0], pipe);
   const { messageId } = resolveCheckpointMessage(ctx, rawIndex, "/checkpoint-go");
 
+  if (ctx.goCheckpoint) {
+    return Promise.resolve(ctx.goCheckpoint(messageId));
+  }
+
+  const session = getCheckpointSession(ctx);
   const checkpointName = session.messageToCheckpoint.get(messageId);
   if (!checkpointName) {
     return "";
@@ -310,6 +327,10 @@ export const handleCheckpointGo: CommandHandler = async (args, namedArgs, ctx, p
 
 /** /checkpoint-exit - 退出当前 checkpoint，会返回父会话名 */
 export const handleCheckpointExit: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  if (ctx.exitCheckpoint) {
+    return Promise.resolve(ctx.exitCheckpoint());
+  }
+
   const session = getCheckpointSession(ctx);
   if (!session.currentCheckpoint) {
     return "";
@@ -321,6 +342,10 @@ export const handleCheckpointExit: CommandHandler = async (_args, _namedArgs, ct
 
 /** /checkpoint-parent - 返回当前 checkpoint 的父会话名 */
 export const handleCheckpointParent: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  if (ctx.getCheckpointParent) {
+    return Promise.resolve(ctx.getCheckpointParent());
+  }
+
   const session = getCheckpointSession(ctx);
   if (!session.currentCheckpoint) {
     return "";

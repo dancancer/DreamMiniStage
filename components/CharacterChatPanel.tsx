@@ -89,6 +89,7 @@ interface Props {
   // ─── 提示词查看器参数 ───
   dialogueKey?: string;
   chatName?: string;
+  footerSlot?: React.ReactNode;
   // ─── Slash Command 回调 ───
   onSendMessage?: (text: string, options?: SendOptions) => void | Promise<void>;
   onTriggerGeneration?: () => void | Promise<void>;
@@ -101,6 +102,13 @@ interface Props {
   onForceSaveChat?: () => void | Promise<void>;
   onHideMessages?: (startIndex: number) => void | Promise<void>;
   onUnhideMessages?: () => void | Promise<void>;
+  onCreateCheckpoint?: (messageId: string, requestedName?: string) => string | Promise<string>;
+  onCreateBranch?: (messageId: string) => string | Promise<string>;
+  onGetCheckpoint?: (messageId: string) => string | Promise<string>;
+  onListCheckpoints?: (options?: { links?: boolean }) => Array<number | string> | Promise<Array<number | string>>;
+  onGoCheckpoint?: (messageId: string) => string | Promise<string>;
+  onExitCheckpoint?: () => string | Promise<string>;
+  onGetCheckpointParent?: () => string | Promise<string>;
   onOpenTemporaryChat?: () => void | Promise<void>;
   onJumpToMessage?: (index: number) => void | Promise<void>;
   onTranslateText?: (
@@ -131,6 +139,17 @@ interface Props {
   onAddGroupMember?: (
     target: string,
   ) => string | number | void | Promise<string | number | void>;
+  onRemoveGroupMember?: (
+    target: string,
+  ) => string | number | void | Promise<string | number | void>;
+  onMoveGroupMember?: (
+    target: string,
+    direction: "up" | "down",
+  ) => string | number | void | Promise<string | number | void>;
+  onPeekGroupMember?: (
+    target: string,
+  ) => string | number | void | Promise<string | number | void>;
+  onGetGroupMemberCount?: () => number | Promise<number>;
   onSetGroupMemberEnabled?: (
     target: string,
     enabled: boolean,
@@ -200,6 +219,7 @@ export default function CharacterChatPanel({
   language,
   dialogueKey,
   chatName,
+  footerSlot,
   onSendMessage,
   onTriggerGeneration,
   onSendAs,
@@ -211,6 +231,13 @@ export default function CharacterChatPanel({
   onForceSaveChat,
   onHideMessages,
   onUnhideMessages,
+  onCreateCheckpoint,
+  onCreateBranch,
+  onGetCheckpoint,
+  onListCheckpoints,
+  onGoCheckpoint,
+  onExitCheckpoint,
+  onGetCheckpointParent,
   onOpenTemporaryChat,
   onJumpToMessage,
   onTranslateText,
@@ -220,6 +247,10 @@ export default function CharacterChatPanel({
   onSetWorldInfoTimedEffect,
   onGetGroupMember,
   onAddGroupMember,
+  onRemoveGroupMember,
+  onMoveGroupMember,
+  onPeekGroupMember,
+  onGetGroupMemberCount,
   onSetGroupMemberEnabled,
   onAddSwipe,
   onSetExpression,
@@ -294,6 +325,13 @@ export default function CharacterChatPanel({
     onForceSaveChat,
     onHideMessages,
     onUnhideMessages,
+    onCreateCheckpoint,
+    onCreateBranch,
+    onGetCheckpoint,
+    onListCheckpoints,
+    onGoCheckpoint,
+    onExitCheckpoint,
+    onGetCheckpointParent,
     onTranslateText,
     onGetYouTubeTranscript,
     onSelectProxyPreset,
@@ -301,6 +339,10 @@ export default function CharacterChatPanel({
     onSetWorldInfoTimedEffect,
     onGetGroupMember,
     onAddGroupMember,
+    onRemoveGroupMember,
+    onMoveGroupMember,
+    onPeekGroupMember,
+    onGetGroupMemberCount,
     onSetGroupMemberEnabled,
     onAddSwipe,
     onSetExpression,
@@ -476,6 +518,7 @@ export default function CharacterChatPanel({
         fontClass={fontClass}
         t={t}
       >
+        {footerSlot}
         <ControlPanel
           activeModes={activeModes as { "story-progress": boolean; perspective: { active: boolean; mode: "novel" | "protagonist" }; "scene-setting": boolean }}
           setActiveModes={setActiveModes}
