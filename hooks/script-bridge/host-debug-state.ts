@@ -14,20 +14,54 @@ export interface ScriptHostApiCallRecord {
   timestamp: number;
 }
 
+export interface ScriptHostRuntimeState {
+  toolRegistrations: number;
+  eventListeners: number;
+  hasHostOverrides: boolean;
+}
+
 const MAX_RECENT_API_CALLS = 20;
 
 export interface ScriptHostDebugState {
   getRecentApiCalls: () => ScriptHostApiCallRecord[];
+  getRuntimeState: () => ScriptHostRuntimeState;
   recordApiCall: (entry: ScriptHostApiCallRecord) => void;
+  setToolRegistrationCount: (count: number) => void;
+  setEventListenerCount: (count: number) => void;
+  setHasHostOverrides: (value: boolean) => void;
 }
 
 export function createHostDebugState(): ScriptHostDebugState {
   let recentApiCalls: ScriptHostApiCallRecord[] = [];
+  let runtimeState: ScriptHostRuntimeState = {
+    toolRegistrations: 0,
+    eventListeners: 0,
+    hasHostOverrides: false,
+  };
 
   return {
     getRecentApiCalls: () => [...recentApiCalls],
+    getRuntimeState: () => ({ ...runtimeState }),
     recordApiCall: (entry) => {
       recentApiCalls = [entry, ...recentApiCalls].slice(0, MAX_RECENT_API_CALLS);
+    },
+    setToolRegistrationCount: (count) => {
+      runtimeState = {
+        ...runtimeState,
+        toolRegistrations: count,
+      };
+    },
+    setEventListenerCount: (count) => {
+      runtimeState = {
+        ...runtimeState,
+        eventListeners: count,
+      };
+    },
+    setHasHostOverrides: (value) => {
+      runtimeState = {
+        ...runtimeState,
+        hasHostOverrides: value,
+      };
     },
   };
 }

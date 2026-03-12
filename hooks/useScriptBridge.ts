@@ -17,6 +17,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useScriptVariables } from "@/lib/store/script-variables";
 import { handleApiCall } from "./script-bridge";
+import { createHostDebugState, type ScriptHostApiCallRecord, type ScriptHostRuntimeState } from "./script-bridge/host-debug-state";
 import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
   CharacterSwitchResult,
@@ -261,6 +262,10 @@ interface UseScriptBridgeOptions {
 interface UseScriptBridgeReturn {
   scriptVariables: Record<string, unknown>;
   scriptStatuses: ScriptStatus[];
+  scriptHostDebug: {
+    recentApiCalls: ScriptHostApiCallRecord[];
+    runtimeState: ScriptHostRuntimeState;
+  };
   handleScriptMessage: (data: ScriptMessageData) => Promise<unknown>;
   broadcastCharacterChange: () => void;
   broadcastMessage: (message: DialogueMessage) => void;
@@ -366,6 +371,11 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onApplyReasoningRegex,
   } = options;
   const [scriptStatuses, setScriptStatuses] = useState<ScriptStatus[]>([]);
+  const hostDebugStateRef = useRef(createHostDebugState());
+  const [scriptHostDebug, setScriptHostDebug] = useState(() => ({
+    recentApiCalls: hostDebugStateRef.current.getRecentApiCalls(),
+    runtimeState: hostDebugStateRef.current.getRuntimeState(),
+  }));
 
   const {
     variables: scriptVariablesStore,
@@ -390,6 +400,26 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       }),
     );
   }, []);
+
+  const syncScriptHostDebug = useCallback(() => {
+    setScriptHostDebug({
+      recentApiCalls: hostDebugStateRef.current.getRecentApiCalls(),
+      runtimeState: hostDebugStateRef.current.getRuntimeState(),
+    });
+  }, []);
+
+  const hasHostOverrides = Boolean(
+    onGetClipboardText ||
+    onSetClipboardText ||
+    onIsExtensionInstalled ||
+    onGetExtensionEnabledState ||
+    onSetExtensionEnabled,
+  );
+
+  useEffect(() => {
+    hostDebugStateRef.current.setHasHostOverrides(hasHostOverrides);
+    syncScriptHostDebug();
+  }, [hasHostOverrides, syncScriptHostDebug]);
 
   const handleCharacterSwitch = useCallback(
     async (target: string): Promise<CharacterSwitchResult | void> => {
@@ -462,6 +492,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           chatId: dialogueId,
           messageId: messagesRef.current[messagesRef.current.length - 1]?.id,
           messages: messagesRef.current,  // 通过 ref 获取最新 messages
+          hostDebugState: hostDebugStateRef.current,
           setScriptVariable,
           deleteScriptVariable,
           getVariablesSnapshot,
@@ -538,6 +569,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onParseReasoningBlock,
           onApplyReasoningRegex,
         });
+        syncScriptHostDebug();
         console.log("[useScriptBridge] API_CALL 返回:", method, "result:", result);
         return result;
       }
@@ -645,6 +677,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onParseReasoningBlock,
       onApplyReasoningRegex,
       handleCharacterSwitch,
+      syncScriptHostDebug,
+      hasHostOverrides,
     ],
   );
 
@@ -687,6 +721,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
   return {
     scriptVariables,
     scriptStatuses,
+    scriptHostDebug,
     handleScriptMessage,
     broadcastCharacterChange,
     broadcastMessage,

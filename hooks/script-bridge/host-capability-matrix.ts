@@ -20,7 +20,7 @@ export interface ScriptHostCapability {
   failFastReason?: string;
 }
 
-export const SCRIPT_HOST_CAPABILITY_MATRIX: ScriptHostCapability[] = [
+const HOST_CAPABILITIES = [
   {
     id: "function-tool-registry",
     area: "tool-registration",
@@ -58,3 +58,29 @@ export const SCRIPT_HOST_CAPABILITY_MATRIX: ScriptHostCapability[] = [
     failFastReason: "Audio commands fail fast when arguments are invalid even though the local host path exists.",
   },
 ] as const;
+
+const METHOD_CAPABILITY_MAP = {
+  registerFunctionTool: "function-tool-registry",
+  unregisterFunctionTool: "function-tool-registry",
+  getAudioSettings: "audio-channel-control",
+  setAudioSettings: "audio-channel-control",
+  setAudioEnabled: "audio-channel-control",
+  setAudioMode: "audio-channel-control",
+  setGlobalVolume: "audio-channel-control",
+  muteAll: "audio-channel-control",
+} as const;
+
+export const SCRIPT_HOST_CAPABILITY_MATRIX: ScriptHostCapability[] = [...HOST_CAPABILITIES];
+
+export function getScriptHostCapabilityById(id: string): ScriptHostCapability | undefined {
+  return SCRIPT_HOST_CAPABILITY_MATRIX.find((capability) => capability.id === id);
+}
+
+export function getScriptHostCapabilityByMethod(method: string): ScriptHostCapability | undefined {
+  const capabilityId = METHOD_CAPABILITY_MAP[method as keyof typeof METHOD_CAPABILITY_MAP];
+  if (!capabilityId) {
+    return undefined;
+  }
+
+  return getScriptHostCapabilityById(capabilityId);
+}

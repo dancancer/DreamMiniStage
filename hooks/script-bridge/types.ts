@@ -54,6 +54,7 @@ import type {
   WorldInfoTimedEffectName,
   WorldInfoTimedEffectState,
 } from "@/lib/slash-command/types";
+import type { ScriptHostDebugState } from "./host-debug-state";
 
 // ============================================================================
 //                              API Handler 上下文
@@ -74,6 +75,7 @@ export interface ApiCallContext {
     type: string,
     payload: unknown
   ) => void;
+  hostDebugState?: ScriptHostDebugState;
   setScriptVariable: (
     key: string,
     value: unknown,

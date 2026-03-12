@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { handleApiCall } from "../index";
+import { createHostDebugState } from "../host-debug-state";
 import type { ApiCallContext } from "../types";
 
 function createMockContext(overrides: Partial<ApiCallContext> = {}): ApiCallContext {
@@ -49,7 +50,8 @@ describe("plugin minimal regression", () => {
   it("keeps JS-Slash-Runner core bridge path runnable", async () => {
     const onSend = vi.fn().mockResolvedValue(undefined);
     const onTrigger = vi.fn().mockResolvedValue(undefined);
-    const ctx = createMockContext({ onSend, onTrigger });
+    const hostDebugState = createHostDebugState();
+    const ctx = createMockContext({ onSend, onTrigger, hostDebugState });
 
     const slashResult = await handleApiCall("triggerSlash", ["/send hi|/trigger"], ctx);
 
@@ -62,6 +64,10 @@ describe("plugin minimal regression", () => {
 
     const eventEmitResult = await handleApiCall("eventEmit", ["mvu.variable_updated", { hp: 1 }], ctx);
     expect(eventEmitResult).toMatchObject({ eventType: "mvu.variable_updated", triggeredCount: 1 });
+    expect(hostDebugState.getRuntimeState()).toMatchObject({
+      eventListeners: 1,
+      toolRegistrations: 0,
+    });
   });
 
   it("keeps MagVarUpdate-like variables and message reads runnable", async () => {
@@ -89,5 +95,43 @@ describe("plugin minimal regression", () => {
 
     expect(result).toMatchObject({ isError: false, pipe: "Bob" });
     expect(onSwitchCharacter).toHaveBeenCalledWith("Bob");
+  });
+
+  it("records host-debug observations for tool registration and default audio support", async () => {
+    const hostDebugState = createHostDebugState();
+    const ctx = createMockContext({ hostDebugState });
+
+    const registerResult = await handleApiCall("registerFunctionTool", [
+      "debug_tool",
+      "Debug tool",
+      { type: "object", properties: {} },
+      false,
+      "iframe_plugin_test",
+    ], ctx);
+    expect(registerResult).toBe(true);
+
+    const audioSettings = await handleApiCall("getAudioSettings", ["bgm"], ctx);
+    expect(audioSettings).toMatchObject({
+      enabled: true,
+      mode: "repeat",
+    });
+
+    expect(hostDebugState.getRecentApiCalls()).toEqual([
+      expect.objectContaining({
+        method: "getAudioSettings",
+        capability: "audio-channel-control",
+        resolvedPath: "session-default",
+        outcome: "supported",
+      }),
+      expect.objectContaining({
+        method: "registerFunctionTool",
+        capability: "function-tool-registry",
+        resolvedPath: "bridge-only",
+        outcome: "supported",
+      }),
+    ]);
+    expect(hostDebugState.getRuntimeState()).toMatchObject({
+      toolRegistrations: 1,
+    });
   });
 });
