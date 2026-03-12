@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resetQuickReplyStore, useQuickReplyStore } from "@/lib/quick-reply/store";
 import { resetGroupChatStore, useGroupChatStore } from "@/lib/group-chat/store";
 import { resetCheckpointStore, useCheckpointStore } from "@/lib/checkpoint/store";
+import { clearPromptInjections, listPromptInjections } from "@/lib/slash-command/prompt-injection-store";
 import SessionPage from "../page";
 import {
   setSessionSlashHostBridge,
@@ -446,10 +447,15 @@ describe("Session page slash integration", () => {
       return true;
     });
     mocks.getWorldBook.mockImplementation(async (file: string) => mocks.worldBooks[file] || null);
+    mocks.dialogue.messages = [
+      { id: "m0", role: "assistant", content: "hello" },
+      { id: "m1", role: "assistant", content: "world" },
+    ];
     setSessionSlashHostBridge(window, null);
     resetQuickReplyStore();
     resetGroupChatStore();
     resetCheckpointStore();
+    clearPromptInjections();
   });
 
   it("executes /tempchat through page host wiring and navigates to the new temp session", async () => {
@@ -554,6 +560,29 @@ describe("Session page slash integration", () => {
     unmountPage(rendered);
   });
 
+  it("executes injected quick replies by writing prompt injections instead of chat messages", async () => {
+    const store = useQuickReplyStore.getState();
+    store.createQuickReplySet("InjectSet", { inject: true, before: true });
+    store.createQuickReply("InjectSet", "InjectMe", "stay in prompt", {});
+    store.addGlobalQuickReplySet("InjectSet", { visible: true });
+
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/qr 0");
+
+    expect(mocks.dialogue.addUserMessage).not.toHaveBeenCalled();
+    expect(listPromptInjections({ dialogueId: "session-1" })).toEqual([
+      expect.objectContaining({
+        content: "stay in prompt",
+        position: "before",
+      }),
+    ]);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
   it("executes /swipe through session host wiring", async () => {
     const rendered = renderPage();
     await flushEffects();
@@ -561,6 +590,105 @@ describe("Session page slash integration", () => {
     await submitSlash("/swipe prev");
 
     expect(mocks.dialogue.handleSwipe).toHaveBeenCalledWith("prev");
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("applies setChatMessages to the live session dialogue", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent("DreamMiniStage:setChatMessages", {
+        detail: {
+          characterId: "char-1",
+          messages: [{
+            message_id: "m1",
+            message: "patched world",
+            role: "assistant",
+            name: "Narrator",
+          }],
+          options: {
+            refresh: "affected",
+          },
+        },
+      }));
+    });
+
+    expect(mocks.dialogue.setMessages).toHaveBeenCalledWith([
+      { id: "m0", role: "assistant", content: "hello" },
+      { id: "m1", role: "assistant", content: "patched world", name: "Narrator" },
+    ]);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("applies createChatMessages to the live session dialogue", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent("DreamMiniStage:createChatMessages", {
+        detail: {
+          characterId: "char-1",
+          messages: [{
+            id: "m2",
+            role: "user",
+            content: "new turn",
+          }],
+        },
+      }));
+    });
+
+    expect(mocks.dialogue.setMessages).toHaveBeenCalledWith([
+      { id: "m0", role: "assistant", content: "hello" },
+      { id: "m1", role: "assistant", content: "world" },
+      { id: "m2", role: "user", content: "new turn" },
+    ]);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("applies deleteChatMessages to the live session dialogue", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent("DreamMiniStage:deleteChatMessages", {
+        detail: {
+          characterId: "char-1",
+          messageIds: ["m0"],
+        },
+      }));
+    });
+
+    expect(mocks.dialogue.setMessages).toHaveBeenCalledWith([
+      { id: "m1", role: "assistant", content: "world" },
+    ]);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("routes refreshOneMessage to the live session dialogue refresh path", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent("DreamMiniStage:refreshOneMessage", {
+        detail: {
+          characterId: "char-1",
+          message_id: "m1",
+          index: 1,
+          message: { id: "m1", role: "assistant", content: "world" },
+        },
+      }));
+    });
+
+    expect(mocks.dialogue.handleRegenerate).toHaveBeenCalledWith("m1");
     expect(mocks.toastError).not.toHaveBeenCalled();
 
     unmountPage(rendered);

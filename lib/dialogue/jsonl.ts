@@ -27,11 +27,7 @@ type JsonlMessageLine = {
 };
 
 export function exportDialogueTreeToJsonl(tree: DialogueTree, options: JsonlExportOptions = {}): string {
-  const header: JsonlLine = {
-    user_name: options.userName ?? "",
-    character_name: options.characterName ?? "",
-    ...(options.chatMetadata ? { chat_metadata: options.chatMetadata } : {}),
-  };
+  const header = buildJsonlHeader(tree, options);
 
   const lines: string[] = [JSON.stringify(header)];
   const path = getDialoguePathToNode(tree, tree.current_nodeId);
@@ -42,6 +38,7 @@ export function exportDialogueTreeToJsonl(tree: DialogueTree, options: JsonlExpo
     if (node.userInput) {
       lines.push(
         JSON.stringify({
+          ...getJsonlMessageExtra(node.extra, "user"),
           is_user: true,
           is_system: false,
           mes: node.userInput,
@@ -56,6 +53,7 @@ export function exportDialogueTreeToJsonl(tree: DialogueTree, options: JsonlExpo
 
       lines.push(
         JSON.stringify({
+          ...getJsonlMessageExtra(node.extra, "assistant"),
           is_user: false,
           is_system: false,
           mes: getNodeDisplayContent(node),
@@ -93,6 +91,7 @@ export function importJsonlToDialogueTree(
 
   let parentNodeId = "root";
   let pendingUserInput: string | null = null;
+  let pendingUserExtra: Record<string, unknown> = {};
 
   for (const message of messageLines) {
     const isUser = Boolean(message.is_user);
@@ -101,6 +100,7 @@ export function importJsonlToDialogueTree(
 
     if (isUser) {
       pendingUserInput = text;
+      pendingUserExtra = extra;
       continue;
     }
 
@@ -113,12 +113,19 @@ export function importJsonlToDialogueTree(
     for (const swipeText of swipes) {
       const nodeId = generateId();
       createdIds.push(nodeId);
-      nodes.push(makeTurnNode({ nodeId, parentNodeId, userInput, assistant: swipeText, extra }));
+      nodes.push(makeTurnNode({
+        nodeId,
+        parentNodeId,
+        userInput,
+        assistant: swipeText,
+        extra: buildTurnExtra(pendingUserExtra, extra),
+      }));
     }
 
     const selectedNodeId = createdIds[swipeId] ?? createdIds[0];
     parentNodeId = selectedNodeId ?? parentNodeId;
     pendingUserInput = null;
+    pendingUserExtra = {};
   }
 
   const tree: DialogueTree = {
@@ -157,6 +164,13 @@ function normalizeMes(mes: unknown): string {
   return String(mes);
 }
 
+function toRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  return value as Record<string, unknown>;
+}
+
 function normalizeSwipes(message: JsonlMessageLine, fallback: string): string[] {
   if (Array.isArray(message.swipes)) {
     const swipes = message.swipes.map((item) => normalizeMes(item)).filter((item) => item.length > 0);
@@ -169,6 +183,57 @@ function clampSwipeId(swipeId: unknown, total: number): number {
   const value = typeof swipeId === "number" ? swipeId : Number(swipeId);
   if (!Number.isFinite(value)) return 0;
   return Math.min(Math.max(Math.trunc(value), 0), Math.max(total - 1, 0));
+}
+
+function buildJsonlHeader(tree: DialogueTree, options: JsonlExportOptions): JsonlLine {
+  const rootNode = tree.nodes.find((node) => node.nodeId === "root");
+  const rootExtra = toRecord(rootNode?.extra);
+  const storedHeader = toRecord(rootExtra.jsonl_metadata);
+  const { chat_metadata: _storedChatMetadata, ...headerWithoutChatMetadata } = storedHeader;
+  const chatMetadata = options.chatMetadata ?? toRecord(rootExtra.chat_metadata);
+
+  return {
+    ...headerWithoutChatMetadata,
+    user_name: options.userName ?? normalizeMes(storedHeader.user_name),
+    character_name: options.characterName ?? normalizeMes(storedHeader.character_name),
+    ...(Object.keys(chatMetadata).length > 0 ? { chat_metadata: chatMetadata } : {}),
+  };
+}
+
+function buildTurnExtra(
+  userExtra: Record<string, unknown>,
+  assistantExtra: Record<string, unknown>,
+): Record<string, unknown> {
+  if (Object.keys(userExtra).length === 0 && Object.keys(assistantExtra).length === 0) {
+    return {};
+  }
+
+  return {
+    ...assistantExtra,
+    jsonl_message: {
+      ...(Object.keys(userExtra).length > 0 ? { user: userExtra } : {}),
+      ...(Object.keys(assistantExtra).length > 0 ? { assistant: assistantExtra } : {}),
+    },
+  };
+}
+
+function getJsonlMessageExtra(
+  extra: Record<string, unknown> | undefined,
+  role: "user" | "assistant",
+): Record<string, unknown> {
+  const extraRecord = toRecord(extra);
+  const stored = toRecord(toRecord(extraRecord.jsonl_message)[role]);
+
+  if (Object.keys(stored).length > 0) {
+    return stored;
+  }
+
+  if (role === "user") {
+    return {};
+  }
+
+  const { jsonl_message: _jsonlMessage, ...legacyAssistantExtra } = extraRecord;
+  return legacyAssistantExtra;
 }
 
 function makeTurnNode(params: {

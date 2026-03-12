@@ -29,6 +29,19 @@ describe("quick reply store", () => {
     expect(store.getQuickReplySet("Draft")?.nosend).toBe(true);
   });
 
+  it("deduplicates visible replies when the same set is active globally and in chat scope", () => {
+    const store = useQuickReplyStore.getState();
+
+    store.createQuickReplySet("Main", {});
+    store.createQuickReply("Main", "Hello", "hello world", {});
+    store.addGlobalQuickReplySet("Main", { visible: true });
+    store.addChatQuickReplySet("dlg-1", "Main", { visible: true });
+
+    expect(store.getVisibleQuickReplies("dlg-1").map((entry) => `${entry.scope}:${entry.reply.label}`)).toEqual([
+      "chat:Hello",
+    ]);
+  });
+
   it("updates replies by label or id and manages context-set bindings", () => {
     const store = useQuickReplyStore.getState();
 

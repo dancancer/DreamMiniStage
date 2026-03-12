@@ -229,6 +229,29 @@ function removeActiveSet(
   return entries.filter((entry) => entry.name !== name);
 }
 
+function resolveActiveQuickReplySets(
+  state: Pick<QuickReplyStoreState, "globalSets" | "chatSets">,
+  dialogueId?: string,
+): ActiveQuickReplySetEntry[] {
+  const resolved = new Map<string, ActiveQuickReplySetEntry>();
+
+  for (const entry of state.globalSets) {
+    resolved.set(entry.name, {
+      ...entry,
+      scope: "global",
+    });
+  }
+
+  for (const entry of state.chatSets[dialogueId || ""] || []) {
+    resolved.set(entry.name, {
+      ...entry,
+      scope: "chat",
+    });
+  }
+
+  return Array.from(resolved.values());
+}
+
 const initialState = {
   nextReplyId: 1,
   sets: {},
@@ -253,10 +276,14 @@ export const useQuickReplyStore = create<QuickReplyStoreState>()(
 
     listQuickReplySets: (scope = "all", dialogueId) => {
       const state = get();
-      const globalSets = scope === "all" || scope === "global"
+      if (scope === "all") {
+        return resolveActiveQuickReplySets(state, dialogueId);
+      }
+
+      const globalSets = scope === "global"
         ? state.globalSets.map((entry) => ({ ...entry, scope: "global" as const }))
         : [];
-      const chatEntries = scope === "all" || scope === "chat"
+      const chatEntries = scope === "chat"
         ? (state.chatSets[dialogueId || ""] || []).map((entry) => ({ ...entry, scope: "chat" as const }))
         : [];
       return [...globalSets, ...chatEntries];

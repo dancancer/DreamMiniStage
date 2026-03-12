@@ -66,6 +66,57 @@ describe("JSONL import/export", () => {
     expect(roundtripLines).toEqual(originalLines);
   });
 
+  it("round-trips imported metadata header and message extra fields", () => {
+    const jsonl = [
+      JSON.stringify({
+        user_name: "u",
+        character_name: "c",
+        create_date: "2026-03-12T10:00:00.000Z",
+        chat_metadata: {
+          timedWorldInfo: {
+            tavern: {
+              fire: true,
+            },
+          },
+        },
+        scenario: "phase-3-jsonl",
+      }),
+      JSON.stringify({
+        is_user: true,
+        is_system: false,
+        mes: "hi",
+        name: "u",
+        send_date: 123,
+      }),
+      JSON.stringify({
+        is_user: false,
+        is_system: false,
+        mes: "hello",
+        name: "c",
+        send_date: 124,
+        extra: {
+          model: "gpt-test",
+          token_count: 42,
+        },
+        swipes: ["hello", "hello alt"],
+        swipe_id: 0,
+      }),
+    ].join("\n");
+
+    let seq = 0;
+    const { tree } = importJsonlToDialogueTree(jsonl, {
+      dialogueId: "d1",
+      characterId: "c1",
+      generateId: () => `n${++seq}`,
+    });
+
+    const exportedAgain = exportDialogueTreeToJsonl(tree, { userName: "u", characterName: "c" });
+
+    expect(exportedAgain.split("\n").map((line) => JSON.parse(line))).toEqual(
+      jsonl.split("\n").map((line) => JSON.parse(line)),
+    );
+  });
+
   it("does not add swipes when no siblings exist", () => {
     const nodes = [
       makeNode({ nodeId: "root", parentNodeId: "root", userInput: "", assistant: "" }),
@@ -78,4 +129,3 @@ describe("JSONL import/export", () => {
     expect(messageLine.swipe_id).toBeUndefined();
   });
 });
-

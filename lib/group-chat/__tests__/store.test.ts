@@ -53,4 +53,15 @@ describe("group chat store", () => {
     expect(store.listGroupMembers("dlg-1").map((member) => member.name)).toEqual(["Bob"]);
     expect(() => store.removeGroupMember("dlg-1", "Missing")).toThrow("Group member not found");
   });
+
+  it("treats user-facing names as distinct from generated ids", () => {
+    const store = useGroupChatStore.getState();
+
+    store.addGroupMember("dlg-1", "Alice");
+    store.addGroupMember("dlg-1", "member-1");
+
+    expect(store.listGroupMembers("dlg-1").map((member) => member.name)).toEqual(["Alice", "member-1"]);
+    expect(store.removeGroupMember("dlg-1", "member-1")).toBe("member-1");
+    expect(store.listGroupMembers("dlg-1").map((member) => member.name)).toEqual(["Alice"]);
+  });
 });

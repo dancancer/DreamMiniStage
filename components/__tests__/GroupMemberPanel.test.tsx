@@ -61,4 +61,19 @@ describe("GroupMemberPanel", () => {
     expect(useGroupChatStore.getState().listGroupMembers("dlg-1").map((member) => member.name)).toEqual(["Bob"]);
     unmountPanel(rendered);
   });
+
+  it("removes the named member even when another member id matches that name", () => {
+    const store = useGroupChatStore.getState();
+    store.addGroupMember("dlg-1", "Alice");
+    store.addGroupMember("dlg-1", "member-1");
+
+    const rendered = renderPanel();
+
+    act(() => {
+      (rendered.container.querySelector("button[data-group-member-remove='member-1']") as HTMLButtonElement).click();
+    });
+
+    expect(useGroupChatStore.getState().listGroupMembers("dlg-1").map((member) => member.name)).toEqual(["Alice"]);
+    unmountPanel(rendered);
+  });
 });

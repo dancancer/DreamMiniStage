@@ -162,6 +162,142 @@ function getSessionMessageSelector(index: number): string {
   return `[data-session-message-index="${index}"]`;
 }
 
+type SessionMutableMessage = DialogueMessage & {
+  data?: Record<string, unknown>;
+  extra?: Record<string, unknown>;
+};
+
+interface SessionSetChatMessagesDetail {
+  characterId?: string;
+  messages?: Array<{
+    message_id?: string | number;
+    message?: string;
+    name?: string;
+    role?: string;
+    data?: Record<string, unknown>;
+    extra?: Record<string, unknown>;
+  }>;
+}
+
+interface SessionCreateChatMessagesDetail {
+  characterId?: string;
+  messages?: Array<{
+    id?: string;
+    role?: string;
+    content?: string;
+  }>;
+}
+
+interface SessionDeleteChatMessagesDetail {
+  characterId?: string;
+  messageIds?: string[];
+}
+
+interface SessionRefreshOneMessageDetail {
+  characterId?: string;
+  message_id?: string;
+}
+
+function shouldHandleSessionMessageEvent(
+  detailCharacterId: string | undefined,
+  currentCharacterId: string | null,
+): boolean {
+  if (!currentCharacterId) {
+    return false;
+  }
+  if (!detailCharacterId) {
+    return true;
+  }
+  return detailCharacterId === currentCharacterId;
+}
+
+function findSessionMessageIndex(
+  messages: DialogueMessage[],
+  rawMessageId: string | number | undefined,
+): number {
+  const messageId = String(rawMessageId || "").trim();
+  if (!messageId) {
+    throw new Error("message_id is required");
+  }
+
+  const index = messages.findIndex((message) => message.id === messageId);
+  if (index < 0) {
+    throw new Error(`Session message not found: ${messageId}`);
+  }
+  return index;
+}
+
+function applySessionMessagePatches(
+  messages: DialogueMessage[],
+  patches: SessionSetChatMessagesDetail["messages"],
+): DialogueMessage[] {
+  if (!patches?.length) {
+    return messages;
+  }
+
+  const nextMessages = messages.map((message) => ({ ...message })) as SessionMutableMessage[];
+  for (const patch of patches) {
+    const index = findSessionMessageIndex(nextMessages, patch?.message_id);
+    const current = nextMessages[index];
+    if (!current) {
+      throw new Error(`Session message not found: ${patch?.message_id}`);
+    }
+
+    nextMessages[index] = {
+      ...current,
+      ...(patch?.message !== undefined ? { content: patch.message } : {}),
+      ...(patch?.name !== undefined ? { name: patch.name } : {}),
+      ...(patch?.role !== undefined ? { role: patch.role } : {}),
+      ...(patch?.data !== undefined ? { data: patch.data } : {}),
+      ...(patch?.extra !== undefined ? { extra: patch.extra } : {}),
+    };
+  }
+
+  return nextMessages;
+}
+
+function appendSessionMessages(
+  messages: DialogueMessage[],
+  created: SessionCreateChatMessagesDetail["messages"],
+): DialogueMessage[] {
+  if (!created?.length) {
+    return messages;
+  }
+
+  const appended = created.map((message, index) => {
+    const role = message?.role?.trim();
+    const content = message?.content?.trim();
+    if (!role || !content) {
+      throw new Error(`createChatMessages requires role/content at index ${index}`);
+    }
+
+    return {
+      id: String(message.id || `${Date.now()}-${index}-${role}`),
+      role,
+      content,
+    } satisfies DialogueMessage;
+  });
+
+  return [...messages, ...appended];
+}
+
+function removeSessionMessages(
+  messages: DialogueMessage[],
+  messageIds: string[] | undefined,
+): DialogueMessage[] {
+  if (!messageIds?.length) {
+    return messages;
+  }
+
+  const missing = messageIds.find((messageId) => !messages.some((message) => message.id === messageId));
+  if (missing) {
+    throw new Error(`Session message not found: ${missing}`);
+  }
+
+  const deleted = new Set(messageIds);
+  return messages.filter((message) => !deleted.has(message.id));
+}
+
 function SessionPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -230,6 +366,9 @@ function SessionPageContent() {
     onError: toast.error,
     t,
   });
+  const dialogueMessages = dialogue.messages;
+  const setDialogueMessages = dialogue.setMessages;
+  const regenerateDialogueMessage = dialogue.handleRegenerate;
   const setScriptVariable = useScriptVariables((state) => state.setVariable);
   const deleteScriptVariable = useScriptVariables((state) => state.deleteVariable);
 
@@ -341,6 +480,82 @@ function SessionPageContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayUsername, sessionId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleSetChatMessages = (event: Event) => {
+      try {
+        const detail = (event as CustomEvent<SessionSetChatMessagesDetail>).detail;
+        if (!shouldHandleSessionMessageEvent(detail?.characterId, characterId)) {
+          return;
+        }
+        setDialogueMessages(applySessionMessagePatches(dialogueMessages, detail?.messages));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to apply setChatMessages");
+      }
+    };
+
+    const handleCreateChatMessages = (event: Event) => {
+      try {
+        const detail = (event as CustomEvent<SessionCreateChatMessagesDetail>).detail;
+        if (!shouldHandleSessionMessageEvent(detail?.characterId, characterId)) {
+          return;
+        }
+        setDialogueMessages(appendSessionMessages(dialogueMessages, detail?.messages));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to apply createChatMessages");
+      }
+    };
+
+    const handleDeleteChatMessages = (event: Event) => {
+      try {
+        const detail = (event as CustomEvent<SessionDeleteChatMessagesDetail>).detail;
+        if (!shouldHandleSessionMessageEvent(detail?.characterId, characterId)) {
+          return;
+        }
+        setDialogueMessages(removeSessionMessages(dialogueMessages, detail?.messageIds));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to apply deleteChatMessages");
+      }
+    };
+
+    const handleRefreshOneMessage = (event: Event) => {
+      try {
+        const detail = (event as CustomEvent<SessionRefreshOneMessageDetail>).detail;
+        if (!shouldHandleSessionMessageEvent(detail?.characterId, characterId)) {
+          return;
+        }
+
+        const index = findSessionMessageIndex(dialogueMessages, detail?.message_id);
+        const message = dialogueMessages[index];
+        if (!message) {
+          throw new Error(`Session message not found: ${detail?.message_id}`);
+        }
+        if (message.role !== "assistant") {
+          throw new Error(`refreshOneMessage only supports assistant messages: ${message.id}`);
+        }
+
+        void regenerateDialogueMessage(extractNodeIdFromMessageId(message.id));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to refresh message");
+      }
+    };
+
+    window.addEventListener("DreamMiniStage:setChatMessages", handleSetChatMessages as EventListener);
+    window.addEventListener("DreamMiniStage:createChatMessages", handleCreateChatMessages as EventListener);
+    window.addEventListener("DreamMiniStage:deleteChatMessages", handleDeleteChatMessages as EventListener);
+    window.addEventListener("DreamMiniStage:refreshOneMessage", handleRefreshOneMessage as EventListener);
+
+    return () => {
+      window.removeEventListener("DreamMiniStage:setChatMessages", handleSetChatMessages as EventListener);
+      window.removeEventListener("DreamMiniStage:createChatMessages", handleCreateChatMessages as EventListener);
+      window.removeEventListener("DreamMiniStage:deleteChatMessages", handleDeleteChatMessages as EventListener);
+      window.removeEventListener("DreamMiniStage:refreshOneMessage", handleRefreshOneMessage as EventListener);
+    };
+  }, [characterId, dialogueMessages, regenerateDialogueMessage, setDialogueMessages]);
 
   const resolveCharacterSwitchTarget = useCallback(async (target: string): Promise<string> => {
     const normalized = target.trim();
@@ -752,6 +967,12 @@ function SessionPageContent() {
       }
       if (entry.set.nosend) {
         setUserInput(payload);
+        return payload;
+      }
+      if (entry.set.inject) {
+        await executionContext.injectPrompt?.(payload, {
+          position: entry.set.before ? "before" : "in_chat",
+        });
         return payload;
       }
       if (payload.startsWith("/")) {

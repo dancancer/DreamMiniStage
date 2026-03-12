@@ -38,6 +38,7 @@ export default function QuickReplyPanel({ dialogueId, onExecuteQuickReply }: Pro
   const setMap = useQuickReplyStore((state) => state.sets);
   const globalSetEntries = useQuickReplyStore((state) => state.globalSets);
   const chatSetMap = useQuickReplyStore((state) => state.chatSets);
+  const getVisibleQuickReplies = useQuickReplyStore((state) => state.getVisibleQuickReplies);
   const createQuickReplySet = useQuickReplyStore((state) => state.createQuickReplySet);
   const addGlobalQuickReplySet = useQuickReplyStore((state) => state.addGlobalQuickReplySet);
   const removeGlobalQuickReplySet = useQuickReplyStore((state) => state.removeGlobalQuickReplySet);
@@ -71,22 +72,8 @@ export default function QuickReplyPanel({ dialogueId, onExecuteQuickReply }: Pro
   }, [chatSetEntries]);
 
   const visibleReplies = useMemo(() => {
-    return [...activeGlobalSets, ...activeChatSets]
-      .filter((entry) => entry.visible)
-      .flatMap((entry) => {
-        const quickReplySet = setMap[entry.name] as QuickReplySetRecord | undefined;
-        if (!quickReplySet) {
-          return [];
-        }
-        return quickReplySet.replies
-          .filter((reply) => !reply.hidden)
-          .map((reply) => ({
-            scope: entry.scope,
-            set: quickReplySet,
-            reply,
-          }));
-      });
-  }, [activeChatSets, activeGlobalSets, setMap]);
+    return getVisibleQuickReplies(dialogueId);
+  }, [dialogueId, getVisibleQuickReplies]);
 
   useEffect(() => {
     if (!quickReplySets.length) {

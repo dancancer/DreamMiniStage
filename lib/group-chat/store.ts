@@ -68,8 +68,20 @@ function ensureDialogueRecord(
   return dialogues[dialogueId] || { members: [] };
 }
 
-function findMemberIndex(members: GroupChatMemberRecord[], target: string): number {
-  return members.findIndex((member) => member.name === target || member.id === target);
+function findMemberNameIndex(members: GroupChatMemberRecord[], target: string): number {
+  return members.findIndex((member) => member.name === target);
+}
+
+function findMemberIdIndex(members: GroupChatMemberRecord[], target: string): number {
+  return members.findIndex((member) => member.id === target);
+}
+
+function findMemberReferenceIndex(members: GroupChatMemberRecord[], target: string): number {
+  const nameIndex = findMemberNameIndex(members, target);
+  if (nameIndex >= 0) {
+    return nameIndex;
+  }
+  return findMemberIdIndex(members, target);
 }
 
 function ensureMember(
@@ -80,7 +92,7 @@ function ensureMember(
   const resolvedDialogueId = normalizeDialogueId(dialogueId);
   const resolvedTarget = normalizeTarget(target, "group member target");
   const members = ensureDialogueRecord(dialogues, resolvedDialogueId).members;
-  const index = findMemberIndex(members, resolvedTarget);
+  const index = findMemberReferenceIndex(members, resolvedTarget);
   if (index < 0) {
     throw new Error(`Group member not found: ${resolvedTarget}`);
   }
@@ -125,7 +137,7 @@ export const useGroupChatStore = create<GroupChatStoreState>()(
       const name = normalizeTarget(target, "group member target");
       const state = get();
       const existing = ensureDialogueRecord(state.dialogues, resolvedDialogueId);
-      if (findMemberIndex(existing.members, name) >= 0) {
+      if (findMemberNameIndex(existing.members, name) >= 0) {
         throw new Error(`Group member already exists: ${name}`);
       }
 

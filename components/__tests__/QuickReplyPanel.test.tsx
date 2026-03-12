@@ -56,4 +56,19 @@ describe("QuickReplyPanel", () => {
     expect(onExecuteQuickReply).toHaveBeenCalledWith(0);
     unmountPanel(rendered);
   });
+
+  it("does not render duplicated buttons when one set is active in both scopes", () => {
+    const store = useQuickReplyStore.getState();
+    store.createQuickReplySet("Main", {});
+    store.createQuickReply("Main", "Hello", "hello world", {});
+    store.addGlobalQuickReplySet("Main", { visible: true });
+    store.addChatQuickReplySet("dlg-1", "Main", { visible: true });
+
+    const rendered = renderPanel();
+    const buttons = rendered.container.querySelectorAll("button[data-quick-reply-index]");
+
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]?.textContent).toContain("Hello");
+    unmountPanel(rendered);
+  });
 });

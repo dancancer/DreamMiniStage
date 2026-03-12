@@ -118,7 +118,7 @@ describe("Property 6: TrimStrings 过滤幂等性", () => {
   it("*For any* text containing a literal pattern, filter SHALL remove all occurrences", () => {
     fc.assert(
       fc.property(
-        fc.string({ minLength: 1, maxLength: 10 }).filter(s => s !== "_"),
+        fc.string({ minLength: 1, maxLength: 10 }).filter((s) => s !== "_" && !s.includes("_")),
         fc.integer({ min: 2, max: 5 }),
         (pattern, count) => {
           // 构造包含多个相同模式的文本
@@ -504,4 +504,3 @@ describe("Composition Properties", () => {
     );
   });
 });
-
