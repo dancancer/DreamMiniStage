@@ -544,6 +544,7 @@ export default function CharacterChatPanel({
         isOpen={showScriptDebugPanel}
         onClose={() => setShowScriptDebugPanel(false)}
         scripts={scriptBridge.scriptStatuses}
+        hostDebug={scriptBridge.scriptHostDebug}
       />
     </div>
   );
