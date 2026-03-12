@@ -12,6 +12,7 @@
 | `types.ts` | 类型定义 | 桥接类型定义 |
 | `audio-handlers.ts` | 处理器 | 音频事件处理 |
 | `capability-matrix.ts` | 能力矩阵 | shim/handler/slash 单一能力声明 |
+| `host-capability-matrix.ts` | 能力矩阵 | JS-Slash-Runner 宿主支持/ fail-fast 单一能力声明 |
 | `character-handlers.ts` | 处理器 | 角色事件处理 |
 | `compat-handlers.ts` | 处理器 | JS-Slash-Runner 高频兼容 API（import_raw / extension / script buttons / version） |
 | `compat-displayed-message-handlers.ts` | 处理器 | JS-Slash-Runner displayed-message 兼容 API（format/retrieve） |
@@ -44,6 +45,7 @@
 - `variable-handlers.ts` 的集合操作默认作用域为 `chat`，并支持上游常用参数形态 `{ type, message_id }`（含 `latest` 与负索引）。
 - `mvu-handlers.ts` 的 `mvu.getVariable/mvu.getVariables` 已支持 `{ type, message_id }` 与 `messageId`，并统一 `chatId > dialogueId > characterId` 的会话键优先级。
 - `capability-matrix.ts` 已作为能力单源，`api-surface-contract.test.ts` 会同步校验 shim 暴露面、handler 注册面与 slash 注册面；高价值宿主注入位还会继续校验 `CharacterChatPanel -> useScriptBridge -> ApiCallContext -> ExecutionContext` 的透传完整性。
+- `host-capability-matrix.ts` 是 Phase 5 新增的宿主语义单源：专门描述哪些 `JS-Slash-Runner` 能力是默认支持、条件支持、显式 fail-fast 或未支持；它不替代 `capability-matrix.ts`，而是补齐“API 存在”和“产品宿主支持”之间的语义缺口。
 - `slash-handlers.ts` 已收敛为薄桥接层；Slash 上下文注入逻辑迁移到 `slash-context-adapter.ts`，其中继续提供 `runSlashCommand` 递归执行入口与 `reload-page` 的显式注入 fail-fast 行为。
 - `registerFunctionTool` 已收敛为单一注册表路径：`extension-handlers` 统一负责注册、调度、回调落地；`tool-handlers` 仅保留适配导出，避免双状态源漂移。
 - `extension-handlers.ts` 现为门面层：具体实现拆分到 `function-tool-bridge.ts` 与 `slash-command-bridge.ts`，通过 `iframe-dispatcher-registry.ts` 共享派发能力。
