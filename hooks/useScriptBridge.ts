@@ -17,7 +17,14 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useScriptVariables } from "@/lib/store/script-variables";
 import { handleApiCall } from "./script-bridge";
-import { createHostDebugState, type ScriptHostApiCallRecord, type ScriptHostRuntimeState } from "./script-bridge/host-debug-state";
+import {
+  readHostDebugSnapshot,
+  type ScriptHostApiCallRecord,
+  type ScriptHostDebugSnapshot,
+  type ScriptHostDebugState,
+  type ScriptHostRuntimeState,
+} from "./script-bridge/host-debug-state";
+import type { ScriptHostDebugResolvedPath } from "./script-bridge/host-debug-state";
 import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
   CharacterSwitchResult,
@@ -229,6 +236,9 @@ interface UseScriptBridgeOptions {
     from: string,
     mappings: ImportVariableMapping[],
   ) => number | void | Promise<number | void>;
+  onListGallery?: (
+    options?: { character?: string; group?: string },
+  ) => string[] | Promise<string[]>;
   onShowGallery?: (
     options?: { character?: string; group?: string },
   ) => void | Promise<void>;
@@ -251,7 +261,8 @@ interface UseScriptBridgeOptions {
   onSetExtensionEnabled?: (
     extensionName: string,
     enabled: boolean,
-  ) => string | Promise<string>;
+    options?: { reload?: boolean },
+  ) => string | void | Promise<string | void>;
   onJumpToMessage?: (index: number) => void | Promise<void>;
   onRenderChatMessages?: (
     count: number,
@@ -269,6 +280,13 @@ interface UseScriptBridgeOptions {
     options?: ReasoningParseOptions,
   ) => ReasoningParseResult | null | undefined | Promise<ReasoningParseResult | null | undefined>;
   onApplyReasoningRegex?: (reasoning: string) => string | Promise<string>;
+  hostCapabilitySources?: Partial<Record<
+    "translation" | "youtubeTranscript" | "clipboardRead" | "clipboardWrite" | "extensionRead" | "extensionWrite" | "galleryList" | "galleryShow",
+    Extract<ScriptHostDebugResolvedPath, "session-default" | "api-context">
+  >>;
+  hasHostOverrides?: boolean;
+  hostDebugState: ScriptHostDebugState;
+  onHostDebugUpdate: (snapshot: ScriptHostDebugSnapshot) => void;
 }
 
 interface UseScriptBridgeReturn {
@@ -372,6 +390,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onGetClipboardText,
     onSetClipboardText,
     onImportVariables,
+    onListGallery,
     onShowGallery,
     onUploadExpressionAsset,
     onShowPopup,
@@ -386,13 +405,13 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onRenameCurrentCharacter,
     onParseReasoningBlock,
     onApplyReasoningRegex,
+    hostCapabilitySources,
+    hasHostOverrides,
+    hostDebugState,
+    onHostDebugUpdate,
   } = options;
   const [scriptStatuses, setScriptStatuses] = useState<ScriptStatus[]>([]);
-  const hostDebugStateRef = useRef(createHostDebugState());
-  const [scriptHostDebug, setScriptHostDebug] = useState(() => ({
-    recentApiCalls: hostDebugStateRef.current.getRecentApiCalls(),
-    runtimeState: hostDebugStateRef.current.getRuntimeState(),
-  }));
+  const [scriptHostDebug, setScriptHostDebug] = useState(() => readHostDebugSnapshot(hostDebugState));
 
   const {
     variables: scriptVariablesStore,
@@ -419,24 +438,24 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
   }, []);
 
   const syncScriptHostDebug = useCallback(() => {
-    setScriptHostDebug({
-      recentApiCalls: hostDebugStateRef.current.getRecentApiCalls(),
-      runtimeState: hostDebugStateRef.current.getRuntimeState(),
-    });
-  }, []);
+    const snapshot = readHostDebugSnapshot(hostDebugState);
+    setScriptHostDebug(snapshot);
+    onHostDebugUpdate(snapshot);
+  }, [hostDebugState, onHostDebugUpdate]);
 
-  const hasHostOverrides = Boolean(
+  const inferredHostOverrides = Boolean(
     onGetClipboardText ||
     onSetClipboardText ||
     onIsExtensionInstalled ||
     onGetExtensionEnabledState ||
     onSetExtensionEnabled,
   );
+  const effectiveHasHostOverrides = hasHostOverrides ?? inferredHostOverrides;
 
   useEffect(() => {
-    hostDebugStateRef.current.setHasHostOverrides(hasHostOverrides);
+    hostDebugState.setHasHostOverrides(effectiveHasHostOverrides);
     syncScriptHostDebug();
-  }, [hasHostOverrides, syncScriptHostDebug]);
+  }, [effectiveHasHostOverrides, hostDebugState, syncScriptHostDebug]);
 
   const handleCharacterSwitch = useCallback(
     async (target: string): Promise<CharacterSwitchResult | void> => {
@@ -509,7 +528,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           chatId: dialogueId,
           messageId: messagesRef.current[messagesRef.current.length - 1]?.id,
           messages: messagesRef.current,  // 通过 ref 获取最新 messages
-          hostDebugState: hostDebugStateRef.current,
+          hostDebugState,
+          hostCapabilitySources,
           setScriptVariable,
           deleteScriptVariable,
           getVariablesSnapshot,
@@ -576,6 +596,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onGetClipboardText,
           onSetClipboardText,
           onImportVariables,
+          onListGallery,
           onShowGallery,
           onUploadExpressionAsset,
           onShowPopup,
@@ -689,6 +710,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onGetClipboardText,
       onSetClipboardText,
       onImportVariables,
+      onListGallery,
       onShowGallery,
       onUploadExpressionAsset,
       onShowPopup,
@@ -705,7 +727,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onApplyReasoningRegex,
       handleCharacterSwitch,
       syncScriptHostDebug,
-      hasHostOverrides,
+      hostCapabilitySources,
+      effectiveHasHostOverrides,
     ],
   );
 

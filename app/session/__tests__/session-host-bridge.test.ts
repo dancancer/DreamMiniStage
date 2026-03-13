@@ -57,37 +57,62 @@ describe("session-host-bridge", () => {
     expect(buildSessionSlashHostBridgeDetail("getYouTubeTranscript")).toBe(
       "window.__DREAMMINISTAGE_SESSION_HOST__.getYouTubeTranscript",
     );
+    expect(buildSessionSlashHostBridgeDetail("getClipboardText")).toBe(
+      "window.__DREAMMINISTAGE_SESSION_HOST__.getClipboardText",
+    );
+    expect(buildSessionSlashHostBridgeDetail("setClipboardText")).toBe(
+      "window.__DREAMMINISTAGE_SESSION_HOST__.setClipboardText",
+    );
+    expect(buildSessionSlashHostBridgeDetail("isExtensionInstalled")).toBe(
+      "window.__DREAMMINISTAGE_SESSION_HOST__.isExtensionInstalled",
+    );
+    expect(buildSessionSlashHostBridgeDetail("getExtensionEnabledState")).toBe(
+      "window.__DREAMMINISTAGE_SESSION_HOST__.getExtensionEnabledState",
+    );
+    expect(buildSessionSlashHostBridgeDetail("setExtensionEnabled")).toBe(
+      "window.__DREAMMINISTAGE_SESSION_HOST__.setExtensionEnabled",
+    );
   });
 
   it("keeps default, conditional, and fail-fast host semantics explainable", () => {
-    const audioCapability = SCRIPT_HOST_CAPABILITY_MATRIX.find(
-      (capability) => capability.area === "audio",
-    );
-    const clipboardCapability = SCRIPT_HOST_CAPABILITY_MATRIX.find(
-      (capability) => capability.area === "clipboard",
-    );
-    const extensionCapability = SCRIPT_HOST_CAPABILITY_MATRIX.find(
-      (capability) => capability.area === "extension-state",
-    );
+    const audioCapability = SCRIPT_HOST_CAPABILITY_MATRIX.find((capability) => capability.id === "audio-channel-control");
+    const clipboardCapability = SCRIPT_HOST_CAPABILITY_MATRIX.find((capability) => capability.id === "clipboard-bridge");
+    const extensionReadCapability = SCRIPT_HOST_CAPABILITY_MATRIX.find((capability) => capability.id === "extension-state-read");
+    const extensionWriteCapability = SCRIPT_HOST_CAPABILITY_MATRIX.find((capability) => capability.id === "extension-state-write");
 
     expect(audioCapability).toBeDefined();
     expect(clipboardCapability).toBeDefined();
-    expect(extensionCapability).toBeDefined();
+    expect(extensionReadCapability).toBeDefined();
+    expect(extensionWriteCapability).toBeDefined();
 
     expect(resolveHostCapabilityState(audioCapability!)).toMatchObject({
       resolvedPath: "session-default",
       outcome: "supported",
     });
-    expect(
-      resolveHostCapabilityState(clipboardCapability!, { hasInjectedHost: true }),
-    ).toMatchObject({
+    expect(resolveHostCapabilityState(clipboardCapability!)).toMatchObject({
+      resolvedPath: "session-default",
+      outcome: "supported",
+    });
+    expect(resolveHostCapabilityState(clipboardCapability!, {
+      resolvedPath: "api-context",
+    })).toMatchObject({
       resolvedPath: "api-context",
       outcome: "supported",
     });
-    expect(resolveHostCapabilityState(extensionCapability!)).toMatchObject({
+    expect(resolveHostCapabilityState(extensionReadCapability!)).toMatchObject({
+      resolvedPath: "session-default",
+      outcome: "supported",
+    });
+    expect(resolveHostCapabilityState(extensionWriteCapability!)).toMatchObject({
       resolvedPath: "fail-fast",
       outcome: "fail-fast",
-      reason: extensionCapability?.failFastReason,
+      reason: extensionWriteCapability?.failFastReason,
+    });
+    expect(resolveHostCapabilityState(extensionWriteCapability!, {
+      resolvedPath: "api-context",
+    })).toMatchObject({
+      resolvedPath: "api-context",
+      outcome: "supported",
     });
   });
 });

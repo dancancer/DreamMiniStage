@@ -73,8 +73,10 @@ describe("ScriptDebugPanel", () => {
     expect(text).toContain("Recent API Calls");
     expect(text).toContain("Runtime State");
     expect(text).toContain("Script Status");
+    expect(text).toContain("function-tool-registry");
     expect(text).toContain("tool-registration");
-    expect(text).toContain("audio");
+    expect(text).toContain("session-translation");
+    expect(text).toContain("Product Entry");
     expect(text).toContain("getAudioSettings");
     expect(text).toContain("session-default");
     expect(text).toContain("toolRegistrations");

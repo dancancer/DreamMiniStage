@@ -63,6 +63,11 @@ const SUPPORT_UI = {
   unsupported: "bg-ink/20 text-ink-soft",
 } as const;
 
+const PRODUCT_ENTRY_UI = {
+  true: "bg-blue-500/20 text-blue-300",
+  false: "bg-ink/20 text-ink-soft",
+} as const;
+
 // ============================================================================
 //                              子组件
 // ============================================================================
@@ -104,23 +109,35 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 function HostCapabilitySection() {
+  const capabilityCards = [...SCRIPT_HOST_CAPABILITY_MATRIX].sort((left, right) =>
+    left.area.localeCompare(right.area) || left.id.localeCompare(right.id),
+  );
+
   return (
     <section className="space-y-2">
       <SectionTitle>Host Capability</SectionTitle>
       <div className="grid gap-2 sm:grid-cols-2">
-        {SCRIPT_HOST_CAPABILITY_MATRIX.map((capability) => (
+        {capabilityCards.map((capability) => (
           <div
             key={capability.id}
             className="rounded border border-border bg-overlay p-3"
           >
             <div className="flex items-center justify-between gap-2">
-              <div className="text-sm font-medium text-cream">{capability.area}</div>
+              <div className="text-sm font-medium text-cream">{capability.id}</div>
               <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${SUPPORT_UI[capability.support]}`}>
                 {capability.support}
               </span>
             </div>
-            <div className="mt-1 text-xs text-ink-soft">
-              {capability.hostSource}
+            <div className="mt-2 flex flex-wrap gap-2 text-[10px] uppercase tracking-wide">
+              <span className="rounded-full bg-ink/20 px-2 py-0.5 text-ink-soft">
+                {capability.area}
+              </span>
+              <span className="rounded-full bg-ink/20 px-2 py-0.5 text-ink-soft">
+                {capability.hostSource}
+              </span>
+              <span className={`rounded-full px-2 py-0.5 ${PRODUCT_ENTRY_UI[String(capability.hasProductEntry) as "true" | "false"]}`}>
+                Product Entry: {capability.hasProductEntry ? "yes" : "no"}
+              </span>
             </div>
             {capability.failFastReason && (
               <div className="mt-2 text-xs text-ink-soft">

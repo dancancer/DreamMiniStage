@@ -20,6 +20,11 @@ export interface ScriptHostRuntimeState {
   hasHostOverrides: boolean;
 }
 
+export interface ScriptHostDebugSnapshot {
+  recentApiCalls: ScriptHostApiCallRecord[];
+  runtimeState: ScriptHostRuntimeState;
+}
+
 const MAX_RECENT_API_CALLS = 20;
 
 export interface ScriptHostDebugState {
@@ -63,5 +68,12 @@ export function createHostDebugState(): ScriptHostDebugState {
         hasHostOverrides: value,
       };
     },
+  };
+}
+
+export function readHostDebugSnapshot(state: ScriptHostDebugState): ScriptHostDebugSnapshot {
+  return {
+    recentApiCalls: state.getRecentApiCalls(),
+    runtimeState: state.getRuntimeState(),
   };
 }

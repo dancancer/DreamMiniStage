@@ -27,6 +27,15 @@ export type SessionSlashHostBridge = {
     urlOrId: string,
     options?: YouTubeTranscriptOptions,
   ) => string | Promise<string>;
+  getClipboardText?: () => string | Promise<string>;
+  setClipboardText?: (text: string) => void | Promise<void>;
+  isExtensionInstalled?: (extensionName: string) => boolean | Promise<boolean>;
+  getExtensionEnabledState?: (extensionName: string) => boolean | Promise<boolean>;
+  setExtensionEnabled?: (
+    extensionName: string,
+    enabled: boolean,
+    options?: { reload?: boolean },
+  ) => string | void | Promise<string | void>;
 };
 
 type SessionHostWindow = Window & {

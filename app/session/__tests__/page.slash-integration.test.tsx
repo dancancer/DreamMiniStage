@@ -102,7 +102,12 @@ const mocks = vi.hoisted(() => {
     },
     defaultTranslateText: vi.fn().mockResolvedValue("default translated"),
     defaultYouTubeTranscript: vi.fn().mockResolvedValue("default transcript"),
+    defaultGetClipboardText: vi.fn().mockResolvedValue("default clipboard"),
+    defaultSetClipboardText: vi.fn().mockResolvedValue(undefined),
+    defaultIsExtensionInstalled: vi.fn().mockResolvedValue(true),
+    defaultGetExtensionEnabledState: vi.fn().mockResolvedValue(true),
     latestScriptDebugProps: undefined as undefined | Record<string, unknown>,
+    latestGalleryDialogProps: undefined as undefined | Record<string, unknown>,
     dialogueTreeState: buildTimedDialogueTree() as ReturnType<typeof buildTimedDialogueTree>,
     worldBooks: {
       "book-1": { entry_0: buildWorldBookEntry() },
@@ -168,6 +173,10 @@ vi.mock("@/app/session/session-host-defaults", () => ({
   createSessionDefaultHostBridge: () => ({
     translateText: mocks.defaultTranslateText,
     getYouTubeTranscript: mocks.defaultYouTubeTranscript,
+    getClipboardText: mocks.defaultGetClipboardText,
+    setClipboardText: mocks.defaultSetClipboardText,
+    isExtensionInstalled: mocks.defaultIsExtensionInstalled,
+    getExtensionEnabledState: mocks.defaultGetExtensionEnabledState,
   }),
 }));
 
@@ -187,7 +196,7 @@ vi.mock("@/hooks/useCharacterDialogue", () => ({
 
 vi.mock("@/hooks/useCharacterLoader", () => ({
   useCharacterLoader: () => ({
-    character: { id: "char-1", name: "Alice", extensions: {} },
+    character: { id: "char-1", name: "Alice", avatar_path: "/alice.png", extensions: {} },
     dialogueData: null,
     error: null,
   }),
@@ -325,6 +334,12 @@ vi.mock("@/components/ScriptDebugPanel", () => ({
     return null;
   },
 }));
+vi.mock("@/components/session-gallery/SessionGalleryDialog", () => ({
+  default: (props: Record<string, unknown>) => {
+    mocks.latestGalleryDialogProps = props;
+    return null;
+  },
+}));
 
 vi.mock("@/components/character-chat", async () => {
   const ReactModule = await import("react");
@@ -442,8 +457,26 @@ describe("Session page slash integration", () => {
     mocks.defaultTranslateText.mockResolvedValue("default translated");
     mocks.defaultYouTubeTranscript.mockReset();
     mocks.defaultYouTubeTranscript.mockResolvedValue("default transcript");
+    mocks.defaultGetClipboardText.mockReset();
+    mocks.defaultGetClipboardText.mockResolvedValue("default clipboard");
+    mocks.defaultSetClipboardText.mockReset();
+    mocks.defaultSetClipboardText.mockResolvedValue(undefined);
+    mocks.defaultIsExtensionInstalled.mockReset();
+    mocks.defaultIsExtensionInstalled.mockResolvedValue(true);
+    mocks.defaultGetExtensionEnabledState.mockReset();
+    mocks.defaultGetExtensionEnabledState.mockResolvedValue(true);
     mocks.latestScriptDebugProps = undefined;
+    mocks.latestGalleryDialogProps = undefined;
     mocks.dialogueTreeState = buildTimedDialogueTree();
+    document.documentElement.setAttribute("data-theme", "dark");
+    document.documentElement.style.removeProperty("--session-accent");
+    document.body.classList.remove("bubblechat", "documentstyle");
+    delete document.body.dataset.panelsCollapsed;
+    delete document.body.dataset.vnMode;
+    delete document.body.dataset.movingUiPreset;
+    delete document.body.dataset.background;
+    delete document.body.dataset.backgroundLocked;
+    delete document.body.dataset.backgroundAuto;
     mocks.worldBooks = {
       "book-1": { entry_0: buildWorldBookEntry() },
       "book-2": { entry_0: buildWorldBookEntry({ sticky: 0, delay: 0, cooldown: 0 }) },
@@ -850,6 +883,80 @@ describe("Session page slash integration", () => {
     unmountPage(rendered);
   });
 
+  it("executes /clipboard-set through the built-in session default host bridge", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/clipboard-set copied text");
+
+    expect(mocks.defaultSetClipboardText).toHaveBeenCalledWith("copied text");
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("executes /clipboard-get through injected session host bridge overrides", async () => {
+    const getClipboardText = vi.fn().mockResolvedValue("injected clipboard");
+    setSessionSlashHostBridge(window, {
+      getClipboardText,
+    });
+
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/clipboard-get");
+
+    expect(getClipboardText).toHaveBeenCalledTimes(1);
+    expect(mocks.defaultGetClipboardText).not.toHaveBeenCalled();
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("executes /extension-state through the built-in session default host bridge", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/extension-state Summarize");
+
+    expect(mocks.defaultIsExtensionInstalled).toHaveBeenCalledWith("Summarize");
+    expect(mocks.defaultGetExtensionEnabledState).toHaveBeenCalledWith("Summarize");
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("keeps /extension-toggle fail-fast when no default extension writer exists", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/extension-toggle Summarize");
+
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      expect.stringContaining("/extension-toggle is not available in current context"),
+    );
+
+    unmountPage(rendered);
+  });
+
+  it("executes /show-gallery through the built-in session gallery host and opens the dialog", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/show-gallery char=Alice");
+
+    expect(mocks.latestGalleryDialogProps).toMatchObject({
+      open: true,
+      items: [{ src: "/alice.png", ephemeral: false }],
+      target: {
+        character: "Alice",
+      },
+    });
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
   it("passes host-debug payload into ScriptDebugPanel from the live /session host", async () => {
     const rendered = renderPage();
     await flushEffects();
@@ -864,6 +971,145 @@ describe("Session page slash integration", () => {
         },
       },
     });
+
+    unmountPage(rendered);
+  });
+
+  it("supports /popup through the shared default UI host in page slash input", async () => {
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/popup result=true hello world");
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
+    unmountPage(rendered);
+  });
+
+  it("supports /bubble and /default through the shared default UI host in page slash input", async () => {
+    document.body.classList.remove("bubblechat", "documentstyle");
+
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/bubble");
+    expect(document.body.classList.contains("bubblechat")).toBe(true);
+
+    await submitSlash("/default");
+    expect(document.body.classList.contains("bubblechat")).toBe(false);
+    expect(document.body.classList.contains("documentstyle")).toBe(false);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("supports /theme and /css-var through the shared default UI host in page slash input", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/theme light");
+    await submitSlash("/css-var varname=--session-accent amber");
+
+    expect(document.documentElement.getAttribute("data-theme")).toBe("light");
+    expect(document.documentElement.style.getPropertyValue("--session-accent")).toBe("amber");
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("supports /panels, /resetpanels, and /vn through the shared default UI host in page slash input", async () => {
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/panels");
+    expect(document.body.dataset.panelsCollapsed).toBe("true");
+
+    await submitSlash("/resetpanels");
+    expect(document.body.dataset.panelsCollapsed).toBeUndefined();
+    expect(document.body.dataset.vnMode).toBeUndefined();
+
+    await submitSlash("/vn");
+    expect(document.body.dataset.vnMode).toBe("true");
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("supports /bg, /lockbg, /unlockbg, and /autobg through the shared default UI host in page slash input", async () => {
+    document.body.dataset.backgroundAuto = "sunset";
+
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/bg forest");
+    expect(document.body.dataset.background).toBe("forest");
+
+    await submitSlash("/lockbg");
+    await submitSlash("/autobg");
+    expect(document.body.dataset.background).toBe("forest");
+    expect(document.body.dataset.backgroundLocked).toBe("true");
+
+    await submitSlash("/unlockbg");
+    await submitSlash("/autobg");
+    expect(document.body.dataset.background).toBe("sunset");
+    expect(document.body.dataset.backgroundLocked).toBeUndefined();
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    unmountPage(rendered);
+  });
+
+  it("supports /closechat through the shared default UI host in page slash input", async () => {
+    const closeSpy = vi.fn();
+    const closeButton = document.createElement("button");
+    closeButton.id = "option_close_chat";
+    closeButton.addEventListener("click", closeSpy);
+    document.body.appendChild(closeButton);
+
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/closechat");
+
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+
+    closeButton.remove();
+    unmountPage(rendered);
+  });
+
+  it("records injected /translate and default /yt-script host paths in host-debug payload", async () => {
+    const translateText = vi.fn().mockResolvedValue("bonjour");
+    setSessionSlashHostBridge(window, {
+      translateText,
+    });
+
+    const rendered = renderPage();
+    await flushEffects();
+
+    await submitSlash("/translate target=fr hello world");
+    await submitSlash("/yt-script https://youtu.be/dQw4w9WgXcQ");
+    await flushEffects();
+
+    expect(mocks.latestScriptDebugProps).toMatchObject({
+      hostDebug: {
+        recentApiCalls: expect.arrayContaining([
+          expect.objectContaining({
+            capability: "session-translation",
+            resolvedPath: "api-context",
+            outcome: "supported",
+          }),
+          expect.objectContaining({
+            capability: "youtube-transcript",
+            resolvedPath: "session-default",
+            outcome: "supported",
+          }),
+        ]),
+      },
+    });
+    expect(translateText).toHaveBeenCalled();
 
     unmountPage(rendered);
   });

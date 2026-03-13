@@ -64,242 +64,26 @@ import type { WorldBookEntry } from "@/lib/models/world-book-model";
 import { createLoreRegexAdapters } from "./slash-context-lore-regex";
 import { getRegisteredScriptTools, invokeScriptTool, registerScriptTool, unregisterScriptTool } from "./tool-handlers";
 
-interface HostPluginRegistryEntry {
-  manifest?: {
-    id?: string;
-    name?: string;
-  };
-  enabled?: boolean;
-}
-
-interface HostPluginOperationResult {
-  success?: boolean;
-  error?: string;
-  message?: string;
-}
-
-interface HostPluginRegistry {
-  initialize?: () => Promise<void> | void;
-  getPlugins?: () => unknown[];
-  enablePlugin?: (pluginId: string) => Promise<HostPluginOperationResult> | HostPluginOperationResult;
-  disablePlugin?: (pluginId: string) => Promise<HostPluginOperationResult> | HostPluginOperationResult;
-}
-
-function normalizeExtensionToken(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-function resolveHostPluginRegistry(): HostPluginRegistry | undefined {
-  if (typeof window === "undefined") {
-    return undefined;
-  }
-
-  const registry = (window as Window & { pluginRegistry?: unknown }).pluginRegistry;
-  if (!registry || typeof registry !== "object") {
-    return undefined;
-  }
-  return registry as HostPluginRegistry;
-}
-
-function readPluginEntries(registry: HostPluginRegistry): HostPluginRegistryEntry[] {
-  const entries = registry.getPlugins?.();
-  if (!Array.isArray(entries)) {
-    throw new Error("plugin registry getPlugins is not available");
-  }
-  return entries as HostPluginRegistryEntry[];
-}
-
-function findPluginEntry(
-  entries: HostPluginRegistryEntry[],
-  extensionName: string,
-): HostPluginRegistryEntry | undefined {
-  const target = normalizeExtensionToken(extensionName);
-  return entries.find((entry) => {
-    const id = typeof entry.manifest?.id === "string"
-      ? normalizeExtensionToken(entry.manifest.id)
-      : "";
-    const name = typeof entry.manifest?.name === "string"
-      ? normalizeExtensionToken(entry.manifest.name)
-      : "";
-    return id === target || name === target;
-  });
-}
-
-function resolvePluginId(entry: HostPluginRegistryEntry, extensionName: string): string {
-  const manifestId = typeof entry.manifest?.id === "string" ? entry.manifest.id.trim() : "";
-  if (manifestId.length > 0) {
-    return manifestId;
-  }
-  return extensionName.trim();
-}
-
-function isCssColorValue(value: string): boolean {
-  if (typeof document === "undefined") {
-    return value.trim().length > 0;
-  }
-
-  const probe = document.createElement("span");
-  probe.style.color = "";
-  probe.style.color = value;
-  return probe.style.color.length > 0;
-}
-
-function applyChatDisplayMode(mode: "default" | "bubble" | "document"): void {
-  if (typeof document === "undefined") {
-    throw new Error("chat display mode is not available in current context");
-  }
-
-  const body = document.body;
-  if (!body) {
-    throw new Error("chat display mode host body is not available");
-  }
-
-  body.classList.remove("bubblechat", "documentstyle");
-  if (mode === "bubble") {
-    body.classList.add("bubblechat");
-    return;
-  }
-  if (mode === "document") {
-    body.classList.add("documentstyle");
-  }
-}
-
-function resolveAutoBackgroundColor(): string {
-  if (typeof document === "undefined") {
-    throw new Error("bgcol is not available in current context");
-  }
-
-  const rootStyle = getComputedStyle(document.documentElement);
-  const bodyStyle = getComputedStyle(document.body);
-  const candidates = [
-    rootStyle.getPropertyValue("--SmartThemeBlurTintColor"),
-    bodyStyle.backgroundColor,
-    rootStyle.backgroundColor,
-  ];
-
-  for (const candidate of candidates) {
-    const normalized = candidate.trim();
-    if (normalized.length > 0 && normalized !== "rgba(0, 0, 0, 0)" && normalized !== "transparent") {
-      return normalized;
-    }
-  }
-
-  return "rgb(0, 0, 0)";
-}
-
-async function defaultShowButtonsPopup(
-  text: string,
-  labels: string[],
-  options?: { multiple?: boolean },
-): Promise<string | string[]> {
-  if (typeof window === "undefined" || typeof window.prompt !== "function") {
-    throw new Error("/buttons host popup is not available in current context");
-  }
-
-  const promptBody = labels
-    .map((label, index) => `${index + 1}. ${label}`)
-    .join("\n");
-  const promptTitle = (text || "Select option").trim();
-
-  if (options?.multiple) {
-    const raw = window.prompt(
-      `${promptTitle}\n${promptBody}\nInput comma-separated numbers:`,
-      "",
-    );
-    if (!raw || raw.trim().length === 0) {
-      return [];
-    }
-
-    const selected = Array.from(new Set(
-      raw
-        .split(",")
-        .map((chunk) => Number.parseInt(chunk.trim(), 10))
-        .filter((index) => Number.isInteger(index) && index > 0 && index <= labels.length),
-    ));
-    return selected.map((index) => labels[index - 1]);
-  }
-
-  const raw = window.prompt(
-    `${promptTitle}\n${promptBody}\nInput number:`,
-    "",
-  );
-  if (!raw || raw.trim().length === 0) {
-    return "";
-  }
-
-  const index = Number.parseInt(raw.trim(), 10);
-  if (!Number.isInteger(index) || index <= 0 || index > labels.length) {
-    return "";
-  }
-  return labels[index - 1];
-}
-
-async function defaultShowPopup(
-  text: string,
-  options?: {
-    header?: string;
-    scroll?: boolean;
-    large?: boolean;
-    wide?: boolean;
-    wider?: boolean;
-    transparent?: boolean;
-    okButton?: string;
-    cancelButton?: string;
-    result?: boolean;
-  },
-): Promise<string | number> {
-  if (typeof window === "undefined") {
-    throw new Error("/popup is not available in current context");
-  }
-
-  const header = options?.header?.trim();
-  const popupText = [header, text].filter(Boolean).join("\n\n");
-  const useResult = options?.result === true;
-  const hasCancelButton = typeof options?.cancelButton === "string";
-
-  if (hasCancelButton || useResult) {
-    const confirmed = window.confirm(popupText);
-    if (useResult) {
-      return confirmed ? 1 : 0;
-    }
-    return confirmed ? text : "";
-  }
-
-  window.alert(popupText);
-  return useResult ? 1 : text;
-}
-
-async function defaultPickIcon(): Promise<string | false> {
-  if (typeof window === "undefined" || typeof window.prompt !== "function") {
-    throw new Error("/pick-icon is not available in current context");
-  }
-
-  const raw = window.prompt("Input icon name:", "");
-  const iconName = (raw || "").trim();
-  return iconName || false;
-}
-
-function defaultIsMobile(): boolean {
-  if (typeof navigator === "undefined") {
-    return false;
-  }
-
-  const ua = navigator.userAgent || "";
-  return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(ua);
-}
-
-async function defaultCloseCurrentChat(): Promise<void> {
-  if (typeof document === "undefined") {
-    throw new Error("/closechat is not available in current context");
-  }
-
-  const closeButton = document.querySelector<HTMLElement>("#option_close_chat");
-  if (!closeButton) {
-    throw new Error("/closechat host close button is not available");
-  }
-
-  closeButton.click();
-}
+import {
+  createDefaultAutoBackground,
+  createDefaultLockBackground,
+  createDefaultSetBackground,
+  createDefaultResetPanels,
+  createDefaultUnlockBackground,
+  createDefaultSetCssVariable,
+  createDefaultSetMovingUiPreset,
+  createDefaultSetTheme,
+  createDefaultTogglePanels,
+  createDefaultToggleVisualNovelMode,
+  applyChatDisplayMode,
+  createDefaultSetAverageBackgroundColor,
+  createDefaultSetChatDisplayMode,
+  defaultCloseCurrentChat,
+  defaultIsMobile,
+  defaultPickIcon,
+  defaultShowButtonsPopup,
+  defaultShowPopup,
+} from "./default-ui-host";
 
 const AUTHOR_NOTE_STORAGE_KEY = "dreamministage.author-note";
 const PERSONA_NAME_STORAGE_KEY = "dreamministage.persona-name";
@@ -879,6 +663,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onGetClipboardText = ctx.onGetClipboardText;
   const onSetClipboardText = ctx.onSetClipboardText;
   const onImportVariables = ctx.onImportVariables;
+  const onListGallery = ctx.onListGallery;
   const onOpenDataBank = ctx.onOpenDataBank;
   const onListDataBankEntries = ctx.onListDataBankEntries;
   const onGetDataBankText = ctx.onGetDataBankText;
@@ -889,69 +674,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const onIngestDataBank = ctx.onIngestDataBank;
   const onPurgeDataBank = ctx.onPurgeDataBank;
   const onSearchDataBank = ctx.onSearchDataBank;
-  const hostPluginRegistry = resolveHostPluginRegistry();
-  const defaultIsExtensionInstalled = hostPluginRegistry
-    ? async (extensionName: string): Promise<boolean> => {
-      await Promise.resolve(hostPluginRegistry.initialize?.());
-      const entries = readPluginEntries(hostPluginRegistry);
-      return !!findPluginEntry(entries, extensionName);
-    }
-    : undefined;
-  const defaultGetExtensionEnabledState = hostPluginRegistry
-    ? async (extensionName: string): Promise<boolean> => {
-      await Promise.resolve(hostPluginRegistry.initialize?.());
-      const entries = readPluginEntries(hostPluginRegistry);
-      const entry = findPluginEntry(entries, extensionName);
-      if (!entry) {
-        throw new Error(`/extension-state extension not installed: ${extensionName}`);
-      }
-      if (typeof entry.enabled !== "boolean") {
-        throw new Error(`/extension-state host returned non-boolean enabled state: ${extensionName}`);
-      }
-      return entry.enabled;
-    }
-    : undefined;
-  const defaultSetExtensionEnabled = hostPluginRegistry
-    ? async (extensionName: string, enabled: boolean): Promise<string> => {
-      await Promise.resolve(hostPluginRegistry.initialize?.());
-      const entries = readPluginEntries(hostPluginRegistry);
-      const entry = findPluginEntry(entries, extensionName);
-      if (!entry) {
-        throw new Error(`/extension-toggle extension not installed: ${extensionName}`);
-      }
-
-      const pluginId = resolvePluginId(entry, extensionName);
-      const action = enabled ? hostPluginRegistry.enablePlugin : hostPluginRegistry.disablePlugin;
-      if (!action) {
-        throw new Error("/extension-toggle host callback is not available in current context");
-      }
-
-      const result = await Promise.resolve(action.call(hostPluginRegistry, pluginId));
-      if (result && result.success === false) {
-        throw new Error(result.error || result.message || `/extension-toggle failed for ${pluginId}`);
-      }
-
-      return pluginId;
-    }
-    : undefined;
-  const defaultSetAverageBackgroundColor = typeof document !== "undefined"
-    ? async (color?: string): Promise<string> => {
-      const nextColor = (color || resolveAutoBackgroundColor()).trim();
-      if (!nextColor) {
-        throw new Error("/bgcol could not resolve target color");
-      }
-      if (!isCssColorValue(nextColor)) {
-        throw new Error(`/bgcol invalid color value: ${color}`);
-      }
-      document.documentElement.style.setProperty("--SmartThemeBlurTintColor", nextColor);
-      return nextColor;
-    }
-    : undefined;
-  const defaultSetChatDisplayMode = typeof document !== "undefined"
-    ? async (mode: "default" | "bubble" | "document"): Promise<void> => {
-      applyChatDisplayMode(mode);
-    }
-    : undefined;
+  const defaultSetAverageBackgroundColor = createDefaultSetAverageBackgroundColor();
+  const defaultSetChatDisplayMode = createDefaultSetChatDisplayMode();
   const defaultButtonsPopupCallback = typeof window !== "undefined"
     ? defaultShowButtonsPopup
     : undefined;
@@ -962,19 +686,20 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     ? defaultPickIcon
     : undefined;
   const defaultIsMobileCallback = defaultIsMobile;
-  const onIsExtensionInstalled = ctx.onIsExtensionInstalled ?? defaultIsExtensionInstalled;
-  const onGetExtensionEnabledState = ctx.onGetExtensionEnabledState ?? defaultGetExtensionEnabledState;
-  const onSetExtensionEnabled = ctx.onSetExtensionEnabled ?? defaultSetExtensionEnabled;
+  const onIsExtensionInstalled = ctx.onIsExtensionInstalled;
+  const onGetExtensionEnabledState = ctx.onGetExtensionEnabledState;
+  const onSetExtensionEnabled = ctx.onSetExtensionEnabled;
   const onTogglePanels = ctx.onTogglePanels;
-  const onResetPanels = ctx.onResetPanels;
-  const onToggleVisualNovelMode = ctx.onToggleVisualNovelMode;
-  const onSetBackground = ctx.onSetBackground;
-  const onLockBackground = ctx.onLockBackground;
-  const onUnlockBackground = ctx.onUnlockBackground;
-  const onAutoBackground = ctx.onAutoBackground;
-  const onSetTheme = ctx.onSetTheme;
-  const onSetMovingUiPreset = ctx.onSetMovingUiPreset;
-  const onSetCssVariable = ctx.onSetCssVariable;
+  const onResetPanels = ctx.onResetPanels ?? createDefaultResetPanels();
+  const onToggleVisualNovelMode = ctx.onToggleVisualNovelMode ?? createDefaultToggleVisualNovelMode();
+  const onSetBackground = ctx.onSetBackground ?? createDefaultSetBackground();
+  const onLockBackground = ctx.onLockBackground ?? createDefaultLockBackground();
+  const onUnlockBackground = ctx.onUnlockBackground ?? createDefaultUnlockBackground();
+  const onAutoBackground = ctx.onAutoBackground ?? createDefaultAutoBackground();
+  const onSetTheme = ctx.onSetTheme ?? createDefaultSetTheme();
+  const onSetMovingUiPreset = ctx.onSetMovingUiPreset ?? createDefaultSetMovingUiPreset();
+  const onSetCssVariable = ctx.onSetCssVariable ?? createDefaultSetCssVariable();
+  const resolvedTogglePanels = onTogglePanels ?? createDefaultTogglePanels();
   const onSetAverageBackgroundColor = ctx.onSetAverageBackgroundColor ?? defaultSetAverageBackgroundColor;
   const onSetChatDisplayMode = ctx.onSetChatDisplayMode ?? defaultSetChatDisplayMode;
   const onShowButtonsPopup = ctx.onShowButtonsPopup ?? defaultButtonsPopupCallback;
@@ -1671,7 +1396,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     isExtensionInstalled: onIsExtensionInstalled,
     getExtensionEnabledState: onGetExtensionEnabledState,
     setExtensionEnabled: onSetExtensionEnabled,
-    togglePanels: onTogglePanels,
+    togglePanels: resolvedTogglePanels,
     resetPanels: onResetPanels,
     toggleVisualNovelMode: onToggleVisualNovelMode,
     setBackground: onSetBackground,
@@ -1689,6 +1414,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     isMobileDevice: onIsMobile,
     generateCaption: onGenerateCaption,
     playNotificationSound: onPlayNotificationSound,
+    listGallery: onListGallery,
     showGallery: onShowGallery,
     uploadExpressionAsset: onUploadExpressionAsset,
     setExpression: onSetExpression,

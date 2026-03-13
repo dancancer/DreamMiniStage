@@ -6,6 +6,7 @@ import type {
 
 export interface ResolveHostCapabilityOptions {
   hasInjectedHost?: boolean;
+  resolvedPath?: ScriptHostDebugResolvedPath;
 }
 
 export interface ResolvedHostCapabilityState {
@@ -19,6 +20,14 @@ export function resolveHostCapabilityState(
   capability: ScriptHostCapability,
   options: ResolveHostCapabilityOptions = {},
 ): ResolvedHostCapabilityState {
+  if (options.resolvedPath) {
+    return {
+      support: capability.support,
+      resolvedPath: options.resolvedPath,
+      outcome: "supported",
+    };
+  }
+
   if (capability.support === "default") {
     return {
       support: capability.support,
