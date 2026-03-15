@@ -287,3 +287,374 @@
   - 提交 PR
   - 等待合入
   - 从最新 `main` 重开下一阶段分支
+
+## Phase 5 Batch 1 已完成内容（2026-03-12）
+
+- 已在 `codex/phase-5-js-slash-runner-host` 分支启动下一阶段，并使用独立 worktree 推进当前批次。
+- 新增 `hooks/script-bridge/host-capability-matrix.ts`，把 `JS-Slash-Runner` 首批宿主能力切片的产品语义收口为单一事实源；当前覆盖：
+  - `tool-registration`
+  - `extension-state`
+  - `clipboard`
+  - `audio`
+- 新增 `hooks/script-bridge/host-debug-resolver.ts` 与 `hooks/script-bridge/host-debug-state.ts`，把“默认支持 / 条件支持 / fail-fast”解析与最近 API 观察、运行时计数收口到最小调试状态层。
+- `hooks/script-bridge/index.ts` 与 `hooks/useScriptBridge.ts` 现已接通首批 host-debug 观察路径：
+  - 高价值 API 调用会记录 `method / capability / resolvedPath / outcome / timestamp`
+  - 运行时会同步 `toolRegistrations / eventListeners / hasHostOverrides`
+- `components/ScriptDebugPanel.tsx` 已从“只看脚本状态”升级为四段式最小宿主调试面板：
+  - `Host Capability`
+  - `Recent API Calls`
+  - `Runtime State`
+  - `Script Status`
+- `/session` 级验证已补齐两类口径：
+  - `app/session/__tests__/session-host-bridge.test.ts`：显式验证 `default / conditional / fail-fast` 三类宿主语义
+  - `app/session/__tests__/page.slash-integration.test.tsx`：验证真实页面会把 `hostDebug` payload 传入 `ScriptDebugPanel`
+- `app/test-script-runner/scenarios.ts` 已同步更新首批场景描述，明确 `tool registration` 与 `audio` 当前属于默认宿主路径。
+
+## Phase 5 Batch 1 验证（2026-03-12）
+
+- `pnpm vitest run hooks/script-bridge/__tests__/host-capability-matrix.test.ts`
+- `pnpm vitest run hooks/script-bridge/__tests__/host-debug-resolver.test.ts`
+- `pnpm vitest run hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
+- `pnpm vitest run components/__tests__/ScriptDebugPanel.test.tsx`
+- `pnpm vitest run app/session/__tests__/session-host-bridge.test.ts app/session/__tests__/page.slash-integration.test.tsx hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
+
+## Phase 5 Batch 1 当前边界（2026-03-12）
+
+- 本轮只完成了首批切片的宿主语义建模与调试可视化，不宣称整个 Phase 5 已收口。
+- 仍待后续批次继续推进的项包括：
+  - 更大范围的高价值宿主产品路径拉通
+  - 更完整的默认支持 / 条件支持 / 显式不支持清单
+  - 把 batch 1 的调试状态继续扩到更多 `JS-Slash-Runner` 能力域
+
+## Phase 5 Batch 2 已完成内容（2026-03-13）
+
+- `app/session/session-host-bridge.ts` 已把 `/session` 宿主协议继续扩到 `clipboard / extension-state`：
+  - `getClipboardText`
+  - `setClipboardText`
+  - `isExtensionInstalled`
+  - `getExtensionEnabledState`
+  - `setExtensionEnabled`
+- `app/session/session-host-defaults.ts` 已补齐默认 clipboard 宿主：
+  - 读写统一走浏览器 `navigator.clipboard`
+  - 浏览器能力缺失时显式 fail-fast
+- `app/session/session-host-defaults.ts` 已补齐 `extension-state / extension-exists` 默认读路径：
+  - 统一从 `window.pluginRegistry` 读取安装态与 enabled 状态
+  - 读路径默认可用
+  - 写路径仍不伪装成默认支持，继续保留为条件支持
+- `app/session/page.tsx` 现已把这批能力同时接入两条真实产品路径：
+  - 页面 slash 宿主执行链
+  - `CharacterChatPanel -> useScriptBridge -> ApiCallContext` 的脚本桥宿主执行链
+- `hooks/script-bridge/slash-context-adapter.ts` 已移除 extension-state 对隐式 `window.pluginRegistry` 的兜底读取；extension 相关能力现在只消费显式注入回调，避免再次形成第二条隐藏宿主路径。
+- `hooks/script-bridge/host-capability-matrix.ts` / `host-debug-resolver.ts` / `index.ts` 已补齐 batch 2 所需的调试语义：
+  - `extension-state` 读路径与写路径拆成两个 capability 事实项
+  - `triggerSlash("/clipboard-*")` / `triggerSlash("/extension-*")` 现会按 `session-default / api-context / fail-fast` 记录真实 resolved path
+  - `triggerSlash` 返回 `isError=true` 时，也会作为 fail-fast 记录到 recent API calls
+- `vitest.config.ts` 已排除 `**/.worktrees/**`，避免仓库内辅助 worktree 被主工作区测试误扫进来，污染阶段验证结果。
+
+## Phase 5 Batch 2 验证（2026-03-13）
+
+- `pnpm vitest run app/session/__tests__/session-host-bridge.test.ts app/session/__tests__/session-host-defaults.test.ts app/session/__tests__/page.slash-integration.test.tsx hooks/script-bridge/__tests__/host-debug-resolver.test.ts hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
+
+## Phase 5 当前边界（2026-03-13）
+
+- 当前已真实拉通的 Phase 5 能力切片包括：
+  - `tool-registration`
+  - `audio`
+  - `clipboard`
+  - `extension-state` 读路径
+  - `gallery`
+- 当前仍明确保留为条件支持的项包括：
+  - `extension-enable`
+  - `extension-disable`
+  - `extension-toggle`
+- `app/session/session-host.ts` 已把 `/session` 默认宿主合并与高价值 callback wiring 从 `page.tsx` 中提炼出来；当前页面仍然很大，但至少宿主职责已不再和页面渲染逻辑继续硬缠在一起。
+- `app/session/session-gallery.ts` + `components/session-gallery/SessionGalleryDialog.tsx` 已补齐 `gallery` 的最小真实宿主路径：
+  - `/list-gallery` 可返回当前角色头像列表
+  - `/show-gallery` 可在 `/session` 打开真实弹窗
+  - 当前 `group gallery` 仍显式不支持，不做静默兼容
+- `hooks/script-bridge/host-capability-matrix.ts` / `host-debug-resolver.ts` / `index.ts` 已继续扩展到 `gallery`：
+  - `triggerSlash("/show-gallery|/list-gallery")` 会记录 `gallery-browser`
+  - 默认路径当前解析为 `session-default`
+- 本轮新增定向验证：
+  - `app/session/__tests__/session-host.test.ts`
+  - `components/__tests__/CharacterChatPanel.bridge.test.tsx`
+  - `app/session/__tests__/page.slash-integration.test.tsx`
+  - `hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
+- 这一批工作继续推进了“高价值宿主能力真实产品路径”与“默认 / 条件 / fail-fast 说明书”两个主目标，但还未覆盖更多命令域与更完整产品入口，因此不宣称整个 Phase 5 已完成。
+
+## Phase 5 Batch 4 已完成内容（2026-03-13）
+
+- `app/session/session-message-events.ts` 已把 `/session` 页面里那段高密度消息事件逻辑抽出：
+  - `DreamMiniStage:setChatMessages`
+  - `DreamMiniStage:createChatMessages`
+  - `DreamMiniStage:deleteChatMessages`
+  - `DreamMiniStage:refreshOneMessage`
+- `app/session/page.tsx` 当前只负责注册/注销浏览器事件，消息补丁与刷新语义已经不再埋在页面组件里。
+- `app/session/session-gallery.ts` 已继续从“只返回 avatar”推进到“avatar + 会话消息里的图片链接”：
+  - 支持 Markdown 图片语法 `![alt](url)`
+  - 支持常见图片扩展名直链 `png/jpg/jpeg/gif/webp`
+  - 继续去重，避免同一素材重复出现在画廊里
+- 本轮新增定向验证：
+  - `app/session/__tests__/session-message-events.test.ts`
+  - `app/session/__tests__/session-gallery.test.ts`
+
+## Phase 5 Batch 4 验证（2026-03-13）
+
+- `pnpm vitest run app/session/__tests__/session-message-events.test.ts app/session/__tests__/session-gallery.test.ts app/session/__tests__/page.slash-integration.test.tsx app/session/__tests__/session-host.test.ts components/__tests__/CharacterChatPanel.bridge.test.tsx hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
+
+## Phase 5 Batch 5 已完成内容（2026-03-13）
+
+- `app/session/session-store-hosts.ts` 已把 `/session` 里依赖 store 的 slash host 再拆出一层：
+  - `checkpoint-*`
+  - `member-*`
+  - `wi-get-timed-effect`
+  - `wi-set-timed-effect`
+- `app/session/page.tsx` 当前这批能力已改为复用 `createSessionStoreHostCallbacks()`，不再保留页面内那串重复的 `useCallback + sessionId fail-fast + store.getState()` 实现。
+- `app/session/session-gallery.ts` 已继续从“avatar + chat messages”推进到：
+  - avatar
+  - opening messages
+  - chat messages
+  三类来源统一去重后组成 `/list-gallery` 的真实素材集合。
+- 本轮新增定向测试：
+  - `app/session/__tests__/session-store-hosts.test.ts`
+  - `app/session/__tests__/session-gallery.test.ts` 已扩到 opening messages 覆盖
+
+## Phase 5 Batch 5 验证（2026-03-13）
+
+- `pnpm vitest run app/session/__tests__/session-store-hosts.test.ts app/session/__tests__/session-gallery.test.ts app/session/__tests__/page.slash-integration.test.tsx app/session/__tests__/session-host.test.ts app/session/__tests__/session-message-events.test.ts components/__tests__/CharacterChatPanel.bridge.test.tsx hooks/script-bridge/__tests__/plugin-minimal-regression.test.ts`
+
+## Phase 5 当前边界（2026-03-13 更新）
+
+- `page.tsx` 仍然偏大，但当前已经把三类高密度宿主逻辑分拆出页面：
+  - `session-host.ts`
+  - `session-message-events.ts`
+  - `session-store-hosts.ts`
+- `gallery` 当前已是真实产品路径，但素材范围仍只覆盖：
+  - 当前角色 avatar
+  - opening/chat 中直接可解析的图片 URL
+- 还没有进入更完整的角色素材体系（例如表达包目录、更多静态资产枚举），因此不宣称 `gallery` 已完全产品化。
+
+## Phase 5 Batch 6 已完成内容（2026-03-13）
+
+- `app/session/page.tsx` 已进一步收口为入口壳，仅保留：
+  - `Suspense`
+  - loading fallback
+  - `SessionPageContent` 装配
+- 原 `/session` 页面主逻辑已下沉到 `app/session/session-page-content.tsx`，避免入口文件再次累积为巨石。
+- 当前 `app/session/page.tsx` 行数已压回双位数级别，方便后续继续维护与 review。
+
+## Phase 5 Batch 6 验证（2026-03-13）
+
+- `pnpm vitest run app/session/__tests__/page.slash-integration.test.tsx app/session/__tests__/session-host.test.ts app/session/__tests__/session-message-events.test.ts app/session/__tests__/session-store-hosts.test.ts components/__tests__/CharacterChatPanel.bridge.test.tsx`
+
+## Phase 5 Batch 7 已完成内容（2026-03-13）
+
+- `app/session/session-slash-executor.ts` 已把 `/session` 内容页里的 slash 执行器整段抽出：
+  - 变量读写与 scoped variable 语义
+  - Quick Reply 的 `nosend / inject / slash / plain message` 分发
+  - `ExecutionContext` 组装
+- `app/session/session-content-view.tsx` 已把 `/session` 主视图切换抽成独立 router：
+  - `chat`
+  - `worldbook`
+  - `preset`
+  - `regex`
+- 当前 `app/session/page.tsx` 继续保持入口壳，而 `app/session/session-page-content.tsx` 也进一步瘦身：
+  - `page.tsx`：34 行
+  - `session-page-content.tsx`：1032 行
+  - 仍然偏大，但已不再同时承担“入口壳 + 内容编排 + slash 执行器 + 视图切换”四种职责
+- 本轮新增定向测试：
+  - `app/session/__tests__/session-slash-executor.test.ts`
+  - `app/session/__tests__/session-content-view.test.tsx`
+
+## Phase 5 Batch 7 验证（2026-03-13）
+
+- `pnpm vitest run app/session/__tests__/page.slash-integration.test.tsx app/session/__tests__/session-slash-executor.test.ts app/session/__tests__/session-content-view.test.tsx`
+
+## Phase 5 Batch 8 已完成内容（2026-03-13）
+
+- `app/session/session-page-content.tsx` 已不再承担“路由解析 + effect 注册 + 视图装配 + 动作中转”这几种职责的混合体，当前只保留状态编排与 guard：
+  - `session-page-content.tsx`：230 行
+  - `page.tsx`：34 行
+- 新增 `app/session/use-session-route-state.ts`，把 `sessionId -> characterId / sessionError` 的加载与 fail-fast 逻辑收口为独立 route state hook。
+- 新增 `app/session/use-session-page-effects.tsx`，把以下页面副作用从内容页抽离：
+  - header top bar 装配
+  - dialogueData -> 页面状态同步
+  - preset 激活回填
+  - display username 变更后的对话刷新
+  - `DreamMiniStage:*ChatMessages` 消息事件注册
+- 新增 `app/session/session-page-layout.tsx`，集中处理：
+  - `SessionContentView`
+  - `SessionChatView`
+  - `WorldBookEditor / PresetEditor / RegexScriptEditor`
+  - `LoginModal / DialogueTreeModal`
+  - `CharacterChatPanel` 大量 props 的单点装配
+- 新增 `app/session/session-dialogue-tree.ts`，把扁平消息转 `DialogueTree` 的快照构建从页面层提升为独立领域工具；`use-session-page-actions.ts` 不再从页面层回传这个 helper。
+- 新增 `app/session/session-dialogue-actions.ts` 与 `app/session/session-quick-reply-store.ts`：
+  - 前者收口 hide / unhide / force-save / reasoning 这批重复的对话动作
+  - 后者收口 Quick Reply store -> slash executor 的适配
+- `app/session/use-session-page-actions.ts` 已继续压回 371 行，不再在同一文件里重复实现消息隐藏、恢复、保存与 Quick Reply adapter。
+
+## Phase 5 Batch 8 验证（2026-03-13）
+
+- `pnpm lint`
+- `pnpm typecheck`
+- `pnpm vitest run app/session/__tests__/page.slash-integration.test.tsx app/session/__tests__/session-slash-executor.test.ts app/session/__tests__/session-content-view.test.tsx app/session/__tests__/session-navigation-actions.test.ts app/session/__tests__/session-host-actions.test.ts app/session/__tests__/session-chat-actions.test.ts`
+- `pnpm verify:stage`
+
+## Phase 5 Batch 9 已完成内容（2026-03-13）
+
+- `hooks/script-bridge/host-capability-matrix.ts` 已从“首批切片矩阵”扩到当前 `/session` 已真实落地的高价值宿主能力：
+  - `navigation`
+  - `proxy`
+  - `quick-reply`
+  - `checkpoint`
+  - `group-member`
+  - `translation`
+  - `youtube-transcript`
+  - `timed-world-info`
+- 上述能力现已与真实 slash 命令建立单一路径映射，不再只把 `clipboard / extension-state / gallery / audio` 视为唯一可观测宿主切片。
+- `components/ScriptDebugPanel.tsx` 已同步改为展示更可审查的 capability 卡片：
+  - capability id
+  - area
+  - host source
+  - `hasProductEntry`
+  - support level
+- 这样 Phase 5 后续就不需要再靠口头判断“某条命令到底算默认支持还是已经有真实产品面”，调试面会直接反映矩阵中的单一事实源。
+
+## Phase 5 Batch 9 验证（2026-03-13）
+
+- `pnpm vitest run hooks/script-bridge/__tests__/host-capability-matrix.test.ts hooks/script-bridge/__tests__/host-debug-resolver.test.ts`
+- `pnpm vitest run components/__tests__/ScriptDebugPanel.test.tsx`
+- `pnpm lint`
+- `pnpm typecheck`
+
+## Phase 5 Batch 10 已完成内容（2026-03-13）
+
+- `/session` 页面直输 slash 当前已不再绕过 host-debug：
+  - 页面聊天输入中的 slash
+  - `QuickReplyPanel` 触发的 `/qr`
+  - iframe script bridge 的 `triggerSlash`
+  现在都会写入同一份 host-debug 观察状态。
+- 新增 `app/session/use-session-host-debug.ts`，把 `/session` 的 host-debug state / snapshot / sync 收口成共享控制器；`useScriptBridge` 不再私有持有另一份 recorder。
+- `hooks/useScriptBridge.ts` 已改为消费外部注入的 host-debug state，并在 iframe API 调用后把快照同步回页面层。
+- `app/session/session-slash-executor.ts` 已接入同一条 host-debug 记录链：
+  - 直输 slash 会按 host capability matrix 解析能力
+  - 会记录 `resolvedPath`
+  - 会在 success / fail-fast 后刷新最近调用与 runtime state
+- 本轮新增回归保护：
+  - `app/session/__tests__/session-slash-executor.test.ts`
+  - `app/session/__tests__/page.slash-integration.test.tsx`
+  - `components/__tests__/CharacterChatPanel.bridge.test.tsx`
+
+## Phase 5 Batch 10 验证（2026-03-13）
+
+- `pnpm vitest run app/session/__tests__/session-slash-executor.test.ts components/__tests__/CharacterChatPanel.bridge.test.tsx app/session/__tests__/page.slash-integration.test.tsx`
+- `pnpm typecheck`
+- `pnpm verify:stage`
+
+## Phase 5 Batch 11 已完成内容（2026-03-13）
+
+- 新增 `hooks/script-bridge/default-ui-host.ts`，把这批默认 UI host 行为从 `slash-context-adapter.ts` 中提炼为共享实现：
+  - `/popup`
+  - `/buttons`
+  - `/pick-icon`
+  - `/is-mobile`
+  - `/closechat`
+  - `/bgcol`
+  - `/bubble` / `/default` / `/single` / `/story`
+- `app/session/session-slash-executor.ts` 已复用同一组默认 UI host，实现页面直输 slash 与 iframe script bridge 的行为一致；这批命令不再只在 bridge 路径可用。
+- `hooks/script-bridge/host-capability-matrix.ts` 已继续纳入这批 bridge-only 宿主能力：
+  - `ui-style`
+  - `popup`
+  - `device`
+  - `chat-control`
+- 当前 Script Debugger 现在既能解释 `/session` 默认路径，也能解释 bridge-only 默认 UI host 路径，不再把这批命令留在不可观测区。
+- 本轮新增回归保护：
+  - `app/session/__tests__/session-slash-executor.test.ts`
+  - `app/session/__tests__/page.slash-integration.test.tsx`
+  - `hooks/script-bridge/__tests__/host-capability-matrix.test.ts`
+  - `hooks/script-bridge/__tests__/host-debug-resolver.test.ts`
+
+## Phase 5 Batch 11 验证（2026-03-13）
+
+- `pnpm vitest run hooks/script-bridge/__tests__/host-capability-matrix.test.ts hooks/script-bridge/__tests__/host-debug-resolver.test.ts app/session/__tests__/session-slash-executor.test.ts app/session/__tests__/page.slash-integration.test.tsx`
+- `pnpm typecheck`
+- `pnpm verify:stage`
+
+## Phase 5 Batch 12 已完成内容（2026-03-13）
+
+- `hooks/script-bridge/default-ui-host.ts` 已继续扩到第二批默认 UI host：
+  - `theme`
+  - `movingui`
+  - `css-var`
+  - `panels`
+  - `resetpanels`
+  - `vn`
+- `hooks/script-bridge/slash-context-adapter.ts` 与 `app/session/session-slash-executor.ts` 现已共用这组默认实现，避免 bridge 路径与页面直输 slash 再次分叉。
+- `hooks/script-bridge/host-capability-matrix.ts` 已新增 `panel-layout` area，并把以下命令继续纳入统一能力矩阵：
+  - `theme`
+  - `movingui`
+  - `css-var`
+  - `panels`
+  - `togglepanels`
+  - `resetpanels`
+  - `vn`
+- `/session` 页面直输 slash 当前已能直接跑通：
+  - `/theme light`
+  - `/css-var varname=--session-accent amber`
+  - `/panels`
+  - `/resetpanels`
+  - `/vn`
+- 这样 Phase 5 当前已经不只是“消息/会话类宿主”闭环，连一批原本只在 bridge 默认路径可用的 UI 命令，也开始在 `/session` 页面输入框里共享同一实现与同一调试语义。
+
+## Phase 5 Batch 12 验证（2026-03-13）
+
+- `pnpm vitest run hooks/script-bridge/__tests__/host-capability-matrix.test.ts hooks/script-bridge/__tests__/host-debug-resolver.test.ts app/session/__tests__/session-slash-executor.test.ts app/session/__tests__/page.slash-integration.test.tsx`
+- `pnpm typecheck`
+- `pnpm verify:stage`
+
+## Phase 5 Batch 13 已完成内容（2026-03-13）
+
+- `hooks/script-bridge/default-ui-host.ts` 已继续扩到背景命令默认实现：
+  - `bg`
+  - `lockbg`
+  - `unlockbg`
+  - `autobg`
+- `hooks/script-bridge/slash-context-adapter.ts` 与 `app/session/session-slash-executor.ts` 现已继续共用这组背景默认 host；页面直输 slash 不再比 bridge 路径少一整块背景能力。
+- `hooks/script-bridge/host-capability-matrix.ts` 已新增 `background` area，并把以下命令纳入统一观测：
+  - `bg`
+  - `background`
+  - `lockbg`
+  - `bglock`
+  - `unlockbg`
+  - `bgunlock`
+  - `autobg`
+  - `bgauto`
+- `/session` 页面直输 slash 当前已能直接跑通：
+  - `/bg forest`
+  - `/lockbg`
+  - `/unlockbg`
+  - `/autobg`
+- 到这里，Phase 5 中“bridge-only 默认 UI host 与 `/session` 页面输入框行为不一致”的大头已经基本收口；剩余问题更像个别命令域是否值得继续产品化，而不再是默认宿主骨架缺失。
+
+## Phase 5 Batch 13 验证（2026-03-13）
+
+- `pnpm vitest run hooks/script-bridge/__tests__/host-capability-matrix.test.ts hooks/script-bridge/__tests__/host-debug-resolver.test.ts app/session/__tests__/session-slash-executor.test.ts app/session/__tests__/page.slash-integration.test.tsx`
+- `pnpm typecheck`
+- `pnpm verify:stage`
+
+## Phase 5 总收束（2026-03-13）
+
+- 已新增 Phase 5 总矩阵说明书：
+  - `docs/plan/2026-03-08-sillytavern-product-roadmap/phase5-host-capability-matrix.md`
+- 当前 Phase 5 已可明确分为三类：
+  - 默认支持
+  - 条件支持
+  - 显式不支持
+- 这份文档与 `hooks/script-bridge/host-capability-matrix.ts` / `host-debug-resolver.ts` 共同组成当前阶段的单一事实源，不再依赖零散 handoff 文字或口头判断。
+- 基于当前矩阵与已完成的 Batch 1-13，`tasks.md` 中 Phase 5 的两个总项已正式勾掉：
+  - `拉通高价值宿主能力的真实产品路径`
+  - `明确哪些能力默认支持、条件支持、显式不支持`
+- 后续若还要继续推进 Phase 5，不应再以“补更多命令覆盖率”为目标，而应只围绕：
+  - 是否新增新的高价值能力域
+  - 是否继续把当前显式不支持边界产品化

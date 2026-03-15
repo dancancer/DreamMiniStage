@@ -37,10 +37,23 @@
 
 ## 6. Phase 5：JS-Slash-Runner 宿主完成度
 
-- [ ] 整理宿主能力矩阵与 fail-fast 矩阵。
-- [ ] 增强 Script Debugger。
-- [ ] 拉通高价值宿主能力的真实产品路径。
-- [ ] 明确哪些能力默认支持、条件支持、显式不支持。
+- [x] 整理宿主能力矩阵与 fail-fast 矩阵。
+- [x] 增强 Script Debugger。
+- [x] 拉通高价值宿主能力的真实产品路径。
+- [x] 明确哪些能力默认支持、条件支持、显式不支持。
+- [x] Phase 5 Batch 1：完成 `tool registration / audio / extension-state / clipboard` 这组首批宿主语义切片的矩阵建模、调试可视化与定向验证。
+- [x] Phase 5 Batch 2：完成 `clipboard` 默认宿主读写、`extension-state` 默认读路径、`extension-toggle` 条件支持保留，以及 host-debug 对这批 slash 路径的来源解析。
+- [x] Phase 5 Batch 3：提炼 `/session` host wiring 模块，并拉通 `gallery` 的默认宿主路径、最小产品面与 host-debug 语义。
+- [x] Phase 5 Batch 4：提炼 `/session` 消息事件模块，并把 `gallery` 扩到“角色头像 + 会话图片链接”的更真实素材集合。
+- [x] Phase 5 Batch 5：提炼 `/session` 的 store-backed slash host（`checkpoint / group / timed-effect`），并把 `gallery` 扩到 opening messages 素材集合。
+- [x] Phase 5 Batch 6：将 `/session/page.tsx` 收口为入口壳，主页面逻辑下沉到 `session-page-content.tsx`，避免入口文件继续膨胀。
+- [x] Phase 5 Batch 7：提炼 `/session` 的 slash 执行器与主视图路由层，继续压缩 `session-page-content.tsx`。
+- [x] Phase 5 Batch 8：将 `/session` 内容页继续拆成 route state / page effects / layout / dialogue actions / quick-reply adapter，彻底压回多文件职责边界内。
+- [x] Phase 5 Batch 9：补全 host capability matrix，把 `/session` 已落地的 navigation / proxy / quick-reply / checkpoint / group-member / translate / yt-script / timed-world-info` 纳入单一支持矩阵与 debugger 展示。
+- [x] Phase 5 Batch 10：让 `/session` 页面直输 slash 与 iframe script bridge 共享同一 host-debug 记录链，避免 debugger 只能观察脚本路径。
+- [x] Phase 5 Batch 11：让 `/session` 页面直输 slash 复用默认 UI host（`popup / bubble / default / closechat` 等）并把这批 bridge-only 能力纳入 host matrix。
+- [x] Phase 5 Batch 12：让 `/session` 页面直输 slash 继续复用共享默认 UI host（`theme / movingui / css-var / panels / resetpanels / vn`）并把 `panel-layout` 纳入 host matrix。
+- [x] Phase 5 Batch 13：让 `/session` 页面直输 slash 继续复用共享默认 UI host（`bg / lockbg / unlockbg / autobg`）并把 `background` 纳入 host matrix。
 
 ## 7. Phase 6：MagVarUpdate 产品化
 

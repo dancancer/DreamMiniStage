@@ -275,6 +275,25 @@ describe("Property 9: Preset 排序字段规范化", () => {
       { numRuns: 100 },
     );
   });
+
+  it("deduplicates repeated prompt identifiers when appending prompts not listed in prompt_order", () => {
+    const result = convertPromptOrder(
+      [
+        { identifier: "__" },
+        { identifier: "_" },
+        { identifier: "_" },
+        { identifier: "A" },
+      ],
+      [
+        {
+          character_id: 1,
+          order: [{ identifier: "__", enabled: false }],
+        },
+      ],
+    );
+
+    expect(result.map((prompt) => prompt.identifier)).toEqual(["__", "_", "A"]);
+  });
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -390,4 +409,3 @@ describe("Preset Import Sampling Compatibility", () => {
     });
   });
 });
-

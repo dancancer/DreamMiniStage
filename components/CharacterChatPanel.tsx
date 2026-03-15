@@ -19,6 +19,10 @@ import { getDisplayUsername, setDisplayUsername } from "@/utils/username-helper"
 import { useApiConfig } from "@/hooks/useApiConfig";
 import { useScriptBridge } from "@/hooks/useScriptBridge";
 import type {
+  ScriptHostDebugSnapshot,
+  ScriptHostDebugState,
+} from "@/hooks/script-bridge/host-debug-state";
+import type {
   CharacterSwitchResult,
   ExpressionClassifyOptions,
   ExpressionFolderOverrideOptions,
@@ -174,9 +178,21 @@ interface Props {
     text: string,
     options?: ExpressionClassifyOptions,
   ) => string | Promise<string>;
+  onListGallery?: (
+    options?: { character?: string; group?: string },
+  ) => string[] | Promise<string[]>;
   onShowGallery?: (
     options?: { character?: string; group?: string },
   ) => void | Promise<void>;
+  onGetClipboardText?: () => string | Promise<string>;
+  onSetClipboardText?: (text: string) => void | Promise<void>;
+  onIsExtensionInstalled?: (extensionName: string) => boolean | Promise<boolean>;
+  onGetExtensionEnabledState?: (extensionName: string) => boolean | Promise<boolean>;
+  onSetExtensionEnabled?: (
+    extensionName: string,
+    enabled: boolean,
+    options?: { reload?: boolean },
+  ) => string | void | Promise<string | void>;
   onUploadExpressionAsset?: (
     imageUrl: string,
     options: ExpressionUploadOptions,
@@ -188,6 +204,14 @@ interface Props {
     name: string,
     options?: { silent?: boolean; chats?: boolean },
   ) => string | Promise<string>;
+  hostCapabilitySources?: Partial<Record<
+    "translation" | "youtubeTranscript" | "clipboardRead" | "clipboardWrite" | "extensionRead" | "extensionWrite" | "galleryList" | "galleryShow",
+    "session-default" | "api-context"
+  >>;
+  hasHostOverrides?: boolean;
+  hostDebug: ScriptHostDebugSnapshot;
+  hostDebugState: ScriptHostDebugState;
+  onHostDebugUpdate: (snapshot: ScriptHostDebugSnapshot) => void;
   onExportJsonl?: () => void | Promise<void>;
   onImportJsonl?: (file: File) => void | Promise<void>;
 }
@@ -258,10 +282,21 @@ export default function CharacterChatPanel({
   onGetLastExpression,
   onListExpressions,
   onClassifyExpression,
+  onListGallery,
   onShowGallery,
+  onGetClipboardText,
+  onSetClipboardText,
+  onIsExtensionInstalled,
+  onGetExtensionEnabledState,
+  onSetExtensionEnabled,
   onUploadExpressionAsset,
   onSwitchCharacter,
   onRenameCurrentCharacter,
+  hostCapabilitySources,
+  hasHostOverrides,
+  hostDebug,
+  hostDebugState,
+  onHostDebugUpdate,
   onExportJsonl,
   onImportJsonl,
 }: Props) {
@@ -350,10 +385,20 @@ export default function CharacterChatPanel({
     onGetLastExpression,
     onListExpressions,
     onClassifyExpression,
+    onListGallery,
     onShowGallery,
+    onGetClipboardText,
+    onSetClipboardText,
+    onIsExtensionInstalled,
+    onGetExtensionEnabledState,
+    onSetExtensionEnabled,
     onUploadExpressionAsset,
     onSwitchCharacter,
     onRenameCurrentCharacter,
+    hostCapabilitySources,
+    hasHostOverrides,
+    hostDebugState,
+    onHostDebugUpdate,
   });
 
   // ═══════════════════════════════════════════════════════════════
@@ -544,6 +589,7 @@ export default function CharacterChatPanel({
         isOpen={showScriptDebugPanel}
         onClose={() => setShowScriptDebugPanel(false)}
         scripts={scriptBridge.scriptStatuses}
+        hostDebug={hostDebug}
       />
     </div>
   );

@@ -7,8 +7,8 @@
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                     Session Host Default Providers                       ║
  * ║                                                                           ║
- * ║  为 /session 提供内建默认宿主能力：translate 直连 active model，              ║
- * ║  yt-script 走 Jina Reader + active model 提取 transcript/lyrics。       ║
+ * ║  为 /session 提供内建默认宿主能力：translate / yt-script / clipboard，     ║
+ * ║  以及 extension-state 的稳定读取路径；写能力继续显式交给外部宿主。         ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -38,6 +38,19 @@ const SESSION_YOUTUBE_TRANSCRIPT_SYSTEM_PROMPT = "You extract only the spoken tr
 
 interface SessionDefaultHostBridgeOptions {
   language: "zh" | "en";
+}
+
+interface SessionHostPluginRegistryEntry {
+  manifest?: {
+    id?: string;
+    name?: string;
+  };
+  enabled?: boolean;
+}
+
+interface SessionHostPluginRegistry {
+  initialize?: () => Promise<void> | void;
+  getPlugins?: () => unknown[];
 }
 
 function getActiveModelConfig(commandName: "/translate" | "/yt-script"): APIConfig {
@@ -158,11 +171,14 @@ function normalizeYouTubeTarget(urlOrId: string): string {
         return `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
       }
 
-      return parsed.toString();
+      throw new Error("/yt-script requires a YouTube url or id");
     }
 
-    return parsed.toString();
-  } catch {
+    throw new Error("/yt-script requires a YouTube url or id");
+  } catch (error) {
+    if (!(error instanceof TypeError)) {
+      throw error;
+    }
     return `https://www.youtube.com/watch?v=${encodeURIComponent(trimmed)}`;
   }
 }
@@ -180,6 +196,90 @@ function getJinaApiKey(): string {
     return process.env.NEXT_PUBLIC_JINA_API_KEY || "";
   }
   return getString("jinaApiKey") || process.env.NEXT_PUBLIC_JINA_API_KEY || "";
+}
+
+function normalizeExtensionToken(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function resolveSessionPluginRegistry(): SessionHostPluginRegistry | undefined {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  const registry = (window as Window & { pluginRegistry?: unknown }).pluginRegistry;
+  if (!registry || typeof registry !== "object") {
+    return undefined;
+  }
+  return registry as SessionHostPluginRegistry;
+}
+
+async function readSessionPluginEntries(): Promise<SessionHostPluginRegistryEntry[]> {
+  const registry = resolveSessionPluginRegistry();
+  if (!registry) {
+    throw new Error("/extension-state default host plugin registry is not available");
+  }
+
+  await Promise.resolve(registry.initialize?.());
+  const entries = registry.getPlugins?.();
+  if (!Array.isArray(entries)) {
+    throw new Error("/extension-state default host plugin registry getPlugins is not available");
+  }
+
+  return entries as SessionHostPluginRegistryEntry[];
+}
+
+function findSessionPluginEntry(
+  entries: SessionHostPluginRegistryEntry[],
+  extensionName: string,
+): SessionHostPluginRegistryEntry | undefined {
+  const target = normalizeExtensionToken(extensionName);
+  return entries.find((entry) => {
+    const id = typeof entry.manifest?.id === "string"
+      ? normalizeExtensionToken(entry.manifest.id)
+      : "";
+    const name = typeof entry.manifest?.name === "string"
+      ? normalizeExtensionToken(entry.manifest.name)
+      : "";
+    return id === target || name === target;
+  });
+}
+
+async function readClipboardText(): Promise<string> {
+  if (typeof navigator === "undefined" || !navigator.clipboard?.readText) {
+    throw new Error("/clipboard-get default host clipboard api is not available");
+  }
+
+  const text = await navigator.clipboard.readText();
+  if (typeof text !== "string") {
+    throw new Error("/clipboard-get default host returned non-string clipboard text");
+  }
+  return text;
+}
+
+async function writeClipboardText(text: string): Promise<void> {
+  if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+    throw new Error("/clipboard-set default host clipboard api is not available");
+  }
+
+  await navigator.clipboard.writeText(text);
+}
+
+async function isExtensionInstalled(extensionName: string): Promise<boolean> {
+  const entries = await readSessionPluginEntries();
+  return !!findSessionPluginEntry(entries, extensionName);
+}
+
+async function getExtensionEnabledState(extensionName: string): Promise<boolean> {
+  const entries = await readSessionPluginEntries();
+  const entry = findSessionPluginEntry(entries, extensionName);
+  if (!entry) {
+    throw new Error(`/extension-state extension not installed: ${extensionName}`);
+  }
+  if (typeof entry.enabled !== "boolean") {
+    throw new Error(`/extension-state host returned non-boolean enabled state: ${extensionName}`);
+  }
+  return entry.enabled;
 }
 
 function buildJinaReaderUrl(sourceUrl: string, lang: string): string {
@@ -272,6 +372,10 @@ export function createSessionDefaultHostBridge(
     translateText: (text, translateOptions) => runDefaultTranslate(text, translateOptions, options.language),
     getYouTubeTranscript: (urlOrId, transcriptOptions) =>
       runDefaultYouTubeTranscript(urlOrId, transcriptOptions, options.language),
+    getClipboardText: () => readClipboardText(),
+    setClipboardText: (text) => writeClipboardText(text),
+    isExtensionInstalled: (extensionName) => isExtensionInstalled(extensionName),
+    getExtensionEnabledState: (extensionName) => getExtensionEnabledState(extensionName),
   };
 }
 

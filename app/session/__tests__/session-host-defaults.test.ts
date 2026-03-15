@@ -39,10 +39,24 @@ function buildOpenAIConfig() {
 
 describe("session-host-defaults", () => {
   const fetchMock = vi.fn();
+  const clipboardReadText = vi.fn();
+  const clipboardWriteText = vi.fn();
+  const pluginRegistry = {
+    initialize: vi.fn(),
+    getPlugins: vi.fn(),
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
+    Object.defineProperty(window.navigator, "clipboard", {
+      configurable: true,
+      value: {
+        readText: clipboardReadText,
+        writeText: clipboardWriteText,
+      },
+    });
+    (window as Window & { pluginRegistry?: unknown }).pluginRegistry = pluginRegistry;
     mocks.createApiClient.mockReturnValue({
       chat: vi.fn().mockResolvedValue({
         content: "translated text",
@@ -54,9 +68,21 @@ describe("session-host-defaults", () => {
       configs: [buildOpenAIConfig()],
       getActiveConfig: () => buildOpenAIConfig(),
     });
+    clipboardReadText.mockResolvedValue("clipboard text");
+    clipboardWriteText.mockResolvedValue(undefined);
+    pluginRegistry.getPlugins.mockReturnValue([
+      {
+        manifest: {
+          id: "summarize",
+          name: "Summarize",
+        },
+        enabled: true,
+      },
+    ]);
   });
 
   afterEach(() => {
+    delete (window as Window & { pluginRegistry?: unknown }).pluginRegistry;
     vi.unstubAllGlobals();
   });
 
@@ -187,6 +213,15 @@ describe("session-host-defaults", () => {
     }));
   });
 
+  it("fails fast for non-youtube urls", async () => {
+    const bridge = createSessionDefaultHostBridge({ language: "en" });
+
+    await expect(
+      bridge.getYouTubeTranscript?.("https://example.com/not-youtube"),
+    ).rejects.toThrow("/yt-script requires a YouTube url or id");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("fails fast when transcript extraction returns the no-transcript token", async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
@@ -203,5 +238,24 @@ describe("session-host-defaults", () => {
     await expect(bridge.getYouTubeTranscript?.("dQw4w9WgXcQ")).rejects.toThrow(
       "/yt-script transcript not available from /session default host",
     );
+  });
+
+  it("reads and writes clipboard text through the browser clipboard api", async () => {
+    const bridge = createSessionDefaultHostBridge({ language: "en" });
+
+    await expect(bridge.getClipboardText?.()).resolves.toBe("clipboard text");
+    await expect(bridge.setClipboardText?.("copied text")).resolves.toBeUndefined();
+
+    expect(clipboardReadText).toHaveBeenCalledTimes(1);
+    expect(clipboardWriteText).toHaveBeenCalledWith("copied text");
+  });
+
+  it("reads extension install and enabled state through the host plugin registry", async () => {
+    const bridge = createSessionDefaultHostBridge({ language: "en" });
+
+    await expect(bridge.isExtensionInstalled?.("Summarize")).resolves.toBe(true);
+    await expect(bridge.getExtensionEnabledState?.("summarize")).resolves.toBe(true);
+    expect(bridge.setExtensionEnabled).toBeUndefined();
+    expect(pluginRegistry.initialize).toHaveBeenCalled();
   });
 });

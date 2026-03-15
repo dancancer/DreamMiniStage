@@ -2,6 +2,10 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useScriptVariables } from "@/lib/store/script-variables";
+import {
+  createHostDebugState,
+  readHostDebugSnapshot,
+} from "@/hooks/script-bridge/host-debug-state";
 import CharacterChatPanel from "../CharacterChatPanel";
 
 const harness = vi.hoisted(() => ({
@@ -82,6 +86,7 @@ function renderPanel(overrides: Record<string, unknown> = {}): RenderedPanel {
   document.body.appendChild(container);
 
   const root = createRoot(container);
+  const hostDebugState = createHostDebugState();
   act(() => {
     root.render(
       <CharacterChatPanel
@@ -110,6 +115,9 @@ function renderPanel(overrides: Record<string, unknown> = {}): RenderedPanel {
         language="en"
         dialogueKey="dialogue-1"
         chatName="Session One"
+        hostDebug={readHostDebugSnapshot(hostDebugState)}
+        hostDebugState={hostDebugState}
+        onHostDebugUpdate={vi.fn()}
         {...overrides}
       />,
     );
@@ -199,6 +207,26 @@ describe("CharacterChatPanel slash bridge harness", () => {
     });
     expect(onSetWorldInfoTimedEffect).toHaveBeenCalledWith("book-1", "uid-1", "delay", "toggle");
     expect(onJumpToMessage).toHaveBeenCalledWith(1);
+
+    unmountPanel(rendered);
+  });
+
+  it("routes gallery slash commands from triggerSlash to host callbacks", async () => {
+    const onListGallery = vi.fn().mockResolvedValue(["/alice.png", "/alice-2.png"]);
+    const onShowGallery = vi.fn().mockResolvedValue(undefined);
+
+    const rendered = renderPanel({
+      onListGallery,
+      onShowGallery,
+    });
+
+    const list = await runSlash("/list-gallery char=Alice") as { isError?: boolean; pipe?: string };
+    const show = await runSlash("/show-gallery char=Alice") as { isError?: boolean; pipe?: string };
+
+    expect(list).toMatchObject({ isError: false, pipe: "[\"/alice.png\",\"/alice-2.png\"]" });
+    expect(show).toMatchObject({ isError: false, pipe: "" });
+    expect(onListGallery).toHaveBeenCalledWith({ character: "Alice", group: undefined });
+    expect(onShowGallery).toHaveBeenCalledWith({ character: "Alice" });
 
     unmountPanel(rendered);
   });

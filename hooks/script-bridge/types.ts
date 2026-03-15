@@ -54,6 +54,7 @@ import type {
   WorldInfoTimedEffectName,
   WorldInfoTimedEffectState,
 } from "@/lib/slash-command/types";
+import type { ScriptHostDebugResolvedPath, ScriptHostDebugState } from "./host-debug-state";
 
 // ============================================================================
 //                              API Handler 上下文
@@ -74,6 +75,11 @@ export interface ApiCallContext {
     type: string,
     payload: unknown
   ) => void;
+  hostDebugState?: ScriptHostDebugState;
+  hostCapabilitySources?: Partial<Record<
+    "translation" | "youtubeTranscript" | "clipboardRead" | "clipboardWrite" | "extensionRead" | "extensionWrite" | "galleryList" | "galleryShow",
+    Extract<ScriptHostDebugResolvedPath, "session-default" | "api-context">
+  >>;
   setScriptVariable: (
     key: string,
     value: unknown,
@@ -369,6 +375,9 @@ export interface ApiCallContext {
     options?: CaptionCommandOptions,
   ) => string | Promise<string>;
   onPlayNotificationSound?: () => void | Promise<void>;
+  onListGallery?: (
+    options?: { character?: string; group?: string },
+  ) => string[] | Promise<string[]>;
   onShowGallery?: (
     options?: { character?: string; group?: string },
   ) => void | Promise<void>;

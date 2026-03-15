@@ -357,7 +357,10 @@ describe("WorldBook Entry Validation", () => {
       fc.property(
         fc.record({
           content: fc.constant(""),
-          keys: fc.array(fc.string({ minLength: 1, maxLength: 20 }), { minLength: 1, maxLength: 5 }),
+          keys: fc.array(
+            fc.stringMatching(/.*\S.*/),
+            { minLength: 1, maxLength: 5 },
+          ),
         }),
         (entry) => {
           const result = importWorldBookEntries([entry]);

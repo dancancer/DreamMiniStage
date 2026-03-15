@@ -17,6 +17,14 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useScriptVariables } from "@/lib/store/script-variables";
 import { handleApiCall } from "./script-bridge";
+import {
+  readHostDebugSnapshot,
+  type ScriptHostApiCallRecord,
+  type ScriptHostDebugSnapshot,
+  type ScriptHostDebugState,
+  type ScriptHostRuntimeState,
+} from "./script-bridge/host-debug-state";
+import type { ScriptHostDebugResolvedPath } from "./script-bridge/host-debug-state";
 import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
   CharacterSwitchResult,
@@ -222,10 +230,15 @@ interface UseScriptBridgeOptions {
     text: string,
     options?: ExpressionClassifyOptions,
   ) => string | Promise<string>;
+  onGetClipboardText?: () => string | Promise<string>;
+  onSetClipboardText?: (text: string) => void | Promise<void>;
   onImportVariables?: (
     from: string,
     mappings: ImportVariableMapping[],
   ) => number | void | Promise<number | void>;
+  onListGallery?: (
+    options?: { character?: string; group?: string },
+  ) => string[] | Promise<string[]>;
   onShowGallery?: (
     options?: { character?: string; group?: string },
   ) => void | Promise<void>;
@@ -239,6 +252,17 @@ interface UseScriptBridgeOptions {
   ) => string | number | null | undefined | Promise<string | number | null | undefined>;
   onPickIcon?: () => string | false | Promise<string | false>;
   onIsMobile?: () => boolean | Promise<boolean>;
+  onIsExtensionInstalled?: (
+    extensionName: string,
+  ) => boolean | Promise<boolean>;
+  onGetExtensionEnabledState?: (
+    extensionName: string,
+  ) => boolean | Promise<boolean>;
+  onSetExtensionEnabled?: (
+    extensionName: string,
+    enabled: boolean,
+    options?: { reload?: boolean },
+  ) => string | void | Promise<string | void>;
   onJumpToMessage?: (index: number) => void | Promise<void>;
   onRenderChatMessages?: (
     count: number,
@@ -256,11 +280,22 @@ interface UseScriptBridgeOptions {
     options?: ReasoningParseOptions,
   ) => ReasoningParseResult | null | undefined | Promise<ReasoningParseResult | null | undefined>;
   onApplyReasoningRegex?: (reasoning: string) => string | Promise<string>;
+  hostCapabilitySources?: Partial<Record<
+    "translation" | "youtubeTranscript" | "clipboardRead" | "clipboardWrite" | "extensionRead" | "extensionWrite" | "galleryList" | "galleryShow",
+    Extract<ScriptHostDebugResolvedPath, "session-default" | "api-context">
+  >>;
+  hasHostOverrides?: boolean;
+  hostDebugState: ScriptHostDebugState;
+  onHostDebugUpdate: (snapshot: ScriptHostDebugSnapshot) => void;
 }
 
 interface UseScriptBridgeReturn {
   scriptVariables: Record<string, unknown>;
   scriptStatuses: ScriptStatus[];
+  scriptHostDebug: {
+    recentApiCalls: ScriptHostApiCallRecord[];
+    runtimeState: ScriptHostRuntimeState;
+  };
   handleScriptMessage: (data: ScriptMessageData) => Promise<unknown>;
   broadcastCharacterChange: () => void;
   broadcastMessage: (message: DialogueMessage) => void;
@@ -352,20 +387,31 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     onGetLastExpression,
     onListExpressions,
     onClassifyExpression,
+    onGetClipboardText,
+    onSetClipboardText,
     onImportVariables,
+    onListGallery,
     onShowGallery,
     onUploadExpressionAsset,
     onShowPopup,
     onPickIcon,
     onIsMobile,
+    onIsExtensionInstalled,
+    onGetExtensionEnabledState,
+    onSetExtensionEnabled,
     onJumpToMessage,
     onRenderChatMessages,
     onSwitchCharacter,
     onRenameCurrentCharacter,
     onParseReasoningBlock,
     onApplyReasoningRegex,
+    hostCapabilitySources,
+    hasHostOverrides,
+    hostDebugState,
+    onHostDebugUpdate,
   } = options;
   const [scriptStatuses, setScriptStatuses] = useState<ScriptStatus[]>([]);
+  const [scriptHostDebug, setScriptHostDebug] = useState(() => readHostDebugSnapshot(hostDebugState));
 
   const {
     variables: scriptVariablesStore,
@@ -390,6 +436,26 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       }),
     );
   }, []);
+
+  const syncScriptHostDebug = useCallback(() => {
+    const snapshot = readHostDebugSnapshot(hostDebugState);
+    setScriptHostDebug(snapshot);
+    onHostDebugUpdate(snapshot);
+  }, [hostDebugState, onHostDebugUpdate]);
+
+  const inferredHostOverrides = Boolean(
+    onGetClipboardText ||
+    onSetClipboardText ||
+    onIsExtensionInstalled ||
+    onGetExtensionEnabledState ||
+    onSetExtensionEnabled,
+  );
+  const effectiveHasHostOverrides = hasHostOverrides ?? inferredHostOverrides;
+
+  useEffect(() => {
+    hostDebugState.setHasHostOverrides(effectiveHasHostOverrides);
+    syncScriptHostDebug();
+  }, [effectiveHasHostOverrides, hostDebugState, syncScriptHostDebug]);
 
   const handleCharacterSwitch = useCallback(
     async (target: string): Promise<CharacterSwitchResult | void> => {
@@ -462,6 +528,8 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           chatId: dialogueId,
           messageId: messagesRef.current[messagesRef.current.length - 1]?.id,
           messages: messagesRef.current,  // 通过 ref 获取最新 messages
+          hostDebugState,
+          hostCapabilitySources,
           setScriptVariable,
           deleteScriptVariable,
           getVariablesSnapshot,
@@ -525,12 +593,18 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onGetLastExpression,
           onListExpressions,
           onClassifyExpression,
+          onGetClipboardText,
+          onSetClipboardText,
           onImportVariables,
+          onListGallery,
           onShowGallery,
           onUploadExpressionAsset,
           onShowPopup,
           onPickIcon,
           onIsMobile,
+          onIsExtensionInstalled,
+          onGetExtensionEnabledState,
+          onSetExtensionEnabled,
           onJumpToMessage,
           onRenderChatMessages,
           onSwitchCharacter: onSwitchCharacter ? handleCharacterSwitch : undefined,
@@ -538,6 +612,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           onParseReasoningBlock,
           onApplyReasoningRegex,
         });
+        syncScriptHostDebug();
         console.log("[useScriptBridge] API_CALL 返回:", method, "result:", result);
         return result;
       }
@@ -632,12 +707,18 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onGetLastExpression,
       onListExpressions,
       onClassifyExpression,
+      onGetClipboardText,
+      onSetClipboardText,
       onImportVariables,
+      onListGallery,
       onShowGallery,
       onUploadExpressionAsset,
       onShowPopup,
       onPickIcon,
       onIsMobile,
+      onIsExtensionInstalled,
+      onGetExtensionEnabledState,
+      onSetExtensionEnabled,
       onJumpToMessage,
       onRenderChatMessages,
       onSwitchCharacter,
@@ -645,6 +726,9 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       onParseReasoningBlock,
       onApplyReasoningRegex,
       handleCharacterSwitch,
+      syncScriptHostDebug,
+      hostCapabilitySources,
+      effectiveHasHostOverrides,
     ],
   );
 
@@ -687,6 +771,7 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
   return {
     scriptVariables,
     scriptStatuses,
+    scriptHostDebug,
     handleScriptMessage,
     broadcastCharacterChange,
     broadcastMessage,

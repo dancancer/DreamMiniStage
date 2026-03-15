@@ -13,6 +13,10 @@
  */
 
 import type { ApiCallContext, ApiHandler, ApiHandlerMap } from "./types";
+import { getTotalListenerCount } from "./event-handlers";
+import { getRegisteredFunctionToolNames } from "./function-tool-bridge";
+import { getScriptHostCapabilityFromCall } from "./host-capability-matrix";
+import { resolveHostCapabilityState } from "./host-debug-resolver";
 import { variableHandlers } from "./variable-handlers";
 import { worldbookHandlers } from "./worldbook-handlers";
 import { lorebookHandlers } from "./lorebook-handlers";
@@ -53,6 +57,29 @@ const API_HANDLERS: ApiHandlerMap = {
   ...promptInjectionHandlers,
 };
 
+function isSlashCommandErrorResult(method: string, result: unknown): boolean {
+  if (method !== "triggerSlash" && method !== "triggerSlashWithResult") {
+    return false;
+  }
+
+  return Boolean(
+    result &&
+    typeof result === "object" &&
+    "isError" in result &&
+    (result as { isError?: boolean }).isError,
+  );
+}
+
+function resolveCallHostPath(
+  context: ApiCallContext,
+  sourceKey?: "translation" | "youtubeTranscript" | "clipboardRead" | "clipboardWrite" | "extensionRead" | "extensionWrite" | "galleryList" | "galleryShow",
+) {
+  if (!sourceKey) {
+    return undefined;
+  }
+  return context.hostCapabilitySources?.[sourceKey];
+}
+
 // ============================================================================
 //                              统一调用入口
 // ============================================================================
@@ -62,15 +89,61 @@ export async function handleApiCall(
   args: unknown[],
   context: ApiCallContext
 ): Promise<unknown> {
+  const matchedCapability = getScriptHostCapabilityFromCall(method, args);
+  const resolvedCapability = matchedCapability
+    ? resolveHostCapabilityState(matchedCapability.capability, {
+      resolvedPath: resolveCallHostPath(context, matchedCapability.sourceKey),
+    })
+    : undefined;
   const handler: ApiHandler | undefined = API_HANDLERS[method];
   console.log("[handleApiCall] method:", method, "handler存在:", !!handler, "已注册的方法:", Object.keys(API_HANDLERS));
   if (!handler) {
     console.warn("[handleApiCall] 未找到 handler:", method);
     return undefined;
   }
-  const result = await handler(args, context);
-  console.log("[handleApiCall] 执行完成:", method, "result:", result);
-  return result;
+
+  try {
+    const result = await handler(args, context);
+    if (matchedCapability && (resolvedCapability?.outcome === "supported") && !isSlashCommandErrorResult(method, result)) {
+      context.hostDebugState?.recordApiCall({
+        method,
+        capability: matchedCapability.capability.id,
+        resolvedPath: resolvedCapability.resolvedPath,
+        outcome: "supported",
+        timestamp: Date.now(),
+      });
+    }
+    if (matchedCapability && isSlashCommandErrorResult(method, result)) {
+      context.hostDebugState?.recordApiCall({
+        method,
+        capability: matchedCapability.capability.id,
+        resolvedPath: resolvedCapability?.resolvedPath ?? "fail-fast",
+        outcome: "fail-fast",
+        timestamp: Date.now(),
+      });
+    }
+    context.hostDebugState?.setToolRegistrationCount(
+      getRegisteredFunctionToolNames(context.iframeId).length,
+    );
+    context.hostDebugState?.setEventListenerCount(getTotalListenerCount());
+    console.log("[handleApiCall] 执行完成:", method, "result:", result);
+    return result;
+  } catch (error) {
+    if (matchedCapability) {
+      context.hostDebugState?.recordApiCall({
+        method,
+        capability: matchedCapability.capability.id,
+        resolvedPath: resolvedCapability?.resolvedPath ?? "fail-fast",
+        outcome: "fail-fast",
+        timestamp: Date.now(),
+      });
+    }
+    context.hostDebugState?.setToolRegistrationCount(
+      getRegisteredFunctionToolNames(context.iframeId).length,
+    );
+    context.hostDebugState?.setEventListenerCount(getTotalListenerCount());
+    throw error;
+  }
 }
 
 // ============================================================================
