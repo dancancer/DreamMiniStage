@@ -13,7 +13,7 @@
 
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useLanguage } from "@/app/i18n";
 import { toast } from "@/lib/store/toast-store";
@@ -120,10 +120,14 @@ function SessionPageContent() {
     setCharacterNameOverride(null);
   }, [characterId]);
 
+  const handleOpenBranches = useCallback(() => {
+    setIsBranchOpen(true);
+  }, []);
+
   useSessionHeaderContent({
     currentCharacter,
     characterView: normalizedCharacterView,
-    onOpenBranches: () => setIsBranchOpen(true),
+    onOpenBranches: handleOpenBranches,
   });
   useSessionDialogueDataSync({
     dialogueData: loader.dialogueData,

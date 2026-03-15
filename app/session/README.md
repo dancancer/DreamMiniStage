@@ -45,6 +45,7 @@
 
 ## 最新变更（2026-03-13）
 
+- `session-page-content.tsx` 现已固定 header 注入所用的 `onOpenBranches` 回调引用，避免 `useSessionHeaderContent -> setHeaderContent -> context rerender` 形成自激重渲染，消除 `/session` 首屏挂载时的 `Maximum update depth exceeded` 噪声。
 - `session-host-bridge.ts` 已扩展 `/session` 宿主协议：除 `translateText/getYouTubeTranscript` 外，现还显式声明 `get/setClipboardText`、`isExtensionInstalled/getExtensionEnabledState/setExtensionEnabled`，避免 clipboard / extension-state 的宿主来源继续漂浮。
 - `session-host-defaults.ts` 已补齐默认 clipboard 宿主：优先走浏览器 Clipboard API；不可用时显式 fail-fast，不再依赖隐式注入。
 - `session-host-defaults.ts` 已补齐 extension-state / extension-exists 默认读路径：通过 `window.pluginRegistry` 读取安装态与 enabled 状态；扩展写操作仍不伪装成默认支持。
