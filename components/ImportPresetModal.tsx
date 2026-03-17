@@ -15,7 +15,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Check, FileText, X } from "lucide-react";
+import { FileText } from "lucide-react";
 import { toast } from "@/lib/store/toast-store";
 import { useLanguage } from "@/app/i18n";
 import { importPresetFromJson } from "@/function/preset/import";
@@ -26,16 +26,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  ImportResultDisplay,
+  type ImportResult,
+} from "@/components/import-modal";
 
 // ============================================================================
 //                              类型定义
 // ============================================================================
-
-/** 导入操作的结果类型 */
-interface ImportResult {
-  success: boolean;
-  error?: string;
-}
 
 interface ImportPresetModalProps {
   isOpen: boolean;
@@ -85,7 +83,10 @@ export default function ImportPresetModal({
       toast.error(`${t("importPreset.failedToImport")}: ${errorMessage}`);
       setImportResult({
         success: false,
-        error: errorMessage,
+        message: errorMessage,
+        importedCount: 0,
+        skippedCount: 1,
+        errors: [errorMessage],
       });
     } finally {
       setIsImporting(false);
@@ -129,7 +130,15 @@ export default function ImportPresetModal({
     setIsImporting(true);
     try {
       const result = await importPresetFromJson(JSON.stringify(jsonData), customName.trim() || fileName);
-      setImportResult(result);
+      setImportResult({
+        success: result.success,
+        message: result.success
+          ? t("importPreset.presetImported")
+          : (result.error || t("importPreset.importError")),
+        importedCount: result.success ? 1 : 0,
+        skippedCount: result.success ? 0 : 1,
+        errors: result.success ? [] : [result.error || t("importPreset.importError")],
+      });
 
       if (result.success) {
         toast.success(t("importPreset.importSuccess"));
@@ -142,7 +151,10 @@ export default function ImportPresetModal({
       toast.error(`${t("importPreset.failedToImport")}: ${errorMessage}`);
       setImportResult({
         success: false,
-        error: errorMessage,
+        message: errorMessage,
+        importedCount: 0,
+        skippedCount: 1,
+        errors: [errorMessage],
       });
     } finally {
       setIsImporting(false);
@@ -267,29 +279,14 @@ export default function ImportPresetModal({
             )}
             
             {importResult && (
-              <div className={`p-4 rounded-md border ${
-                importResult.success
-                  ? "bg-emerald-900/20 border-emerald-500/30 text-emerald-200"
-                  : "bg-red-900/20 border-red-500/30 text-red-200"
-              }`}>
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                    importResult.success ? "bg-emerald-500/20" : "bg-red-500/20"
-                  }`}>
-                    {importResult.success ? (
-                      <Check className="h-3 w-3 text-emerald-400" />
-                    ) : (
-                      <X className="h-3 w-3 text-red-400" />
-                    )}
-                  </div>
-                  <h4 className={"font-medium "}>
-                    {importResult.success ? t("importPreset.importSuccess") : t("importPreset.importFailed")}
-                  </h4>
-                </div>
-                <p className={`text-sm ${fontClass}`}>
-                  {importResult.success ? t("importPreset.presetImported") : importResult.error || t("importPreset.importError")}
-                </p>
-              </div>
+              <ImportResultDisplay
+                result={importResult}
+                title={importResult.success ? t("importPreset.importSuccess") : t("importPreset.importFailed")}
+                importedLabel="Imported {count}"
+                skippedLabel="Skipped {count}"
+                errorsLabel={t("importPreset.importFailed")}
+                serifFontClass={serifFontClass}
+              />
             )}
             
             <div className="bg-muted-surface/40 backdrop-blur-sm border border-border/30 rounded-md p-4">

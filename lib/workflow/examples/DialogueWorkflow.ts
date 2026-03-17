@@ -1,11 +1,13 @@
 import { BaseWorkflow, WorkflowConfig, WorkflowParams } from "@/lib/workflow/BaseWorkflow";
+import { WorkflowEngine } from "@/lib/nodeflow/WorkflowEngine";
+import { NodeContext } from "@/lib/nodeflow/NodeContext";
 import { NodeCategory } from "@/lib/nodeflow/types";
 import { UserInputNode } from "@/lib/nodeflow/UserInputNode/UserInputNode";
 import { HistoryPreNode } from "@/lib/nodeflow/HistoryPreNode/HistoryPreNode";
 import { ContextNode } from "@/lib/nodeflow/ContextNode/ContextNode";
 import { WorldBookNode } from "@/lib/nodeflow/WorldBookNode/WorldBookNode";
 import { PresetNode } from "@/lib/nodeflow/PresetNode/PresetNode";
-import { LLMNode } from "@/lib/nodeflow/LLMNode/LLMNode";
+import { buildLLMConfigFromNodeInput, LLMNode } from "@/lib/nodeflow/LLMNode/LLMNode";
 import { RegexNode } from "@/lib/nodeflow/RegexNode/RegexNode";
 import { PluginNode } from "@/lib/nodeflow/PluginNode/PluginNode";
 import { PluginMessageNode } from "@/lib/nodeflow/PluginNode/PluginMessageNode";
@@ -218,6 +220,44 @@ export class DialogueWorkflow extends BaseWorkflow {
           outputFields: ["thinkingContent", "screenContent", "fullResponse", "nextPrompts", "event"],
         },
       ],
+    };
+  }
+
+  async prepareExecution(params: DialogueWorkflowParams): Promise<{
+    context: NodeContext;
+    llmInput: import("@/lib/nodeflow/LLMNode/llm-config").LLMConfig;
+  }> {
+    this.resetContext();
+    const context = this.getContext();
+    const engine = new WorkflowEngine(
+      this.getWorkflowConfig(),
+      this.getNodeRegistry() as import("@/lib/nodeflow/types").NodeRegistry,
+      context,
+    );
+
+    const prepared = await engine.executeUntil("llm-1", params, context);
+    return {
+      context: prepared.context,
+      llmInput: buildLLMConfigFromNodeInput(prepared.targetInput),
+    };
+  }
+
+  async finalizeExecution(
+    context: NodeContext,
+    llmResponse: string,
+  ): Promise<{
+    outputData: Record<string, unknown>;
+  }> {
+    context.setCache("llmResponse", llmResponse);
+    const engine = new WorkflowEngine(
+      this.getWorkflowConfig(),
+      this.getNodeRegistry() as import("@/lib/nodeflow/types").NodeRegistry,
+      context,
+    );
+
+    const result = await engine.executeFrom("regex-1", context);
+    return {
+      outputData: result.outputData,
     };
   }
 } 

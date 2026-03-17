@@ -17,6 +17,7 @@
 import React, { useRef, useEffect, useCallback, useState, memo, useLayoutEffect } from "react";
 import type { ScriptMessageData } from "@/types/script-message";
 import { clearIframeListeners } from "@/hooks/script-bridge";
+import { generateSandboxAttributes } from "@/lib/utils/iframe-security";
 import {
   clearIframeFunctionTools,
   clearIframeSlashCommands,
@@ -223,7 +224,7 @@ export const ScriptSandbox = memo(function ScriptSandbox({
         ref={iframeRef}
         data-sandbox-id={id}
         srcDoc={srcdoc}
-        sandbox="allow-scripts allow-same-origin"
+        sandbox={generateSandboxAttributes(true, true, true)}
         loading="lazy"
         className="block w-full border-0 bg-transparent"
         style={{ height: `${height}px`, background: "transparent" }}

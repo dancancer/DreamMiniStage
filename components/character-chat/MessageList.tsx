@@ -19,6 +19,7 @@ import { ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import { MemoizedMessageItem, type Message } from "./MessageItem";
 import { Button } from "@/components/ui/button";
 import type { TavernHelperScript } from "@/lib/models/character-model";
+import type { ChatStreamingIntent } from "./streaming-types";
 // ============================================================================
 //                              类型定义
 // ============================================================================
@@ -46,9 +47,7 @@ interface MessageListProps {
   openingMessages: OpeningMessage[];
   openingIndex: number;
   openingLocked: boolean;
-  isSending: boolean;
-  enableStreaming: boolean;
-  streamingTarget: number;
+  streamingIntent: ChatStreamingIntent;
   onTruncate: (id: string) => void;
   onRegenerate: (id: string) => void;
   onOpeningNavigate: (direction: "prev" | "next") => void;
@@ -70,9 +69,7 @@ export default function MessageList({
   openingMessages,
   openingIndex,
   openingLocked,
-  isSending,
-  enableStreaming,
-  streamingTarget,
+  streamingIntent,
   onTruncate,
   onRegenerate,
   onOpeningNavigate,
@@ -138,9 +135,7 @@ export default function MessageList({
                   index={messageIndex}
                   character={character}
                   isLastMessage={visibleIndex === visibleMessages.length - 1}
-                  isSending={isSending}
-                  enableStreaming={enableStreaming}
-                  streamingTarget={streamingTarget}
+                  streamingIntent={streamingIntent}
                   onTruncate={onTruncate}
                   onRegenerate={onRegenerate}
                   onContentChange={visibleIndex === visibleMessages.length - 1 ? maybeScrollToBottom : undefined}
@@ -160,14 +155,14 @@ export default function MessageList({
                 openingIndex={openingIndex}
                 totalOpenings={openingMessages.length}
                 onNavigate={onOpeningNavigate}
-                isSending={isSending}
+                isSending={streamingIntent.isSending}
                 serifFontClass={serifFontClass}
                 t={t}
               />
             )}
 
             {/* 加载指示器 */}
-            {isSending && (
+            {streamingIntent.isSending && (
               <TypingIndicator characterName={character.name} serifFontClass={serifFontClass} t={t} />
             )}
           </div>

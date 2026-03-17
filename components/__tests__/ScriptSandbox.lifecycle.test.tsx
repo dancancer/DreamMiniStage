@@ -71,6 +71,66 @@ function unmountSandbox(rendered: RenderedSandbox): void {
 }
 
 describe("ScriptSandbox lifecycle", () => {
+  it("allows modal apis inside the sandbox iframe", () => {
+    const rendered = renderSandbox("segment_modal_permissions");
+
+    expect(rendered.iframe.getAttribute("sandbox")).toContain("allow-modals");
+
+    unmountSandbox(rendered);
+  });
+
+  it("keeps legacy global triggerSlash calls intact for shim compatibility", () => {
+    const rendered = renderSandbox(
+      "segment_legacy_trigger_slash",
+    );
+
+    act(() => {
+      rendered.root.render(
+        <ScriptSandbox
+          id="segment_legacy_trigger_slash"
+          html={`<html><body><script>
+            if (typeof triggerSlash === "function") {
+              triggerSlash('/send hello|/trigger');
+            }
+          </script></body></html>`}
+        />,
+      );
+    });
+
+    const srcdoc = rendered.iframe.getAttribute("srcdoc") || "";
+
+    expect(srcdoc).toContain("typeof triggerSlash === \"function\"");
+    expect(srcdoc).toContain("triggerSlash('/send hello|/trigger')");
+
+    unmountSandbox(rendered);
+  });
+
+  it("preserves locally declared legacy api helpers", () => {
+    const rendered = renderSandbox("segment_legacy_message_api");
+
+    act(() => {
+      rendered.root.render(
+        <ScriptSandbox
+          id="segment_legacy_message_api"
+          html={`<html><body><script>
+            function triggerSlash(command) {
+              return command;
+            }
+            triggerSlash('/send hello');
+          </script></body></html>`}
+        />,
+      );
+    });
+
+    const srcdoc = rendered.iframe.getAttribute("srcdoc") || "";
+
+    expect(srcdoc).toContain("function triggerSlash(command)");
+    expect(srcdoc).toContain("triggerSlash('/send hello');");
+    expect(srcdoc).not.toContain("function (window.TavernHelper?.triggerSlash");
+
+    unmountSandbox(rendered);
+  });
+
   it("clears character switch listeners by internal iframe id on unmount", () => {
     const internalIframeId = "iframe_lifecycle_internal_cleanup";
     const segmentId = "segment_lifecycle_cleanup";

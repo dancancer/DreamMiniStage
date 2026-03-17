@@ -30,10 +30,12 @@
 
 ## 5. Phase 4：世界书、正则、Persona 与迁移体验
 
-- [ ] 建立迁移语义检查清单。
-- [ ] 增强导入结果报告。
-- [ ] 建立真实素材迁移样例集。
-- [ ] 对齐 Persona / 世界书 / 正则组合工作流。
+- [x] 建立迁移语义检查清单。
+- [x] 增强导入结果报告。
+- [x] 建立真实素材迁移样例集。
+- [x] 对齐 Persona / 世界书 / 正则组合工作流。
+- [x] 完成 Phase 4 统一运行时收敛（generation runtime / slash 宏时序 / render pipeline / store action 分层）。
+- [ ] 下一轮若继续停留在 Phase 4，仅允许补强样例、迁移语义表达与评审整理；不再继续主骨架改造。
 
 ## 6. Phase 5：JS-Slash-Runner 宿主完成度
 

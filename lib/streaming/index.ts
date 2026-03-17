@@ -59,7 +59,6 @@ export type {
   StreamEvent,
   StreamCallbacks,
   StreamResult,
-  StreamResponseEvent,
 } from "./sse-handler";
 
 export {
@@ -67,7 +66,6 @@ export {
   createSSEResponse,
   formatSSEData,
   formatSSEDone,
-  createStreamResponseBuilder,
 } from "./sse-handler";
 
 // ============================================================================

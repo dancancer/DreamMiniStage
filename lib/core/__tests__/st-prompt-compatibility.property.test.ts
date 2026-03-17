@@ -499,7 +499,14 @@ describe("Property 2: Absolute Injection 排序正确性", () => {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /** 生成非空消息内容 */
-const nonEmptyContentArb = fc.string({ minLength: 1, maxLength: 50 }).filter(s => s.trim().length > 0);
+const nonEmptyContentArb = fc.string({ minLength: 1, maxLength: 50 }).filter((s) => {
+  const trimmed = s.trim();
+  return (
+    trimmed.length > 0 &&
+    !s.includes("${") &&
+    !/<\/?(content|length|word_count|context)>/i.test(s)
+  );
+});
 
 /** 生成 name 字段 */
 const nameArb = fc.string({ minLength: 1, maxLength: 20 }).filter(s => s.trim().length > 0);

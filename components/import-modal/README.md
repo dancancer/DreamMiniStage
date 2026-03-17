@@ -13,5 +13,5 @@
 | `ImportModalFooter.tsx` | 子组件 | 弹窗底部 |
 | `DragDropZone.tsx` | 子组件 | 拖放区域 |
 | `GlobalItemSelector.tsx` | 子组件 | 全局项选择器 |
-| `ImportResultDisplay.tsx` | 子组件 | 导入结果展示 |
+| `ImportResultDisplay.tsx` | 子组件 | 导入结果展示（含 Phase 4 迁移语义分桶） |
 | `SaveAsGlobalCheckbox.tsx` | 子组件 | 保存为全局复选框 |

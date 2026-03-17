@@ -11,6 +11,7 @@ import { parseKernelScript } from "./core/parser";
 import { ScopeChain } from "./core/scope";
 import { getDebugMonitor } from "./core/debug";
 import type { AstNode, CommandDescriptor } from "./core/types";
+import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
   ParserFlags,
   SlashCommand,
@@ -57,6 +58,55 @@ function adaptKernelResult(pipe: string, signal?: { kind: string; value?: string
     };
   }
   return { pipe, isError: false };
+}
+
+function createRuntimeMessageTracker(ctx: ExecutionContext): ExecutionContext {
+  const messages = [...ctx.messages];
+  const appendMessage = (
+    role: DialogueMessage["role"],
+    content: string,
+  ) => {
+    messages.push({
+      id: String(messages.length),
+      role,
+      content,
+    });
+  };
+
+  return {
+    ...ctx,
+    messages,
+    onSend: async (text, options) => {
+      if (options === undefined) {
+        await ctx.onSend(text);
+      } else {
+        await ctx.onSend(text, options);
+      }
+      appendMessage("user", text);
+    },
+    onSendAs: ctx.onSendAs
+      ? async (role, text) => {
+        await ctx.onSendAs?.(role, text);
+        appendMessage(role as DialogueMessage["role"], text);
+      }
+      : ctx.onSendAs,
+    onSendSystem: ctx.onSendSystem
+      ? async (text, options) => {
+        if (options === undefined) {
+          await ctx.onSendSystem?.(text);
+        } else {
+          await ctx.onSendSystem?.(text, options);
+        }
+        appendMessage("system", text);
+      }
+      : ctx.onSendSystem,
+    onImpersonate: ctx.onImpersonate
+      ? async (text) => {
+        await ctx.onImpersonate?.(text);
+        appendMessage("assistant", text);
+      }
+      : ctx.onImpersonate,
+  };
 }
 
 function mapCommandToAst(cmd: SlashCommand): AstNode {
@@ -110,10 +160,11 @@ export async function executeSlashCommands(
   commands: SlashCommand[],
   ctx: ExecutionContext,
 ): Promise<ExecutionResult> {
+  const runtimeContext = createRuntimeMessageTracker(ctx);
   const resolver = makeResolver();
   const scope = new ScopeChain();
   const script = toAst(commands);
-  const result = await executeScript(script, { resolveCommand: resolver, context: ctx, scope });
+  const result = await executeScript(script, { resolveCommand: resolver, context: runtimeContext, scope });
   return adaptKernelResult(result.pipe, result.signal);
 }
 
@@ -128,9 +179,10 @@ export async function executeSlashCommandScript(
   if (parsed.isError) {
     return { pipe: "", isError: true, errorMessage: parsed.errorMessage };
   }
+  const runtimeContext = createRuntimeMessageTracker(ctx);
   const resolver = makeResolver();
   const scope = new ScopeChain();
-  const result = await executeScript(parsed.script, { resolveCommand: resolver, context: ctx, scope });
+  const result = await executeScript(parsed.script, { resolveCommand: resolver, context: runtimeContext, scope });
   return adaptKernelResult(result.pipe, result.signal);
 }
 

@@ -14,12 +14,11 @@
 
 "use client";
 
-import { useState, useEffect, memo } from "react";
-import { parseContentAsync } from "@/lib/utils/content-parser";
+import { useEffect, memo, useMemo } from "react";
 import { ScriptSandbox } from "./ScriptSandbox";
 import { clearColorCache } from "@/lib/utils/html-tag-processor";
 import type { ScriptMessageData } from "@/types/script-message";
-import type { ContentSegment } from "@/types/content-segment";
+import { useMessageRenderPipeline } from "@/components/message-bubble/useMessageRenderPipeline";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    类型定义
@@ -60,47 +59,27 @@ function MessageBubbleInner({
   html: rawHtml,
   characterId,
   isLoading = false,
+  enableStreaming = false,
   onContentChange,
   enableScript = false,
   onScriptMessage,
   scriptVariables,
   scripts = [],
 }: Props) {
-  const [segments, setSegments] = useState<ContentSegment[]>([]);
-  const [isParsing, setIsParsing] = useState(true);
-
-  // ╔══════════════════════════════════════════════════════════════════╗
-  // ║  异步解析内容：走 RegexProcessor + Markdown + 标签替换            ║
-  // ╚══════════════════════════════════════════════════════════════════╝
-  useEffect(() => {
-    let cancelled = false;
-
-    async function parse() {
-      setIsParsing(true);
-
-      // 处理 TavernHelper 脚本注入
-      let contentWithScripts = rawHtml;
-      if (scripts.length > 0) {
-        const scriptTags = scripts
-          .map(normalizeScript)
-          .filter((s): s is TavernHelperScriptValue => s !== null)
-          .map(generateScriptTag)
-          .join("\n");
-        if (scriptTags) {
-          contentWithScripts = scriptTags + rawHtml;
-        }
-      }
-
-      const result = await parseContentAsync(contentWithScripts, characterId);
-      if (!cancelled) {
-        setSegments(result);
-        setIsParsing(false);
-      }
-    }
-
-    parse();
-    return () => { cancelled = true; };
-  }, [rawHtml, scripts, characterId]);
+  const contentWithScripts = useMemo(
+    () => injectScriptsIntoContent(rawHtml, scripts),
+    [rawHtml, scripts],
+  );
+  const pipeline = useMessageRenderPipeline({
+    html: contentWithScripts,
+    characterId,
+    enableStreaming,
+  });
+  const shouldShowLoading = (
+    isLoading ||
+    rawHtml.trim() === "" ||
+    (pipeline.phase === "parsed" && pipeline.isParsing)
+  );
 
   // 清理颜色缓存
   useEffect(() => {
@@ -110,19 +89,21 @@ function MessageBubbleInner({
   // ╔══════════════════════════════════════════════════════════════════╗
   // ║  加载状态                                                         ║
   // ╚══════════════════════════════════════════════════════════════════╝
-  if (isLoading || rawHtml.trim() === "" || isParsing) {
-    return (
-      <div className="flex flex-col items-center justify-center py-6 px-4">
-        <div className="text-sm text-muted-foreground font-medium leading-relaxed text-center">
-          No response received. Please check your network connection or API configuration.
-        </div>
-      </div>
-    );
+  if (isLoading || rawHtml.trim() === "") {
+    return null;
+  }
+
+  if (shouldShowLoading) {
+    return null;
+  }
+
+  if (pipeline.phase === "preview" || pipeline.phase === "transition") {
+    return <StreamingPreview html={rawHtml} />;
   }
 
   return (
     <div className=" whitespace-pre-wrap prose prose-invert max-w-none">
-      {segments.map((segment, index) =>
+      {pipeline.segments.map((segment, index) =>
         segment.type === "html" ? (
           <HtmlSegment key={`html-${index}`} html={segment.content} />
         ) : (
@@ -160,6 +141,9 @@ const MessageBubble = memo(MessageBubbleInner, (prev, next) => {
   
   // 加载状态变化 → 必须重渲染
   if (prev.isLoading !== next.isLoading) return false;
+
+  // 流式预览/完整解析切换 → 必须重渲染
+  if (prev.enableStreaming !== next.enableStreaming) return false;
   
   // scripts 数组长度变化 → 必须重渲染
   if ((prev.scripts?.length ?? 0) !== (next.scripts?.length ?? 0)) return false;
@@ -177,6 +161,15 @@ export default MessageBubble;
 const HtmlSegment = memo(function HtmlSegment({ html }: { html: string }) {
   if (!html) return null;
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
+});
+
+const StreamingPreview = memo(function StreamingPreview({ html }: { html: string }) {
+  if (!html) return null;
+  return (
+    <div className="whitespace-pre-wrap break-words text-foreground leading-relaxed">
+      {html}
+    </div>
+  );
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -201,6 +194,24 @@ function normalizeScript(script: TavernHelperScript): TavernHelperScriptValue | 
   }
 
   return null;
+}
+
+function injectScriptsIntoContent(rawHtml: string, scripts: TavernHelperScript[]): string {
+  if (scripts.length === 0) {
+    return rawHtml;
+  }
+
+  const scriptTags = scripts
+    .map(normalizeScript)
+    .filter((s): s is TavernHelperScriptValue => s !== null)
+    .map(generateScriptTag)
+    .join("\n");
+
+  if (!scriptTags) {
+    return rawHtml;
+  }
+
+  return scriptTags + rawHtml;
 }
 
 function generateScriptTag(script: TavernHelperScriptValue): string {

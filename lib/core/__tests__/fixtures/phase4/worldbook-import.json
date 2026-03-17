@@ -1,0 +1,30 @@
+{
+  "entries": {
+    "0": {
+      "key": ["服装"],
+      "content": "如果提到服装，就注入外套和手套的细节。",
+      "selective": true,
+      "constant": false,
+      "position": 4,
+      "enabled": true,
+      "depth": 4,
+      "probability": 100,
+      "useProbability": true,
+      "group": "wardrobe",
+      "group_weight": 100
+    },
+    "1": {
+      "key": ["搭配"],
+      "content": "强调同一套服装在不同天气中的变化。",
+      "selective": true,
+      "constant": false,
+      "position": 4,
+      "enabled": true,
+      "depth": 4,
+      "probability": 100,
+      "useProbability": true,
+      "group": "wardrobe",
+      "groupWeight": 100
+    }
+  }
+}

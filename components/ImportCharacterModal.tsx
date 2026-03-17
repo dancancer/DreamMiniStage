@@ -19,6 +19,7 @@ import { UploadCloud } from "lucide-react";
 import { useLanguage } from "@/app/i18n";
 import { trackButtonClick } from "@/utils/google-analytics";
 import { handleCharacterUpload } from "@/function/character/import";
+import { mergeImportSemanticsSummaries, summarizeChecklistSemantics } from "@/lib/import/migration-semantics/report";
 import { toast } from "@/lib/store/toast-store";
 import {
   Dialog,
@@ -27,6 +28,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  ImportResultDisplay,
+  type ImportResult,
+} from "@/components/import-modal";
 
 // ============================================================================
 //                              类型定义
@@ -48,6 +53,7 @@ export default function ImportCharacterModal({ isOpen, onClose, onImport }: Impo
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ========== 拖拽处理 ==========
@@ -75,6 +81,7 @@ export default function ImportCharacterModal({ isOpen, onClose, onImport }: Impo
       if (pngFiles.length > 0) {
         setSelectedFiles(pngFiles);
         setError("");
+        setImportResult(null);
         
         // Show warning if some files were not PNG
         if (pngFiles.length < files.length) {
@@ -97,6 +104,7 @@ export default function ImportCharacterModal({ isOpen, onClose, onImport }: Impo
       if (pngFiles.length > 0) {
         setSelectedFiles(pngFiles);
         setError("");
+        setImportResult(null);
         
         // Show warning if some files were not PNG
         if (pngFiles.length < files.length) {
@@ -128,6 +136,9 @@ export default function ImportCharacterModal({ isOpen, onClose, onImport }: Impo
       let successCount = 0;
       let failCount = 0;
       const errors: string[] = [];
+      const successfulFiles: string[] = [];
+      const failedFiles: string[] = [];
+      const semanticsSummaries: Array<ReturnType<typeof mergeImportSemanticsSummaries>> = [];
 
       // Upload files sequentially to avoid overwhelming the server
       for (let i = 0; i < selectedFiles.length; i++) {
@@ -137,18 +148,38 @@ export default function ImportCharacterModal({ isOpen, onClose, onImport }: Impo
           
           if (response.success) {
             successCount++;
+            successfulFiles.push(file.name);
+            semanticsSummaries.push(mergeImportSemanticsSummaries([
+              response.hasWorldBook ? summarizeChecklistSemantics("worldbook") : undefined,
+              response.hasRegexScripts ? summarizeChecklistSemantics("regex") : undefined,
+            ]));
           } else {
             failCount++;
+            failedFiles.push(file.name);
             errors.push(`${file.name}: ${t("importCharacterModal.uploadFailed")}`);
           }
         } catch (err) {
           failCount++;
+          failedFiles.push(file.name);
           const errorMsg = typeof err === "string" ? err : t("importCharacterModal.uploadFailed");
           errors.push(`${file.name}: ${errorMsg}`);
         }
       }
 
       // Show results
+      setImportResult({
+        success: successCount > 0,
+        message: successCount > 0
+          ? `${successCount} character(s) imported`
+          : (errors[0] || t("importCharacterModal.uploadFailed")),
+        importedCount: successCount,
+        skippedCount: failCount,
+        errors,
+        successfulFiles,
+        failedFiles,
+        semantics: mergeImportSemanticsSummaries(semanticsSummaries),
+      });
+
       if (successCount > 0 && failCount === 0) {
         toast.success(
           selectedFiles.length === 1 
@@ -173,6 +204,13 @@ export default function ImportCharacterModal({ isOpen, onClose, onImport }: Impo
       console.error("Error uploading characters:", err);
       const errorMessage = typeof err === "string" ? err : t("importCharacterModal.uploadFailed");
       setError(errorMessage);
+      setImportResult({
+        success: false,
+        message: errorMessage,
+        importedCount: 0,
+        skippedCount: selectedFiles.length || 1,
+        errors: [errorMessage],
+      });
       toast.error(errorMessage);
     } finally {
       setIsUploading(false);
@@ -184,6 +222,7 @@ export default function ImportCharacterModal({ isOpen, onClose, onImport }: Impo
   const resetForm = () => {
     setSelectedFiles([]);
     setError("");
+    setImportResult(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -269,6 +308,17 @@ export default function ImportCharacterModal({ isOpen, onClose, onImport }: Impo
             <div className="text-danger text-sm mb-4 text-center">
               {error}
             </div>
+          )}
+
+          {importResult && (
+            <ImportResultDisplay
+              result={importResult}
+              title={t("importCharacterModal.title")}
+              importedLabel="Imported {count}"
+              skippedLabel="Skipped {count}"
+              errorsLabel={t("importCharacterModal.uploadFailed")}
+              serifFontClass={serifFontClass}
+            />
           )}
           
           <div className="flex justify-end space-x-3">

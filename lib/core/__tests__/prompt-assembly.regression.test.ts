@@ -71,23 +71,33 @@ interface TestOutput {
   };
 }
 
+interface PromptAssemblyFixture {
+  userInput: string;
+  characterCard: CharacterCard;
+  preset: STOpenAIPreset;
+}
+
+function readPhase4Fixture<T>(name: string): T {
+  const filePath = path.join(
+    process.cwd(),
+    "lib/core/__tests__/fixtures/phase4",
+    name,
+  );
+  return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
+}
+
 describe("消息拼装回归测试", () => {
   let characterCard: CharacterCard;
   let openaiPreset: STOpenAIPreset;
   let testOutput: TestOutput;
 
-  const USER_INPUT = "推进剧情";
-  const CHARACTER_CARD_PATH = path.join(process.cwd(), "test-baseline-assets/character-card/Sgw3.card.json");
-  const PRESET_PATH = path.join(process.cwd(), "test-baseline-assets/preset/明月秋青v3.94.json");
+  let USER_INPUT = "推进剧情";
 
   beforeAll(() => {
-    // 加载角色卡
-    const cardContent = fs.readFileSync(CHARACTER_CARD_PATH, "utf-8");
-    characterCard = JSON.parse(cardContent);
-
-    // 加载预设
-    const presetContent = fs.readFileSync(PRESET_PATH, "utf-8");
-    openaiPreset = JSON.parse(presetContent);
+    const fixture = readPhase4Fixture<PromptAssemblyFixture>("persona-macro.json");
+    characterCard = fixture.characterCard;
+    openaiPreset = fixture.preset;
+    USER_INPUT = fixture.userInput;
   });
 
   describe("场景：Sgw3 + 明月秋青v3.94 + 推进剧情", () => {

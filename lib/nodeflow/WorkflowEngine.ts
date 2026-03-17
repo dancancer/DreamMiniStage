@@ -99,6 +99,28 @@ export class WorkflowEngine {
     );
   }
 
+  private enqueueNextNodes(
+    sourceNodes: NodeBase[],
+    processedNodes: Set<string>,
+    skipAfterNodes: boolean = true,
+  ): NodeBase[] {
+    const nextLevelNodesSet = new Set<NodeBase>();
+
+    sourceNodes.forEach((node) => {
+      this.getNextNodes(node.getId()).forEach((nextNode) => {
+        const nodeConfig = this.config.nodes.find((item) => item.id === nextNode.getId());
+        if (skipAfterNodes && nodeConfig?.category === NodeCategory.AFTER) {
+          return;
+        }
+        if (!processedNodes.has(nextNode.getId())) {
+          nextLevelNodesSet.add(nextNode);
+        }
+      });
+    });
+
+    return Array.from(nextLevelNodesSet);
+  }
+
   /**
    * Execute main workflow until EXIT nodes, then optionally execute AFTER nodes in background
    */
@@ -155,6 +177,116 @@ export class WorkflowEngine {
     return result;
   }
 
+  async executeUntil(
+    targetNodeId: string,
+    initialWorkflowInput: NodeInput,
+    context?: NodeContext,
+  ): Promise<{
+    context: NodeContext;
+    targetNode: NodeBase;
+    targetInput: NodeInput;
+  }> {
+    const ctx = context || new NodeContext();
+
+    for (const key in initialWorkflowInput) {
+      ctx.setInput(key, initialWorkflowInput[key] as NodeValue);
+    }
+
+    const entryNodes = this.getEntryNodes();
+    if (entryNodes.length === 0) {
+      throw new Error("No entry nodes found in workflow");
+    }
+
+    const directEntryTarget = entryNodes.find((node) => node.getId() === targetNodeId);
+    if (directEntryTarget) {
+      return {
+        context: ctx,
+        targetNode: directEntryTarget,
+        targetInput: await directEntryTarget.previewInput(ctx),
+      };
+    }
+
+    await this.executeParallel(entryNodes, ctx);
+
+    const processedNodes = new Set<string>();
+    entryNodes.forEach((node) => processedNodes.add(node.getId()));
+
+    const queue: Array<{ nodes: NodeBase[] }> = [];
+    const initialNextNodes = this.enqueueNextNodes(entryNodes, processedNodes);
+    if (initialNextNodes.length > 0) {
+      queue.push({ nodes: initialNextNodes });
+    }
+
+    while (queue.length > 0) {
+      const currentBatch = queue.shift()!;
+      const nodesToExecuteInBatch = currentBatch.nodes.filter((node) => !processedNodes.has(node.getId()));
+      if (nodesToExecuteInBatch.length === 0) continue;
+
+      const targetNode = nodesToExecuteInBatch.find((node) => node.getId() === targetNodeId);
+      if (targetNode) {
+        return {
+          context: ctx,
+          targetNode,
+          targetInput: await targetNode.previewInput(ctx),
+        };
+      }
+
+      await this.executeParallel(nodesToExecuteInBatch, ctx);
+      nodesToExecuteInBatch.forEach((node) => processedNodes.add(node.getId()));
+
+      const nextNodes = this.enqueueNextNodes(nodesToExecuteInBatch, processedNodes);
+      if (nextNodes.length > 0) {
+        queue.push({ nodes: nextNodes });
+      }
+    }
+
+    throw new Error(`Target node not found in executable path: ${targetNodeId}`);
+  }
+
+  async executeFrom(
+    startNodeId: string,
+    context?: NodeContext,
+  ): Promise<{
+    status: NodeExecutionStatus;
+    outputData: Record<string, unknown>;
+  }> {
+    const ctx = context || new NodeContext();
+    const startNode = this.nodes.get(startNodeId);
+    if (!startNode) {
+      throw new Error(`Start node not found: ${startNodeId}`);
+    }
+
+    const processedNodes = new Set<string>();
+    const queue: Array<{ nodes: NodeBase[] }> = [{ nodes: [startNode] }];
+
+    while (queue.length > 0) {
+      const currentBatch = queue.shift()!;
+      const nodesToExecuteInBatch = currentBatch.nodes.filter((node) => !processedNodes.has(node.getId()));
+      if (nodesToExecuteInBatch.length === 0) continue;
+
+      await this.executeParallel(nodesToExecuteInBatch, ctx);
+      nodesToExecuteInBatch.forEach((node) => processedNodes.add(node.getId()));
+
+      const hasExitNodes = nodesToExecuteInBatch.some((node) => {
+        const nodeConfig = this.config.nodes.find((item) => item.id === node.getId());
+        return nodeConfig?.category === NodeCategory.EXIT;
+      });
+      if (hasExitNodes) {
+        break;
+      }
+
+      const nextNodes = this.enqueueNextNodes(nodesToExecuteInBatch, processedNodes);
+      if (nextNodes.length > 0) {
+        queue.push({ nodes: nextNodes });
+      }
+    }
+
+    return {
+      status: NodeExecutionStatus.COMPLETED,
+      outputData: ctx.toJSON().outputStore as Record<string, unknown>,
+    };
+  }
+
   /**
    * Execute main workflow from ENTRY to EXIT nodes
    */
@@ -172,23 +304,10 @@ export class WorkflowEngine {
     const processedNodes = new Set<string>();
     entryNodes.forEach(node => processedNodes.add(node.getId()));
 
-    const queue: Array<{
-      nodes: NodeBase[];
-    }> = [];
-    
-    // Add initial next nodes to queue
-    const nextLevelNodesSet = new Set<NodeBase>();
-    entryNodes.forEach(node => {
-      this.getNextNodes(node.getId()).forEach(nextNode => {
-        // Skip AFTER nodes in main workflow
-        const nodeConfig = this.config.nodes.find(n => n.id === nextNode.getId());
-        if (nodeConfig?.category !== NodeCategory.AFTER && !processedNodes.has(nextNode.getId())) {
-          nextLevelNodesSet.add(nextNode);
-        }
-      });
-    });
-    if (nextLevelNodesSet.size > 0) {
-      queue.push({ nodes: Array.from(nextLevelNodesSet) });
+    const queue: Array<{ nodes: NodeBase[] }> = [];
+    const initialNextNodes = this.enqueueNextNodes(entryNodes, processedNodes);
+    if (initialNextNodes.length > 0) {
+      queue.push({ nodes: initialNextNodes });
     }
 
     // Process nodes level by level until EXIT nodes
@@ -214,17 +333,9 @@ export class WorkflowEngine {
       }
 
       // Add next level nodes (excluding AFTER nodes)
-      const nextLevelNodesSet = new Set<NodeBase>();
-      nodesToExecuteInBatch.forEach(node => {
-        this.getNextNodes(node.getId()).forEach(nextNode => {
-          const nodeConfig = this.config.nodes.find(n => n.id === nextNode.getId());
-          if (nodeConfig?.category !== NodeCategory.AFTER && !processedNodes.has(nextNode.getId())) {
-            nextLevelNodesSet.add(nextNode);
-          }
-        });
-      });
-      if (nextLevelNodesSet.size > 0) {
-        queue.push({ nodes: Array.from(nextLevelNodesSet) });
+      const nextNodes = this.enqueueNextNodes(nodesToExecuteInBatch, processedNodes);
+      if (nextNodes.length > 0) {
+        queue.push({ nodes: nextNodes });
       }
     }
 

@@ -14,7 +14,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronRight, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -34,9 +34,18 @@ export default function ThinkBubble({
   t,
 }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const hadThinkingContentRef = useRef(false);
+  const hasThinkingContent = thinkingContent.trim().length > 0;
+
+  useEffect(() => {
+    if (!hadThinkingContentRef.current && hasThinkingContent) {
+      setIsExpanded(true);
+    }
+    hadThinkingContentRef.current = hasThinkingContent;
+  }, [hasThinkingContent]);
 
   // Don't render if no thinking content
-  if (!thinkingContent || thinkingContent.trim() === "") {
+  if (!hasThinkingContent) {
     return null;
   }
 

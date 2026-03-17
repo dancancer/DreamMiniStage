@@ -1,6 +1,6 @@
 /**
  * @input  lib/store/persona-store, lib/models/persona-model
- * @output useCurrentPersona, UseCurrentPersonaReturn, getPersonaDisplayName, getPersonaDescription, resolvePersonaForDialogue
+ * @output useCurrentPersona, UseCurrentPersonaReturn, getPersonaDisplayName, getPersonaDescription, getPersonaDisplayNameForDialogue, getPersonaDescriptionForDialogue, resolvePersonaForDialogue
  * @pos    Persona 解析 Hook - 在对话上下文中自动解析应该使用的 Persona
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
  *
@@ -163,6 +163,34 @@ export function getPersonaDescription(): string {
   if (!state.activePersonaId) return "";
   const persona = state.personas[state.activePersonaId];
   return persona?.description ?? "";
+}
+
+export function getPersonaDisplayNameForDialogue(
+  dialogueKey: string,
+  characterId: string,
+): string {
+  const state = usePersonaStore.getState();
+  const resolution = state.resolvePersona(dialogueKey, characterId);
+
+  if (!resolution.personaId) {
+    return "";
+  }
+
+  return state.personas[resolution.personaId]?.name ?? "";
+}
+
+export function getPersonaDescriptionForDialogue(
+  dialogueKey: string,
+  characterId: string,
+): string {
+  const state = usePersonaStore.getState();
+  const resolution = state.resolvePersona(dialogueKey, characterId);
+
+  if (!resolution.personaId) {
+    return "";
+  }
+
+  return state.personas[resolution.personaId]?.description ?? "";
 }
 
 /**

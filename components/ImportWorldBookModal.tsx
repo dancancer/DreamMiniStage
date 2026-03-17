@@ -24,6 +24,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { summarizeChecklistSemantics } from "@/lib/import/migration-semantics/report";
 import {
   DragDropZone,
   ImportModalHeader,
@@ -124,7 +125,10 @@ export default function ImportWorldBookModal({ isOpen, characterId, onClose, onI
       const jsonData = JSON.parse(text);
       const options = saveAsGlobal ? { saveAsGlobal: true, globalName: globalName.trim() || file.name.replace(".json", ""), globalDescription: globalDescription.trim(), sourceCharacterName: undefined } : undefined;
       const result = await importWorldBookFromJson(characterId, jsonData, options);
-      setImportResult(result);
+      setImportResult({
+        ...result,
+        semantics: result.success ? summarizeChecklistSemantics("worldbook") : undefined,
+      });
       if (result.success) { toast.success(result.message); onImportSuccess(); }
       else toast.error(result.message);
     } catch (error) {
@@ -147,7 +151,14 @@ export default function ImportWorldBookModal({ isOpen, characterId, onClose, onI
     try {
       const result = await importFromGlobalWorldBook(characterId, selectedGlobalId);
       if (result.success) {
-        setImportResult({ success: true, message: result.message, importedCount: result.importedCount, skippedCount: 0, errors: [] });
+        setImportResult({
+          success: true,
+          message: result.message,
+          importedCount: result.importedCount,
+          skippedCount: 0,
+          errors: [],
+          semantics: summarizeChecklistSemantics("worldbook"),
+        });
         toast.success(result.message);
         onImportSuccess();
       } else toast.error(result.message);

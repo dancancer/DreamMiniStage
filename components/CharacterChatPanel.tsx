@@ -14,7 +14,7 @@
 
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { getDisplayUsername, setDisplayUsername } from "@/utils/username-helper";
 import { useApiConfig } from "@/hooks/useApiConfig";
 import { useScriptBridge } from "@/hooks/useScriptBridge";
@@ -53,6 +53,7 @@ import {
   MessageList,
   type Message,
 } from "@/components/character-chat";
+import type { ChatStreamingIntent } from "@/components/character-chat/streaming-types";
 
 // ============================================================================
 //                              类型定义
@@ -301,7 +302,6 @@ export default function CharacterChatPanel({
   onImportJsonl,
 }: Props) {
   // ========== 状态管理 ==========
-  const [streamingTarget, setStreamingTarget] = useState(-1);
   const [showUserNameModal, setShowUserNameModal] = useState(false);
   const [showScriptDebugPanel, setShowScriptDebugPanel] = useState(false);
   const [lastSwipeTarget, setLastSwipeTarget] = useState<string | null>(null);
@@ -410,8 +410,7 @@ export default function CharacterChatPanel({
   // 同步流式传输状态
   useEffect(() => {
     setActiveModes((prev) => (prev.streaming === streamingEnabled ? prev : { ...prev, streaming: streamingEnabled }));
-    setStreamingTarget(streamingEnabled && messages.length > 0 ? messages.length : -1);
-  }, [messages.length, streamingEnabled, setActiveModes]);
+  }, [streamingEnabled, setActiveModes]);
 
   // 同步快速模型状态
   useEffect(() => {
@@ -522,6 +521,23 @@ export default function CharacterChatPanel({
     );
   }, [apiConfig, activeModes, isSending, messages.length, handleToggleStreaming, handleToggleFastModel, handleSwipe, t]);
 
+  const streamingTarget = useMemo(() => (
+    streamingEnabled && messages.length > 0 ? messages.length - 1 : -1
+  ), [messages.length, streamingEnabled]);
+
+  const streamingIntent = useMemo<ChatStreamingIntent>(() => ({
+    enabled: streamingEnabled,
+    targetIndex: streamingTarget,
+    isSending,
+    activeMessageId: (
+      streamingEnabled &&
+      isSending &&
+      messages.length > 0
+    )
+      ? messages[messages.length - 1]?.id ?? null
+      : null,
+  }), [isSending, messages, streamingEnabled, streamingTarget]);
+
   // ========== 渲染 ==========
   return (
     <div className="flex flex-col h-full max-h-screen">
@@ -532,9 +548,7 @@ export default function CharacterChatPanel({
         openingMessages={openingMessages}
         openingIndex={openingIndex}
         openingLocked={openingLocked}
-        isSending={isSending}
-        enableStreaming={!!activeModes.streaming}
-        streamingTarget={streamingTarget}
+        streamingIntent={streamingIntent}
         onTruncate={onTruncate}
         onRegenerate={onRegenerate}
         onOpeningNavigate={onOpeningNavigate}

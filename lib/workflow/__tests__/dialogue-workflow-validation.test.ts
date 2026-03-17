@@ -10,8 +10,17 @@
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { DialogueWorkflow } from "../examples/DialogueWorkflow";
+import { WorkflowEngine } from "@/lib/nodeflow/WorkflowEngine";
+import { applyContextWindowToMessages } from "@/lib/model-runtime";
+import {
+  clearIframeTools,
+} from "@/hooks/script-bridge";
+import {
+  registerScriptTool,
+  unregisterScriptTool,
+} from "@/hooks/script-bridge/tool-handlers";
 
 describe("Task 8: DialogueWorkflow 更新验证", () => {
 
@@ -166,5 +175,91 @@ describe("Phase 1: 模型高级参数流转", () => {
       expect(entryNode?.outputFields).toContain(field);
       expect(llmNode?.inputFields).toContain(field);
     }
+  });
+});
+
+describe("Phase 4: 统一执行计划与运行时输入保持一致", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    unregisterScriptTool("stream_tool_echo");
+    clearIframeTools("iframe_stream_test");
+  });
+
+  it("prepareExecution 应沿用上下文裁剪语义", async () => {
+    const rawMessages = [
+      { role: "system", content: "S".repeat(220) },
+      { role: "assistant", content: "old assistant reply" },
+      { role: "user", content: "latest user turn that must survive" },
+    ];
+    const expectedMessages = applyContextWindowToMessages(rawMessages, {
+      contextWindow: 40,
+      maxTokens: 10,
+    });
+
+    vi.spyOn(WorkflowEngine.prototype, "executeUntil").mockResolvedValue({
+      context: {} as never,
+      targetNode: {} as never,
+      targetInput: {
+        modelName: "gpt-test",
+        apiKey: "key",
+        llmType: "openai",
+        messages: rawMessages,
+        contextWindow: 40,
+        maxTokens: 10,
+      },
+    });
+
+    const workflow = new DialogueWorkflow();
+    const prepared = await workflow.prepareExecution({
+      characterId: "char-1",
+      userInput: "hello",
+      modelName: "gpt-test",
+      apiKey: "key",
+    });
+
+    expect(prepared.llmInput.messages).toEqual(expectedMessages);
+  });
+
+  it("prepareExecution 应注入脚本注册的 function tools", async () => {
+    registerScriptTool(
+      "stream_tool_echo",
+      "stream echo tool",
+      { type: "object", properties: {} },
+      async () => "ok",
+    );
+
+    vi.spyOn(WorkflowEngine.prototype, "executeUntil").mockResolvedValue({
+      context: {} as never,
+      targetNode: {} as never,
+      targetInput: {
+        modelName: "gpt-test",
+        apiKey: "key",
+        llmType: "openai",
+        messages: [{ role: "user", content: "hello" }],
+      },
+    });
+
+    const workflow = new DialogueWorkflow();
+    const prepared = await workflow.prepareExecution({
+      characterId: "char-1",
+      userInput: "hello",
+      modelName: "gpt-test",
+      apiKey: "key",
+    });
+
+    expect(prepared.llmInput.scriptTools).toEqual([
+      {
+        type: "function",
+        function: {
+          name: "stream_tool_echo",
+          description: "stream echo tool",
+          parameters: {
+            type: "object",
+            properties: {},
+            required: undefined,
+          },
+        },
+      },
+    ]);
   });
 });

@@ -39,11 +39,16 @@ export function rewriteIframeParentAccess(html: string): string {
  * 
  * 根据功能需求生成最小必要的沙箱权限
  */
-export function generateSandboxAttributes(allowScripts: boolean = true, allowSameOrigin: boolean = true): string {
+export function generateSandboxAttributes(
+  allowScripts: boolean = true,
+  allowSameOrigin: boolean = true,
+  allowModals: boolean = true,
+): string {
   const permissions: string[] = [];
   
   if (allowScripts) permissions.push("allow-scripts");
   if (allowSameOrigin) permissions.push("allow-same-origin");
+  if (allowModals) permissions.push("allow-modals");
   
   return permissions.join(" ");
 }

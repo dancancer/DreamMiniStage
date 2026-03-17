@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MVU_VARIABLE_UPDATE_FUNCTION } from "@/lib/mvu/function-call";
 
 const createGeminiRunnable = vi.fn();
 const convertForGoogle = vi.fn();
@@ -91,5 +92,45 @@ describe("invokeGeminiModel", () => {
         stopSequences: ["END"],
       }),
     }));
+  });
+
+  it("emits tool call callbacks on the MVU Gemini path", async () => {
+    generateContent.mockResolvedValue({
+      response: {
+        candidates: [{
+          content: {
+            parts: [{
+              functionCall: {
+                name: MVU_VARIABLE_UPDATE_FUNCTION.name,
+                args: {
+                  analysis: "ok",
+                  delta: "{\"hp\":1}",
+                },
+              },
+            }],
+          },
+        }],
+      },
+    });
+    getGenerativeModel.mockReturnValue({ generateContent });
+    const onToolCallStart = vi.fn();
+    const onToolCallResult = vi.fn();
+
+    await invokeGeminiModel(
+      [{ role: "user", content: "hello" }],
+      {
+        apiKey: "test-key",
+        modelName: "gemini-1.5-flash",
+        llmType: "gemini",
+        mvuToolEnabled: true,
+      } as never,
+      {
+        onToolCallStart,
+        onToolCallResult,
+      },
+    );
+
+    expect(onToolCallStart).toHaveBeenCalledWith(MVU_VARIABLE_UPDATE_FUNCTION.name);
+    expect(onToolCallResult).toHaveBeenCalledTimes(1);
   });
 });

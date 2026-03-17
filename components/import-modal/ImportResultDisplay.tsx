@@ -27,6 +27,15 @@ export interface ImportResult {
   errors?: string[];
   successfulFiles?: string[];
   failedFiles?: string[];
+  semantics?: ImportResultSemantics;
+}
+
+export interface ImportResultSemantics {
+  retained: string[];
+  ignored: string[];
+  downgraded: string[];
+  manualReview: string[];
+  notes: string[];
 }
 
 interface ImportResultDisplayProps {
@@ -100,6 +109,60 @@ function ErrorList({ errors, label }: ErrorListProps) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   迁移语义展示
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+interface SemanticsListProps {
+  items: string[];
+  label: string;
+}
+
+function SemanticsList({ items, label }: SemanticsListProps) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div>
+      <p className="text-cream-soft font-medium flex items-center mt-2">
+        <span className="w-1.5 h-1.5 bg-primary rounded-full mr-2" />
+        {label}:
+      </p>
+      <ul className="list-none text-ink-soft ml-3 space-y-0.5">
+        {items.map((item) => (
+          <li key={item} className="flex items-start">
+            <span className="w-1 h-1 bg-primary/60 rounded-full mr-2 mt-1.5 flex-shrink-0" />
+            <span className="text-xs break-words">{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function hasSemantics(result: ImportResult): boolean {
+  if (!result.semantics) {
+    return false;
+  }
+
+  const {
+    retained,
+    ignored,
+    downgraded,
+    manualReview,
+    notes,
+  } = result.semantics;
+
+  return (
+    retained.length > 0 ||
+    ignored.length > 0 ||
+    downgraded.length > 0 ||
+    manualReview.length > 0 ||
+    notes.length > 0
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    主组件
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -142,6 +205,16 @@ export function ImportResultDisplay({
         {/* 错误列表 */}
         {result.errors && result.errors.length > 0 && (
           <ErrorList errors={result.errors} label={errorsLabel} />
+        )}
+
+        {hasSemantics(result) && result.semantics && (
+          <div className="pt-1">
+            <SemanticsList items={result.semantics.retained} label="Retained" />
+            <SemanticsList items={result.semantics.ignored} label="Ignored" />
+            <SemanticsList items={result.semantics.downgraded} label="Downgraded" />
+            <SemanticsList items={result.semantics.manualReview} label="Manual review" />
+            <SemanticsList items={result.semantics.notes} label="Notes" />
+          </div>
         )}
       </div>
     </div>

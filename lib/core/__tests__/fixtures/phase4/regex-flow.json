@@ -1,0 +1,60 @@
+{
+  "userInput": "侦探需要整理侦探手记",
+  "macroEnv": {
+    "user": "用户",
+    "char": "林雾",
+    "description": "冷静的调查员，擅长从细节中发现线索。",
+    "personality": "克制、敏锐、谨慎",
+    "scenario": "雨夜命案后的旧城区调查",
+    "persona": "冷静的调查员",
+    "mesExamples": "用户：你发现什么？\n林雾：窗边有被拖动过的痕迹。",
+    "wiBefore": "",
+    "wiAfter": "",
+    "chatHistory": "",
+    "number": 200,
+    "language": "zh"
+  },
+  "worldBook": [
+    {
+      "entry_id": "phase4-worldbook-entry",
+      "keys": ["标准化输入"],
+      "content": "世界书命中：标准化输入触发调查备忘。",
+      "selective": true,
+      "constant": false,
+      "position": 4,
+      "enabled": true,
+      "depth": 4,
+      "useProbability": true,
+      "probability": 100,
+      "group": "phase4",
+      "groupWeight": 100
+    }
+  ],
+  "regexScripts": [
+    {
+      "scriptKey": "phase4-user-input",
+      "scriptName": "标准化输入",
+      "findRegex": "侦探",
+      "replaceString": "标准化输入",
+      "trimStrings": [],
+      "placement": [1]
+    },
+    {
+      "scriptKey": "phase4-ai-output",
+      "scriptName": "后处理输出",
+      "findRegex": "\\[模拟响应\\]",
+      "replaceString": "后处理输出",
+      "trimStrings": [],
+      "placement": [2]
+    }
+  ],
+  "history": [
+    {
+      "role": "user",
+      "content": "昨晚的线索已经记录。",
+      "timestamp": 1
+    }
+  ],
+  "systemPrompt": "系统：保持{{persona}}风格。",
+  "characterCard": "角色设定：{{description}}"
+}

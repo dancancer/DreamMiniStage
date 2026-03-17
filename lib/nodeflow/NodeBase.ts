@@ -81,8 +81,6 @@ export abstract class NodeBase {
       const registeredToolClass = NodeToolRegistry.get(this.getName());
       if (registeredToolClass) {
         this.toolClass = registeredToolClass;
-      } else {
-        console.warn(`找不到节点类型的工具类: ${this.getName()}`);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "未知错误";
@@ -137,6 +135,10 @@ export abstract class NodeBase {
     }
 
     return resolvedInput;
+  }
+
+  async previewInput(context: NodeContext): Promise<NodeInput> {
+    return this.resolveInput(context);
   }
 
   protected async publishOutput(output: NodeOutput, context: NodeContext): Promise<void> {

@@ -48,7 +48,11 @@ const literalPatternArb = fc.oneof(
   fc.constant(" "),
   fc.constant("\n"),
   fc.constant("Test"),
-  fc.stringMatching(/^[a-zA-Z0-9]+$/).filter(s => s.length > 0 && s.length <= 10),
+  fc.string().filter((s) => (
+    s.length > 0 &&
+    s.length <= 10 &&
+    !/^\/.+\/[gimsuvy]*$/.test(s)
+  )),
 );
 
 /**

@@ -16,9 +16,8 @@ import type { WorldBookEntry } from "@/lib/models/world-book-model";
 
 const WORLDBOOK_ASSET_PATH = path.join(
   process.cwd(),
-  "test-baseline-assets",
-  "worldbook",
-  "服装随机化.json",
+  "lib/core/__tests__/fixtures/phase4",
+  "worldbook-import.json",
 );
 
 function createEntry(overrides: Partial<WorldBookEntry>): WorldBookEntry {
@@ -99,4 +98,3 @@ describe("素材驱动 WorldBook 组合语义", () => {
     expect(depthInjections.some((item) => item.depth === 6 && item.content === "高权重分组条目")).toBe(true);
   });
 });
-

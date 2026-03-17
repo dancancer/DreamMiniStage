@@ -24,6 +24,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { summarizeChecklistSemantics } from "@/lib/import/migration-semantics/report";
 import {
   DragDropZone,
   ImportModalHeader,
@@ -109,6 +110,9 @@ async function processBatchImport(files: File[], ctx: BatchImportContext): Promi
     errors: allErrors,
     successfulFiles,
     failedFiles,
+    semantics: successfulFiles.length > 0
+      ? summarizeChecklistSemantics("regex")
+      : undefined,
   };
 }
 
@@ -197,7 +201,14 @@ export default function ImportRegexScriptModal({ isOpen, characterId, onClose, o
     try {
       const result = await importFromGlobalRegexScript(characterId, selectedGlobalId);
       if (result.success) {
-        setImportResult({ success: true, message: result.message, importedCount: result.importedCount, skippedCount: 0, errors: [] });
+        setImportResult({
+          success: true,
+          message: result.message,
+          importedCount: result.importedCount,
+          skippedCount: 0,
+          errors: [],
+          semantics: summarizeChecklistSemantics("regex"),
+        });
         toast.success(result.message);
         onImportSuccess();
       } else toast.error(result.message);

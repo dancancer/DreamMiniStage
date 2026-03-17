@@ -1,0 +1,70 @@
+{
+  "userInput": "推进剧情",
+  "characterCard": {
+    "name": "林雾",
+    "description": "冷静的调查员，擅长从细节中发现线索。",
+    "personality": "克制、敏锐、谨慎",
+    "scenario": "雨夜命案后的旧城区调查",
+    "first_mes": "我先看现场留下的脚印。",
+    "mes_example": "用户：你发现什么？\n林雾：窗边有被拖动过的痕迹。"
+  },
+  "preset": {
+    "temperature": 1,
+    "top_p": 0.9,
+    "openai_max_tokens": 400,
+    "prompts": [
+      {
+        "identifier": "main",
+        "name": "Main Prompt",
+        "role": "system",
+        "content": "你是{{char}}，正在与{{user}}合作调查案件。"
+      },
+      {
+        "identifier": "worldInfoBefore",
+        "name": "World Info Before",
+        "role": "system",
+        "marker": true,
+        "system_prompt": true
+      },
+      {
+        "identifier": "charDescription",
+        "name": "Character Description",
+        "role": "system",
+        "marker": true,
+        "system_prompt": true
+      },
+      {
+        "identifier": "worldInfoAfter",
+        "name": "World Info After",
+        "role": "system",
+        "marker": true,
+        "system_prompt": true
+      },
+      {
+        "identifier": "chatHistory",
+        "name": "Chat History",
+        "role": "system",
+        "marker": true
+      },
+      {
+        "identifier": "userPrompt",
+        "name": "User Prompt",
+        "role": "user",
+        "content": "{{userInput}}"
+      }
+    ],
+    "prompt_order": [
+      {
+        "character_id": 100001,
+        "order": [
+          { "identifier": "main", "enabled": true },
+          { "identifier": "worldInfoBefore", "enabled": true },
+          { "identifier": "charDescription", "enabled": true },
+          { "identifier": "worldInfoAfter", "enabled": true },
+          { "identifier": "chatHistory", "enabled": true },
+          { "identifier": "userPrompt", "enabled": true }
+        ]
+      }
+    ]
+  }
+}

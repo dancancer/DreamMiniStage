@@ -12,243 +12,16 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
-import { STMacroEvaluator } from "@/lib/core/st-macro-evaluator";
-import { WorldBookManager } from "@/lib/core/world-book";
 import type { MacroEnv } from "@/lib/core/st-preset-types";
 import type { WorldBookEntry } from "@/lib/models/world-book-model";
-import type { DialogueMessage } from "@/lib/models/character-dialogue-model";
-import type { RegexScript } from "@/lib/models/regex-model";
 import { setupDeterministicEnv, teardownDeterministicEnv } from "./baseline-helpers";
-
-// ════════════════════════════════════════════════════════════════════════════
-//   类型定义
-// ════════════════════════════════════════════════════════════════════════════
-
-/**
- * 对话流程执行结果
- */
-interface DialogueFlowResult {
-  processedInput: string;        // 处理后的用户输入
-  matchedWorldBookEntries: WorldBookEntry[];  // 匹配的世界书条目
-  assembledPrompt: string;        // 装配的提示
-  simulatedResponse: string;      // 模拟的 AI 响应
-  processedResponse: string;      // 处理后的 AI 响应
-  updatedHistory: DialogueMessage[];  // 更新后的历史
-}
-
-/**
- * 对话流程配置
- */
-interface DialogueFlowConfig {
-  userInput: string;
-  macroEnv: MacroEnv;
-  worldBook: WorldBookEntry[];
-  regexScripts: RegexScript[];
-  history: DialogueMessage[];
-  systemPrompt: string;
-  characterCard: string;
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//   测试辅助函数
-// ════════════════════════════════════════════════════════════════════════════
-
-/**
- * 执行完整的对话流程
- *
- * 流程：
- * 1. 用户输入 → 宏替换
- * 2. 宏替换后的输入 → 正则处理（USER_INPUT）
- * 3. 正则处理后的输入 → 世界书匹配
- * 4. 装配提示（系统提示 + 角色卡 + 世界书 + 历史 + 用户输入）
- * 5. 模拟 LLM 响应
- * 6. AI 响应 → 正则处理（AI_OUTPUT）
- * 7. 更新历史消息
- */
-function executeDialogueFlow(config: DialogueFlowConfig): DialogueFlowResult {
-  const {
-    userInput,
-    macroEnv,
-    worldBook,
-    regexScripts,
-    history,
-    systemPrompt,
-    characterCard,
-  } = config;
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // 步骤 1: 用户输入 → 宏替换
-  // ──────────────────────────────────────────────────────────────────────────
-  const macroEvaluator = new STMacroEvaluator();
-  let processedInput = macroEvaluator.evaluate(userInput, macroEnv);
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // 步骤 2: 宏替换后的输入 → 正则处理（USER_INPUT）
-  // ──────────────────────────────────────────────────────────────────────────
-  const userInputScripts = regexScripts.filter((script) =>
-    script.placement?.includes("USER_INPUT") || script.placement === undefined,
-  );
-
-  for (const script of userInputScripts) {
-    if (script.disabled) continue;
-
-    // 应用 findRegex（先替换宏）
-    const findRegex = macroEvaluator.evaluate(script.findRegex || "", macroEnv);
-    const replaceString = macroEvaluator.evaluate(script.replaceString || "", macroEnv);
-
-    const regex = compileRegex(findRegex);
-    if (regex) {
-      processedInput = processedInput.replace(regex, replaceString);
-    }
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // 步骤 3: 正则处理后的输入 → 世界书匹配
-  // ──────────────────────────────────────────────────────────────────────────
-  const matchedWorldBookEntries = WorldBookManager.getMatchingEntries(
-    worldBook,
-    processedInput,
-    history,
-    { contextWindow: 10 },
-  );
-
-  // 处理世界书内容中的宏
-  matchedWorldBookEntries.forEach((entry) => {
-    entry.content = macroEvaluator.evaluate(entry.content, macroEnv);
-  });
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // 步骤 4: 装配提示
-  // ──────────────────────────────────────────────────────────────────────────
-  const worldBookContents = matchedWorldBookEntries
-    .map((entry) => entry.content)
-    .join("\n\n");
-
-  const historyText = history
-    .map((msg) => `${msg.role === "user" ? "用户" : "助手"}: ${msg.content}`)
-    .join("\n");
-
-  // 对系统提示和角色卡应用宏替换
-  const processedSystemPrompt = macroEvaluator.evaluate(systemPrompt, macroEnv);
-  const processedCharacterCard = macroEvaluator.evaluate(characterCard, macroEnv);
-
-  const assembledPrompt = [
-    processedSystemPrompt,
-    processedCharacterCard,
-    worldBookContents,
-    historyText,
-    `用户: ${processedInput}`,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // 步骤 5: 模拟 LLM 响应
-  // ──────────────────────────────────────────────────────────────────────────
-  // 在真实场景中，这里会调用 LLM
-  // 在测试中，我们返回一个确定性的模拟响应
-  const simulatedResponse = `[模拟响应] 针对输入"${processedInput}"的回复`;
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // 步骤 6: AI 响应 → 正则处理（AI_OUTPUT）
-  // ──────────────────────────────────────────────────────────────────────────
-  let processedResponse = simulatedResponse;
-  const aiOutputScripts = regexScripts.filter((script) =>
-    script.placement?.includes("AI_OUTPUT"),
-  );
-
-  for (const script of aiOutputScripts) {
-    if (script.disabled) continue;
-
-    const findRegex = macroEvaluator.evaluate(script.findRegex || "", macroEnv);
-    const replaceString = macroEvaluator.evaluate(script.replaceString || "", macroEnv);
-
-    const regex = compileRegex(findRegex);
-    if (regex) {
-      processedResponse = processedResponse.replace(regex, replaceString);
-    }
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // 步骤 7: 更新历史消息
-  // ──────────────────────────────────────────────────────────────────────────
-  const updatedHistory: DialogueMessage[] = [
-    ...history,
-    {
-      role: "user",
-      content: processedInput,
-      timestamp: Date.now(),
-    } as DialogueMessage,
-    {
-      role: "assistant",
-      content: processedResponse,
-      timestamp: Date.now() + 1,
-    } as DialogueMessage,
-  ];
-
-  return {
-    processedInput,
-    matchedWorldBookEntries,
-    assembledPrompt,
-    simulatedResponse,
-    processedResponse,
-    updatedHistory,
-  };
-}
-
-/**
- * 创建简化的对话消息
- */
-function createMessage(role: "user" | "assistant", content: string): DialogueMessage {
-  return {
-    role,
-    content,
-    timestamp: Date.now(),
-  } as DialogueMessage;
-}
-
-/**
- * 编译正则表达式（支持 /pattern/flags 格式）
- */
-function compileRegex(pattern: string): RegExp | null {
-  try {
-    // 移除 /pattern/flags 格式
-    const regexMatch = pattern.match(/^\/(.*)\/([gimsuy]*)$/);
-
-    if (regexMatch) {
-      return new RegExp(regexMatch[1], regexMatch[2] || "g");
-    } else {
-      // 直接作为模式编译
-      try {
-        return new RegExp(pattern, "g");
-      } catch {
-        // 回退到字面量匹配
-        return new RegExp(pattern.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"), "g");
-      }
-    }
-  } catch {
-    return null;
-  }
-}
-
-/**
- * 创建简化的世界书条目
- */
-function createWorldBookEntry(
-  keys: string[],
-  content: string,
-  options: Partial<WorldBookEntry> = {},
-): WorldBookEntry {
-  return {
-    keys,
-    content,
-    selective: true,
-    constant: false,
-    position: 4,
-    enabled: true,
-    ...options,
-  };
-}
+import {
+  createMessage,
+  createWorldBookEntry,
+  executeDialogueFlow,
+  type DialogueFlowConfig,
+  type DialogueFlowRegexScript,
+} from "./dialogue-flow-test-helpers";
 
 // ════════════════════════════════════════════════════════════════════════════
 //   测试套件
@@ -275,7 +48,7 @@ describe("完整对话流程基线测试", () => {
         language: "zh",
       };
 
-      const regexScripts: RegexScript[] = [
+      const regexScripts: DialogueFlowRegexScript[] = [
         {
           scriptName: "去除多余空格",
           findRegex: "\\s+",
@@ -358,7 +131,7 @@ describe("完整对话流程基线测试", () => {
         language: "zh",
       };
 
-      const regexScripts: RegexScript[] = [
+      const regexScripts: DialogueFlowRegexScript[] = [
         {
           scriptName: "替换为用户名",
           findRegex: "某人",
@@ -389,7 +162,7 @@ describe("完整对话流程基线测试", () => {
         language: "zh",
       };
 
-      const regexScripts: RegexScript[] = [
+      const regexScripts: DialogueFlowRegexScript[] = [
         {
           scriptName: "清理响应",
           findRegex: "\\[模拟响应\\] ",
@@ -531,7 +304,7 @@ describe("完整对话流程基线测试", () => {
         language: "zh",
       };
 
-      const regexScripts: RegexScript[] = [
+      const regexScripts: DialogueFlowRegexScript[] = [
         {
           scriptName: "全部小写",
           findRegex: "ALICE",
@@ -564,7 +337,7 @@ describe("完整对话流程基线测试", () => {
         language: "zh",
       };
 
-      const regexScripts: RegexScript[] = [
+      const regexScripts: DialogueFlowRegexScript[] = [
         {
           scriptName: "动态替换",
           findRegex: "XX",
@@ -623,7 +396,7 @@ describe("完整对话流程基线测试", () => {
         language: "zh",
       };
 
-      const regexScripts: RegexScript[] = [
+      const regexScripts: DialogueFlowRegexScript[] = [
         {
           scriptName: "标准化关键词",
           findRegex: "进城",
@@ -703,7 +476,7 @@ describe("完整对话流程基线测试", () => {
     });
 
     it("应跳过 disabled 的正则脚本", () => {
-      const regexScripts: RegexScript[] = [
+      const regexScripts: DialogueFlowRegexScript[] = [
         {
           scriptName: "禁用的脚本",
           findRegex: "你好",
@@ -730,7 +503,7 @@ describe("完整对话流程基线测试", () => {
     });
 
     it("应处理无效的正则表达式", () => {
-      const regexScripts: RegexScript[] = [
+      const regexScripts: DialogueFlowRegexScript[] = [
         {
           scriptName: "无效正则",
           findRegex: "[[[invalid",  // 无效的正则
@@ -763,7 +536,7 @@ describe("完整对话流程基线测试", () => {
 
   describe("SillyTavern 行为对齐", () => {
     it("placement 为 undefined 的正则应应用于所有阶段", () => {
-      const regexScripts: RegexScript[] = [
+      const regexScripts: DialogueFlowRegexScript[] = [
         {
           scriptName: "全局脚本",
           findRegex: "测试",

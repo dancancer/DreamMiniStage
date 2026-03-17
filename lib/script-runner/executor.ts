@@ -18,6 +18,7 @@ import { ScriptEventEmitter, createEventEmitterWithBridge } from "./event-emitte
 import { SandboxContext, createSandboxContext } from "./sandbox-context";
 import { GlobalEventBridge, createGlobalEventBridge } from "./global-event-bridge";
 import { createTavernHelper, type TavernHelperAPI } from "./tavern-helper";
+import { generateSandboxAttributes } from "@/lib/utils/iframe-security";
 
 /**
  * Default executor options
@@ -86,7 +87,7 @@ export class ScriptExecutor {
       // Create iframe
       this.iframe = document.createElement("iframe");
       this.iframe.style.display = "none";
-      this.iframe.setAttribute("sandbox", "allow-scripts");
+      this.iframe.setAttribute("sandbox", generateSandboxAttributes(true, false, true));
       this.iframe.src = this.options.sandboxUrl;
       
       // Set up ready listener

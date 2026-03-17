@@ -27,6 +27,7 @@ import {
   createScopeChangeEvent,
   createScriptLifecycleEvent,
 } from "./debug";
+import { expandStEnvMacros } from "./st-env-macros";
 
 // =============================================================================
 //                              对外 API
@@ -135,13 +136,24 @@ async function executeCommand(node: CommandNode, ctx: ExecContext): Promise<Exec
   ));
 
   try {
-    const expandedPipe = expandCommandMacros(ctx.pipe, ctx);
-    const expandedArgs = node.args.map((arg) => expandCommandMacros(arg, { ...ctx, pipe: expandedPipe }));
+    const preExpandedPipe = await expandStEnvMacros(ctx.pipe, ctx.options.context);
+    const commandMacroPipe = expandCommandMacros(preExpandedPipe, ctx);
+    const expandedPipe = await expandStEnvMacros(commandMacroPipe, ctx.options.context);
+    const expandedArgs = await Promise.all(
+      node.args.map(async (arg) => {
+        const preExpanded = await expandStEnvMacros(arg, ctx.options.context);
+        const commandExpanded = expandCommandMacros(preExpanded, { ...ctx, pipe: expandedPipe });
+        return expandStEnvMacros(commandExpanded, ctx.options.context);
+      }),
+    );
     const expandedNamedArgs = Object.fromEntries(
-      Object.entries(node.namedArgs).map(([key, value]) => [
-        key,
-        expandCommandMacros(value, { ...ctx, pipe: expandedPipe }),
-      ]),
+      await Promise.all(
+        Object.entries(node.namedArgs).map(async ([key, value]) => {
+          const preExpanded = await expandStEnvMacros(value, ctx.options.context);
+          const commandExpanded = expandCommandMacros(preExpanded, { ...ctx, pipe: expandedPipe });
+          return [key, await expandStEnvMacros(commandExpanded, ctx.options.context)] as const;
+        }),
+      ),
     );
     const invocationMeta = {
       raw: node.raw,

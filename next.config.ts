@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import withPWA from "next-pwa";
 
-const nextConfig: NextConfig = {
+const baseConfig: NextConfig = {
   output: "export",
   distDir: ".next",
   images: {
@@ -14,7 +14,6 @@ const nextConfig: NextConfig = {
   devIndicators: false,
 };
 
-// Configure PWA settings
 const pwaConfig = withPWA({
   dest: "public",
   register: true,
@@ -35,4 +34,9 @@ const pwaConfig = withPWA({
   ],
 });
 
-export default pwaConfig(nextConfig as any);
+const nextConfig =
+  process.env.NODE_ENV === "development"
+    ? baseConfig
+    : pwaConfig(baseConfig as any);
+
+export default nextConfig;

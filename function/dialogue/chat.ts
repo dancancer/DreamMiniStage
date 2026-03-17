@@ -7,17 +7,15 @@
 
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { ParsedResponse } from "@/lib/models/parsed-response";
-import { DialogueWorkflow } from "@/lib/workflow/examples/DialogueWorkflow";
 import { prepareOpeningGreeting, type OpeningPayload } from "@/function/dialogue/opening";
 import { resolveModelAdvancedSettings } from "@/lib/model-runtime";
 import type { ModelAdvancedSettings } from "@/lib/model-runtime";
 import { getActivePromptPreset, resolvePromptRuntimeConfig } from "@/lib/prompt-config/service";
 import {
   buildDialogueWorkflowParams,
-  isDialogueWorkflowResult,
-  processPostResponseAsync,
 } from "@/function/dialogue/chat-shared";
-import { handleStreamingResponse } from "@/function/dialogue/chat-streaming";
+import { handlePreparedDialogueResponse } from "@/function/dialogue/chat-streaming";
+import { prepareDialogueExecution } from "@/lib/generation-runtime/prepare/prepare-dialogue-execution";
 
 function sanitizeUserMessage(message: string): string {
   return message
@@ -92,28 +90,7 @@ export async function handleCharacterChatRequest(payload: {
       });
       await appendPendingUserTurn({ dialogueId, message, nodeId, parentNodeId });
 
-      if (responseStreaming) {
-        return handleStreamingResponse({
-          dialogueId,
-          characterId,
-          message: sanitizedMessage,
-          originalMessage: message,
-          username,
-          modelName,
-          baseUrl,
-          apiKey,
-          llmType,
-          language,
-          number,
-          fastModel,
-          advanced: resolvedAdvanced,
-          promptRuntime,
-          nodeId,
-        });
-      }
-
-      const workflow = new DialogueWorkflow();
-      const workflowResult = await workflow.execute(buildDialogueWorkflowParams({
+      const preparedExecution = await prepareDialogueExecution(buildDialogueWorkflowParams({
         dialogueId,
         characterId,
         userInput: sanitizedMessage,
@@ -133,33 +110,12 @@ export async function handleCharacterChatRequest(payload: {
         fastModel,
       }));
 
-      if (!isDialogueWorkflowResult(workflowResult)) {
-        throw new Error("No response returned from workflow");
-      }
-
-      const { thinkingContent, screenContent, fullResponse, nextPrompts, event } = workflowResult.outputData;
-      await processPostResponseAsync({
+      return await handlePreparedDialogueResponse({
         dialogueId,
-        message,
-        thinkingContent: thinkingContent ?? "",
-        fullResponse,
-        screenContent,
-        event: typeof event === "string" ? event : "",
-        nextPrompts: nextPrompts ?? [],
+        originalMessage: message,
         nodeId,
-      }).catch((error) => console.error("Post-processing error:", error));
-
-      return new Response(JSON.stringify({
-        type: "complete",
-        success: true,
-        thinkingContent,
-        content: screenContent,
-        parsedContent: { nextPrompts },
-        isRegexProcessed: true,
-      }), {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        preparedExecution,
+        streaming: responseStreaming,
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";

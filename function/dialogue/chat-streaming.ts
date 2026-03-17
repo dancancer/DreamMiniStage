@@ -1,129 +1,91 @@
 /**
- * @input  function/dialogue/chat-shared, lib/streaming, lib/workflow/examples/DialogueWorkflow
+ * @input  function/dialogue/chat-shared, lib/streaming, lib/generation-runtime
  * @output handleStreamingResponse
  * @pos    对话流式响应 - buffered chunked delivery SSE 封装
  */
 
-import { createSSEResponse, formatSSEData, formatSSEDone } from "@/lib/streaming";
-import { DialogueWorkflow } from "@/lib/workflow/examples/DialogueWorkflow";
-import type { ModelAdvancedSettings } from "@/lib/model-runtime";
-import {
-  buildDialogueWorkflowParams,
-  isDialogueWorkflowResult,
-  processPostResponseAsync,
-} from "@/function/dialogue/chat-shared";
-
-const STREAMING_CHUNK_SIZE = 20;
-const STREAMING_CHUNK_DELAY_MS = 10;
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { createSSEResponse } from "@/lib/streaming";
+import { createErrorEvent } from "@/lib/generation-runtime/events";
+import { runDialogueGeneration } from "@/lib/generation-runtime/run-dialogue-generation";
+import { createBufferedSink } from "@/lib/generation-runtime/sinks/create-buffered-sink";
+import { createSseSink } from "@/lib/generation-runtime/sinks/create-sse-sink";
+import type { PreparedDialogueExecution } from "@/lib/generation-runtime/types";
 
 export interface StreamingParams {
   dialogueId: string;
-  characterId: string;
-  message: string;
   originalMessage: string;
-  username?: string;
-  modelName: string;
-  baseUrl: string;
-  apiKey: string;
-  llmType: "openai" | "ollama" | "gemini";
-  language: "zh" | "en";
-  number: number;
-  fastModel: boolean;
-  advanced?: ModelAdvancedSettings;
-  promptRuntime: import("@/lib/prompt-config/state").ResolvedPromptRuntimeConfig;
   nodeId: string;
+  preparedExecution: PreparedDialogueExecution;
+}
+
+export interface PreparedDialogueResponseParams extends StreamingParams {
+  streaming?: boolean;
+}
+
+function createBufferedJsonResponse(
+  result: ReturnType<ReturnType<typeof createBufferedSink>["getResult"]>,
+): Response {
+  if (!result) {
+    throw new Error("No response returned from workflow");
+  }
+
+  return new Response(JSON.stringify(result), {
+    status: result.type === "error" ? 500 : 200,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+async function createBufferedResponse(
+  params: StreamingParams,
+): Promise<Response> {
+  const sink = createBufferedSink();
+
+  await runDialogueGeneration({
+    dialogueId: params.dialogueId,
+    originalMessage: params.originalMessage,
+    nodeId: params.nodeId,
+    preparedExecution: params.preparedExecution,
+  }, sink);
+
+  return createBufferedJsonResponse(sink.getResult());
 }
 
 export async function handleStreamingResponse(params: StreamingParams): Promise<Response> {
-  const { dialogueId, characterId, message, originalMessage, username, modelName, baseUrl, apiKey, llmType, language, number, fastModel, advanced, promptRuntime, nodeId } = params;
+  const { dialogueId, originalMessage, nodeId, preparedExecution } = params;
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        // 当前流式模式为 buffered chunked delivery：
-        // 先完整执行 workflow，再按固定块大小通过 SSE 模拟流式输出。
-        const workflow = new DialogueWorkflow();
-        const workflowResult = await workflow.execute(buildDialogueWorkflowParams({
+        await runDialogueGeneration({
           dialogueId,
-          characterId,
-          userInput: message,
-          language,
-          username,
-          modelName,
-          apiKey,
-          baseUrl,
-          llmType,
-          advanced,
-          promptRuntime,
-          number,
-          fastModel,
-        }));
-
-        if (!isDialogueWorkflowResult(workflowResult)) {
-          throw new Error("No response returned from workflow");
-        }
-
-        const { thinkingContent, screenContent, fullResponse, nextPrompts, event } = workflowResult.outputData;
-
-        if (thinkingContent) {
-          controller.enqueue(encoder.encode(formatSSEData({
-            type: "reasoning",
-            thinkingContent,
-          })));
-        }
-
-        let sentContent = "";
-        for (let index = 0; index < screenContent.length; index += STREAMING_CHUNK_SIZE) {
-          const chunk = screenContent.slice(index, index + STREAMING_CHUNK_SIZE);
-          sentContent += chunk;
-          controller.enqueue(encoder.encode(formatSSEData({
-            type: "content",
-            content: chunk,
-            accumulated: sentContent,
-          })));
-          await sleep(STREAMING_CHUNK_DELAY_MS);
-        }
-
-        controller.enqueue(encoder.encode(formatSSEData({
-          type: "complete",
-          success: true,
-          thinkingContent: thinkingContent ?? "",
-          content: screenContent,
-          parsedContent: { nextPrompts: nextPrompts ?? [] },
-          isRegexProcessed: true,
-        })));
-        controller.enqueue(encoder.encode(formatSSEDone()));
-
-        processPostResponseAsync({
-          dialogueId,
-          message: originalMessage,
-          thinkingContent: thinkingContent ?? "",
-          fullResponse,
-          screenContent,
-          event: typeof event === "string" ? event : "",
-          nextPrompts: nextPrompts ?? [],
+          originalMessage,
           nodeId,
-        }).catch((error) => console.error("Post-processing error:", error));
-
-        controller.close();
+          preparedExecution,
+        }, createSseSink({
+          controller,
+          encoder,
+        }));
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("Streaming error:", error);
-        controller.enqueue(encoder.encode(formatSSEData({
-          type: "error",
-          message: errorMessage,
-          success: false,
-        })));
-        controller.enqueue(encoder.encode(formatSSEDone()));
-        controller.close();
+        const sink = createSseSink({ controller, encoder });
+        await sink.emit(createErrorEvent(errorMessage));
       }
     },
   });
 
   return createSSEResponse(stream);
+}
+
+export async function handlePreparedDialogueResponse(
+  params: PreparedDialogueResponseParams,
+): Promise<Response> {
+  if (params.streaming) {
+    return handleStreamingResponse(params);
+  }
+
+  return createBufferedResponse(params);
 }

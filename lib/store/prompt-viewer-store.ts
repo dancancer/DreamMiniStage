@@ -24,6 +24,7 @@ import {
   createDefaultUIState,
   DEFAULT_PROMPT_VIEWER_STATE,
 } from "@/lib/prompt-viewer/constants";
+import { promptInterceptor } from "@/lib/prompt-viewer/prompt-interceptor";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    完整状态接口
@@ -100,9 +101,6 @@ export const usePromptViewerStore = create<PromptViewerStoreState>((set, get) =>
       setLoading(dialogueKey, true);
 
       console.log(`[PromptViewerStore:refreshPrompt] 开始刷新: dialogueKey=${dialogueKey}, characterId=${characterId}`);
-      
-      // 动态导入拦截器，避免循环依赖
-      const { promptInterceptor } = await import("@/lib/prompt-viewer/prompt-interceptor");
       
       // 使用拦截器获取提示词数据
       console.log("[PromptViewerStore:refreshPrompt] 调用 triggerInterception...");
@@ -239,9 +237,6 @@ export const usePromptViewerStore = create<PromptViewerStoreState>((set, get) =>
     if (!dialogueKey) return;
 
     try {
-      // 动态导入拦截器，避免循环依赖
-      const { promptInterceptor } = await import("@/lib/prompt-viewer/prompt-interceptor");
-      
       // 启动拦截器
       promptInterceptor.startInterception(dialogueKey);
 
@@ -268,9 +263,6 @@ export const usePromptViewerStore = create<PromptViewerStoreState>((set, get) =>
     if (!dialogueKey) return;
 
     try {
-      // 动态导入拦截器，避免循环依赖
-      const { promptInterceptor } = await import("@/lib/prompt-viewer/prompt-interceptor");
-      
       // 停止拦截器
       promptInterceptor.stopInterception(dialogueKey);
 
@@ -382,7 +374,6 @@ export const usePromptViewerStore = create<PromptViewerStoreState>((set, get) =>
     for (const dialogueKey of dialogueKeys) {
       if (state.intercepting[dialogueKey]) {
         try {
-          const { promptInterceptor } = await import("@/lib/prompt-viewer/prompt-interceptor");
           promptInterceptor.stopInterception(dialogueKey);
         } catch (error) {
           console.error(`[PromptViewerStore] 停止拦截失败: ${dialogueKey}`, error);

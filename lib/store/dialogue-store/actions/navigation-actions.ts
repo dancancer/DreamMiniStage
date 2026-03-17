@@ -10,6 +10,8 @@ import { switchDialogueBranch } from "@/function/dialogue/truncate";
 import { switchSwipe as switchSwipeVariant } from "@/function/dialogue/swipe";
 import { extractNodeIdFromMessageId } from "@/utils/message-id";
 import { formatMessages } from "@/hooks/character-dialogue/message-utils";
+import { mergeDialogueData } from "./generation-event-state";
+import { replaceDialogueSnapshot } from "./dialogue-snapshot-state";
 import type { DialogueState, DialogueMessage } from "../types";
 import type { OpeningMessage, OpeningPayload } from "@/types/character-dialogue";
 
@@ -64,11 +66,14 @@ export async function truncateMessagesAfter(
         setState((state: DialogueState) => ({
           dialogues: {
             ...state.dialogues,
-            [dialogueKey]: {
-              ...state.dialogues[dialogueKey],
-              messages: formattedMessages,
-              suggestedInputs: lastMessage?.parsedContent?.nextPrompts || [],
-            },
+            [dialogueKey]: mergeDialogueData(
+              state.dialogues[dialogueKey],
+              replaceDialogueSnapshot({
+                dialogue: state.dialogues[dialogueKey],
+                messages: formattedMessages,
+                suggestedInputs: lastMessage?.parsedContent?.nextPrompts || [],
+              }),
+            ),
           },
         }));
       }, 100);
@@ -105,11 +110,14 @@ export async function switchSwipe(
     setState((state: DialogueState) => ({
       dialogues: {
         ...state.dialogues,
-        [dialogueKey]: {
-          ...state.dialogues[dialogueKey],
-          messages: formattedMessages,
-          suggestedInputs: lastMessage?.parsedContent?.nextPrompts || [],
-        },
+        [dialogueKey]: mergeDialogueData(
+          state.dialogues[dialogueKey],
+          replaceDialogueSnapshot({
+            dialogue: state.dialogues[dialogueKey],
+            messages: formattedMessages,
+            suggestedInputs: lastMessage?.parsedContent?.nextPrompts || [],
+          }),
+        ),
       },
     }));
   } catch (error) {
@@ -179,13 +187,15 @@ export async function navigateOpening(
       setState((state: DialogueState) => ({
         dialogues: {
           ...state.dialogues,
-          [dialogueKey]: {
-            ...state.dialogues[dialogueKey],
+          [dialogueKey]: replaceDialogueSnapshot({
+            dialogue: state.dialogues[dialogueKey],
             messages: formattedMessages,
             suggestedInputs: [],
-            openingIndex: nextIndex,
-            pendingOpening: openingToPayload(target),
-          },
+            patch: {
+              openingIndex: nextIndex,
+              pendingOpening: openingToPayload(target),
+            },
+          }),
         },
       }));
     } else {

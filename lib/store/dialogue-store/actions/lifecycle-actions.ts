@@ -10,6 +10,8 @@ import { getCharacterDialogue } from "@/function/dialogue/info";
 import { initCharacterDialogue } from "@/function/dialogue/init";
 import { getDisplayUsername } from "@/utils/username-helper";
 import { extractOpeningMessages, formatMessages } from "@/hooks/character-dialogue/message-utils";
+import { mergeDialogueData } from "./generation-event-state";
+import { replaceDialogueSnapshot } from "./dialogue-snapshot-state";
 import type { InitDialogueParams } from "../types";
 import { DEFAULT_DIALOGUE_DATA } from "../types";
 
@@ -49,13 +51,19 @@ export async function fetchLatestDialogue(
           ...state.dialogues,
           [dialogueKey]: {
             ...DEFAULT_DIALOGUE_DATA,
-            ...state.dialogues[dialogueKey],
-            messages: formattedMessages,
-            openingMessages: openings,
-            openingIndex: activeIndex,
-            openingLocked: locked,
-            suggestedInputs: lastMessage?.parsedContent?.nextPrompts || [],
-            pendingOpening: undefined,
+            ...mergeDialogueData(
+              state.dialogues[dialogueKey] ?? DEFAULT_DIALOGUE_DATA,
+              replaceDialogueSnapshot({
+                dialogue: state.dialogues[dialogueKey] ?? DEFAULT_DIALOGUE_DATA,
+                messages: formattedMessages,
+                suggestedInputs: lastMessage?.parsedContent?.nextPrompts || [],
+                patch: {
+                  openingMessages: openings,
+                  openingIndex: activeIndex,
+                  openingLocked: locked,
+                },
+              }),
+            ),
           },
         },
       }));

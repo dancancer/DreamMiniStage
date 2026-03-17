@@ -2,19 +2,22 @@ import { NodeTool } from "@/lib/nodeflow/NodeTool";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatOllama } from "@langchain/ollama";
 import { createGeminiRunnable } from "@/lib/core/gemini-client";
-import { postProcessMessages, getTextContent } from "@/lib/core/prompt/post-processor";
-import { invokeClaudeModel, invokeGeminiModel, invokeClaudeModelStream, type StreamingCallbacks } from "./model-invokers";
-import { extractTokenUsage, type TokenUsage } from "@/lib/adapters/token-usage";
-import type { PromptNames, ExtendedChatMessage, PostProcessingMode } from "@/lib/core/st-preset-types";
-import type { EffectivePromptConfigSummary } from "@/lib/prompt-config/state";
 import {
-  getMvuTool,
-  extractMvuToolCall,
-  functionCallToUpdateContent,
-  type ToolCallBatches,
-  type OpenAITool,
-} from "@/lib/mvu/function-call";
-import { invokeScriptTool } from "@/hooks/script-bridge";
+  invokeClaudeModel,
+  invokeGeminiModel,
+  invokeClaudeModelStream,
+  invokeOpenAIModel,
+  invokeOpenAIModelStream,
+  invokeOpenAIWithTools,
+  type StreamingCallbacks,
+} from "./model-invokers";
+import type { LLMConfig } from "./llm-config";
+import { hasFunctionCalling } from "./function-calling";
+import {
+  emitPromptCapturedEvent,
+  normalizeMessages,
+  publishTokenUsage,
+} from "./runtime-helpers";
 
 // 为window对象添加lastTokenUsage属性的类型声明
 declare global {
@@ -25,66 +28,6 @@ declare global {
       total_tokens: number;
     };
   }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   LLM 配置接口
-   
-   Requirements: 7.1, 8.1 - 支持模型特定转换
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-export interface LLMConfig {
-  modelName: string;
-  apiKey: string;
-  baseUrl?: string;
-  llmType: "openai" | "ollama" | "gemini" | "claude";
-  temperature?: number;
-  contextWindow?: number;
-  maxTokens?: number;
-  timeout?: number;
-  maxRetries?: number;
-  topP?: number;
-  frequencyPenalty?: number;
-  presencePenalty?: number;
-  topK?: number;
-  repeatPenalty?: number;
-  streaming?: boolean;
-  streamUsage?: boolean;
-  language?: "zh" | "en";
-  dialogueKey?: string;
-  characterId?: string;
-  messages?: Array<{ role: string; content: string }>;
-  stopStrings?: string[];
-  effectivePromptConfig?: EffectivePromptConfigSummary;
-
-  /* ─────────────────────────────────────────────────────────────────────────
-     后处理选项 (Requirements: 7.1, 8.1)
-     ───────────────────────────────────────────────────────────────────────── */
-
-  /** 角色名称集合，用于名称前缀规范化 */
-  promptNames?: PromptNames;
-
-  /** 后处理模式 */
-  postProcessingMode?: PostProcessingMode;
-
-  /** 是否保留工具调用字段 */
-  tools?: boolean;
-
-  /** Assistant prefill 内容 */
-  prefill?: string;
-
-  /** 占位符文本 */
-  placeholder?: string;
-
-  /* ─────────────────────────────────────────────────────────────────────────
-     MVU Function Calling 选项
-     ───────────────────────────────────────────────────────────────────────── */
-
-  /** 启用 MVU 函数调用模式 */
-  mvuToolEnabled?: boolean;
-
-  /** 脚本注册的自定义工具 */
-  scriptTools?: OpenAITool[];
 }
 
 const DEFAULT_LLM_SETTINGS = {
@@ -101,76 +44,6 @@ const DEFAULT_LLM_SETTINGS = {
   streamUsage: true,
 };
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   消息处理工具
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-type ChatMessage = { role: string; content: string };
-
-/**
- * 将 ExtendedChatMessage 转换为简单 ChatMessage 格式
- * 
- * 用于 LangChain 调用，需要将多模态内容转为纯文本
- */
-function toSimpleMessages(messages: ExtendedChatMessage[]): ChatMessage[] {
-  return messages.map(msg => ({
-    role: msg.role,
-    content: typeof msg.content === "string" ? msg.content : getTextContent(msg.content),
-  }));
-}
-
-function parseScriptToolArguments(toolName: string, rawArgs: unknown): Record<string, unknown> {
-  if (rawArgs === undefined || rawArgs === null) {
-    return {};
-  }
-
-  if (typeof rawArgs === "string") {
-    try {
-      const parsed = JSON.parse(rawArgs) as unknown;
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        return parsed as Record<string, unknown>;
-      }
-      throw new Error(`Tool '${toolName}' arguments JSON 必须为对象`);
-    } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
-      throw new Error(`Tool '${toolName}' arguments 解析失败: ${detail}`);
-    }
-  }
-
-  if (typeof rawArgs === "object" && !Array.isArray(rawArgs)) {
-    return rawArgs as Record<string, unknown>;
-  }
-
-  throw new Error(`Tool '${toolName}' arguments 类型不受支持: ${typeof rawArgs}`);
-}
-
-function serializeToolResult(result: unknown): string {
-  if (typeof result === "string") {
-    return result;
-  }
-
-  try {
-    return JSON.stringify(result);
-  } catch {
-    return String(result);
-  }
-}
-
-async function executeScriptToolCalls(
-  rawToolCalls: Array<{ name: string; args: unknown }>,
-  scriptToolNames: Set<string>,
-): Promise<string[]> {
-  const outputs: string[] = [];
-  for (const call of rawToolCalls) {
-    if (!scriptToolNames.has(call.name)) {
-      continue;
-    }
-    const args = parseScriptToolArguments(call.name, call.args);
-    const result = await invokeScriptTool(call.name, args);
-    outputs.push(`[tool:${call.name}] ${serializeToolResult(result)}`);
-  }
-  return outputs;
-}
 export class LLMNodeTools extends NodeTool {
   protected static readonly toolType: string = "llm";
   protected static readonly version: string = "1.0.0";
@@ -228,61 +101,12 @@ export class LLMNodeTools extends NodeTool {
         throw new Error("messages[] is required for invokeLLM");
       }
 
-      const rawMessages = [...config.messages];
-
-      /* ═══════════════════════════════════════════════════════════════════════
-         后处理管线 (Requirements: 7.1, 8.1)
-         
-         根据 promptNames 和 postProcessingMode 应用后处理：
-         - 名称规范化（将 name 字段转为 content 前缀）
-         - 角色合并（合并连续同角色消息）
-         - 严格模式处理（确保 user 起始）
-         ═══════════════════════════════════════════════════════════════════════ */
-      const finalMessages: ChatMessage[] = (() => {
-        // 新后处理管线：仅在明确提供模式时启用
-        if (config.promptNames && config.postProcessingMode) {
-          const extMessages = rawMessages as ExtendedChatMessage[];
-          const processed = postProcessMessages(extMessages, {
-            mode: config.postProcessingMode,
-            names: config.promptNames,
-            tools: config.tools,
-            prefill: config.prefill,
-            placeholder: config.placeholder,
-          });
-          return toSimpleMessages(processed);
-        }
-
-        // 默认行为：保持原始顺序与分条结构，避免合并同角色消息
-        // 这样能与 SillyTavern 的多条 system/user 提示对齐
-        return rawMessages;
-      })();
+      const finalMessages = normalizeMessages(config);
       
       // ═══════════════════════════════════════════════════════════════════════
       // 广播实际发送的提示词数据，供提示词查看器捕获
       // ═══════════════════════════════════════════════════════════════════════
-      if (typeof window !== "undefined" && config.dialogueKey) {
-        console.log("[LLMNodeTools:invokeLLM] 广播 llm-prompt-captured 事件:", {
-          dialogueKey: config.dialogueKey,
-          characterId: config.characterId,
-          messagesCount: finalMessages.length,
-        });
-        const promptEvent = new CustomEvent("llm-prompt-captured", {
-          detail: {
-            dialogueKey: config.dialogueKey,
-            characterId: config.characterId,
-            modelName: config.modelName,
-            timestamp: Date.now(),
-            messages: finalMessages,
-            effectiveConfig: config.effectivePromptConfig,
-          },
-        });
-        window.dispatchEvent(promptEvent);
-      } else {
-        console.log("[LLMNodeTools:invokeLLM] 未广播事件:", {
-          hasWindow: typeof window !== "undefined",
-          dialogueKey: config.dialogueKey,
-        });
-      }
+      emitPromptCapturedEvent(config, finalMessages);
 
       /* ═══════════════════════════════════════════════════════════════════════
          模型特定转换 (Requirements: 7.1, 8.1)
@@ -305,96 +129,31 @@ export class LLMNodeTools extends NodeTool {
       
       // OpenAI 兼容模型（openai/ollama）：直接使用处理后的消息
       if (config.llmType === "openai") {
-        const openaiLlm = this.createLLM(config) as ChatOpenAI;
-
         // MVU/脚本工具函数调用模式
-        if (config.mvuToolEnabled || (config.scriptTools && config.scriptTools.length > 0)) {
-          // 合并 MVU 工具和脚本工具
-          const allTools: OpenAITool[] = [];
-          if (config.mvuToolEnabled) {
-            allTools.push(getMvuTool());
-          }
-          const scriptTools = config.scriptTools || [];
-          if (scriptTools.length > 0) {
-            allTools.push(...scriptTools);
-          }
-
-          const boundModel = openaiLlm.bindTools(allTools, { tool_choice: "auto" });
-          const aiMessage = await boundModel.invoke(finalMessages);
-
-          // 提取 token usage
-          const usageData = extractTokenUsage(aiMessage);
-          if (usageData && typeof window !== "undefined") {
-            window.lastTokenUsage = {
-              prompt_tokens: usageData.promptTokens,
-              completion_tokens: usageData.completionTokens,
-              total_tokens: usageData.totalTokens,
-            };
-          }
-
-          // 处理工具调用
-          let textContent = aiMessage.content as string;
-          if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
-            const toolCalls: ToolCallBatches = [aiMessage.tool_calls.map(tc => ({
-              id: tc.id || "",
-              type: "function" as const,
-              function: {
-                name: tc.name,
-                arguments: typeof tc.args === "string" ? tc.args : JSON.stringify(tc.args),
-              },
-            }))];
-
-            // 处理 MVU 工具调用
-            const mvuArgs = extractMvuToolCall(toolCalls);
-            if (mvuArgs) {
-              const updateContent = functionCallToUpdateContent(mvuArgs);
-              textContent = textContent ? `${textContent}\n\n${updateContent}` : updateContent;
-              console.log("[LLMNodeTools] MVU 函数调用转换完成:", mvuArgs.analysis);
-            }
-
-            // 脚本工具调用：直接桥接到 script-bridge 注册表执行并回传结果
-            const scriptToolNames = new Set(scriptTools.map((tool) => tool.function.name));
-            const scriptOutputs = await executeScriptToolCalls(
-              aiMessage.tool_calls.map((call) => ({
-                name: call.name,
-                args: call.args,
-              })),
-              scriptToolNames,
-            );
-            if (scriptOutputs.length > 0) {
-              const outputText = scriptOutputs.join("\n");
-              textContent = textContent ? `${textContent}\n\n${outputText}` : outputText;
-            }
-          }
-
-          return textContent;
+        if (hasFunctionCalling(config)) {
+          return await invokeOpenAIWithTools(
+            finalMessages,
+            config,
+            {
+              onUsage: publishTokenUsage,
+            },
+          );
         }
 
         // 标准调用（无工具）
-        const aiMessage = await openaiLlm.invoke(finalMessages);
+        const response = await invokeOpenAIModel(
+          finalMessages,
+          config,
+          {
+            onUsage: publishTokenUsage,
+          },
+        );
 
-        /* ─────────────────────────────────────────────────────────────────────
-           使用适配器链提取 token usage
-           ───────────────────────────────────────────────────────────────────── */
-        const usageData = extractTokenUsage(aiMessage);
-        const tokenUsage = usageData ? {
-          prompt_tokens: usageData.promptTokens,
-          completion_tokens: usageData.completionTokens,
-          total_tokens: usageData.totalTokens,
-        } : null;
-
-        if (!tokenUsage && config.streaming && config.streamUsage) {
+        if (config.streaming && config.streamUsage && typeof window !== "undefined" && !window.lastTokenUsage) {
           console.log("📊 Token usage not found in response, this may be due to streaming mode");
         }
 
-        if (tokenUsage && typeof window !== "undefined") {
-          window.lastTokenUsage = tokenUsage;
-          console.log("📊 Token usage stored for plugins:", tokenUsage);
-          const event = new CustomEvent("llm-token-usage", { detail: { tokenUsage } });
-          window.dispatchEvent(event);
-        }
-
-        return aiMessage.content as string;
+        return response;
       }
 
       // Ollama：直接使用 messages[] 调用
@@ -428,44 +187,107 @@ export class LLMNodeTools extends NodeTool {
         throw new Error("messages[] is required for invokeLLMStream");
       }
 
-      const rawMessages = [...config.messages];
-      let finalMessages: ChatMessage[];
+      const finalMessages = normalizeMessages(config);
 
-      if (config.promptNames && config.postProcessingMode) {
-        const extMessages = rawMessages as ExtendedChatMessage[];
-        const processed = postProcessMessages(extMessages, {
-          mode: config.postProcessingMode,
-          names: config.promptNames,
-          tools: config.tools,
-          prefill: config.prefill,
-          placeholder: config.placeholder,
-        });
-        finalMessages = toSimpleMessages(processed);
-      } else {
-        finalMessages = rawMessages;
+      if (config.llmType === "openai" && config.mvuToolEnabled) {
+        const result = await invokeOpenAIWithTools(
+          finalMessages,
+          {
+            ...config,
+            streaming: false,
+          },
+          {
+            ...callbacks,
+            onUsage: (usage) => {
+              publishTokenUsage(usage);
+              callbacks.onUsage?.(usage);
+            },
+          },
+        );
+        callbacks.onToken?.(result);
+        return result;
+      }
+
+      if (config.llmType === "claude" && hasFunctionCalling(config)) {
+        const result = await invokeClaudeModel(
+          finalMessages,
+          {
+            ...config,
+            streaming: false,
+          },
+          callbacks,
+        );
+        callbacks.onToken?.(result);
+        return result;
       }
 
       // 广播提示词事件
-      if (typeof window !== "undefined" && config.dialogueKey) {
-        const promptEvent = new CustomEvent("llm-prompt-captured", {
-          detail: {
-            dialogueKey: config.dialogueKey,
-            characterId: config.characterId,
-            modelName: config.modelName,
-            timestamp: Date.now(),
-            messages: finalMessages,
-            effectiveConfig: config.effectivePromptConfig,
-          },
-        });
-        window.dispatchEvent(promptEvent);
-      }
+      emitPromptCapturedEvent(config, finalMessages);
+
+      let streamedText = "";
+      const streamingCallbacks: StreamingCallbacks = {
+        ...callbacks,
+        onToken: (token) => {
+          streamedText += token;
+          callbacks.onToken?.(token);
+        },
+        onUsage: (usage) => {
+          publishTokenUsage(usage);
+          callbacks.onUsage?.(usage);
+        },
+      };
 
       // 根据模型类型选择流式调用方式
-      if (config.llmType === "claude" || config.llmType === "openai") {
-        return await invokeClaudeModelStream(finalMessages, config, callbacks);
+      if (config.llmType === "claude") {
+        return await invokeClaudeModelStream(finalMessages, config, streamingCallbacks);
       }
 
-      // Gemini 和 Ollama 暂不支持流式，回退到非流式
+      if (config.llmType === "openai") {
+        const streamedResult = await invokeOpenAIModelStream(finalMessages, config, streamingCallbacks);
+        const resolvedStreamedResult = streamedResult || streamedText;
+        if (
+          resolvedStreamedResult.length > 0 ||
+          !config.scriptTools ||
+          config.scriptTools.length === 0
+        ) {
+          return resolvedStreamedResult;
+        }
+
+        const bufferedResult = await invokeOpenAIWithTools(
+          finalMessages,
+          {
+            ...config,
+            streaming: false,
+          },
+          {
+            ...callbacks,
+            onUsage: (usage) => {
+              publishTokenUsage(usage);
+              callbacks.onUsage?.(usage);
+            },
+          },
+        );
+        if (bufferedResult.length > 0) {
+          callbacks.onToken?.(bufferedResult);
+        }
+        return bufferedResult;
+      }
+
+      if (config.llmType === "gemini") {
+        console.warn("[LLMNodeTools] 流式模式不支持 gemini，回退到非流式");
+        const result = await invokeGeminiModel(
+          finalMessages,
+          {
+            ...config,
+            streaming: false,
+          },
+          callbacks,
+        );
+        callbacks.onToken?.(result);
+        return result;
+      }
+
+      // Ollama 暂不支持流式，回退到非流式
       console.warn(`[LLMNodeTools] 流式模式不支持 ${config.llmType}，回退到非流式`);
       const result = await this.invokeLLM(config);
       callbacks.onToken?.(result);

@@ -7,7 +7,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { handleCharacterChatRequest } from "../chat";
 
-const executeMock = vi.fn();
 const getDialogueTreeById = vi.fn();
 const createDialogueTree = vi.fn();
 const addNodeToDialogueTree = vi.fn();
@@ -17,6 +16,8 @@ const ingestMock = vi.fn();
 const processMessageVariables = vi.fn();
 const getActivePromptPreset = vi.fn();
 const resolvePromptRuntimeConfig = vi.fn();
+const prepareDialogueExecutionMock = vi.fn();
+const runDialogueGenerationMock = vi.fn();
 
 const DEFAULT_PROMPT_RUNTIME = {
   contextPreset: {
@@ -47,9 +48,7 @@ const DEFAULT_PROMPT_RUNTIME = {
 };
 
 vi.mock("@/lib/workflow/examples/DialogueWorkflow", () => ({
-  DialogueWorkflow: vi.fn().mockImplementation(() => ({
-    execute: executeMock,
-  })),
+  DialogueWorkflow: vi.fn().mockImplementation(() => ({})),
 }));
 
 vi.mock("@/lib/prompt-config/service", () => ({
@@ -68,6 +67,14 @@ vi.mock("@/lib/mvu", () => ({
   initMvuVariablesFromWorldBooks: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/lib/generation-runtime/prepare/prepare-dialogue-execution", () => ({
+  prepareDialogueExecution: (...args: unknown[]) => prepareDialogueExecutionMock(...args),
+}));
+
+vi.mock("@/lib/generation-runtime/run-dialogue-generation", () => ({
+  runDialogueGeneration: (...args: unknown[]) => runDialogueGenerationMock(...args),
+}));
+
 vi.mock("@/lib/data/roleplay/character-dialogue-operation", () => ({
   LocalCharacterDialogueOperations: {
     getDialogueTreeById: (...args: unknown[]) => getDialogueTreeById(...args),
@@ -80,7 +87,6 @@ vi.mock("@/lib/data/roleplay/character-dialogue-operation", () => ({
 
 describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
   beforeEach(() => {
-    executeMock.mockReset();
     getDialogueTreeById.mockReset();
     createDialogueTree.mockReset();
     addNodeToDialogueTree.mockReset();
@@ -90,6 +96,8 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
     processMessageVariables.mockReset();
     getActivePromptPreset.mockReset();
     resolvePromptRuntimeConfig.mockReset();
+    prepareDialogueExecutionMock.mockReset();
+    runDialogueGenerationMock.mockReset();
 
     getDialogueTreeById
       .mockResolvedValueOnce(null) // ensure tree missing at first
@@ -117,14 +125,23 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
 
     getActivePromptPreset.mockResolvedValue(null);
     resolvePromptRuntimeConfig.mockResolvedValue(DEFAULT_PROMPT_RUNTIME);
-    executeMock.mockResolvedValue({
-      outputData: {
-        thinkingContent: "think",
-        screenContent: "reply",
-        fullResponse: "full reply",
-        nextPrompts: [],
-        event: "",
-      },
+    prepareDialogueExecutionMock.mockImplementation(async (params) => ({
+      context: { id: "ctx-1" },
+      llmConfig: params,
+      postprocessNodeId: "regex-1",
+    }));
+    runDialogueGenerationMock.mockImplementation(async (_input, sink) => {
+      await sink.emit({
+        type: "complete",
+        result: {
+          screenContent: "reply",
+          fullResponse: "full reply",
+          thinkingContent: "think",
+          parsedContent: { nextPrompts: [] },
+          event: "",
+          isPostProcessed: true,
+        },
+      });
     });
 
     ingestMock.mockResolvedValue(undefined);
@@ -175,20 +192,12 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
       undefined,
       "assistant-1",
     );
-    expect(updateNodeInDialogueTree).toHaveBeenCalledWith(
-      "session-1",
-      "assistant-1",
-      expect.objectContaining({
-        assistantResponse: "reply",
-        fullResponse: "full reply",
-        thinkingContent: "think",
-        parsedContent: expect.objectContaining({
-          regexResult: "reply",
-          nextPrompts: [],
-        }),
-      }),
-    );
-    expect(executeMock).toHaveBeenCalledTimes(1);
+    expect(runDialogueGenerationMock).toHaveBeenCalledTimes(1);
+    expect(runDialogueGenerationMock).toHaveBeenCalledWith(expect.objectContaining({
+      dialogueId: "session-1",
+      originalMessage: "hi",
+      nodeId: "assistant-1",
+    }), expect.any(Object));
   });
 
   it("workflow 失败时仍先持久化用户输入节点", async () => {
@@ -196,7 +205,8 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
     createDialogueTree.mockReset();
     addNodeToDialogueTree.mockReset();
     updateNodeInDialogueTree.mockReset();
-    executeMock.mockReset();
+    prepareDialogueExecutionMock.mockReset();
+    runDialogueGenerationMock.mockReset();
     getActivePromptPreset.mockReset();
     resolvePromptRuntimeConfig.mockReset();
 
@@ -207,10 +217,15 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
       current_nodeId: "root",
     });
 
-    executeMock.mockResolvedValue(undefined);
     addNodeToDialogueTree.mockResolvedValue("pending-node");
     getActivePromptPreset.mockResolvedValue(null);
     resolvePromptRuntimeConfig.mockResolvedValue(DEFAULT_PROMPT_RUNTIME);
+    prepareDialogueExecutionMock.mockImplementation(async (params) => ({
+      context: { id: "ctx-fail" },
+      llmConfig: params,
+      postprocessNodeId: "regex-1",
+    }));
+    runDialogueGenerationMock.mockResolvedValue(undefined);
 
     const response = await handleCharacterChatRequest({
       username: "user",
@@ -247,13 +262,14 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
 
 describe("handleCharacterChatRequest 模型参数透传", () => {
   beforeEach(() => {
-    executeMock.mockReset();
     getDialogueTreeById.mockReset();
     createDialogueTree.mockReset();
     addNodeToDialogueTree.mockReset();
     updateNodeInDialogueTree.mockReset();
     getActivePromptPreset.mockReset();
     resolvePromptRuntimeConfig.mockReset();
+    prepareDialogueExecutionMock.mockReset();
+    runDialogueGenerationMock.mockReset();
 
     getDialogueTreeById.mockResolvedValue({
       id: "session-advanced",
@@ -265,14 +281,23 @@ describe("handleCharacterChatRequest 模型参数透传", () => {
     updateNodeInDialogueTree.mockResolvedValue(true);
     getActivePromptPreset.mockResolvedValue(null);
     resolvePromptRuntimeConfig.mockResolvedValue(DEFAULT_PROMPT_RUNTIME);
-    executeMock.mockResolvedValue({
-      outputData: {
-        thinkingContent: "",
-        screenContent: "reply",
-        fullResponse: "reply",
-        nextPrompts: [],
-        event: "",
-      },
+    prepareDialogueExecutionMock.mockImplementation(async (params) => ({
+      context: { id: "ctx-advanced" },
+      llmConfig: params,
+      postprocessNodeId: "regex-1",
+    }));
+    runDialogueGenerationMock.mockImplementation(async (_input, sink) => {
+      await sink.emit({
+        type: "complete",
+        result: {
+          screenContent: "reply",
+          fullResponse: "reply",
+          thinkingContent: "",
+          parsedContent: { nextPrompts: [] },
+          event: "",
+          isPostProcessed: true,
+        },
+      });
     });
   });
 
@@ -306,7 +331,7 @@ describe("handleCharacterChatRequest 模型参数透传", () => {
       },
     });
 
-    expect(executeMock).toHaveBeenCalledWith(expect.objectContaining({
+    expect(prepareDialogueExecutionMock).toHaveBeenCalledWith(expect.objectContaining({
       temperature: 0.35,
       contextWindow: 8192,
       maxTokens: 640,
@@ -342,7 +367,7 @@ describe("handleCharacterChatRequest 模型参数透传", () => {
     });
 
     expect(response.headers.get("Content-Type")).toContain("application/json");
-    expect(executeMock).toHaveBeenCalledWith(expect.objectContaining({
+    expect(prepareDialogueExecutionMock).toHaveBeenCalledWith(expect.objectContaining({
       streaming: true,
     }));
   });

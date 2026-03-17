@@ -24,6 +24,7 @@ import { trackButtonClick } from "@/utils/google-analytics";
 import { Button } from "@/components/ui/button";
 import type { TavernHelperScript } from "@/lib/models/character-model";
 import type { ScriptMessageData } from "@/types/script-message";
+import type { ChatStreamingIntent } from "./streaming-types";
 
 // ============================================================================
 //                              类型定义
@@ -57,9 +58,7 @@ interface MessageItemProps {
   index: number;
   character: Character;
   isLastMessage: boolean;
-  isSending: boolean;
-  enableStreaming: boolean;
-  streamingTarget: number;
+  streamingIntent: ChatStreamingIntent;
   onTruncate: (id: string) => void;
   onRegenerate: (id: string) => void;
   onContentChange?: () => void;
@@ -128,9 +127,7 @@ export default function MessageItem({
   index,
   character,
   isLastMessage,
-  isSending,
-  enableStreaming,
-  streamingTarget,
+  streamingIntent,
   onTruncate,
   onRegenerate,
   onContentChange,
@@ -167,9 +164,7 @@ export default function MessageItem({
       index={index}
       character={character}
       isLastMessage={isLastMessage}
-      isSending={isSending}
-      enableStreaming={enableStreaming}
-      streamingTarget={streamingTarget}
+      streamingIntent={streamingIntent}
       onTruncate={onTruncate}
       onRegenerate={onRegenerate}
       onContentChange={onContentChange}
@@ -238,9 +233,7 @@ interface AssistantMessageProps {
   index: number;
   character: Character;
   isLastMessage: boolean;
-  isSending: boolean;
-  enableStreaming: boolean;
-  streamingTarget: number;
+  streamingIntent: ChatStreamingIntent;
   onTruncate: (id: string) => void;
   onRegenerate: (id: string) => void;
   onContentChange?: () => void;
@@ -257,9 +250,7 @@ function AssistantMessage({
   index,
   character,
   isLastMessage,
-  isSending,
-  enableStreaming,
-  streamingTarget,
+  streamingIntent,
   onTruncate,
   onRegenerate,
   onContentChange,
@@ -270,7 +261,15 @@ function AssistantMessage({
   scriptVariables,
   onScriptMessage,
 }: AssistantMessageProps) {
+  const { enabled, targetIndex, isSending, activeMessageId } = streamingIntent;
   const showRegenerateButton = !isSending && isLastMessage;
+  const isStreamingCandidate = enabled && index >= targetIndex;
+  const isActivelyStreaming = (
+    isStreamingCandidate &&
+    isSending &&
+    isLastMessage &&
+    activeMessageId === message.id
+  );
 
   const handleTruncate = useCallback(() => {
     trackButtonClick("page", "跳转到此消息");
@@ -316,7 +315,7 @@ function AssistantMessage({
         scripts={character.extensions?.TavernHelper_scripts || []}
         scriptVariables={scriptVariables}
         isLoading={isSending && isLastMessage && message.content.trim() === ""}
-        enableStreaming={enableStreaming && index >= streamingTarget}
+        enableStreaming={isActivelyStreaming}
         onContentChange={isLastMessage ? onContentChange : undefined}
         enableScript={true}
         onScriptMessage={onScriptMessage}
@@ -515,12 +514,10 @@ export const MemoizedMessageItem = React.memo(MessageItem, (prev, next) => {
   // 非最后一条消息不需要因为这些状态变化而重渲染
   // ═══════════════════════════════════════════════════════════════
   if (next.isLastMessage) {
-    // 发送状态变化 → 最后一条消息需要重渲染（显示加载指示器）
-    if (prev.isSending !== next.isSending) return false;
-    
-    // 流式传输状态变化 → 最后一条消息需要重渲染
-    if (prev.enableStreaming !== next.enableStreaming) return false;
-    if (prev.streamingTarget !== next.streamingTarget) return false;
+    if (prev.streamingIntent.isSending !== next.streamingIntent.isSending) return false;
+    if (prev.streamingIntent.enabled !== next.streamingIntent.enabled) return false;
+    if (prev.streamingIntent.targetIndex !== next.streamingIntent.targetIndex) return false;
+    if (prev.streamingIntent.activeMessageId !== next.streamingIntent.activeMessageId) return false;
   }
   
   // 其他情况 → 跳过重渲染

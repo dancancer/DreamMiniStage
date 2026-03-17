@@ -15,57 +15,27 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createGeminiRunnable } from "@/lib/core/gemini-client";
 import { getTextContent } from "@/lib/core/prompt/post-processor";
 import { convertForClaude, convertForGoogle } from "@/lib/core/prompt/converters";
+import { extractTokenUsage, type TokenUsage } from "@/lib/adapters/token-usage";
 import type { ExtendedChatMessage, ContentPart } from "@/lib/core/st-preset-types";
-import type { LLMConfig } from "./LLMNodeTools";
-import type { ClaudeMessage, ClaudeContentPart } from "@/lib/core/prompt/converters/claude";
+import type { LLMConfig } from "./llm-config";
+import type { ClaudeContentPart } from "@/lib/core/prompt/converters/claude";
 import {
-  getMvuTool,
-  extractMvuToolCall,
   functionCallToUpdateContent,
   MVU_VARIABLE_UPDATE_FUNCTION,
   toGeminiMvuToolDeclaration,
-  type ToolCallBatches,
-  type OpenAITool,
 } from "@/lib/mvu/function-call";
-import { invokeScriptTool } from "@/hooks/script-bridge";
+import { applyOpenAIToolCalls } from "./tool-call-runtime";
+import { buildFunctionCallingTools, hasFunctionCalling } from "./function-calling";
 
 type ChatMessage = { role: string; content: string };
-
-function parseScriptToolArguments(toolName: string, rawArgs: unknown): Record<string, unknown> {
-  if (rawArgs === undefined || rawArgs === null) {
-    return {};
-  }
-
-  if (typeof rawArgs === "string") {
-    const parsed = JSON.parse(rawArgs) as unknown;
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed as Record<string, unknown>;
-    }
-    throw new Error(`Tool '${toolName}' arguments JSON 必须为对象`);
-  }
-
-  if (typeof rawArgs === "object" && !Array.isArray(rawArgs)) {
-    return rawArgs as Record<string, unknown>;
-  }
-
-  throw new Error(`Tool '${toolName}' arguments 类型不受支持: ${typeof rawArgs}`);
-}
-
-function serializeToolResult(result: unknown): string {
-  if (typeof result === "string") {
-    return result;
-  }
-  try {
-    return JSON.stringify(result);
-  } catch {
-    return String(result);
-  }
-}
 
 /** 流式回调接口 */
 export interface StreamingCallbacks {
   onToken?: (token: string) => void;
   onReasoning?: (reasoning: string) => void;
+  onUsage?: (usage: TokenUsage) => void;
+  onToolCallStart?: (toolName: string) => void;
+  onToolCallResult?: (toolName: string, output: string) => void;
 }
 
 const DEFAULT_LLM_SETTINGS = {
@@ -77,6 +47,125 @@ const DEFAULT_LLM_SETTINGS = {
   streaming: false,
   streamUsage: true,
 };
+
+function createOpenAICompatibleModel(
+  config: LLMConfig,
+  overrides: Partial<{
+    streaming: boolean;
+    streamUsage: boolean;
+  }> = {},
+): ChatOpenAI {
+  return new ChatOpenAI({
+    modelName: config.modelName,
+    openAIApiKey: config.apiKey,
+    configuration: {
+      baseURL: config.baseUrl?.trim() || undefined,
+    },
+    temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
+    maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
+    timeout: config.timeout,
+    maxRetries: config.maxRetries ?? DEFAULT_LLM_SETTINGS.maxRetries,
+    topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
+    frequencyPenalty: config.frequencyPenalty,
+    presencePenalty: config.presencePenalty,
+    stop: config.stopStrings,
+    streaming: overrides.streaming ?? config.streaming ?? DEFAULT_LLM_SETTINGS.streaming,
+    streamUsage: overrides.streamUsage ?? config.streamUsage ?? DEFAULT_LLM_SETTINGS.streamUsage,
+  });
+}
+
+async function streamOpenAICompatibleModel(
+  openaiLlm: ChatOpenAI,
+  messages: ChatMessage[],
+  callbacks: StreamingCallbacks,
+): Promise<string> {
+  let fullContent = "";
+  const stream = await openaiLlm.stream(messages);
+
+  for await (const chunk of stream) {
+    const content = chunk.content;
+    if (typeof content === "string" && content) {
+      fullContent += content;
+      callbacks.onToken?.(content);
+    }
+
+    const additional = chunk.additional_kwargs as Record<string, unknown> | undefined;
+    if (additional?.reasoning_content && typeof additional.reasoning_content === "string") {
+      callbacks.onReasoning?.(additional.reasoning_content);
+    }
+
+    const usage = extractTokenUsage(chunk);
+    if (usage) {
+      callbacks.onUsage?.(usage);
+    }
+  }
+
+  return fullContent;
+}
+
+function buildClaudeMessages(
+  messages: ChatMessage[],
+  config: LLMConfig,
+): ChatMessage[] {
+  const extMessages = messages as ExtendedChatMessage[];
+  const { messages: claudeMessages, systemPrompt } = convertForClaude(extMessages, {
+    useTools: config.tools,
+    placeholder: config.placeholder,
+  });
+
+  const systemText = systemPrompt.map(s => s.text).join("\n\n");
+
+  return systemText
+    ? [{ role: "system", content: systemText }, ...claudeMessages.map(m => ({
+      role: m.role,
+      content: getClaudeTextContent(m.content),
+    }))]
+    : claudeMessages.map(m => ({
+      role: m.role,
+      content: getClaudeTextContent(m.content),
+    }));
+}
+
+export async function invokeOpenAIModel(
+  messages: ChatMessage[],
+  config: LLMConfig,
+  callbacks?: Pick<StreamingCallbacks, "onUsage">,
+): Promise<string> {
+  const openaiLlm = createOpenAICompatibleModel(config);
+  const aiMessage = await openaiLlm.invoke(messages);
+  const usage = extractTokenUsage(aiMessage);
+  if (usage) {
+    callbacks?.onUsage?.(usage);
+  }
+  return aiMessage.content as string;
+}
+
+export async function invokeOpenAIWithTools(
+  messages: ChatMessage[],
+  config: LLMConfig,
+  callbacks?: Pick<StreamingCallbacks, "onToolCallStart" | "onToolCallResult" | "onUsage">,
+): Promise<string> {
+  const openaiLlm = createOpenAICompatibleModel(config, {
+    streaming: false,
+  });
+  const { allTools, scriptTools } = buildFunctionCallingTools(config);
+  const boundModel = openaiLlm.bindTools(allTools, { tool_choice: "auto" });
+  const aiMessage = await boundModel.invoke(messages);
+
+  const usage = extractTokenUsage(aiMessage);
+  if (usage) {
+    callbacks?.onUsage?.(usage);
+  }
+
+  return applyOpenAIToolCalls(
+    aiMessage.content as string,
+    {
+      rawToolCalls: aiMessage.tool_calls ?? [],
+      scriptTools,
+      callbacks,
+    },
+  );
+}
 
 /**
  * 将 ClaudeContentPart 转换为文本内容
@@ -108,107 +197,31 @@ function getClaudeTextContent(content: string | ClaudeContentPart[]): string {
 export async function invokeClaudeModel(
   messages: ChatMessage[],
   config: LLMConfig,
+  callbacks?: Pick<StreamingCallbacks, "onToolCallStart" | "onToolCallResult">,
 ): Promise<string> {
-  // 转换为 ExtendedChatMessage 格式
-  const extMessages = messages as ExtendedChatMessage[];
-
-  // 使用 Claude 转换器
-  const { messages: claudeMessages, systemPrompt } = convertForClaude(extMessages, {
-    useTools: config.tools,
-    placeholder: config.placeholder,
-  });
-
-  // 构建 system 字符串（Claude API 需要）
-  const systemText = systemPrompt.map(s => s.text).join("\n\n");
-
-  // 使用 OpenAI 兼容接口调用 Claude（通过 baseUrl 配置）
-  const openaiLlm = new ChatOpenAI({
-    modelName: config.modelName,
-    openAIApiKey: config.apiKey,
-    configuration: {
-      baseURL: config.baseUrl?.trim() || undefined,
-    },
-    temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
-    maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
-    timeout: config.timeout,
-    maxRetries: config.maxRetries ?? DEFAULT_LLM_SETTINGS.maxRetries,
-    topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
-    frequencyPenalty: config.frequencyPenalty,
-    presencePenalty: config.presencePenalty,
-    stop: config.stopStrings,
-    streaming: config.streaming ?? DEFAULT_LLM_SETTINGS.streaming,
-    streamUsage: config.streamUsage ?? DEFAULT_LLM_SETTINGS.streamUsage,
-  });
-
-  // 将 system 作为首条消息（OpenAI 兼容格式）
-  const finalMessages: ChatMessage[] = systemText
-    ? [{ role: "system", content: systemText }, ...claudeMessages.map(m => ({
-      role: m.role,
-      content: getClaudeTextContent(m.content),
-    }))]
-    : claudeMessages.map(m => ({
-      role: m.role,
-      content: getClaudeTextContent(m.content),
-    }));
+  const finalMessages = buildClaudeMessages(messages, config);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // MVU/脚本工具函数调用模式：绑定工具并处理 tool_calls
   // ═══════════════════════════════════════════════════════════════════════════
-  if (config.mvuToolEnabled || (config.scriptTools && config.scriptTools.length > 0)) {
-    // 合并 MVU 工具和脚本工具
-    const allTools: OpenAITool[] = [];
-    if (config.mvuToolEnabled) {
-      allTools.push(getMvuTool());
-    }
-    const scriptTools = config.scriptTools || [];
-    if (scriptTools.length > 0) {
-      allTools.push(...scriptTools);
-    }
-
-    const boundModel = openaiLlm.bindTools(allTools, { tool_choice: "auto" });
-    const aiMessage = await boundModel.invoke(finalMessages);
-
-    let textContent = aiMessage.content as string;
-    if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
-      const toolCalls: ToolCallBatches = [aiMessage.tool_calls.map(tc => ({
-        id: tc.id || "",
-        type: "function" as const,
-        function: {
-          name: tc.name,
-          arguments: typeof tc.args === "string" ? tc.args : JSON.stringify(tc.args),
-        },
-      }))];
-
-      // 处理 MVU 工具调用
-      const mvuArgs = extractMvuToolCall(toolCalls);
-      if (mvuArgs) {
-        const updateContent = functionCallToUpdateContent(mvuArgs);
-        textContent = textContent ? `${textContent}\n\n${updateContent}` : updateContent;
-        console.log("[Claude] MVU 函数调用转换完成:", mvuArgs.analysis);
-      }
-
-      const scriptToolNames = new Set(scriptTools.map((tool) => tool.function.name));
-      const scriptOutputs: string[] = [];
-      for (const call of aiMessage.tool_calls) {
-        if (!scriptToolNames.has(call.name)) {
-          continue;
-        }
-        const args = parseScriptToolArguments(call.name, call.args);
-        const result = await invokeScriptTool(call.name, args);
-        scriptOutputs.push(`[tool:${call.name}] ${serializeToolResult(result)}`);
-      }
-      if (scriptOutputs.length > 0) {
-        const outputText = scriptOutputs.join("\n");
-        textContent = textContent ? `${textContent}\n\n${outputText}` : outputText;
-      }
-    }
-
-    return textContent;
+  if (hasFunctionCalling(config)) {
+    return invokeOpenAIWithTools(finalMessages, config, callbacks);
   }
 
   // 标准调用（无工具）
-  const aiMessage = await openaiLlm.invoke(finalMessages);
-  return aiMessage.content as string;
+  return invokeOpenAIModel(finalMessages, config);
+}
+
+export async function invokeOpenAIModelStream(
+  messages: ChatMessage[],
+  config: LLMConfig,
+  callbacks: StreamingCallbacks,
+): Promise<string> {
+  const openaiLlm = createOpenAICompatibleModel(config, {
+    streaming: true,
+    streamUsage: true,
+  });
+  return streamOpenAICompatibleModel(openaiLlm, messages, callbacks);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -221,62 +234,12 @@ export async function invokeClaudeModelStream(
   config: LLMConfig,
   callbacks: StreamingCallbacks,
 ): Promise<string> {
-  const extMessages = messages as ExtendedChatMessage[];
-  const { messages: claudeMessages, systemPrompt } = convertForClaude(extMessages, {
-    useTools: config.tools,
-    placeholder: config.placeholder,
-  });
-
-  const systemText = systemPrompt.map(s => s.text).join("\n\n");
-
-  const openaiLlm = new ChatOpenAI({
-    modelName: config.modelName,
-    openAIApiKey: config.apiKey,
-    configuration: {
-      baseURL: config.baseUrl?.trim() || undefined,
-    },
-    temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
-    maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
-    timeout: config.timeout,
-    maxRetries: config.maxRetries ?? DEFAULT_LLM_SETTINGS.maxRetries,
-    topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
-    frequencyPenalty: config.frequencyPenalty,
-    presencePenalty: config.presencePenalty,
-    stop: config.stopStrings,
+  const openaiLlm = createOpenAICompatibleModel(config, {
     streaming: true,
     streamUsage: true,
   });
-
-  const finalMessages: ChatMessage[] = systemText
-    ? [{ role: "system", content: systemText }, ...claudeMessages.map(m => ({
-      role: m.role,
-      content: getClaudeTextContent(m.content),
-    }))]
-    : claudeMessages.map(m => ({
-      role: m.role,
-      content: getClaudeTextContent(m.content),
-    }));
-
-  let fullContent = "";
-
-  // 使用 stream() 方法进行流式调用
-  const stream = await openaiLlm.stream(finalMessages);
-
-  for await (const chunk of stream) {
-    const content = chunk.content;
-    if (typeof content === "string" && content) {
-      fullContent += content;
-      callbacks.onToken?.(content);
-    }
-
-    // 处理 reasoning_content（如果有）
-    const additional = chunk.additional_kwargs as Record<string, unknown> | undefined;
-    if (additional?.reasoning_content && typeof additional.reasoning_content === "string") {
-      callbacks.onReasoning?.(additional.reasoning_content);
-    }
-  }
-
-  return fullContent;
+  const finalMessages = buildClaudeMessages(messages, config);
+  return streamOpenAICompatibleModel(openaiLlm, finalMessages, callbacks);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -291,6 +254,7 @@ export async function invokeClaudeModelStream(
 export async function invokeGeminiModel(
   messages: ChatMessage[],
   config: LLMConfig,
+  callbacks?: Pick<StreamingCallbacks, "onToolCallStart" | "onToolCallResult">,
 ): Promise<string> {
   // 转换为 ExtendedChatMessage 格式
   const extMessages = messages as ExtendedChatMessage[];
@@ -365,7 +329,9 @@ export async function invokeGeminiModel(
           delta: String(mvuCall.args.delta || ""),
         };
         if (mvuArgs.delta && mvuArgs.delta.length > 5) {
+          callbacks?.onToolCallStart?.(MVU_VARIABLE_UPDATE_FUNCTION.name);
           const updateContent = functionCallToUpdateContent(mvuArgs);
+          callbacks?.onToolCallResult?.(MVU_VARIABLE_UPDATE_FUNCTION.name, updateContent);
           textContent = textContent ? `${textContent}\n\n${updateContent}` : updateContent;
           console.log("[Gemini] MVU 函数调用转换完成:", mvuArgs.analysis);
         }

@@ -1,5 +1,91 @@
 # Handoff（2026-03-08）
 
+## Phase 4 Unified Runtime Refactor 已完成（2026-03-17）
+
+- Phase 4 当前不应再被理解为“仅剩导入语义和迁移样例补齐”的状态；这一轮已经继续完成了对话生成主链路的统一运行时收敛。
+- 已落地的主收敛项：
+  - `lib/generation-runtime/` 已成为单一路径运行时，负责 `prepare -> model execution -> postprocess -> sink emission`。
+  - `function/dialogue/chat.ts` 与 `function/dialogue/chat-streaming.ts` 已收敛为薄适配层；`preparedExecution -> buffered/SSE response` 由统一出口负责。
+  - `lib/nodeflow/LLMNode/LLMNodeTools.ts` / `model-invokers.ts` 已去掉大块重复 OpenAI 兼容调用逻辑，并拆出：
+    - `llm-config.ts`
+    - `runtime-helpers.ts`
+    - `function-calling.ts`
+    - `tool-call-runtime.ts`
+  - `hooks/script-bridge/slash-handlers.ts` 不再提前冻结整串 slash 的 ST env 宏；宏展开已下沉到执行边界。
+  - `components/MessageBubble.tsx` / `components/character-chat/MessageItem.tsx` 已切到显式 render phase（`preview / transition / parsed`），避免流式结束后出现短暂空白。
+  - `lib/store/dialogue-store/actions/` 已按职责拆成：
+    - `generation-actions.ts`
+    - `generation-request-runtime.ts`
+    - `generation-event-state.ts`
+    - `dialogue-snapshot-state.ts`
+    - `dialogue-status-state.ts`
+    - `dialogue-event-emitter.ts`
+- 已删除的历史壳层/伪语义：
+  - `ModelExecutionMode`
+  - `lib/generation-runtime/model/execution-mode.ts`
+  - `lib/generation-runtime/result.ts`
+- 当前验证状态：
+  - 最近一次 `pnpm verify:stage` 已通过
+  - 当前全量约为 `210` 个测试文件、`1901` 个测试通过
+- 对下一轮的建议：
+  - 不再继续做 Phase 4 主骨架重构。
+  - 下一轮若仍留在 Phase 4，应只做两类事：
+    - 更真实的上游样本补强与迁移样例扩展
+    - PR/评审整理、术语对齐、非阻塞历史文档收口
+  - 若目标是新增产品能力，应切换到后续阶段，而不是继续把 Phase 4 当作 runtime 大改阶段。
+
+## Phase 4 Batch 1 进行中（2026-03-15）
+
+> 历史记录：本节保留 2026-03-15 当时的阶段日志；当前可执行现状请以前面的 `Phase 4 Unified Runtime Refactor 已完成（2026-03-17）` 为准。
+
+- 已将 `docs/plans/2026-03-15-phase4-migration-semantics.md` 放回当前阶段分支，避免 Phase 4 执行计划只存在于旧 worktree 的未跟踪文件里。
+- 已新增 `lib/import/migration-semantics/`，把 Persona / WorldBook / Regex 的 `retained / ignored / downgraded / manual-review` 语义收口到单一路径：
+  - `types.ts`：定义材料类型、字段状态与导入语义摘要结构。
+  - `phase4-checklist.ts`：声明 Phase 4 第一批字段规则，明确哪些语义保留、降级或需要人工复核。
+  - `report.ts`：把字段列表归并为 UI 可消费的语义分桶结果。
+- 已新增 `lib/import/migration-semantics/__tests__/phase4-checklist.test.ts`，验证：
+  - `worldbook.useProbability` / `worldbook.groupWeight` 的语义状态是显式声明的。
+  - 语义摘要会把未知或未直连的字段归入 `manualReview`，而不是静默吞掉。
+- 已新增 `lib/core/__tests__/fixtures/phase4/` 下的 committed fixtures，并把 Phase 4 相关基线测试从本地未跟踪 `test-baseline-assets/` 迁移到仓库内可复现素材：
+  - `persona-macro.json`
+  - `worldbook-import.json`
+  - `regex-flow.json`
+- 当前已完成的定向验证：
+  - `pnpm vitest run lib/core/__tests__/prompt-assembly.regression.test.ts lib/core/__tests__/st-baseline-worldbook-material.test.ts`
+  - `pnpm vitest run lib/import/migration-semantics/__tests__/phase4-checklist.test.ts`
+- 下一步只继续推进 Phase 4 Batch 1 的第三项：用更窄的 Persona / WorldBook / Regex 基线测试锁定组合顺序，再决定生产代码是否需要最小修补。
+
+## Phase 4 Batch 1 已完成（2026-03-15）
+
+> 历史记录：本节描述的是 2026-03-15 时点完成的 Batch 1 范围；当前 Phase 4 总体状态与下一轮建议，以上方 2026-03-17 收口说明为准。
+
+- 已补齐 Phase 4 的结构化导入报告能力：
+  - `components/import-modal/ImportResultDisplay.tsx` 现支持 `retained / ignored / downgraded / manualReview / notes` 语义分桶。
+  - `components/__tests__/ImportResultDisplay.test.tsx` 断言语义分桶由结构化数据驱动渲染，而不是靠硬编码文案。
+  - `components/import-modal/index.ts`、`components/import-modal/README.md` 已同步导出与记录新的 `ImportResultSemantics`。
+- Phase 4 相关导入产品面现已接入语义摘要：
+  - `components/ImportWorldBookModal.tsx`：导入成功后展示 WorldBook Phase 4 迁移语义。
+  - `components/ImportRegexScriptModal.tsx`：批量导入与全局导入成功后展示 Regex Phase 4 迁移语义。
+  - `components/ImportPresetModal.tsx`：统一切到共享 `ImportResultDisplay`，导入结果结构不再漂浮为局部定制类型。
+  - `components/ImportCharacterModal.tsx`：导入角色后会按角色内含 `worldbook / regex` 资源聚合语义说明。
+- Persona / WorldBook / Regex 组合顺序已由更窄的新基线测试锁住：
+  - `lib/core/__tests__/phase4-persona-macro-baseline.test.ts`
+  - `lib/core/__tests__/phase4-worldbook-migration-baseline.test.ts`
+  - `lib/core/__tests__/phase4-regex-flow-baseline.test.ts`
+  - `lib/core/__tests__/dialogue-flow-test-helpers.ts`
+- 为了让 Persona 语义不被“临时激活 Persona”污染，`hooks/useCurrentPersona.ts` 已新增按 `dialogueKey + characterId` 解析的静态 helper：
+  - `getPersonaDisplayNameForDialogue()`
+  - `getPersonaDescriptionForDialogue()`
+- 本轮聚合验证结果：
+  - `pnpm vitest run lib/import/migration-semantics/__tests__/phase4-checklist.test.ts lib/core/__tests__/phase4-persona-macro-baseline.test.ts lib/core/__tests__/phase4-worldbook-migration-baseline.test.ts lib/core/__tests__/phase4-regex-flow-baseline.test.ts components/__tests__/ImportResultDisplay.test.tsx`
+  - 结果：5 个文件、6 个测试全部通过。
+- 本轮阶段门验证结果：
+  - `pnpm verify:stage`
+  - 结果：`lint` / `typecheck` / `vitest run` / `build` 全部通过。
+- 现阶段结论：
+  - Phase 4 Batch 1 已完成“可复现素材、迁移语义单一事实源、组合链基线测试、结构化导入语义报告”这四个目标。
+  - 后续若继续扩展 Phase 4，更应该补的是更真实的上游样本覆盖与更细粒度的 UI 表达，而不是再发散新的隐式语义路径。
+
 ## Phase 1 已完成内容
 
 - 已创建阶段分支 `codex/phase-1-model-runtime`，按阶段分支规则推进本轮实现。

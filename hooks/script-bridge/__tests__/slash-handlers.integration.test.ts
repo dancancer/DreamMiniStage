@@ -12,6 +12,16 @@ import { slashHandlers } from "../slash-handlers";
 import type { ApiCallContext } from "../types";
 import type { CharacterSwitchResult, SendOptions } from "@/lib/slash-command/types";
 
+const characterOpsMocks = vi.hoisted(() => ({
+  getCharacterById: vi.fn(),
+}));
+
+vi.mock("@/lib/data/roleplay/character-record-operation", () => ({
+  LocalCharacterRecordOperations: {
+    getCharacterById: (...args: unknown[]) => characterOpsMocks.getCharacterById(...args),
+  },
+}));
+
 // ============================================================================
 //                              测试辅助函数
 // ============================================================================
@@ -31,6 +41,7 @@ function createMockContext(overrides: Partial<{
   onContinue: () => void | Promise<void>;
   onSwipe: (target?: string) => void | Promise<void>;
   onSwitchCharacter: (target: string) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
+  onGetPersonaName: () => string | Promise<string>;
 }>= {}): ApiCallContext {
   const globalVars: Record<string, unknown> = overrides.globalVars ?? {};
   const characterVars: Record<string, Record<string, unknown>> = overrides.characterVars ?? {};
@@ -47,6 +58,7 @@ function createMockContext(overrides: Partial<{
     onContinue: overrides.onContinue,
     onSwipe: overrides.onSwipe,
     onSwitchCharacter: overrides.onSwitchCharacter,
+    onGetPersonaName: overrides.onGetPersonaName,
     setScriptVariable: vi.fn((key, value, scope, id) => {
       if (scope === "global") {
         globalVars[key] = value;
@@ -74,6 +86,11 @@ function createMockContext(overrides: Partial<{
 // ============================================================================
 
 describe("triggerSlash Integration Tests", () => {
+  beforeEach(() => {
+    characterOpsMocks.getCharacterById.mockReset();
+    characterOpsMocks.getCharacterById.mockResolvedValue(null);
+  });
+
   describe("/send text|/trigger flow (Requirements 8.1, 8.2)", () => {
     /**
      * 测试基本的 /send text|/trigger 流程
@@ -125,6 +142,97 @@ describe("triggerSlash Integration Tests", () => {
         "...",
         expect.objectContaining({ at: undefined, name: undefined }),
       );
+    });
+
+    it("should expand ST env macros in legacy triggerSlash send text", async () => {
+      const onSend = vi.fn().mockResolvedValue(undefined);
+      const ctx = createMockContext({
+        onSend,
+        onGetPersonaName: () => "Alice",
+        characterId: "Tomori",
+      });
+
+      const result = await slashHandlers.triggerSlash(
+        ["/send Hello {{user}} from {{char}}"],
+        ctx,
+      );
+
+      expect(result.isError).toBe(false);
+      expect(onSend).toHaveBeenCalledWith(
+        "Hello Alice from Tomori",
+        expect.objectContaining({ at: undefined, name: undefined }),
+      );
+    });
+
+    it("should resolve {{char}} from the character display name instead of the internal id", async () => {
+      const onSend = vi.fn().mockResolvedValue(undefined);
+      characterOpsMocks.getCharacterById.mockResolvedValue({
+        id: "char_9b1d0b65",
+        data: {
+          name: "Display Tomori",
+        },
+      });
+      const ctx = createMockContext({
+        onSend,
+        onGetPersonaName: () => "Alice",
+        characterId: "char_9b1d0b65",
+      });
+
+      const result = await slashHandlers.triggerSlash(
+        ["/send Hello {{user}} from {{char}}"],
+        ctx,
+      );
+
+      expect(result.isError).toBe(false);
+      expect(onSend).toHaveBeenCalledWith(
+        "Hello Alice from Display Tomori",
+        expect.objectContaining({ at: undefined, name: undefined }),
+      );
+    });
+
+    it("should preserve slash command macros while expanding ST env macros", async () => {
+      const onSend = vi.fn().mockResolvedValue(undefined);
+      const ctx = createMockContext({
+        onSend,
+        onGetPersonaName: () => "Alice",
+      });
+
+      const result = await slashHandlers.triggerSlash(
+        ["/setvar key=mykey value=myvalue|/send {{var::mykey}} {{user}}"],
+        ctx,
+      );
+
+      expect(result.isError).toBe(false);
+      expect(onSend).toHaveBeenCalledWith(
+        "myvalue Alice",
+        expect.objectContaining({ at: undefined, name: undefined }),
+      );
+    });
+
+    it("should evaluate lastMessage after earlier slash segments mutate messages", async () => {
+      const onSend = vi.fn(async (_text: string) => undefined);
+      const ctx = createMockContext({ onSend });
+
+      const result = await slashHandlers.triggerSlash(
+        ["/send first|/echo now-{{lastMessage}}"],
+        ctx,
+      );
+
+      expect(result.isError).toBe(false);
+      expect(result.pipe).toBe("now-first");
+    });
+
+    it("should evaluate messageCount after earlier slash segments append messages", async () => {
+      const onSend = vi.fn(async (_text: string) => undefined);
+      const ctx = createMockContext({ onSend });
+
+      const result = await slashHandlers.triggerSlash(
+        ["/send first|/send second|/echo count-{{messageCount}}"],
+        ctx,
+      );
+
+      expect(result.isError).toBe(false);
+      expect(result.pipe).toBe("count-2");
     });
 
     /**
