@@ -11,6 +11,9 @@ import { getVectorMemoryManager } from "@/lib/vector-memory/manager";
 import { DialogueWorkflowParams } from "@/lib/workflow/examples/DialogueWorkflow";
 import type { ModelAdvancedSettings } from "@/lib/model-runtime";
 import type { ResolvedPromptRuntimeConfig } from "@/lib/prompt-config/state";
+import { stripMvuProtocolBlocks } from "@/lib/mvu/protocol";
+import { buildMvuTrace } from "@/lib/mvu/route-trace";
+import { useMvuConfigStore } from "@/lib/store/mvu-config-store";
 
 export interface DialogueWorkflowResult {
   outputData: {
@@ -33,6 +36,7 @@ export interface DialogueWorkflowParamInput {
   baseUrl: string;
   llmType: "openai" | "ollama" | "gemini";
   advanced?: ModelAdvancedSettings;
+  mvuToolEnabled?: boolean;
   promptRuntime: ResolvedPromptRuntimeConfig;
   number: number;
   fastModel: boolean;
@@ -73,6 +77,7 @@ export function buildDialogueWorkflowParams(
     baseUrl,
     llmType,
     advanced,
+    mvuToolEnabled,
     promptRuntime,
     number,
     fastModel,
@@ -109,6 +114,7 @@ export function buildDialogueWorkflowParams(
     promptNames: promptRuntime.promptNames,
     postProcessingMode: promptRuntime.postProcessingMode,
     effectivePromptConfig: promptRuntime.effectiveConfig,
+    mvuToolEnabled,
   };
 }
 
@@ -137,6 +143,7 @@ export async function processPostResponseAsync(input: PostResponseInput): Promis
 
     const vectorManager = getVectorMemoryManager();
     const now = Date.now();
+    const assistantMemoryContent = screenContent || stripMvuProtocolBlocks(fullResponse);
     vectorManager.ingest(dialogueId, [
       {
         id: `user_${nodeId}`,
@@ -149,25 +156,49 @@ export async function processPostResponseAsync(input: PostResponseInput): Promis
         id: `assistant_${nodeId}`,
         role: "assistant",
         source: "assistant_response",
-        content: screenContent || fullResponse,
+        content: assistantMemoryContent,
         createdAt: now,
       },
     ]).catch((error) => console.warn("[VectorMemory] ingest failed:", error));
 
     const { processMessageVariables } = await import("@/lib/mvu");
-    await processMessageVariables({
+    const baseResult = await processMessageVariables({
       dialogueKey: dialogueId,
       nodeId,
       messageContent: fullResponse,
     });
 
-    if (event) {
+    const { maybeApplyExtraModelUpdate } = await import("@/lib/mvu/extra-model-runtime");
+    const extraApplied = await maybeApplyExtraModelUpdate({
+      dialogueKey: dialogueId,
+      nodeId,
+      messageContent: fullResponse,
+    });
+
+    const latestTree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueId);
+    const latestNode = latestTree?.nodes.find((node) => node.nodeId === nodeId);
+    const selectedStrategy = useMvuConfigStore.getState().strategy;
+    const mvuTrace = buildMvuTrace({
+      selectedStrategy,
+      fullResponse,
+      baseApplied: Boolean(baseResult),
+      extraApplied,
+    });
+
+    if (
+      event ||
+      latestNode?.parsedContent?.variables ||
+      mvuTrace.applied ||
+      mvuTrace.hasUpdateProtocol ||
+      mvuTrace.selectedStrategy !== "text-delta"
+    ) {
       await LocalCharacterDialogueOperations.updateNodeInDialogueTree(
         dialogueId,
         nodeId,
         {
           parsedContent: {
-            ...parsed,
+            ...(latestNode?.parsedContent || parsed),
+            mvuTrace,
             compressedContent: event,
           },
         },

@@ -154,7 +154,7 @@ export function useCharacterDialogue({
 
   const handleInitializeNewDialogue = useCallback(
     async (charId: string, sessId?: string) => {
-      const { llmType, modelName, baseUrl, apiKey, advanced } = readLlmConfig();
+      const { llmType, modelName, baseUrl, apiKey, advanced, mvuToolEnabled } = readLlmConfig();
       const key = sessId || charId;
       await initializeNewDialogue({
         dialogueKey: key,
@@ -165,6 +165,7 @@ export function useCharacterDialogue({
         apiKey,
         llmType,
         advanced,
+        mvuToolEnabled,
         responseLength,
         fastModel: fastModelEnabled,
       });
@@ -176,7 +177,7 @@ export function useCharacterDialogue({
     async (message: string) => {
       if (!storeKey || !characterId) return;
 
-      const { llmType, modelName, baseUrl, apiKey, advanced } = readLlmConfig();
+      const { llmType, modelName, baseUrl, apiKey, advanced, mvuToolEnabled } = readLlmConfig();
       await sendMessage({
         dialogueKey: storeKey,
         characterId,
@@ -187,6 +188,7 @@ export function useCharacterDialogue({
         apiKey,
         llmType,
         advanced,
+        mvuToolEnabled,
         responseLength,
         fastModel: fastModelEnabled,
         onError,
@@ -216,7 +218,7 @@ export function useCharacterDialogue({
     async (nodeId: string) => {
       if (!storeKey || !characterId) return;
 
-      const { llmType, modelName, baseUrl, apiKey, advanced } = readLlmConfig();
+      const { llmType, modelName, baseUrl, apiKey, advanced, mvuToolEnabled } = readLlmConfig();
       await regenerateMessage(storeKey, characterId, nodeId, {
         language,
         modelName,
@@ -224,6 +226,7 @@ export function useCharacterDialogue({
         apiKey,
         llmType,
         advanced,
+        mvuToolEnabled,
         responseLength,
         fastModel: fastModelEnabled,
         onError,
@@ -340,7 +343,7 @@ export function useCharacterDialogue({
   const triggerGeneration = useCallback(async () => {
     if (!storeKey || !characterId) return;
 
-    const { llmType, modelName, baseUrl, apiKey, advanced } = readLlmConfig();
+    const { llmType, modelName, baseUrl, apiKey, advanced, mvuToolEnabled } = readLlmConfig();
     await triggerGenerationStore({
       dialogueKey: storeKey,
       characterId,
@@ -350,6 +353,7 @@ export function useCharacterDialogue({
       apiKey,
       llmType,
       advanced,
+      mvuToolEnabled,
       responseLength,
       fastModel: fastModelEnabled,
       onError,

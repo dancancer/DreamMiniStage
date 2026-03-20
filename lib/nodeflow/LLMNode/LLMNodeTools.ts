@@ -18,6 +18,7 @@ import {
   normalizeMessages,
   publishTokenUsage,
 } from "./runtime-helpers";
+import { stripMvuProtocolBlocks } from "@/lib/mvu/protocol";
 
 // 为window对象添加lastTokenUsage属性的类型声明
 declare global {
@@ -204,7 +205,10 @@ export class LLMNodeTools extends NodeTool {
             },
           },
         );
-        callbacks.onToken?.(result);
+        const visibleResult = stripMvuProtocolBlocks(result);
+        if (visibleResult) {
+          callbacks.onToken?.(visibleResult);
+        }
         return result;
       }
 
@@ -217,7 +221,10 @@ export class LLMNodeTools extends NodeTool {
           },
           callbacks,
         );
-        callbacks.onToken?.(result);
+        const visibleResult = stripMvuProtocolBlocks(result);
+        if (visibleResult) {
+          callbacks.onToken?.(visibleResult);
+        }
         return result;
       }
 

@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "source": [
+      "hooks/script-bridge/__tests__/fixtures/round34-migration-material.json",
+      "lib/core/__tests__/fixtures/phase4/persona-macro.json",
+      "lib/core/__tests__/fixtures/phase4/worldbook-import.json"
+    ],
+    "note": "用当前仓库已提交素材拼接一条更贴近作者工作流的 extra-model 变量更新样例"
+  },
+  "activeConfig": {
+    "id": "cfg-extra-model",
+    "name": "Phase6 Extra Model",
+    "type": "openai",
+    "baseUrl": "https://api.example.com/v1",
+    "model": "gpt-4o-mini",
+    "apiKey": "key",
+    "advanced": {
+      "temperature": 0.2,
+      "maxTokens": 256
+    }
+  },
+  "dialogueKey": "phase6-extra-dialogue",
+  "nodeId": "mvu_snapshot_replay",
+  "messageContent": "林雾注意到外套和手套上沾了新的雨水痕迹，这说明服装细节再次成为关键线索，而且搭配变化暴露了嫌疑人的行动路径。",
+  "currentVariables": {
+    "stat_data": {
+      "status_bar": {
+        "clue_progress": [1, "线索推进度"],
+        "outfit_focus": ["无", "当前服装焦点"]
+      }
+    },
+    "display_data": {},
+    "delta_data": {}
+  },
+  "modelResponse": "<UpdateVariable><Analyze>服装线索和搭配变化都被重新确认</Analyze>_.set('status_bar.outfit_focus', '外套和手套'); _.add('status_bar.clue_progress', 1);</UpdateVariable>",
+  "expectedVariables": {
+    "status_bar": {
+      "clue_progress": [2, "线索推进度"],
+      "outfit_focus": ["外套和手套", "当前服装焦点"]
+    }
+  }
+}

@@ -15,13 +15,17 @@ import type { APIConfig } from "@/lib/model-runtime";
 import { resolveModelAdvancedSettings } from "@/lib/model-runtime";
 import { LLMConfig } from "@/types/character-dialogue";
 import { useModelStore } from "@/lib/store/model-store";
+import { useMvuConfigStore } from "@/lib/store/mvu-config-store";
 import {
   useLocalStorageBoolean,
   useLocalStorageNumber,
   useLocalStorageString,
 } from "@/hooks/useLocalStorage";
 
-export function buildDialogueLlmConfig(activeConfig: APIConfig | undefined): LLMConfig {
+export function buildDialogueLlmConfig(
+  activeConfig: APIConfig | undefined,
+  strategy: "text-delta" | "function-calling" | "extra-model" = "text-delta",
+): LLMConfig {
   if (!activeConfig) {
     return {
       llmType: "openai",
@@ -29,6 +33,7 @@ export function buildDialogueLlmConfig(activeConfig: APIConfig | undefined): LLM
       baseUrl: "",
       apiKey: "",
       advanced: resolveModelAdvancedSettings({}),
+      mvuToolEnabled: strategy === "function-calling",
     };
   }
 
@@ -38,6 +43,7 @@ export function buildDialogueLlmConfig(activeConfig: APIConfig | undefined): LLM
     baseUrl: activeConfig.baseUrl,
     apiKey: activeConfig.apiKey || "",
     advanced: resolveModelAdvancedSettings({ session: activeConfig.advanced }),
+    mvuToolEnabled: strategy === "function-calling",
   };
 }
 
@@ -47,6 +53,7 @@ export const useDialoguePreferences = () => {
   const { value: fastModelEnabled } = useLocalStorageBoolean("fastModelEnabled", false);
   const configs = useModelStore((state) => state.configs);
   const activeConfigId = useModelStore((state) => state.activeConfigId);
+  const mvuStrategy = useMvuConfigStore((state) => state.strategy);
 
   const language = useMemo<"en" | "zh">(
     () => (storedLanguage === "en" ? "en" : "zh"),
@@ -55,8 +62,8 @@ export const useDialoguePreferences = () => {
 
   const readLlmConfig = useCallback((): LLMConfig => {
     const activeConfig = configs.find((config) => config.id === activeConfigId);
-    return buildDialogueLlmConfig(activeConfig);
-  }, [activeConfigId, configs]);
+    return buildDialogueLlmConfig(activeConfig, mvuStrategy);
+  }, [activeConfigId, configs, mvuStrategy]);
 
   return { language, readLlmConfig, responseLength, fastModelEnabled };
 };

@@ -195,6 +195,39 @@ describe("LLMNodeTools.invokeLLMStream", () => {
     );
   });
 
+  it("keeps MVU UpdateVariable blocks out of streamed visible tokens while preserving the raw return value", async () => {
+    mockState.aiMessage = {
+      content: "Visible reply",
+      tool_calls: [
+        {
+          id: "tc1",
+          name: "mvu_VariableUpdate",
+          args: {
+            analysis: "hp change",
+            delta: "_.set('hp', 3);",
+          },
+        },
+      ],
+    };
+    const onToken = vi.fn();
+
+    const result = await LLMNodeTools.invokeLLMStream(
+      {
+        modelName: "mock-model",
+        apiKey: "mock-key",
+        llmType: "openai",
+        mvuToolEnabled: true,
+        messages: [{ role: "user", content: "say hi" }],
+      },
+      { onToken },
+    );
+
+    expect(result).toContain("<UpdateVariable>");
+    expect(result).toContain("Visible reply");
+    expect(onToken).toHaveBeenCalledWith("Visible reply");
+    expect(onToken).not.toHaveBeenCalledWith(expect.stringContaining("<UpdateVariable>"));
+  });
+
   it("falls back to buffered tool execution for Claude and emits tool callbacks", async () => {
     convertForClaudeMock.mockReturnValue({
       messages: [{ role: "user", content: "hello" }],

@@ -92,7 +92,9 @@ export {
 
 export {
   getCharacterVariables,
+  getCurrentMvuTrace,
   getNodeVariables,
+  getNodeMvuTrace,
   processMessageVariables,
   saveNodeVariables,
   initCharacterVariables,

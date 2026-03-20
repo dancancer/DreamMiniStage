@@ -39,6 +39,7 @@ export function buildLLMConfigFromNodeInput(input: NodeInput): LLMConfig {
   const tools = input.tools as boolean | undefined;
   const prefill = input.prefill as string | undefined;
   const placeholder = input.placeholder as string | undefined;
+  const mvuToolEnabled = (input.mvuToolEnabled ?? false) as boolean;
   const scriptTools = getScriptToolsAsOpenAI();
 
   if (!messages || messages.length === 0) {
@@ -78,6 +79,7 @@ export function buildLLMConfigFromNodeInput(input: NodeInput): LLMConfig {
     tools,
     prefill,
     placeholder,
+    mvuToolEnabled,
     scriptTools,
   };
 }

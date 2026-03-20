@@ -1,5 +1,246 @@
 # Handoff（2026-03-08）
 
+## Phase 6 Batch 13 已完成（2026-03-19）
+
+- 已新增 `docs/plan/2026-03-08-sillytavern-product-roadmap/phase6-mvu-capability-matrix.md`
+- 这份文档现在作为 Phase 6 的单一事实源，集中描述：
+  - 默认路径
+  - 显式扩展路径
+  - 协议卫生边界
+  - `/session` 当前可观测面
+  - 已验证与未做的边界
+- 当前结论：
+  - Phase 6 现在已经不需要只靠 handoff 时间线来理解状态；
+  - 判断“某条 MVU 路径当前是否真实支持、是否默认、是否可见、是否已验证”，优先以这份矩阵文档为准。
+
+## Phase 6 Batch 12 已完成（2026-03-19）
+
+- 已修正 MVU 路径观测里的一个可用性缺口：
+  - 现象：作者显式选了 `extra-model`，但本次没有变量更新时，节点上不会留下 `mvuTrace`
+  - 结果：调试面看起来像“根本没走 extra-model”，而不是“走了，但这次没命中”
+- 本轮修复：
+  - `function/dialogue/chat-shared.ts` 现在会在显式扩展策略（非 `text-delta`）下，哪怕本次没有实际更新，也把 `mvuTrace` 写回节点
+- 本轮新增验证：
+  - `function/dialogue/__tests__/chat-shared.test.ts` 已新增“extra-model selected but no update produced”回归
+- 当前结论：
+  - Phase 6 的路径观测现在终于能区分三种状态：
+    - 默认路径
+    - 扩展路径已命中
+    - 扩展路径已执行但未命中
+
+## Phase 6 Batch 11 已完成（2026-03-19）
+
+- 已把 Phase 6 的三条 MVU 路径观测真正落到 `/session` 产品面：
+  - `ParsedResponse` 新增 `mvuTrace`
+  - `lib/mvu/route-trace.ts` 统一构建节点级观测信息
+  - `lib/mvu/data/persistence.ts` 已补齐 `getCurrentMvuTrace` / `getNodeMvuTrace`
+  - `components/mvu/MvuDebuggerPanel.tsx` 现在会直接显示“当前节点 / 选中节点”的实际路径
+- 当前路径观测会明确区分：
+  - 已选策略
+  - 实际应用路径
+  - 是否真的应用
+  - 当前回复是否带过 `UpdateVariable` 协议块
+- 本轮新增验证：
+  - `components/__tests__/MvuDebuggerPanel.test.tsx` 已扩展到路径观测断言
+  - `function/dialogue/__tests__/chat-shared.event-mvu.test.ts` 会锁住 event + variables 共存路径
+- 当前结论：
+  - Phase 6 现在已经不只是“能配策略、能跑路径”，而是作者在真实 `/session` 页面里终于能看清楚某条消息到底是怎么更新变量的。
+
+## Phase 6 Batch 10 已完成（2026-03-19）
+
+- 已新增一条更真实的 committed extra-model 样例：
+  - `lib/mvu/__tests__/fixtures/phase6/extra-model-material-workflow.json`
+  - 样例来源明确绑定当前仓库已有素材：
+    - `hooks/script-bridge/__tests__/fixtures/round34-migration-material.json`
+    - `lib/core/__tests__/fixtures/phase4/persona-macro.json`
+    - `lib/core/__tests__/fixtures/phase4/worldbook-import.json`
+- 已新增对应基线测试：
+  - `lib/mvu/__tests__/phase6-extra-model-material.test.ts`
+- 这条样例当前锁住的事实：
+  - 当策略显式为 `extra-model` 时
+  - 运行时会复用当前激活模型
+  - 并把 extra-model 解析出的变量更新写回当前节点
+  - 同时保留当前项目已有素材里的角色/世界书语义，不再只靠极小的人造样本验证
+- 当前结论：
+  - Phase 6 的 fixture 覆盖现在已经从“状态栏”和“策略”扩到 extra-model 这条扩展路径；
+  - 这条 committed 样例足以在不引入外部素材的前提下，继续约束 extra-model 的最小运行时行为。
+
+## Phase 6 Batch 9 已完成（2026-03-19）
+
+- 已打通 `extra-model` 的最小真实运行时接入：
+  - 新增 `lib/mvu/extra-model-runtime.ts`
+  - 当前当策略显式为 `extra-model` 时，会复用当前激活模型做二次变量解析，并将 `updatedVariables` 写回当前节点
+- 已补上实现所需的本质层缺口：
+  - `lib/mvu/extra-model.ts` 的 `ExtraModelResponse` 现已返回 `updatedVariables`
+  - 这让 extra-model 不再只会吐文本 delta，而是真正具备“算出结果 -> 保存结果”的能力
+- 当前策略语义变成：
+  - `text-delta`：默认路径
+  - `function-calling`：显式扩展路径，已具备运行时闭环和协议卫生
+  - `extra-model`：显式扩展路径，现已具备最小真实运行时接入
+- 本轮新增验证：
+  - `lib/mvu/__tests__/extra-model-parser.test.ts`
+  - `lib/mvu/__tests__/extra-model-runtime.test.ts`
+  - `function/dialogue/__tests__/chat-shared.test.ts` 已扩展到 extra-model 集成断言
+- 当前结论：
+  - Phase 6 的两条扩展路径现在都不再只是矩阵说明，而是已经各自具备最小可运行闭环。
+
+## Phase 6 Batch 8 已完成（2026-03-19）
+
+- 已修复一条真实的高层链路 bug：
+  - 现象：当 `function-calling` 生成的 `fullResponse` 同时包含 MVU 协议块和 `event` 时，后续写入 `compressedContent` 会把已落下去的 `parsedContent.variables` 覆盖掉。
+  - 根因：`LocalCharacterDialogueOperations.updateNodeInDialogueTree()` 只做顶层浅合并，`parsedContent` 整块替换；`processPostResponseAsync()` 在写 `event` 时复用了旧的局部 `parsed`，没有读取最新节点状态。
+- 已做的修复：
+  - `function/dialogue/chat-shared.ts` 现在会在写 `compressedContent` 前重新读取最新节点的 `parsedContent`，再叠加 `event`
+  - 因此 `parsedContent.variables` 与 `parsedContent.compressedContent` 现在可以稳定共存
+- 本轮新增验证：
+  - `function/dialogue/__tests__/chat-shared.event-mvu.test.ts`
+  - 该测试按真实存储语义模拟了 `parsedContent` 顶层替换，确保不会再被宽松 mock 掩盖
+- 当前结论：
+  - Phase 6 的 `function-calling` 路径现在不仅协议卫生更好，而且在“变量快照 + event 压缩”同时存在时也不会丢失状态更新。
+
+## Phase 6 Batch 7 已完成（2026-03-19）
+
+- 已继续补齐 `function-calling` 的高层回归：
+  - 新增 `function/dialogue/__tests__/chat-shared.test.ts`
+  - 目的：锁住“MVU 协议块不会污染向量记忆，但原始 fullResponse 仍保留给变量落盘”这条真实链路
+- 本轮实现收口：
+  - `function/dialogue/chat-shared.ts` 现在会对写入向量记忆的 assistant 内容使用 `stripMvuProtocolBlocks(fullResponse)` 作为回退
+  - 这样 `processMessageVariables()` 仍读取原始 `fullResponse`
+  - 但向量检索面不会把 `<UpdateVariable>...</UpdateVariable>` 当成正常对话语料吞进去
+- 当前结果：
+  - 用户可见 UI：干净
+  - 向量记忆：干净
+  - MVU 落盘输入：保留原始协议文本
+- 本轮定向验证：
+  - `pnpm vitest run function/dialogue/__tests__/chat-shared.test.ts`
+- 当前结论：
+  - Phase 6 的 `function-calling` 路径现在已经不只是“策略可配”，而是开始具备高层链路上的协议卫生保证。
+
+## Phase 6 Batch 6 已完成（2026-03-19）
+
+- 已补齐 `function-calling` 路径的协议卫生：
+  - 新增 `lib/mvu/protocol.ts`
+  - 当前会把 `<UpdateVariable>...</UpdateVariable>` 这类 MVU 协议块从可见输出路径中剥离
+- 当前行为收敛为：
+  - `fullResponse` 继续保留协议块，供 `processMessageVariables()` 落盘
+  - `screenContent` 与流式 token 不再暴露协议块，避免用户看到内部更新协议
+- 落地点：
+  - `lib/nodeflow/LLMNode/LLMNodeTools.ts`：在 function-calling 流式退化路径中，只向 UI 发干净文本
+  - `lib/nodeflow/RegexNode/RegexNode.ts`：在正则处理前剥离 MVU 协议块，保证最终可见输出干净
+- 本轮新增验证：
+  - `lib/nodeflow/__tests__/regex-node-mvu.test.ts`
+  - `lib/nodeflow/__tests__/llm-node-streaming.test.ts` 已新增 function-calling 协议块不可见断言
+- 当前结论：
+  - Phase 6 现在不仅定义了 function-calling 是显式扩展路径，还保证它不会把内部协议文本泄露到最终用户界面。
+
+## Phase 6 Batch 5 已完成（2026-03-18）
+
+- 已把 Phase 6 的“策略矩阵”推进到“显式策略配置 + 最小运行时闭环”：
+  - 新增 `lib/store/mvu-config-store.ts`，把当前 MVU 策略持久化为单一状态源。
+  - `components/mvu/MvuStrategyPanel.tsx` 现在不仅展示矩阵，还允许在真实 `/session` 页面显式切换策略。
+- 已打通最小运行时闭环：
+  - `hooks/character-dialogue/useDialoguePreferences.ts` 会把当前策略折算为 `mvuToolEnabled`
+  - `hooks/useCharacterDialogue.ts` / `hooks/script-bridge/generation-handlers.ts` 会把该开关透传到聊天请求
+  - `function/dialogue/chat.ts` / `function/dialogue/chat-shared.ts` / `lib/workflow/examples/DialogueWorkflow.ts` / `lib/nodeflow/LLMNode/LLMNode.ts` 已把该字段继续透传到 LLM config
+- 当前运行时语义：
+  - 默认仍是 `text-delta`
+  - 只有显式选择 `function-calling` 时，才会打开 `mvuToolEnabled`
+  - `extra-model` 目前仍只停留在显式策略展示，不会静默抢默认路径
+- 本轮新增验证：
+  - `lib/store/__tests__/mvu-config-store.test.ts`
+  - `hooks/character-dialogue/__tests__/useDialoguePreferences.test.ts`
+  - `function/dialogue/__tests__/chat-first-message.test.ts`
+  - `lib/mvu/debugger/__tests__/strategy-matrix.test.ts`
+  - `lib/mvu/__tests__/phase6-strategy-material.test.ts`
+- 当前结论：
+  - Phase 6 现在已经不只是“定义默认路径”，而是把“谁是默认、谁是扩展、何时显式开启 function-calling”收口成了产品可见、运行时可验证的单一路径。
+
+## Phase 6 Batch 4 已完成（2026-03-18）
+
+- 已把“MVU 默认路径 / 扩展路径”的判断从口头约定收口成代码事实源：
+  - 新增 `lib/mvu/debugger/strategy-matrix.ts`
+  - 当前矩阵显式声明：
+    - `text-delta` = 默认路径
+    - `function-calling` = 条件扩展
+    - `extra-model` = 条件扩展
+- `/session` 的 `MVU Debugger` 已新增策略矩阵面板：
+  - 新增 `components/mvu/MvuStrategyPanel.tsx`
+  - 面板会直接展示当前支持状态与默认建议，避免作者继续靠文档猜“哪条路径现在真能用”。
+- 已使用当前仓库内的 committed 测试素材补了一条更真实的组合样例：
+  - `lib/mvu/__tests__/phase6-strategy-material.test.ts`
+  - 当前样例复用：
+    - `hooks/script-bridge/__tests__/fixtures/round34-migration-material.json`
+    - `lib/core/__tests__/fixtures/phase4/worldbook-import.json`
+  - 目的：锁住“当前项目现有素材下，默认策略仍应保持 text-delta”的事实。
+- 本轮新增验证：
+  - `lib/mvu/debugger/__tests__/strategy-matrix.test.ts`
+  - `lib/mvu/__tests__/phase6-strategy-material.test.ts`
+- 本轮定向验证：
+  - `pnpm vitest run lib/mvu/debugger/__tests__/strategy-matrix.test.ts lib/mvu/__tests__/phase6-strategy-material.test.ts components/__tests__/MvuDebuggerPanel.test.tsx`
+- 当前结论：
+  - Phase 6 的“策略面板 + 支持矩阵”已经存在于真实产品面，不再只是 handoff 里的说明文字；
+  - 现有仓库素材已经足够支撑这一轮扩样，不需要你额外提供素材。
+
+## Phase 6 Batch 3 已完成（2026-03-18）
+
+- 已继续补齐状态栏作者工具链中的“占位符渲染”缺口：
+  - 新增 `lib/mvu/debugger/template.ts`，集中处理 `{{status_bar.key}}` 模板渲染与默认模板生成。
+  - `components/mvu/MvuDebuggerPanel.tsx` 现在会提供可编辑的状态栏模板输入区，以及即时渲染结果预览。
+- 当前模板语义选择：
+  - 优先使用 `display_data` 渲染；
+  - 若字段不存在，保留原占位符文本，避免作者误以为 key 生效。
+- 本轮新增验证：
+  - `lib/mvu/debugger/__tests__/template.test.ts`
+  - `components/__tests__/MvuDebuggerPanel.test.tsx` 已扩展到状态栏模板预览断言
+- 本轮定向验证：
+  - `pnpm vitest run lib/mvu/debugger/__tests__/template.test.ts components/__tests__/MvuDebuggerPanel.test.tsx`
+- 当前结论：
+  - Phase 6 的 `/session` MVU Debugger 已从“看变量”推进到“试模板”；
+  - 状态栏作者现在可以直接在真实会话里验证 `status_bar` 占位符表达，而不必手工脑补 display/stat 的落点。
+
+## Phase 6 Batch 2 已完成（2026-03-17）
+
+- 已继续把 Phase 6 从“变量可见”推进到“状态栏作者体验可见”：
+  - 新增 `lib/mvu/debugger/status-bar.ts`，把 `status_bar` 的 `stat/display` 语义收敛成单一路径。
+  - 新增 `components/mvu/MvuStatusBarPreview.tsx`，把状态栏字段渲染成作者可读的卡片，而不是继续让作者盯 JSON。
+  - `components/mvu/MvuDebuggerPanel.tsx` 现在会同时展示“当前状态栏”和“消息状态栏”。
+- 已新增第二批 committed Phase 6 样例：
+  - `lib/mvu/__tests__/fixtures/phase6/status-bar-authoring-workflow.json`
+  - 目标是锁住“数组值 + 描述”这类更贴近上游作者写法的状态栏语义。
+- 本轮新增验证：
+  - `lib/mvu/debugger/__tests__/status-bar.test.ts`
+  - `lib/mvu/__tests__/phase6-status-bar-authoring.test.ts`
+- 本轮定向验证：
+  - `pnpm vitest run lib/mvu/debugger/__tests__/status-bar.test.ts components/__tests__/MvuDebuggerPanel.test.tsx lib/mvu/__tests__/phase6-status-bar-authoring.test.ts lib/mvu/__tests__/phase6-replay-baseline.test.ts`
+- 当前结论：
+  - Phase 6 的下一步已经不只是“能看变量”，而是开始对齐“作者如何理解并使用状态栏表达”；
+  - `status_bar` 里的 `[[...], "描述"]` 这种数组值写法现在在调试面板里会按状态栏语义正确展开，不再退化成难读的原始数组。
+
+## Phase 6 Batch 1 已完成（2026-03-17）
+
+- 已创建阶段分支 `codex/phase-6-mvu-productization`，本轮不使用 worktree，直接在新阶段分支推进。
+- 已新增 `docs/plan/2026-03-08-sillytavern-product-roadmap/phase6-mvu-workflow.md`，明确 DreamMiniStage 当前 MVU 的单一路径：
+  - 世界书 / 开场白初始化；
+  - 助手最终文本 delta 更新；
+  - 节点级变量快照持久化；
+  - `/session` 调试面板可视化；
+  - 楼层 replay 与 JSON Patch 回放验证。
+- `/session` 真实页面已新增 `components/mvu/MvuDebuggerPanel.tsx`，当前产品面可直接查看：
+  - 当前会话变量；
+  - 指定消息快照；
+  - schema；
+  - delta 预览。
+- `app/session/session-chat-view.tsx` 已把 MVU 调试面板接入真实聊天页脚，不再要求作者绕到脚本桥或单独 smoke 页观察变量。
+- 已新增第一批 committed 样例与回放基线：
+  - `lib/mvu/__tests__/fixtures/phase6/status-bar-workflow.json`
+  - `lib/mvu/__tests__/phase6-replay-baseline.test.ts`
+- 本轮定向验证：
+  - `pnpm vitest run components/__tests__/MvuDebuggerPanel.test.tsx lib/mvu/__tests__/phase6-replay-baseline.test.ts`
+- 当前阶段结论：
+  - Phase 6 的四个 roadmap 待办已形成最小闭环；
+  - function-calling / extra model 继续保留为显式扩展路径，不是默认更新路径；
+  - 下一轮若继续做 Phase 6，更应该补更多上游样例和状态栏作者体验，而不是引入第二条默认变量更新链路。
+
 ## Phase 4 Unified Runtime Refactor 已完成（2026-03-17）
 
 - Phase 4 当前不应再被理解为“仅剩导入语义和迁移样例补齐”的状态；这一轮已经继续完成了对话生成主链路的统一运行时收敛。

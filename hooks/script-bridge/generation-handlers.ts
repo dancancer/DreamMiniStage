@@ -12,6 +12,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { resolveModelAdvancedSettings } from "@/lib/model-runtime";
 import { useModelStore } from "@/lib/store/model-store";
+import { useMvuConfigStore } from "@/lib/store/mvu-config-store";
 import { handleCharacterChatRequest } from "@/function/dialogue/chat";
 import type { ApiCallContext, ApiHandlerMap } from "./types";
 
@@ -94,6 +95,7 @@ async function generate(args: unknown[], ctx: ApiCallContext) {
         nodeId: generationId,
         fastModel: false,
         advanced: effectiveConfig.advanced,
+        mvuToolEnabled: useMvuConfigStore.getState().strategy === "function-calling",
       }),
       abortPromise,
     ]);

@@ -33,4 +33,18 @@ describe("buildDialogueLlmConfig", () => {
       advanced: {},
     });
   });
+
+  it("在 function-calling 策略下显式打开 mvuToolEnabled", () => {
+    const result = buildDialogueLlmConfig({
+      id: "cfg-2",
+      name: "Config",
+      type: "openai",
+      baseUrl: "https://api.example.com/v1",
+      model: "gpt-4o-mini",
+      apiKey: "key",
+      advanced: {},
+    }, "function-calling");
+
+    expect(result.mvuToolEnabled).toBe(true);
+  });
 });
