@@ -9,6 +9,7 @@
 
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
+import type { ParsedMvuTrace } from "@/lib/models/parsed-response";
 import type { MvuData, StatData } from "../types";
 import { updateVariablesFromMessage } from "../core/executor";
 import { initializeVariables, type WorldBookEntry } from "../variable-init";
@@ -70,6 +71,27 @@ export async function getNodeVariables(
 
   const node = tree.nodes.find((n) => n.nodeId === nodeId);
   return node?.parsedContent?.variables ?? null;
+}
+
+export async function getNodeMvuTrace(
+  scope: DialogueScope,
+  nodeId: string,
+): Promise<ParsedMvuTrace | null> {
+  const dialogueKey = requireDialogueKey(scope);
+  const tree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueKey);
+  if (!tree) return null;
+
+  const node = tree.nodes.find((entry) => entry.nodeId === nodeId);
+  return node?.parsedContent?.mvuTrace ?? null;
+}
+
+export async function getCurrentMvuTrace(scope: DialogueScope): Promise<ParsedMvuTrace | null> {
+  const dialogueKey = requireDialogueKey(scope);
+  const tree = await LocalCharacterDialogueOperations.getDialogueTreeById(dialogueKey);
+  if (!tree) return null;
+
+  const node = tree.nodes.find((entry) => entry.nodeId === tree.current_nodeId);
+  return node?.parsedContent?.mvuTrace ?? null;
 }
 
 // ============================================================================

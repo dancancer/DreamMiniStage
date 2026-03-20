@@ -75,3 +75,10 @@
 - `/session` 页面直输 slash 现已继续复用共享默认 UI host：`/popup`、`/bubble`、`/default`、`/closechat` 这类原本只在 script bridge 默认路径可用的命令，现在在页面输入框里也能走同一实现。
 - 第二批共享默认 UI host 也已接入 `/session` 页面直输 slash：`/theme`、`/movingui`、`/css-var`、`/panels`、`/resetpanels`、`/vn` 当前都会复用与 script bridge 相同的默认实现。
 - 背景命令这组共享默认 UI host 也已接入 `/session` 页面直输 slash：`/bg`、`/lockbg`、`/unlockbg`、`/autobg` 现在与 script bridge 默认路径共用同一实现。
+
+## 最新变更（2026-03-17）
+
+- `session-chat-view.tsx` 已把 `MvuDebuggerPanel` 接到真实聊天页脚，MVU 不再只停留在底层存储与脚本 API。
+- `/session` 当前可直接查看当前变量、指定消息快照、schema 与 delta 预览，便于作者调试 MagVarUpdate 工作流。
+- `/session` 当前已继续补上状态栏预览：会把 `status_bar` 变量渲染成作者可读卡片，区分“当前状态栏”与“消息状态栏”。
+- `/session` 当前已补上 MVU 路径观测：会直接显示“当前节点 / 选中节点”实际走了 `text-delta`、`function-calling` 还是 `extra-model`。

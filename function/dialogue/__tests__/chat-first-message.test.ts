@@ -200,6 +200,33 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
     }), expect.any(Object));
   });
 
+  it("在显式开启 function-calling 策略时透传 mvuToolEnabled 到 workflow", async () => {
+    await handleCharacterChatRequest({
+      username: "user",
+      dialogueId: "session-1",
+      characterId: "char-1",
+      message: "hi",
+      modelName: "gpt",
+      baseUrl: "",
+      apiKey: "key",
+      llmType: "openai",
+      language: "zh",
+      number: 100,
+      nodeId: "assistant-1",
+      fastModel: false,
+      mvuToolEnabled: true,
+      openingMessage: {
+        id: "session-1-opening",
+        content: "opening regex",
+        fullContent: "opening raw",
+      },
+    });
+
+    expect(prepareDialogueExecutionMock).toHaveBeenCalledWith(expect.objectContaining({
+      mvuToolEnabled: true,
+    }));
+  });
+
   it("workflow 失败时仍先持久化用户输入节点", async () => {
     getDialogueTreeById.mockReset();
     createDialogueTree.mockReset();

@@ -7,10 +7,22 @@
 
 import type { MvuData } from "@/lib/mvu/types";
 
+export type ParsedMvuStrategy = "text-delta" | "function-calling" | "extra-model";
+export type ParsedMvuAppliedPath = ParsedMvuStrategy | "none";
+
+export interface ParsedMvuTrace {
+  selectedStrategy: ParsedMvuStrategy;
+  appliedPath: ParsedMvuAppliedPath;
+  applied: boolean;
+  hasUpdateProtocol: boolean;
+}
+
 export interface ParsedResponse {
   regexResult?: string;
   nextPrompts?: string[];
   compressedContent?: string;
   /** MVU 变量快照 - 该消息处理后的变量状态 */
   variables?: MvuData;
+  /** MVU 路径观测 - 记录本节点到底走了哪条更新链路 */
+  mvuTrace?: ParsedMvuTrace;
 }

@@ -1,0 +1,43 @@
+{
+  "variables": {
+    "stat_data": {
+      "status_bar": {
+        "hp": [18, "生命值"],
+        "mana": [7, "法力值"],
+        "condition": [["轻伤", "疲劳"], "当前状态"]
+      }
+    },
+    "display_data": {
+      "status_bar": {
+        "hp": "15->18",
+        "condition": "轻伤 / 疲劳"
+      }
+    },
+    "delta_data": {
+      "status_bar": {
+        "hp": "15->18",
+        "condition": "新增 疲劳"
+      }
+    }
+  },
+  "expectedEntries": [
+    {
+      "key": "hp",
+      "label": "生命值",
+      "rawValue": 18,
+      "displayValue": "15->18"
+    },
+    {
+      "key": "mana",
+      "label": "法力值",
+      "rawValue": 7,
+      "displayValue": "7"
+    },
+    {
+      "key": "condition",
+      "label": "当前状态",
+      "rawValue": ["轻伤", "疲劳"],
+      "displayValue": "轻伤 / 疲劳"
+    }
+  ]
+}

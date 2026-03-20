@@ -51,6 +51,7 @@ export interface LLMConfig {
   baseUrl: string;
   apiKey: string;
   advanced?: ModelAdvancedSettings;
+  mvuToolEnabled?: boolean;
 }
 
 export interface UseCharacterDialogueOptions {

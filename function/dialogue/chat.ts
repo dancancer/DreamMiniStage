@@ -39,6 +39,7 @@ export async function handleCharacterChatRequest(payload: {
   nodeId: string;
   fastModel: boolean;
   advanced?: ModelAdvancedSettings;
+  mvuToolEnabled?: boolean;
   openingMessage?: OpeningPayload;
   parentNodeId?: string;
 }): Promise<Response> {
@@ -58,6 +59,7 @@ export async function handleCharacterChatRequest(payload: {
       fastModel = false,
       streaming = false,
       advanced,
+      mvuToolEnabled,
       openingMessage,
       parentNodeId,
     } = payload;
@@ -105,6 +107,7 @@ export async function handleCharacterChatRequest(payload: {
           streaming: modelStreaming,
           streamUsage: effectiveStreamUsage,
         },
+        mvuToolEnabled,
         promptRuntime,
         number,
         fastModel,

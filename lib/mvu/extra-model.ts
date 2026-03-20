@@ -66,6 +66,7 @@ export interface ExtraModelResponse {
   success: boolean;
   updateContent?: string;
   results?: CommandResult[];
+  updatedVariables?: MvuData;
   error?: string;
   retries?: number;
 }
@@ -225,6 +226,7 @@ export class ExtraModelParser {
               success: true,
               updateContent,
               results,
+              updatedVariables,
               retries: retry,
             };
           }

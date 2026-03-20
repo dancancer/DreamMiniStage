@@ -43,6 +43,7 @@ export interface LLMConfig {
   responseLength: number;
   fastModel: boolean;
   advanced?: ModelAdvancedSettings;
+  mvuToolEnabled?: boolean;
 }
 
 export interface InitDialogueParams extends LLMConfig {

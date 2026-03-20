@@ -2,6 +2,7 @@ import { NodeBase } from "@/lib/nodeflow/NodeBase";
 import { NodeConfig, NodeInput, NodeOutput, NodeCategory } from "@/lib/nodeflow/types";
 import { RegexNodeTools } from "./RegexNodeTools";
 import { NodeToolRegistry } from "../NodeTool";
+import { stripMvuProtocolBlocks } from "@/lib/mvu/protocol";
 
 const DEBUG = true;
 function log(tag: string, ...args: unknown[]): void {
@@ -83,6 +84,8 @@ export class RegexNode extends NodeBase {
       .replace(/\n*\s*<next_prompts>[\s\S]*?<\/next_prompts>\s*\n*/g, "")
       .replace(/\n*\s*<events>[\s\S]*?<\/events>\s*\n*/g, "")
       .trim();
+
+    mainContent = stripMvuProtocolBlocks(mainContent);
 
     const processedResult = await this.executeTool(
       "processRegex",

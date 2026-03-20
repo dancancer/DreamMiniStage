@@ -53,6 +53,7 @@ export interface ChatRequestInput {
   responseLength: number;
   fastModel: boolean;
   advanced?: ModelAdvancedSettings;
+  mvuToolEnabled?: boolean;
 }
 
 interface StreamingHandlerParams {
@@ -242,6 +243,7 @@ export async function requestCharacterChatResponse(
     nodeId: input.nodeId,
     fastModel: input.fastModel,
     advanced: input.advanced,
+    mvuToolEnabled: input.mvuToolEnabled,
     openingMessage: input.pendingOpening,
     parentNodeId: input.parentNodeId,
   });

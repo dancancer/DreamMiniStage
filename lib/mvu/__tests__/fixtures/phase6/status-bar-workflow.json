@@ -1,0 +1,55 @@
+{
+  "initialVariables": {
+    "stat_data": {
+      "status_bar": {
+        "hp": [12, "生命值"],
+        "floor": [1, "当前楼层"]
+      },
+      "inventory": []
+    },
+    "display_data": {},
+    "delta_data": {},
+    "schema": {
+      "type": "object",
+      "properties": {
+        "status_bar": {
+          "type": "object",
+          "properties": {
+            "hp": { "type": "number", "required": true },
+            "floor": { "type": "number", "required": true }
+          }
+        },
+        "inventory": {
+          "type": "array",
+          "elementType": { "type": "any" }
+        }
+      }
+    }
+  },
+  "messages": [
+    {
+      "id": "opening",
+      "content": "开场白，不包含变量更新。"
+    },
+    {
+      "id": "battle",
+      "content": "_.add('status_bar.hp', -3);// battle damage"
+    },
+    {
+      "id": "climb",
+      "content": "_.add('status_bar.floor', 1);// stair climb"
+    }
+  ],
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/status_bar/floor/0",
+      "value": 3
+    },
+    {
+      "op": "add",
+      "path": "/status_bar/location",
+      "value": ["塔顶", "当前位置"]
+    }
+  ]
+}
