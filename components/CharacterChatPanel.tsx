@@ -540,7 +540,7 @@ export default function CharacterChatPanel({
 
   // ========== 渲染 ==========
   return (
-    <div className="flex flex-col h-full max-h-screen">
+    <div className="flex h-full min-h-0 max-h-screen flex-col">
       {/* 消息列表 */}
       <MessageList
         messages={messages}

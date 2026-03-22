@@ -7,14 +7,21 @@
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         Chat Input Component                               ║
  * ║                                                                            ║
- * ║  聊天输入区域：输入框、建议列表、发送按钮                                    ║
- * ║  职责单一：只处理用户输入相关的 UI 和交互                                    ║
+ * ║  聊天输入区域：输入框、建议列表、发送按钮、受限高度的工具带                    ║
+ * ║  职责单一：收口输入区交互，避免底部工具继续挤压消息滚动区                      ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
 "use client";
 
-import { useState, useCallback } from "react";
+import {
+  Children,
+  Fragment,
+  isValidElement,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { trackButtonClick, trackFormSubmit } from "@/utils/google-analytics";
 import { Button } from "@/components/ui/button";
@@ -51,6 +58,10 @@ export default function ChatInput({
   children,
 }: ChatInputProps) {
   const [suggestionsCollapsed, setSuggestionsCollapsed] = useState(false);
+  const toolItems = useMemo(
+    () => flattenToolItems(children),
+    [children],
+  );
 
   const handleSubmit = useCallback((event: React.FormEvent) => {
     trackFormSubmit("page", "提交表单");
@@ -69,7 +80,7 @@ export default function ChatInput({
   const showSuggestions = suggestedInputs.length > 0 && !isSending;
 
   return (
-    <div className="sticky bottom-0 border-t border-border py-6 px-5 z-5 mt-4 ">
+    <div className="sticky bottom-0 z-10 mt-4 shrink-0 border-t border-border bg-background/95 px-5 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       {/* 建议输入区域 */}
       {showSuggestions && (
         <SuggestionsArea
@@ -98,11 +109,9 @@ export default function ChatInput({
           />
         </div>
 
-        {/* 控制面板插槽 */}
-        <div className="mt-3 sm:mt-5 flex justify-start gap-1.5 sm:gap-2 md:gap-3 max-w-4xl mx-auto relative">
-          {children}
-        </div>
       </form>
+
+      <ToolRail items={toolItems} />
     </div>
   );
 }
@@ -181,7 +190,7 @@ function InputField({ value, onChange, disabled, placeholder }: InputFieldProps)
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         data-tour="chat-input"
-        className="w-full bg-overlay border border-border rounded-md py-2 sm:py-2.5 px-3 sm:px-4 text-cream text-sm leading-tight focus:outline-none focus:border-primary-soft  relative z-1 transition-all duration-300 group-hover:border-border"
+        className="relative z-[1] w-full rounded-md border border-border bg-overlay px-3 py-2 text-cream text-sm leading-tight transition-all duration-300 focus:border-primary-soft focus:outline-none group-hover:border-border sm:px-4 sm:py-2.5"
         disabled={disabled}
       />
     </div>
@@ -218,4 +227,53 @@ function LoadingSpinner() {
       <div className="absolute inset-1 rounded-full border-2 border-t-ink-soft border-r-primary-bright border-b-primary-soft border-l-transparent animate-spin-slow" />
     </div>
   );
+}
+
+interface ToolRailProps {
+  items: React.ReactNode[];
+}
+
+function ToolRail({ items }: ToolRailProps) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      data-chat-tool-rail="true"
+      className="mt-3 overflow-x-auto pb-2 sm:mt-4"
+    >
+      <div className="mx-auto flex max-w-4xl items-start gap-3">
+        {items.map((item, index) => (
+          <div
+            key={getToolRailItemKey(item, index)}
+            data-chat-tool-slot="true"
+            className="min-w-[18rem] shrink-0 self-stretch [&>*]:max-h-[18rem] [&>*]:w-[min(32rem,85vw)] [&>*]:min-w-[18rem] [&>*]:overflow-y-auto [&>*]:overscroll-contain"
+          >
+            {item}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function getToolRailItemKey(item: React.ReactNode, index: number): string {
+  if (isValidElement(item) && item.key != null) {
+    return `tool-${index}-${String(item.key)}`;
+  }
+  return `tool-${index}`;
+}
+
+function flattenToolItems(input: React.ReactNode): React.ReactNode[] {
+  return Children.toArray(input).flatMap((child) => {
+    if (!isValidElement(child)) {
+      return [child];
+    }
+    if (child.type !== Fragment) {
+      return [child];
+    }
+    const fragmentProps = child.props as { children?: React.ReactNode };
+    return flattenToolItems(fragmentProps.children);
+  });
 }

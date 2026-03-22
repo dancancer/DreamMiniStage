@@ -12,5 +12,6 @@ export { default as ControlPanel } from "./ControlPanel";
 export { default as MessageHeaderControls } from "./MessageHeaderControls";
 export { default as MessageItem, MemoizedMessageItem } from "./MessageItem";
 export { default as MessageList } from "./MessageList";
+export { default as SessionToolbar } from "./SessionToolbar";
 
 export type { Message } from "./MessageItem";
