@@ -28,7 +28,7 @@ export const slashHandlers: ApiHandlerMap = {
     const [command] = args as [string];
 
     const execCtx = adaptSlashExecutionContext(ctx);
-    console.log("[slashHandlers.triggerSlash] 执行上下文已构建, onSend:", !!ctx.onSend, "onTrigger:", !!ctx.onTrigger);
+    console.log("[slashHandlers.triggerSlash] 执行上下文已构建, onSend:", !!ctx.messageCallbacks?.onSend, "onTrigger:", !!ctx.messageCallbacks?.onTrigger);
 
     const result = await executeSlashCommandScript(command, execCtx);
     console.log("[slashHandlers.triggerSlash] 执行完成, result:", result);

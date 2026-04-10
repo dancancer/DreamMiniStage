@@ -1,31 +1,23 @@
 /**
- * @input  types/character-dialogue, lib/slash-command/types
+ * @input  types/character-dialogue, types/slash-callback-domains, lib/slash-command/types
  * @output ApiCallContext, ApiHandler, ApiHandlerMap
  * @pos    脚本桥接类型定义 - Script Bridge 核心类型
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
  *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         Script Bridge 类型定义                             ║
+ * ║                                                                           ║
+ * ║  穿透 UI 层的回调通过 10 个域接口引用 (slash-callback-domains)              ║
+ * ║  仅 adapter 内部使用的回调保持扁平，避免向 UI 层泄露不必要的复杂度。          ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
 import type { DialogueMessage } from "@/types/character-dialogue";
 import type {
   AuthorNoteState,
-  ButtonsCommandOptions,
-  CaptionCommandOptions,
-  CharacterSwitchResult,
   ConnectionProfileState,
   DataBankEntrySnapshot,
   DataBankSource,
-  ExpressionClassifyOptions,
-  ExpressionFolderOverrideOptions,
-  ExpressionListOptions,
-  ExpressionSetOptions,
-  ExpressionUploadOptions,
-  GroupMemberField,
-  GroupMemberMoveDirection,
-  ImportVariableMapping,
   ImageGenerationConfig,
   ImageGenerationOptions,
   InstructModePatch,
@@ -34,27 +26,35 @@ import type {
   PersonaLockState,
   PersonaSetMode,
   PersonaLockType,
-  PopupCommandOptions,
-  QuickReplyContextOptions,
-  QuickReplyCreateOptions,
-  QuickReplyLookup,
-  QuickReplySetOptions,
-  QuickReplySetScope,
-  QuickReplySetSnapshot,
-  QuickReplySetVisibilityOptions,
-  QuickReplySnapshot,
-  QuickReplyUpdateOptions,
-  ReasoningParseOptions,
-  ReasoningParseResult,
   SetModelOptions,
-  SendOptions,
-  TranslateTextOptions,
-  YouTubeTranscriptOptions,
-  WorldInfoTimedEffectFormat,
-  WorldInfoTimedEffectName,
-  WorldInfoTimedEffectState,
 } from "@/lib/slash-command/types";
 import type { ScriptHostDebugResolvedPath, ScriptHostDebugState } from "./host-debug-state";
+import type {
+  MessageCallbacks,
+  ChatManagementCallbacks,
+  CheckpointCallbacks,
+  GroupMemberCallbacks,
+  QuickReplyCallbacks,
+  ExpressionCallbacks,
+  HostCapabilityCallbacks,
+  WorldInfoCallbacks,
+  UICallbacks,
+  NavigationCallbacks,
+} from "@/types/slash-callback-domains";
+
+// ─── re-export 域接口，方便消费端直接从本文件引入 ───
+export type {
+  MessageCallbacks,
+  ChatManagementCallbacks,
+  CheckpointCallbacks,
+  GroupMemberCallbacks,
+  QuickReplyCallbacks,
+  ExpressionCallbacks,
+  HostCapabilityCallbacks,
+  WorldInfoCallbacks,
+  UICallbacks,
+  NavigationCallbacks,
+} from "@/types/slash-callback-domains";
 
 // ============================================================================
 //                              API Handler 上下文
@@ -95,42 +95,23 @@ export interface ApiCallContext {
     global: Record<string, unknown>;
     character: Record<string, Record<string, unknown>>;
   };
-  // ─── Slash Command 回调 ───
-  onSend?: (text: string, options?: SendOptions) => void | Promise<void>;
-  onTrigger?: (member?: string) => void | Promise<void>;
-  onSendAs?: (role: string, text: string) => void | Promise<void>;
-  onSendSystem?: (text: string, options?: SendOptions) => void | Promise<void>;
-  onImpersonate?: (text: string) => void | Promise<void>;
-  onContinue?: () => void | Promise<void>;
-  onSwipe?: (target?: string) => void | Promise<void>;
-  onCloseChat?: () => void | Promise<void>;
-  onGetChatName?: () => string | Promise<string>;
-  onRenameChat?: (name: string) => string | Promise<string>;
-  onSetInput?: (text: string) => void | Promise<void>;
-  onOpenTemporaryChat?: () => void | Promise<void>;
-  onForceSaveChat?: () => void | Promise<void>;
-  onHideMessages?: (startIndex: number) => void | Promise<void>;
-  onUnhideMessages?: () => void | Promise<void>;
-  onCreateCheckpoint?: (messageId: string, requestedName?: string) => string | Promise<string>;
-  onCreateBranch?: (messageId: string) => string | Promise<string>;
-  onGetCheckpoint?: (messageId: string) => string | Promise<string>;
-  onListCheckpoints?: (options?: { links?: boolean }) => Array<number | string> | Promise<Array<number | string>>;
-  onGoCheckpoint?: (messageId: string) => string | Promise<string>;
-  onExitCheckpoint?: () => string | Promise<string>;
-  onGetCheckpointParent?: () => string | Promise<string>;
-  onDuplicateCharacter?: () => string | void | Promise<string | void>;
-  onNewChat?: (options?: { deleteCurrentChat?: boolean }) => void | Promise<void>;
+
+  // ─── 域回调分组 (穿透 UI 层) ───
+  messageCallbacks?: MessageCallbacks;
+  chatManagementCallbacks?: ChatManagementCallbacks;
+  checkpointCallbacks?: CheckpointCallbacks;
+  groupMemberCallbacks?: GroupMemberCallbacks;
+  quickReplyCallbacks?: QuickReplyCallbacks;
+  expressionCallbacks?: ExpressionCallbacks;
+  hostCapabilityCallbacks?: HostCapabilityCallbacks;
+  worldInfoCallbacks?: WorldInfoCallbacks;
+  uiCallbacks?: UICallbacks;
+  navigationCallbacks?: NavigationCallbacks;
+
+  // ─── 仅 adapter 内部使用的回调 (不穿透 UI 层) ───
   onGenerateImage?: (
     prompt: string,
     options?: ImageGenerationOptions,
-  ) => string | Promise<string>;
-  onTranslateText?: (
-    text: string,
-    options?: TranslateTextOptions,
-  ) => string | Promise<string>;
-  onGetYouTubeTranscript?: (
-    urlOrId: string,
-    options?: YouTubeTranscriptOptions,
   ) => string | Promise<string>;
   onGetImageGenerationConfig?: () => ImageGenerationConfig | Promise<ImageGenerationConfig>;
   onSetImageGenerationConfig?: (
@@ -147,107 +128,10 @@ export interface ApiCallContext {
     model: string,
     options?: SetModelOptions,
   ) => string | Promise<string>;
-  onSelectProxyPreset?: (name?: string) => string | Promise<string>;
   onNarrateText?: (
     text: string,
     options?: NarrateOptions,
   ) => void | Promise<void>;
-  onGetGroupMember?: (
-    target: string,
-    field: GroupMemberField,
-  ) => string | number | undefined | Promise<string | number | undefined>;
-  onGetGroupMemberCount?: () => number | Promise<number>;
-  onAddGroupMember?: (
-    target: string,
-  ) => string | number | void | Promise<string | number | void>;
-  onRemoveGroupMember?: (
-    target: string,
-  ) => string | number | void | Promise<string | number | void>;
-  onMoveGroupMember?: (
-    target: string,
-    direction: GroupMemberMoveDirection,
-  ) => string | number | void | Promise<string | number | void>;
-  onPeekGroupMember?: (
-    target: string,
-  ) => string | number | void | Promise<string | number | void>;
-  onSetGroupMemberEnabled?: (
-    target: string,
-    enabled: boolean,
-  ) => string | number | void | Promise<string | number | void>;
-  onAddSwipe?: (
-    text: string,
-    options?: { switch?: boolean },
-  ) => string | number | void | Promise<string | number | void>;
-  onExecuteQuickReplyByIndex?: (
-    index: number,
-  ) => string | number | void | Promise<string | number | void>;
-  onToggleGlobalQuickReplySet?: (
-    setName: string,
-    options?: QuickReplySetVisibilityOptions,
-  ) => void | Promise<void>;
-  onAddGlobalQuickReplySet?: (
-    setName: string,
-    options?: QuickReplySetVisibilityOptions,
-  ) => void | Promise<void>;
-  onRemoveGlobalQuickReplySet?: (setName: string) => void | Promise<void>;
-  onToggleChatQuickReplySet?: (
-    setName: string,
-    options?: QuickReplySetVisibilityOptions,
-  ) => void | Promise<void>;
-  onAddChatQuickReplySet?: (
-    setName: string,
-    options?: QuickReplySetVisibilityOptions,
-  ) => void | Promise<void>;
-  onRemoveChatQuickReplySet?: (setName: string) => void | Promise<void>;
-  onListQuickReplySets?: (
-    scope?: QuickReplySetScope,
-  ) => string[] | QuickReplySetSnapshot[] | Promise<string[] | QuickReplySetSnapshot[]>;
-  onListQuickReplies?: (
-    setName: string,
-  ) => string[] | QuickReplySnapshot[] | Promise<string[] | QuickReplySnapshot[]>;
-  onGetQuickReply?: (
-    setName: string,
-    target: QuickReplyLookup,
-  ) => Record<string, unknown> | null | undefined | Promise<Record<string, unknown> | null | undefined>;
-  onCreateQuickReply?: (
-    setName: string,
-    label: string,
-    message: string,
-    options?: QuickReplyCreateOptions,
-  ) => void | Promise<void>;
-  onUpdateQuickReply?: (
-    setName: string,
-    target: QuickReplyLookup,
-    options?: QuickReplyUpdateOptions,
-  ) => void | Promise<void>;
-  onDeleteQuickReply?: (
-    setName: string,
-    target: QuickReplyLookup,
-  ) => void | Promise<void>;
-  onAddQuickReplyContextSet?: (
-    setName: string,
-    target: QuickReplyLookup,
-    contextSetName: string,
-    options?: QuickReplyContextOptions,
-  ) => void | Promise<void>;
-  onRemoveQuickReplyContextSet?: (
-    setName: string,
-    target: QuickReplyLookup,
-    contextSetName: string,
-  ) => void | Promise<void>;
-  onClearQuickReplyContextSets?: (
-    setName: string,
-    target: QuickReplyLookup,
-  ) => void | Promise<void>;
-  onCreateQuickReplySet?: (
-    name: string,
-    options?: QuickReplySetOptions,
-  ) => void | Promise<void>;
-  onUpdateQuickReplySet?: (
-    name: string,
-    options?: QuickReplySetOptions,
-  ) => void | Promise<void>;
-  onDeleteQuickReplySet?: (name: string) => void | Promise<void>;
   onAskCharacter?: (
     target: string,
     prompt: string,
@@ -285,13 +169,6 @@ export interface ApiCallContext {
   onGetPersonaLockState?: (
     options?: { type?: PersonaLockType },
   ) => boolean | Promise<boolean>;
-  onReloadPage?: () => void | Promise<void>;
-  onGetClipboardText?: () => string | Promise<string>;
-  onSetClipboardText?: (text: string) => void | Promise<void>;
-  onImportVariables?: (
-    from: string,
-    mappings: ImportVariableMapping[],
-  ) => number | void | Promise<number | void>;
   onOpenDataBank?: () => void | Promise<void>;
   onListDataBankEntries?: (
     options?: { source?: DataBankSource },
@@ -333,107 +210,6 @@ export interface ApiCallContext {
       returnType?: "urls" | "chunks";
     },
   ) => string[] | string | Promise<string[] | string>;
-  onIsExtensionInstalled?: (
-    extensionName: string,
-  ) => boolean | Promise<boolean>;
-  onGetExtensionEnabledState?: (
-    extensionName: string,
-  ) => boolean | Promise<boolean>;
-  onSetExtensionEnabled?: (
-    extensionName: string,
-    enabled: boolean,
-    options?: { reload?: boolean },
-  ) => string | void | Promise<string | void>;
-  onTogglePanels?: () => void | Promise<void>;
-  onResetPanels?: () => void | Promise<void>;
-  onToggleVisualNovelMode?: () => void | Promise<void>;
-  onSetBackground?: (background?: string) => string | Promise<string>;
-  onLockBackground?: () => void | Promise<void>;
-  onUnlockBackground?: () => void | Promise<void>;
-  onAutoBackground?: () => void | Promise<void>;
-  onSetTheme?: (theme?: string) => string | Promise<string>;
-  onSetMovingUiPreset?: (presetName: string) => string | Promise<string>;
-  onSetCssVariable?: (args: { varName: string; value: string; target?: string }) => void | Promise<void>;
-  onSetAverageBackgroundColor?: (
-    color?: string,
-  ) => string | Promise<string>;
-  onSetChatDisplayMode?: (
-    mode: "default" | "bubble" | "document",
-  ) => void | Promise<void>;
-  onShowButtonsPopup?: (
-    text: string,
-    labels: string[],
-    options?: ButtonsCommandOptions,
-  ) => string | string[] | Promise<string | string[]>;
-  onShowPopup?: (
-    text: string,
-    options?: PopupCommandOptions,
-  ) => string | number | null | undefined | Promise<string | number | null | undefined>;
-  onPickIcon?: () => string | false | Promise<string | false>;
-  onIsMobile?: () => boolean | Promise<boolean>;
-  onGenerateCaption?: (
-    options?: CaptionCommandOptions,
-  ) => string | Promise<string>;
-  onPlayNotificationSound?: () => void | Promise<void>;
-  onListGallery?: (
-    options?: { character?: string; group?: string },
-  ) => string[] | Promise<string[]>;
-  onShowGallery?: (
-    options?: { character?: string; group?: string },
-  ) => void | Promise<void>;
-  onUploadExpressionAsset?: (
-    imageUrl: string,
-    options: ExpressionUploadOptions,
-  ) => string | Promise<string>;
-  onSetExpression?: (
-    label: string,
-    options?: ExpressionSetOptions,
-  ) => string | Promise<string>;
-  onSetExpressionFolderOverride?: (
-    folder: string,
-    options?: ExpressionFolderOverrideOptions,
-  ) => string | void | Promise<string | void>;
-  onGetLastExpression?: (name?: string) => string | Promise<string>;
-  onListExpressions?: (
-    options?: ExpressionListOptions,
-  ) => string[] | Promise<string[]>;
-  onClassifyExpression?: (
-    text: string,
-    options?: ExpressionClassifyOptions,
-  ) => string | Promise<string>;
-  onJumpToMessage?: (index: number) => void | Promise<void>;
-  onRenderChatMessages?: (
-    count: number,
-    options?: { scroll?: boolean },
-  ) => void | Promise<void>;
-  onSelectContextPreset?: (
-    name?: string,
-    options?: { quiet?: boolean },
-  ) => string | Promise<string>;
-  onSwitchCharacter?: (
-    target: string
-  ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
-  onRenameCurrentCharacter?: (
-    name: string,
-    options?: { silent?: boolean; chats?: boolean },
-  ) => string | Promise<string>;
-  onParseReasoningBlock?: (
-    input: string,
-    options?: ReasoningParseOptions,
-  ) => ReasoningParseResult | null | undefined | Promise<ReasoningParseResult | null | undefined>;
-  onApplyReasoningRegex?: (reasoning: string) => string | Promise<string>;
-  onGetWorldInfoTimedEffect?: (
-    file: string,
-    uid: string,
-    effect: WorldInfoTimedEffectName,
-    options?: { format?: WorldInfoTimedEffectFormat },
-  ) => boolean | number | Promise<boolean | number>;
-  onSetWorldInfoTimedEffect?: (
-    file: string,
-    uid: string,
-    effect: WorldInfoTimedEffectName,
-    state: WorldInfoTimedEffectState,
-  ) => void | Promise<void>;
   onRemovePromptInjections?: (id?: string) => number | Promise<number>;
 }
 

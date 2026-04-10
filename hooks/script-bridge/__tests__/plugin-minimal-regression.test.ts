@@ -51,7 +51,10 @@ describe("plugin minimal regression", () => {
     const onSend = vi.fn().mockResolvedValue(undefined);
     const onTrigger = vi.fn().mockResolvedValue(undefined);
     const hostDebugState = createHostDebugState();
-    const ctx = createMockContext({ onSend, onTrigger, hostDebugState });
+    const ctx = createMockContext({
+      messageCallbacks: { onSend, onTrigger },
+      hostDebugState,
+    });
 
     const slashResult = await handleApiCall("triggerSlash", ["/send hi|/trigger"], ctx);
 
@@ -89,7 +92,9 @@ describe("plugin minimal regression", () => {
 
   it("keeps /character switch callback path runnable", async () => {
     const onSwitchCharacter = vi.fn().mockResolvedValue(undefined);
-    const ctx = createMockContext({ onSwitchCharacter });
+    const ctx = createMockContext({
+      navigationCallbacks: { onSwitchCharacter },
+    });
 
     const result = await handleApiCall("triggerSlash", ["/character Bob"], ctx);
 
@@ -139,9 +144,11 @@ describe("plugin minimal regression", () => {
     const hostDebugState = createHostDebugState();
     const ctx = createMockContext({
       hostDebugState,
-      onGetClipboardText: vi.fn().mockResolvedValue("session clipboard"),
-      onIsExtensionInstalled: vi.fn().mockResolvedValue(true),
-      onGetExtensionEnabledState: vi.fn().mockResolvedValue(true),
+      hostCapabilityCallbacks: {
+        onGetClipboardText: vi.fn().mockResolvedValue("session clipboard"),
+        onIsExtensionInstalled: vi.fn().mockResolvedValue(true),
+        onGetExtensionEnabledState: vi.fn().mockResolvedValue(true),
+      },
       hostCapabilitySources: {
         clipboard: "session-default",
         extensionRead: "session-default",
@@ -173,8 +180,10 @@ describe("plugin minimal regression", () => {
     const hostDebugState = createHostDebugState();
     const ctx = createMockContext({
       hostDebugState,
-      onIsExtensionInstalled: vi.fn().mockResolvedValue(true),
-      onGetExtensionEnabledState: vi.fn().mockResolvedValue(false),
+      hostCapabilityCallbacks: {
+        onIsExtensionInstalled: vi.fn().mockResolvedValue(true),
+        onGetExtensionEnabledState: vi.fn().mockResolvedValue(false),
+      },
       hostCapabilitySources: {
         extensionRead: "session-default",
       },
@@ -198,7 +207,9 @@ describe("plugin minimal regression", () => {
     const hostDebugState = createHostDebugState();
     const ctx = createMockContext({
       hostDebugState,
-      onListGallery: vi.fn().mockResolvedValue(["/alice.png"]),
+      navigationCallbacks: {
+        onListGallery: vi.fn().mockResolvedValue(["/alice.png"]),
+      },
       hostCapabilitySources: {
         galleryList: "session-default",
       },

@@ -50,14 +50,18 @@ function createMockContext(overrides: Partial<{
   return {
     characterId,
     messages: [],
-    onSend: overrides.onSend,
-    onTrigger: overrides.onTrigger,
-    onSendAs: overrides.onSendAs,
-    onSendSystem: overrides.onSendSystem,
-    onImpersonate: overrides.onImpersonate,
-    onContinue: overrides.onContinue,
-    onSwipe: overrides.onSwipe,
-    onSwitchCharacter: overrides.onSwitchCharacter,
+    messageCallbacks: {
+      onSend: overrides.onSend,
+      onSendAs: overrides.onSendAs,
+      onSendSystem: overrides.onSendSystem,
+      onImpersonate: overrides.onImpersonate,
+      onContinue: overrides.onContinue,
+      onSwipe: overrides.onSwipe,
+      onTrigger: overrides.onTrigger,
+    },
+    navigationCallbacks: {
+      onSwitchCharacter: overrides.onSwitchCharacter,
+    },
     onGetPersonaName: overrides.onGetPersonaName,
     setScriptVariable: vi.fn((key, value, scope, id) => {
       if (scope === "global") {

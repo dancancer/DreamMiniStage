@@ -69,6 +69,12 @@ jobs:
     - name: Install dependencies
       run: pnpm install
 
+    - name: Run linter
+      run: pnpm lint
+
+    - name: Run tests
+      run: pnpm test
+
     - name: Build Next.js app
       run: pnpm build
 

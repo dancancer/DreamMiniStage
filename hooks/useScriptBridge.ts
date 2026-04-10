@@ -26,35 +26,20 @@ import {
 } from "./script-bridge/host-debug-state";
 import type { ScriptHostDebugResolvedPath } from "./script-bridge/host-debug-state";
 import type { DialogueMessage } from "@/types/character-dialogue";
-import type {
-  CharacterSwitchResult,
-  ExpressionClassifyOptions,
-  ExpressionFolderOverrideOptions,
-  ExpressionListOptions,
-  ExpressionSetOptions,
-  ExpressionUploadOptions,
-  GroupMemberField,
-  ImportVariableMapping,
-  PopupCommandOptions,
-  QuickReplyContextOptions,
-  QuickReplyCreateOptions,
-  QuickReplyLookup,
-  QuickReplySetOptions,
-  QuickReplySetScope,
-  QuickReplySetSnapshot,
-  QuickReplySetVisibilityOptions,
-  QuickReplySnapshot,
-  QuickReplyUpdateOptions,
-  ReasoningParseOptions,
-  ReasoningParseResult,
-  SendOptions,
-  TranslateTextOptions,
-  WorldInfoTimedEffectFormat,
-  WorldInfoTimedEffectName,
-  WorldInfoTimedEffectState,
-  YouTubeTranscriptOptions,
-} from "@/lib/slash-command/types";
+import type { CharacterSwitchResult } from "@/lib/slash-command/types";
 import type { ScriptMessageData } from "@/types/script-message";
+import type {
+  MessageCallbacks,
+  ChatManagementCallbacks,
+  CheckpointCallbacks,
+  GroupMemberCallbacks,
+  QuickReplyCallbacks,
+  ExpressionCallbacks,
+  HostCapabilityCallbacks,
+  WorldInfoCallbacks,
+  UICallbacks,
+  NavigationCallbacks,
+} from "@/types/slash-callback-domains";
 
 // ============================================================================
 //                              类型定义
@@ -73,213 +58,18 @@ interface UseScriptBridgeOptions {
   dialogueId?: string;
   messages?: DialogueMessage[];
   maxStatusHistory?: number;
-  // ─── Slash Command 回调 ───
-  onSend?: (text: string, options?: SendOptions) => void | Promise<void>;
-  onTrigger?: (member?: string) => void | Promise<void>;
-  onSendAs?: (role: string, text: string) => void | Promise<void>;
-  onSendSystem?: (text: string, options?: SendOptions) => void | Promise<void>;
-  onImpersonate?: (text: string) => void | Promise<void>;
-  onContinue?: () => void | Promise<void>;
-  onSwipe?: (target?: string) => void | Promise<void>;
-  onGetChatName?: () => string | Promise<string>;
-  onRenameChat?: (name: string) => string | Promise<string>;
-  onSetInput?: (text: string) => void | Promise<void>;
-  onOpenTemporaryChat?: () => void | Promise<void>;
-  onForceSaveChat?: () => void | Promise<void>;
-  onHideMessages?: (startIndex: number) => void | Promise<void>;
-  onUnhideMessages?: () => void | Promise<void>;
-  onCreateCheckpoint?: (messageId: string, requestedName?: string) => string | Promise<string>;
-  onCreateBranch?: (messageId: string) => string | Promise<string>;
-  onGetCheckpoint?: (messageId: string) => string | Promise<string>;
-  onListCheckpoints?: (options?: { links?: boolean }) => Array<number | string> | Promise<Array<number | string>>;
-  onGoCheckpoint?: (messageId: string) => string | Promise<string>;
-  onExitCheckpoint?: () => string | Promise<string>;
-  onGetCheckpointParent?: () => string | Promise<string>;
-  onDuplicateCharacter?: () => string | void | Promise<string | void>;
-  onNewChat?: (options?: { deleteCurrentChat?: boolean }) => void | Promise<void>;
-  onTranslateText?: (
-    text: string,
-    options?: TranslateTextOptions,
-  ) => string | Promise<string>;
-  onGetYouTubeTranscript?: (
-    urlOrId: string,
-    options?: YouTubeTranscriptOptions,
-  ) => string | Promise<string>;
-  onSelectProxyPreset?: (name?: string) => string | Promise<string>;
-  onGetWorldInfoTimedEffect?: (
-    file: string,
-    uid: string,
-    effect: WorldInfoTimedEffectName,
-    options?: { format?: WorldInfoTimedEffectFormat },
-  ) => boolean | number | Promise<boolean | number>;
-  onSetWorldInfoTimedEffect?: (
-    file: string,
-    uid: string,
-    effect: WorldInfoTimedEffectName,
-    state: WorldInfoTimedEffectState,
-  ) => void | Promise<void>;
-  onGetGroupMember?: (
-    target: string,
-    field: GroupMemberField,
-  ) => string | number | undefined | Promise<string | number | undefined>;
-  onAddGroupMember?: (
-    target: string,
-  ) => string | number | void | Promise<string | number | void>;
-  onRemoveGroupMember?: (
-    target: string,
-  ) => string | number | void | Promise<string | number | void>;
-  onMoveGroupMember?: (
-    target: string,
-    direction: "up" | "down",
-  ) => string | number | void | Promise<string | number | void>;
-  onPeekGroupMember?: (
-    target: string,
-  ) => string | number | void | Promise<string | number | void>;
-  onGetGroupMemberCount?: () => number | Promise<number>;
-  onSetGroupMemberEnabled?: (
-    target: string,
-    enabled: boolean,
-  ) => string | number | void | Promise<string | number | void>;
-  onAddSwipe?: (
-    text: string,
-    options?: { switch?: boolean },
-  ) => string | number | void | Promise<string | number | void>;
-  onExecuteQuickReplyByIndex?: (
-    index: number,
-  ) => string | number | void | Promise<string | number | void>;
-  onToggleGlobalQuickReplySet?: (
-    setName: string,
-    options?: QuickReplySetVisibilityOptions,
-  ) => void | Promise<void>;
-  onAddGlobalQuickReplySet?: (
-    setName: string,
-    options?: QuickReplySetVisibilityOptions,
-  ) => void | Promise<void>;
-  onRemoveGlobalQuickReplySet?: (setName: string) => void | Promise<void>;
-  onToggleChatQuickReplySet?: (
-    setName: string,
-    options?: QuickReplySetVisibilityOptions,
-  ) => void | Promise<void>;
-  onAddChatQuickReplySet?: (
-    setName: string,
-    options?: QuickReplySetVisibilityOptions,
-  ) => void | Promise<void>;
-  onRemoveChatQuickReplySet?: (setName: string) => void | Promise<void>;
-  onListQuickReplySets?: (
-    scope?: QuickReplySetScope,
-  ) => string[] | QuickReplySetSnapshot[] | Promise<string[] | QuickReplySetSnapshot[]>;
-  onListQuickReplies?: (
-    setName: string,
-  ) => string[] | QuickReplySnapshot[] | Promise<string[] | QuickReplySnapshot[]>;
-  onGetQuickReply?: (
-    setName: string,
-    target: QuickReplyLookup,
-  ) => Record<string, unknown> | null | undefined | Promise<Record<string, unknown> | null | undefined>;
-  onCreateQuickReply?: (
-    setName: string,
-    label: string,
-    message: string,
-    options?: QuickReplyCreateOptions,
-  ) => void | Promise<void>;
-  onUpdateQuickReply?: (
-    setName: string,
-    target: QuickReplyLookup,
-    options?: QuickReplyUpdateOptions,
-  ) => void | Promise<void>;
-  onDeleteQuickReply?: (
-    setName: string,
-    target: QuickReplyLookup,
-  ) => void | Promise<void>;
-  onAddQuickReplyContextSet?: (
-    setName: string,
-    target: QuickReplyLookup,
-    contextSetName: string,
-    options?: QuickReplyContextOptions,
-  ) => void | Promise<void>;
-  onRemoveQuickReplyContextSet?: (
-    setName: string,
-    target: QuickReplyLookup,
-    contextSetName: string,
-  ) => void | Promise<void>;
-  onClearQuickReplyContextSets?: (
-    setName: string,
-    target: QuickReplyLookup,
-  ) => void | Promise<void>;
-  onCreateQuickReplySet?: (
-    name: string,
-    options?: QuickReplySetOptions,
-  ) => void | Promise<void>;
-  onUpdateQuickReplySet?: (
-    name: string,
-    options?: QuickReplySetOptions,
-  ) => void | Promise<void>;
-  onDeleteQuickReplySet?: (name: string) => void | Promise<void>;
-  onSetExpression?: (
-    label: string,
-    options?: ExpressionSetOptions,
-  ) => string | Promise<string>;
-  onSetExpressionFolderOverride?: (
-    folder: string,
-    options?: ExpressionFolderOverrideOptions,
-  ) => string | void | Promise<string | void>;
-  onGetLastExpression?: (name?: string) => string | Promise<string>;
-  onListExpressions?: (
-    options?: ExpressionListOptions,
-  ) => string[] | Promise<string[]>;
-  onClassifyExpression?: (
-    text: string,
-    options?: ExpressionClassifyOptions,
-  ) => string | Promise<string>;
-  onGetClipboardText?: () => string | Promise<string>;
-  onSetClipboardText?: (text: string) => void | Promise<void>;
-  onImportVariables?: (
-    from: string,
-    mappings: ImportVariableMapping[],
-  ) => number | void | Promise<number | void>;
-  onListGallery?: (
-    options?: { character?: string; group?: string },
-  ) => string[] | Promise<string[]>;
-  onShowGallery?: (
-    options?: { character?: string; group?: string },
-  ) => void | Promise<void>;
-  onUploadExpressionAsset?: (
-    imageUrl: string,
-    options: ExpressionUploadOptions,
-  ) => string | Promise<string>;
-  onShowPopup?: (
-    text: string,
-    options?: PopupCommandOptions,
-  ) => string | number | null | undefined | Promise<string | number | null | undefined>;
-  onPickIcon?: () => string | false | Promise<string | false>;
-  onIsMobile?: () => boolean | Promise<boolean>;
-  onIsExtensionInstalled?: (
-    extensionName: string,
-  ) => boolean | Promise<boolean>;
-  onGetExtensionEnabledState?: (
-    extensionName: string,
-  ) => boolean | Promise<boolean>;
-  onSetExtensionEnabled?: (
-    extensionName: string,
-    enabled: boolean,
-    options?: { reload?: boolean },
-  ) => string | void | Promise<string | void>;
-  onJumpToMessage?: (index: number) => void | Promise<void>;
-  onRenderChatMessages?: (
-    count: number,
-    options?: { scroll?: boolean },
-  ) => void | Promise<void>;
-  onSwitchCharacter?: (
-    target: string
-  ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
-  onRenameCurrentCharacter?: (
-    name: string,
-    options?: { silent?: boolean; chats?: boolean },
-  ) => string | Promise<string>;
-  onParseReasoningBlock?: (
-    input: string,
-    options?: ReasoningParseOptions,
-  ) => ReasoningParseResult | null | undefined | Promise<ReasoningParseResult | null | undefined>;
-  onApplyReasoningRegex?: (reasoning: string) => string | Promise<string>;
+  // ─── 域回调分组 ───
+  messageCallbacks?: MessageCallbacks;
+  chatManagementCallbacks?: ChatManagementCallbacks;
+  checkpointCallbacks?: CheckpointCallbacks;
+  groupMemberCallbacks?: GroupMemberCallbacks;
+  quickReplyCallbacks?: QuickReplyCallbacks;
+  expressionCallbacks?: ExpressionCallbacks;
+  hostCapabilityCallbacks?: HostCapabilityCallbacks;
+  worldInfoCallbacks?: WorldInfoCallbacks;
+  uiCallbacks?: UICallbacks;
+  navigationCallbacks?: NavigationCallbacks;
+  // ─── debug ───
   hostCapabilitySources?: Partial<Record<
     "translation" | "youtubeTranscript" | "clipboardRead" | "clipboardWrite" | "extensionRead" | "extensionWrite" | "galleryList" | "galleryShow",
     Extract<ScriptHostDebugResolvedPath, "session-default" | "api-context">
@@ -327,89 +117,24 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
     dialogueId,
     messages = [],
     maxStatusHistory = 50,
-    onSend,
-    onTrigger,
-    onSendAs,
-    onSendSystem,
-    onImpersonate,
-    onContinue,
-    onSwipe,
-    onGetChatName,
-    onRenameChat,
-    onSetInput,
-    onOpenTemporaryChat,
-    onForceSaveChat,
-    onHideMessages,
-    onUnhideMessages,
-    onCreateCheckpoint,
-    onCreateBranch,
-    onGetCheckpoint,
-    onListCheckpoints,
-    onGoCheckpoint,
-    onExitCheckpoint,
-    onGetCheckpointParent,
-    onDuplicateCharacter,
-    onNewChat,
-    onTranslateText,
-    onGetYouTubeTranscript,
-    onSelectProxyPreset,
-    onGetWorldInfoTimedEffect,
-    onSetWorldInfoTimedEffect,
-    onGetGroupMember,
-    onAddGroupMember,
-    onRemoveGroupMember,
-    onMoveGroupMember,
-    onPeekGroupMember,
-    onGetGroupMemberCount,
-    onSetGroupMemberEnabled,
-    onAddSwipe,
-    onExecuteQuickReplyByIndex,
-    onToggleGlobalQuickReplySet,
-    onAddGlobalQuickReplySet,
-    onRemoveGlobalQuickReplySet,
-    onToggleChatQuickReplySet,
-    onAddChatQuickReplySet,
-    onRemoveChatQuickReplySet,
-    onListQuickReplySets,
-    onListQuickReplies,
-    onGetQuickReply,
-    onCreateQuickReply,
-    onUpdateQuickReply,
-    onDeleteQuickReply,
-    onAddQuickReplyContextSet,
-    onRemoveQuickReplyContextSet,
-    onClearQuickReplyContextSets,
-    onCreateQuickReplySet,
-    onUpdateQuickReplySet,
-    onDeleteQuickReplySet,
-    onSetExpression,
-    onSetExpressionFolderOverride,
-    onGetLastExpression,
-    onListExpressions,
-    onClassifyExpression,
-    onGetClipboardText,
-    onSetClipboardText,
-    onImportVariables,
-    onListGallery,
-    onShowGallery,
-    onUploadExpressionAsset,
-    onShowPopup,
-    onPickIcon,
-    onIsMobile,
-    onIsExtensionInstalled,
-    onGetExtensionEnabledState,
-    onSetExtensionEnabled,
-    onJumpToMessage,
-    onRenderChatMessages,
-    onSwitchCharacter,
-    onRenameCurrentCharacter,
-    onParseReasoningBlock,
-    onApplyReasoningRegex,
+    messageCallbacks,
+    chatManagementCallbacks,
+    checkpointCallbacks,
+    groupMemberCallbacks,
+    quickReplyCallbacks,
+    expressionCallbacks,
+    hostCapabilityCallbacks,
+    worldInfoCallbacks,
+    uiCallbacks,
+    navigationCallbacks,
     hostCapabilitySources,
     hasHostOverrides,
     hostDebugState,
     onHostDebugUpdate,
   } = options;
+
+  // ─── 从域分组提取单个回调（仅在 hook 内部需要直接引用的） ───
+  const onSwitchCharacter = navigationCallbacks?.onSwitchCharacter;
   const [scriptStatuses, setScriptStatuses] = useState<ScriptStatus[]>([]);
   const [scriptHostDebug, setScriptHostDebug] = useState(() => readHostDebugSnapshot(hostDebugState));
 
@@ -444,11 +169,11 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
   }, [hostDebugState, onHostDebugUpdate]);
 
   const inferredHostOverrides = Boolean(
-    onGetClipboardText ||
-    onSetClipboardText ||
-    onIsExtensionInstalled ||
-    onGetExtensionEnabledState ||
-    onSetExtensionEnabled,
+    hostCapabilityCallbacks?.onGetClipboardText ||
+    hostCapabilityCallbacks?.onSetClipboardText ||
+    hostCapabilityCallbacks?.onIsExtensionInstalled ||
+    hostCapabilityCallbacks?.onGetExtensionEnabledState ||
+    hostCapabilityCallbacks?.onSetExtensionEnabled,
   );
   const effectiveHasHostOverrides = hasHostOverrides ?? inferredHostOverrides;
 
@@ -522,95 +247,31 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       if (type === "API_CALL") {
         const { method = "", args = [] } = payload;
         console.log("[useScriptBridge] 处理 API_CALL:", method, "args:", args);
+        // ─── 构建 ApiCallContext：域对象直接透传，角色切换走包装函数 ───
+        const switchNav = onSwitchCharacter
+          ? { ...navigationCallbacks, onSwitchCharacter: handleCharacterSwitch }
+          : navigationCallbacks;
         const result = await handleApiCall(method, args, {
           characterId,
           dialogueId,
           chatId: dialogueId,
           messageId: messagesRef.current[messagesRef.current.length - 1]?.id,
-          messages: messagesRef.current,  // 通过 ref 获取最新 messages
+          messages: messagesRef.current,
           hostDebugState,
           hostCapabilitySources,
           setScriptVariable,
           deleteScriptVariable,
           getVariablesSnapshot,
-          onSend,
-          onTrigger,
-          onSendAs,
-          onSendSystem,
-          onImpersonate,
-          onContinue,
-          onSwipe,
-          onGetChatName,
-          onRenameChat,
-          onSetInput,
-          onOpenTemporaryChat,
-          onForceSaveChat,
-          onHideMessages,
-          onUnhideMessages,
-          onCreateCheckpoint,
-          onCreateBranch,
-          onGetCheckpoint,
-          onListCheckpoints,
-          onGoCheckpoint,
-          onExitCheckpoint,
-          onGetCheckpointParent,
-          onDuplicateCharacter,
-          onNewChat,
-          onTranslateText,
-          onGetYouTubeTranscript,
-          onSelectProxyPreset,
-          onGetWorldInfoTimedEffect,
-          onSetWorldInfoTimedEffect,
-          onGetGroupMember,
-          onAddGroupMember,
-          onRemoveGroupMember,
-          onMoveGroupMember,
-          onPeekGroupMember,
-          onGetGroupMemberCount,
-          onSetGroupMemberEnabled,
-          onAddSwipe,
-          onExecuteQuickReplyByIndex,
-          onToggleGlobalQuickReplySet,
-          onAddGlobalQuickReplySet,
-          onRemoveGlobalQuickReplySet,
-          onToggleChatQuickReplySet,
-          onAddChatQuickReplySet,
-          onRemoveChatQuickReplySet,
-          onListQuickReplySets,
-          onListQuickReplies,
-          onGetQuickReply,
-          onCreateQuickReply,
-          onUpdateQuickReply,
-          onDeleteQuickReply,
-          onAddQuickReplyContextSet,
-          onRemoveQuickReplyContextSet,
-          onClearQuickReplyContextSets,
-          onCreateQuickReplySet,
-          onUpdateQuickReplySet,
-          onDeleteQuickReplySet,
-          onSetExpression,
-          onSetExpressionFolderOverride,
-          onGetLastExpression,
-          onListExpressions,
-          onClassifyExpression,
-          onGetClipboardText,
-          onSetClipboardText,
-          onImportVariables,
-          onListGallery,
-          onShowGallery,
-          onUploadExpressionAsset,
-          onShowPopup,
-          onPickIcon,
-          onIsMobile,
-          onIsExtensionInstalled,
-          onGetExtensionEnabledState,
-          onSetExtensionEnabled,
-          onJumpToMessage,
-          onRenderChatMessages,
-          onSwitchCharacter: onSwitchCharacter ? handleCharacterSwitch : undefined,
-          onRenameCurrentCharacter,
-          onParseReasoningBlock,
-          onApplyReasoningRegex,
+          messageCallbacks,
+          chatManagementCallbacks,
+          checkpointCallbacks,
+          groupMemberCallbacks,
+          quickReplyCallbacks,
+          expressionCallbacks,
+          hostCapabilityCallbacks,
+          worldInfoCallbacks,
+          uiCallbacks,
+          navigationCallbacks: switchNav,
         });
         syncScriptHostDebug();
         console.log("[useScriptBridge] API_CALL 返回:", method, "result:", result);
@@ -647,84 +308,17 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       setScriptVariable,
       deleteScriptVariable,
       maxStatusHistory,
-      onSend,
-      onTrigger,
-      onSendAs,
-      onSendSystem,
-      onImpersonate,
-      onContinue,
-      onSwipe,
-      onGetChatName,
-      onRenameChat,
-      onSetInput,
-      onOpenTemporaryChat,
-      onForceSaveChat,
-      onHideMessages,
-      onUnhideMessages,
-      onCreateCheckpoint,
-      onCreateBranch,
-      onGetCheckpoint,
-      onListCheckpoints,
-      onGoCheckpoint,
-      onExitCheckpoint,
-      onGetCheckpointParent,
-      onDuplicateCharacter,
-      onNewChat,
-      onTranslateText,
-      onGetYouTubeTranscript,
-      onSelectProxyPreset,
-      onGetWorldInfoTimedEffect,
-      onSetWorldInfoTimedEffect,
-      onGetGroupMember,
-      onAddGroupMember,
-      onRemoveGroupMember,
-      onMoveGroupMember,
-      onPeekGroupMember,
-      onGetGroupMemberCount,
-      onSetGroupMemberEnabled,
-      onAddSwipe,
-      onExecuteQuickReplyByIndex,
-      onToggleGlobalQuickReplySet,
-      onAddGlobalQuickReplySet,
-      onRemoveGlobalQuickReplySet,
-      onToggleChatQuickReplySet,
-      onAddChatQuickReplySet,
-      onRemoveChatQuickReplySet,
-      onListQuickReplySets,
-      onListQuickReplies,
-      onGetQuickReply,
-      onCreateQuickReply,
-      onUpdateQuickReply,
-      onDeleteQuickReply,
-      onAddQuickReplyContextSet,
-      onRemoveQuickReplyContextSet,
-      onClearQuickReplyContextSets,
-      onCreateQuickReplySet,
-      onUpdateQuickReplySet,
-      onDeleteQuickReplySet,
-      onSetExpression,
-      onSetExpressionFolderOverride,
-      onGetLastExpression,
-      onListExpressions,
-      onClassifyExpression,
-      onGetClipboardText,
-      onSetClipboardText,
-      onImportVariables,
-      onListGallery,
-      onShowGallery,
-      onUploadExpressionAsset,
-      onShowPopup,
-      onPickIcon,
-      onIsMobile,
-      onIsExtensionInstalled,
-      onGetExtensionEnabledState,
-      onSetExtensionEnabled,
-      onJumpToMessage,
-      onRenderChatMessages,
+      messageCallbacks,
+      chatManagementCallbacks,
+      checkpointCallbacks,
+      groupMemberCallbacks,
+      quickReplyCallbacks,
+      expressionCallbacks,
+      hostCapabilityCallbacks,
+      worldInfoCallbacks,
+      uiCallbacks,
+      navigationCallbacks,
       onSwitchCharacter,
-      onRenameCurrentCharacter,
-      onParseReasoningBlock,
-      onApplyReasoningRegex,
       handleCharacterSwitch,
       syncScriptHostDebug,
       hostCapabilitySources,

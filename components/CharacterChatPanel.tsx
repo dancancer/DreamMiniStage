@@ -23,21 +23,17 @@ import type {
   ScriptHostDebugSnapshot,
   ScriptHostDebugState,
 } from "@/hooks/script-bridge/host-debug-state";
+import type { SendOptions } from "@/lib/slash-command/types";
 import type {
-  CharacterSwitchResult,
-  ExpressionClassifyOptions,
-  ExpressionFolderOverrideOptions,
-  ExpressionListOptions,
-  ExpressionSetOptions,
-  ExpressionUploadOptions,
-  GroupMemberField,
-  SendOptions,
-  TranslateTextOptions,
-  WorldInfoTimedEffectFormat,
-  WorldInfoTimedEffectName,
-  WorldInfoTimedEffectState,
-  YouTubeTranscriptOptions,
-} from "@/lib/slash-command/types";
+  MessageCallbacks,
+  ChatManagementCallbacks,
+  CheckpointCallbacks,
+  GroupMemberCallbacks,
+  ExpressionCallbacks,
+  HostCapabilityCallbacks,
+  WorldInfoCallbacks,
+  NavigationCallbacks,
+} from "@/types/slash-callback-domains";
 import { useLocalStorageBoolean } from "@/hooks/useLocalStorage";
 import { resolveStreamingEnabled } from "@/lib/model-runtime";
 import type { TavernHelperScript } from "@/lib/models/character-model";
@@ -114,116 +110,16 @@ interface Props {
   // ─── 提示词查看器参数 ───
   dialogueKey?: string;
   chatName?: string;
-  // ─── Slash Command 回调 ───
-  onSendMessage?: (text: string, options?: SendOptions) => void | Promise<void>;
-  onTriggerGeneration?: () => void | Promise<void>;
-  onSendAs?: (role: string, text: string) => void | Promise<void>;
-  onSendSystem?: (text: string, options?: SendOptions) => void | Promise<void>;
-  onImpersonate?: (text: string) => void | Promise<void>;
-  onContinue?: () => void | Promise<void>;
-  onSwipe?: (target?: string) => void | Promise<void>;
-  onRenameChat?: (name: string) => string | Promise<string>;
-  onForceSaveChat?: () => void | Promise<void>;
-  onHideMessages?: (startIndex: number) => void | Promise<void>;
-  onUnhideMessages?: () => void | Promise<void>;
-  onCreateCheckpoint?: (messageId: string, requestedName?: string) => string | Promise<string>;
-  onCreateBranch?: (messageId: string) => string | Promise<string>;
-  onGetCheckpoint?: (messageId: string) => string | Promise<string>;
-  onListCheckpoints?: (options?: { links?: boolean }) => Array<number | string> | Promise<Array<number | string>>;
-  onGoCheckpoint?: (messageId: string) => string | Promise<string>;
-  onExitCheckpoint?: () => string | Promise<string>;
-  onGetCheckpointParent?: () => string | Promise<string>;
-  onOpenTemporaryChat?: () => void | Promise<void>;
-  onJumpToMessage?: (index: number) => void | Promise<void>;
-  onTranslateText?: (
-    text: string,
-    options?: TranslateTextOptions,
-  ) => string | Promise<string>;
-  onGetYouTubeTranscript?: (
-    urlOrId: string,
-    options?: YouTubeTranscriptOptions,
-  ) => string | Promise<string>;
-  onSelectProxyPreset?: (name?: string) => string | Promise<string>;
-  onGetWorldInfoTimedEffect?: (
-    file: string,
-    uid: string,
-    effect: WorldInfoTimedEffectName,
-    options?: { format?: WorldInfoTimedEffectFormat },
-  ) => boolean | number | Promise<boolean | number>;
-  onSetWorldInfoTimedEffect?: (
-    file: string,
-    uid: string,
-    effect: WorldInfoTimedEffectName,
-    state: WorldInfoTimedEffectState,
-  ) => void | Promise<void>;
-  onGetGroupMember?: (
-    target: string,
-    field: GroupMemberField,
-  ) => string | number | undefined | Promise<string | number | undefined>;
-  onAddGroupMember?: (
-    target: string,
-  ) => string | number | void | Promise<string | number | void>;
-  onRemoveGroupMember?: (
-    target: string,
-  ) => string | number | void | Promise<string | number | void>;
-  onMoveGroupMember?: (
-    target: string,
-    direction: "up" | "down",
-  ) => string | number | void | Promise<string | number | void>;
-  onPeekGroupMember?: (
-    target: string,
-  ) => string | number | void | Promise<string | number | void>;
-  onGetGroupMemberCount?: () => number | Promise<number>;
-  onSetGroupMemberEnabled?: (
-    target: string,
-    enabled: boolean,
-  ) => string | number | void | Promise<string | number | void>;
-  onAddSwipe?: (
-    text: string,
-    options?: { switch?: boolean },
-  ) => string | number | void | Promise<string | number | void>;
-  onSetExpression?: (
-    label: string,
-    options?: ExpressionSetOptions,
-  ) => string | Promise<string>;
-  onSetExpressionFolderOverride?: (
-    folder: string,
-    options?: ExpressionFolderOverrideOptions,
-  ) => string | void | Promise<string | void>;
-  onGetLastExpression?: (name?: string) => string | Promise<string>;
-  onListExpressions?: (
-    options?: ExpressionListOptions,
-  ) => string[] | Promise<string[]>;
-  onClassifyExpression?: (
-    text: string,
-    options?: ExpressionClassifyOptions,
-  ) => string | Promise<string>;
-  onListGallery?: (
-    options?: { character?: string; group?: string },
-  ) => string[] | Promise<string[]>;
-  onShowGallery?: (
-    options?: { character?: string; group?: string },
-  ) => void | Promise<void>;
-  onGetClipboardText?: () => string | Promise<string>;
-  onSetClipboardText?: (text: string) => void | Promise<void>;
-  onIsExtensionInstalled?: (extensionName: string) => boolean | Promise<boolean>;
-  onGetExtensionEnabledState?: (extensionName: string) => boolean | Promise<boolean>;
-  onSetExtensionEnabled?: (
-    extensionName: string,
-    enabled: boolean,
-    options?: { reload?: boolean },
-  ) => string | void | Promise<string | void>;
-  onUploadExpressionAsset?: (
-    imageUrl: string,
-    options: ExpressionUploadOptions,
-  ) => string | Promise<string>;
-  onSwitchCharacter?: (
-    target: string
-  ) => CharacterSwitchResult | void | Promise<CharacterSwitchResult | void>;
-  onRenameCurrentCharacter?: (
-    name: string,
-    options?: { silent?: boolean; chats?: boolean },
-  ) => string | Promise<string>;
+  // ─── 域回调分组 ───
+  messageCallbacks?: MessageCallbacks;
+  chatManagementCallbacks?: ChatManagementCallbacks;
+  checkpointCallbacks?: CheckpointCallbacks;
+  groupMemberCallbacks?: GroupMemberCallbacks;
+  expressionCallbacks?: ExpressionCallbacks;
+  hostCapabilityCallbacks?: HostCapabilityCallbacks;
+  worldInfoCallbacks?: WorldInfoCallbacks;
+  navigationCallbacks?: NavigationCallbacks;
+  // ─── debug & 杂项 ───
   hostCapabilitySources?: Partial<Record<
     "translation" | "youtubeTranscript" | "clipboardRead" | "clipboardWrite" | "extensionRead" | "extensionWrite" | "galleryList" | "galleryShow",
     "session-default" | "api-context"
@@ -263,54 +159,14 @@ export default function CharacterChatPanel({
   language,
   dialogueKey,
   chatName,
-  onSendMessage,
-  onTriggerGeneration,
-  onSendAs,
-  onSendSystem,
-  onImpersonate,
-  onContinue,
-  onSwipe,
-  onRenameChat,
-  onForceSaveChat,
-  onHideMessages,
-  onUnhideMessages,
-  onCreateCheckpoint,
-  onCreateBranch,
-  onGetCheckpoint,
-  onListCheckpoints,
-  onGoCheckpoint,
-  onExitCheckpoint,
-  onGetCheckpointParent,
-  onOpenTemporaryChat,
-  onJumpToMessage,
-  onTranslateText,
-  onGetYouTubeTranscript,
-  onSelectProxyPreset,
-  onGetWorldInfoTimedEffect,
-  onSetWorldInfoTimedEffect,
-  onGetGroupMember,
-  onAddGroupMember,
-  onRemoveGroupMember,
-  onMoveGroupMember,
-  onPeekGroupMember,
-  onGetGroupMemberCount,
-  onSetGroupMemberEnabled,
-  onAddSwipe,
-  onSetExpression,
-  onSetExpressionFolderOverride,
-  onGetLastExpression,
-  onListExpressions,
-  onClassifyExpression,
-  onListGallery,
-  onShowGallery,
-  onGetClipboardText,
-  onSetClipboardText,
-  onIsExtensionInstalled,
-  onGetExtensionEnabledState,
-  onSetExtensionEnabled,
-  onUploadExpressionAsset,
-  onSwitchCharacter,
-  onRenameCurrentCharacter,
+  messageCallbacks,
+  chatManagementCallbacks,
+  checkpointCallbacks,
+  groupMemberCallbacks,
+  expressionCallbacks,
+  hostCapabilityCallbacks,
+  worldInfoCallbacks,
+  navigationCallbacks,
   hostCapabilitySources,
   hasHostOverrides,
   hostDebug,
@@ -331,88 +187,66 @@ export default function CharacterChatPanel({
   const currentConfig = apiConfig.getCurrentConfig();
   const streamingEnabled = resolveStreamingEnabled(currentConfig?.advanced);
   // ─── Slash Command 回调适配，优先使用外部传入，否则回退到基础 onSend/onTrigger ───
+  const onSendMessage = messageCallbacks?.onSend;
+  const onTriggerGeneration = messageCallbacks?.onTrigger;
+
   const handleSendAs = useCallback(async (role: string, text: string) => {
-    if (onSendAs) return onSendAs(role, text);
+    if (messageCallbacks?.onSendAs) return messageCallbacks.onSendAs(role, text);
     if (onSendMessage) return onSendMessage(`[${role}] ${text}`);
-  }, [onSendAs, onSendMessage]);
+  }, [messageCallbacks, onSendMessage]);
 
   const handleSendSystem = useCallback(async (text: string, options?: SendOptions) => {
-    if (onSendSystem) return onSendSystem(text, options);
+    if (messageCallbacks?.onSendSystem) return messageCallbacks.onSendSystem(text, options);
     if (onSendMessage) return onSendMessage(`[SYS] ${text}`, options);
-  }, [onSendSystem, onSendMessage]);
+  }, [messageCallbacks, onSendMessage]);
 
   const handleImpersonate = useCallback(async (text: string) => {
-    if (onImpersonate) return onImpersonate(text);
+    if (messageCallbacks?.onImpersonate) return messageCallbacks.onImpersonate(text);
     if (onSendMessage) await onSendMessage(`[impersonate] ${text}`);
     if (onTriggerGeneration) await onTriggerGeneration();
-  }, [onImpersonate, onSendMessage, onTriggerGeneration]);
+  }, [messageCallbacks, onSendMessage, onTriggerGeneration]);
 
   const handleContinue = useCallback(async () => {
-    if (onContinue) return onContinue();
+    if (messageCallbacks?.onContinue) return messageCallbacks.onContinue();
     if (onTriggerGeneration) return onTriggerGeneration();
-  }, [onContinue, onTriggerGeneration]);
+  }, [messageCallbacks, onTriggerGeneration]);
 
   const handleSwipe = useCallback(async (target?: string) => {
-    if (onSwipe) return onSwipe(target);
+    if (messageCallbacks?.onSwipe) return messageCallbacks.onSwipe(target);
     setLastSwipeTarget(target ?? "next");
     return undefined;
-  }, [onSwipe]);
+  }, [messageCallbacks]);
+
+  // ─── 组合消息回调：将本地适配层与外部回调合并 ───
+  const bridgeMessageCallbacks = useMemo(() => ({
+    ...messageCallbacks,
+    onSendAs: handleSendAs,
+    onSendSystem: handleSendSystem,
+    onImpersonate: handleImpersonate,
+    onContinue: handleContinue,
+    onSwipe: handleSwipe,
+  }), [messageCallbacks, handleSendAs, handleSendSystem, handleImpersonate, handleContinue, handleSwipe]);
+
+  // ─── 组合会话管理回调：注入 getChatName 和 setInput，合并外部回调 ───
+  const bridgeChatCallbacks = useMemo(() => ({
+    ...chatManagementCallbacks,
+    onGetChatName: () => chatName || dialogueKey || character.name || "",
+    onSetInput: (text: string) => setUserInput(text),
+  }), [chatManagementCallbacks, chatName, dialogueKey, character.name, setUserInput]);
 
   const scriptBridge = useScriptBridge({
     characterId: character.id,
     characterName: character.name,
     dialogueId: dialogueKey,
     messages,
-    onSend: onSendMessage,
-    onTrigger: onTriggerGeneration,
-    onSendAs: handleSendAs,
-    onSendSystem: handleSendSystem,
-    onImpersonate: handleImpersonate,
-    onContinue: handleContinue,
-    onSwipe: handleSwipe,
-    onGetChatName: () => chatName || dialogueKey || character.name || "",
-    onRenameChat,
-    onSetInput: (text) => setUserInput(text),
-    onOpenTemporaryChat,
-    onJumpToMessage,
-    onForceSaveChat,
-    onHideMessages,
-    onUnhideMessages,
-    onCreateCheckpoint,
-    onCreateBranch,
-    onGetCheckpoint,
-    onListCheckpoints,
-    onGoCheckpoint,
-    onExitCheckpoint,
-    onGetCheckpointParent,
-    onTranslateText,
-    onGetYouTubeTranscript,
-    onSelectProxyPreset,
-    onGetWorldInfoTimedEffect,
-    onSetWorldInfoTimedEffect,
-    onGetGroupMember,
-    onAddGroupMember,
-    onRemoveGroupMember,
-    onMoveGroupMember,
-    onPeekGroupMember,
-    onGetGroupMemberCount,
-    onSetGroupMemberEnabled,
-    onAddSwipe,
-    onSetExpression,
-    onSetExpressionFolderOverride,
-    onGetLastExpression,
-    onListExpressions,
-    onClassifyExpression,
-    onListGallery,
-    onShowGallery,
-    onGetClipboardText,
-    onSetClipboardText,
-    onIsExtensionInstalled,
-    onGetExtensionEnabledState,
-    onSetExtensionEnabled,
-    onUploadExpressionAsset,
-    onSwitchCharacter,
-    onRenameCurrentCharacter,
+    messageCallbacks: bridgeMessageCallbacks,
+    chatManagementCallbacks: bridgeChatCallbacks,
+    checkpointCallbacks,
+    groupMemberCallbacks,
+    expressionCallbacks,
+    hostCapabilityCallbacks,
+    worldInfoCallbacks,
+    navigationCallbacks,
     hostCapabilitySources,
     hasHostOverrides,
     hostDebugState,

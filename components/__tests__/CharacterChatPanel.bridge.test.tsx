@@ -168,13 +168,10 @@ describe("CharacterChatPanel slash bridge harness", () => {
     const onJumpToMessage = vi.fn().mockResolvedValue(undefined);
 
     const rendered = renderPanel({
-      onOpenTemporaryChat,
-      onTranslateText,
-      onGetYouTubeTranscript,
-      onSelectProxyPreset,
-      onGetWorldInfoTimedEffect,
-      onSetWorldInfoTimedEffect,
-      onJumpToMessage,
+      chatManagementCallbacks: { onOpenTemporaryChat },
+      hostCapabilityCallbacks: { onTranslateText, onGetYouTubeTranscript, onSelectProxyPreset },
+      worldInfoCallbacks: { onGetWorldInfoTimedEffect, onSetWorldInfoTimedEffect },
+      navigationCallbacks: { onJumpToMessage },
     });
 
     const tempchat = await runSlash("/tempchat") as { isError?: boolean; pipe?: string };
@@ -216,8 +213,7 @@ describe("CharacterChatPanel slash bridge harness", () => {
     const onShowGallery = vi.fn().mockResolvedValue(undefined);
 
     const rendered = renderPanel({
-      onListGallery,
-      onShowGallery,
+      navigationCallbacks: { onListGallery, onShowGallery },
     });
 
     const list = await runSlash("/list-gallery char=Alice") as { isError?: boolean; pipe?: string };
