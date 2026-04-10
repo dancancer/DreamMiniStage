@@ -40,14 +40,14 @@ export default function AgentUserInput({ question, options, onResponse, isLoadin
   };
 
   return (
-    <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-4 mb-4 animate-in fade-in slide-in-from-bottom-5 duration-300">
+    <div className="mb-4 rounded-md border border-accent/20 bg-accent/10 p-4 animate-in fade-in slide-in-from-bottom-5 duration-300">
       <div className="flex items-start space-x-3 mb-4">
-        <div className="p-2 rounded-md bg-blue-500/20 text-blue-400">
+        <div className="p-2 rounded-md bg-accent/20 text-sky">
           <ArrowRight className="w-4 h-4" />
         </div>
         <div className="flex-1">
-          <h4 className="text-primary-soft font-medium text-sm mb-2">Agent is asking for input:</h4>
-          <p className="text-primary-soft text-sm whitespace-pre-wrap">{question}</p>
+          <h4 className="mb-2 text-sm font-medium text-foreground">Agent is asking for input:</h4>
+          <p className="whitespace-pre-wrap text-sm text-muted-foreground">{question}</p>
         </div>
       </div>
 
@@ -61,7 +61,7 @@ export default function AgentUserInput({ question, options, onResponse, isLoadin
               className={`h-auto px-3 py-1 rounded-full ${
                 inputMode === "options"
                   ? "bg-primary-500/20 text-primary-400"
-                  : "bg-black/20 text-primary-soft/60 hover:text-primary-soft"
+                  : "bg-muted/60 text-muted-foreground hover:text-foreground"
               }`}
             >
               Choose from options
@@ -72,7 +72,7 @@ export default function AgentUserInput({ question, options, onResponse, isLoadin
               className={`h-auto px-3 py-1 rounded-full ${
                 inputMode === "custom"
                   ? "bg-primary-500/20 text-primary-400"
-                  : "bg-black/20 text-primary-soft/60 hover:text-primary-soft"
+                  : "bg-muted/60 text-muted-foreground hover:text-foreground"
               }`}
             >
               Custom input
@@ -88,8 +88,8 @@ export default function AgentUserInput({ question, options, onResponse, isLoadin
                   onClick={() => setSelectedOption(option)}
                   className={`h-auto justify-start text-left p-3 animate-in fade-in slide-in-from-left-5 ${
                     selectedOption === option
-                      ? "bg-primary-500/20 border-primary-500/40 text-primary-soft"
-                      : "bg-black/20 border-primary-500/20 text-primary-soft/80 hover:bg-black/30 hover:border-primary-500/30"
+                      ? "border-primary/40 bg-primary/10 text-foreground"
+                      : "border-border bg-background/80 text-muted-foreground hover:bg-muted/70 hover:border-primary/30 hover:text-foreground"
                   }`}
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
@@ -115,7 +115,7 @@ export default function AgentUserInput({ question, options, onResponse, isLoadin
               onChange={(e) => setCustomInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type your response..."
-              className="w-full bg-black/20 border border-primary-500/20 rounded-md p-3 text-primary-soft text-sm placeholder-primary-soft/40 resize-none min-h-[80px] max-h-[160px] focus:outline-none focus:border-primary-500/40"
+              className="min-h-[80px] max-h-[160px] w-full resize-none rounded-md border border-border bg-background/80 p-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-primary/40"
               disabled={isLoading}
             />
           </div>
@@ -135,7 +135,7 @@ export default function AgentUserInput({ question, options, onResponse, isLoadin
         >
           {isLoading ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black" />
+              <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-foreground/70" />
               <span>Sending...</span>
             </>
           ) : (

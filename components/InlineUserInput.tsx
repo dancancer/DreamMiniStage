@@ -80,7 +80,7 @@ const InlineUserInput: React.FC<InlineUserInputProps> = ({
           <PenSquare className="w-4 h-4" />
           <span>需要您的输入</span>
         </div>
-        <div className="pl-6 text-sm leading-relaxed text-primary-soft/90">
+        <div className="pl-6 text-sm leading-relaxed text-muted-foreground">
           {question}
         </div>
       </div>
@@ -88,7 +88,7 @@ const InlineUserInput: React.FC<InlineUserInputProps> = ({
       {/* Elegant Reference Options */}
       {options && options.length > 0 && (
         <div className="pl-6 mb-4">
-          <div className="bg-black/20 border border-primary-500/25 rounded-xl p-4 mb-3 backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="mb-3 rounded-xl border border-primary/20 bg-background/80 p-4 backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-4 bg-primary-500 rounded-full"></div>
               <span className="text-xs text-primary-400/90 font-medium tracking-wide">参考选项</span>
@@ -99,7 +99,7 @@ const InlineUserInput: React.FC<InlineUserInputProps> = ({
                   key={index}
                   variant="outline"
                   size="sm"
-                  className="inline-flex items-center px-3 py-1.5 h-auto text-xs text-primary-soft/80 bg-black/30 border border-primary-500/20 rounded-full hover:bg-black/40 hover:border-primary-400/40 hover:text-cream animate-in fade-in zoom-in-95"
+                  className="inline-flex h-auto items-center rounded-full border border-border bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground animate-in fade-in zoom-in-95 hover:border-primary/30 hover:bg-muted/70 hover:text-foreground"
                   style={{ animationDelay: `${index * 50}ms` }}
                   onClick={() => {
                     setCustomInput(option);
@@ -127,7 +127,7 @@ const InlineUserInput: React.FC<InlineUserInputProps> = ({
             onKeyPress={handleKeyPress}
             placeholder="输入您的回复..."
             disabled={isLoading}
-            className="w-full pl-4 pr-12 py-2.5 text-sm text-cream bg-black/30 border border-primary-500/30 rounded-full focus:outline-none focus:border-primary-400/60 focus:bg-black/40 placeholder-primary-soft/60 transition-all duration-300 hover:border-primary-500/40"
+            className="w-full rounded-full border border-border bg-background/85 py-2.5 pl-4 pr-12 text-sm text-foreground placeholder:text-muted-foreground/70 transition-[background-color,border-color,color] duration-300 hover:border-primary/30 focus:border-primary/40 focus:outline-none"
             autoFocus
           />
           <Button
@@ -135,7 +135,7 @@ const InlineUserInput: React.FC<InlineUserInputProps> = ({
             size="icon"
             onClick={handleCustomSubmit}
             disabled={isLoading || !customInput.trim()}
-            className="absolute right-1.5 p-1.5 h-auto w-auto text-primary-400 rounded-full hover:bg-primary-500/15"
+            className="absolute right-1.5 h-9 w-9 rounded-full p-0 text-primary hover:bg-primary/10"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-primary-soft/40 border-t-primary-400 rounded-full animate-spin" />

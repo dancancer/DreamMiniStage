@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
  * 类型定义
  * ───────────────────────────────────────────────────────────────────────────── */
 
-type AccentColor = "primary" | "purple" | "blue";
+type AccentColor = "primary" | "accent" | "soft";
 
 interface SidebarMenuItemProps {
   /** 图标元素 */
@@ -53,13 +53,13 @@ const colorMap: Record<AccentColor, { gradient: string; line: string }> = {
     gradient: "bg-primary/10",
     line: "bg-primary/40",
   },
-  purple: {
-    gradient: "bg-purple-500/10",
-    line: "bg-purple-400/40",
+  accent: {
+    gradient: "bg-accent/20",
+    line: "bg-accent/50",
   },
-  blue: {
-    gradient: "bg-blue-500/10",
-    line: "bg-blue-400/40",
+  soft: {
+    gradient: "bg-muted-surface/70",
+    line: "bg-primary/30",
   },
 };
 
@@ -102,10 +102,10 @@ const SidebarMenuItem: React.FC<SidebarMenuItemProps> = ({
         <div
           className={cn(
             iconSize,
-            "flex items-center justify-center text-cream bg-surface rounded-md border border-stroke  transition-all duration-300",
+            "flex items-center justify-center rounded-md border border-stroke bg-surface text-foreground transition-all duration-300",
             isActive
-              ? "border-accent text-accent-foreground shadow-[0_0_10px_rgba(0,0,0,0.35)]"
-              : "hover:text-accent-foreground hover:border-accent ",
+              ? "border-accent text-accent-foreground"
+              : "hover:border-accent hover:text-accent-foreground",
           )}
         >
           {icon}
@@ -146,10 +146,10 @@ const SidebarMenuItem: React.FC<SidebarMenuItemProps> = ({
           <div
             className={cn(
               iconSize,
-              "flex items-center justify-center flex-shrink-0 text-cream bg-surface rounded-md border border-stroke  transition-all duration-300",
+              "flex flex-shrink-0 items-center justify-center rounded-md border border-stroke bg-surface text-foreground transition-all duration-300",
               isActive
-                ? "border-accent text-accent-foreground shadow-[0_0_10px_rgba(0,0,0,0.35)]"
-                : "group-hover:border-accent group-hover:text-accent-foreground group-",
+                ? "border-accent text-accent-foreground"
+                : "group-hover:border-accent group-hover:text-accent-foreground",
             )}
           >
             {icon}

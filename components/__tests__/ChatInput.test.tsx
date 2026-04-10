@@ -11,7 +11,11 @@ interface RenderedChatInput {
   root: Root;
 }
 
-function renderChatInput(children?: React.ReactNode): RenderedChatInput {
+function renderChatInput(props?: {
+  userInput?: string;
+  suggestedInputs?: string[];
+  isSending?: boolean;
+}): RenderedChatInput {
   const container = document.createElement("div");
   document.body.appendChild(container);
 
@@ -20,17 +24,15 @@ function renderChatInput(children?: React.ReactNode): RenderedChatInput {
   act(() => {
     root.render(
       <ChatInput
-        userInput=""
+        userInput={props?.userInput ?? ""}
         setUserInput={vi.fn()}
-        isSending={false}
-        suggestedInputs={[]}
+        isSending={props?.isSending ?? false}
+        suggestedInputs={props?.suggestedInputs ?? []}
         onSubmit={vi.fn()}
         onSuggestedInput={vi.fn()}
         fontClass="font-body"
         t={(key) => key}
-      >
-        {children}
-      </ChatInput>,
+      />,
     );
   });
 
@@ -49,26 +51,46 @@ afterEach(() => {
 });
 
 describe("ChatInput", () => {
-  it("wraps footer tools in constrained rail slots", () => {
-    const rendered = renderChatInput(
-      <>
-        <div data-testid="tool-a">A</div>
-        <div data-testid="tool-b">B</div>
-        <div data-testid="tool-c">C</div>
-      </>,
-    );
+  it("does not render legacy tool rail containers anymore", () => {
+    const rendered = renderChatInput();
 
-    const rail = rendered.container.querySelector("[data-chat-tool-rail='true']");
-    const slots = rendered.container.querySelectorAll("[data-chat-tool-slot='true']");
+    expect(rendered.container.querySelector("[data-chat-tool-rail='true']")).toBeNull();
+    expect(rendered.container.querySelector("[data-chat-floating-tools='true']")).toBeNull();
 
-    expect(rail).not.toBeNull();
-    expect(rail?.className).toContain("overflow-x-auto");
-    expect(slots).toHaveLength(3);
+    unmount(rendered);
+  });
 
-    slots.forEach((slot) => {
-      expect(slot.className).toContain("shrink-0");
-      expect(slot.className).toContain("min-w-[18rem]");
+  it("renders suggestions only when available and not sending", () => {
+    const rendered = renderChatInput({
+      suggestedInputs: ["alpha", "beta"],
+      isSending: false,
     });
+
+    expect(rendered.container.textContent).toContain("alpha");
+    expect(rendered.container.textContent).toContain("beta");
+
+    unmount(rendered);
+  });
+
+  it("exposes an accessible label for the message input", () => {
+    const rendered = renderChatInput();
+
+    const input = rendered.container.querySelector("#send_textarea");
+    const label = rendered.container.querySelector("label[for='send_textarea']");
+
+    expect(input).toBeInstanceOf(HTMLInputElement);
+    expect(label?.textContent).toBe("characterChat.typeMessage");
+
+    unmount(rendered);
+  });
+
+  it("hides suggestions while sending", () => {
+    const rendered = renderChatInput({
+      suggestedInputs: ["alpha"],
+      isSending: true,
+    });
+
+    expect(rendered.container.textContent).not.toContain("alpha");
 
     unmount(rendered);
   });

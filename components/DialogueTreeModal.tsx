@@ -28,6 +28,12 @@ import {
 import "reactflow/dist/style.css";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useLanguage } from "@/app/i18n";
 import { trackButtonClick } from "@/utils/google-analytics";
 import { switchDialogueBranch } from "@/function/dialogue/truncate";
@@ -79,7 +85,6 @@ export default function DialogueTreeModal({ isOpen, onClose, characterId, sessio
   const [isSaving, setIsSaving] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const nodesRef = useRef<DialogueNode[]>([]);
-  const editModalRef = useRef<HTMLDivElement>(null);
   const { language, readLlmConfig } = useDialoguePreferences();
 
   const {
@@ -295,12 +300,14 @@ export default function DialogueTreeModal({ isOpen, onClose, characterId, sessio
   const manualCount = Object.keys(userAdjustedPositions).length;
   const showEmpty = dataLoaded && nodes.length === 0;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <DialogueFlowStyles />
-      <div className="absolute inset-0 backdrop-blur-sm"></div>
-      <div className=" bg-opacity-75 border border-border rounded-md  p-4 w-[90%] h-[80%] max-w-5xl mx-4  relative z-10 backdrop-filter backdrop-blur-sm">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className={"text-cream text-lg "}>{t("dialogue.treeVisualization")}</h3>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        className="flex h-[80vh] w-[90vw] max-w-5xl flex-col overflow-hidden border-border bg-card/95 p-4"
+        hideCloseButton={true}
+      >
+        <DialogueFlowStyles />
+        <DialogHeader className="mb-4 flex flex-row items-center justify-between space-y-0">
+          <DialogTitle>{t("dialogue.treeVisualization")}</DialogTitle>
           <Button
             variant="ghost"
             size="icon"
@@ -308,10 +315,12 @@ export default function DialogueTreeModal({ isOpen, onClose, characterId, sessio
               trackButtonClick("DialogueTreeModal", "close_modal");
               onClose();
             }}
+            className="h-11 w-11 text-muted-foreground hover:text-foreground sm:h-10 sm:w-10"
+            aria-label={t("common.close")}
           >
             <X size={20} />
           </Button>
-        </div>
+        </DialogHeader>
 
         {!characterId ? (
           <DialoguePlaceholderCard
@@ -345,7 +354,7 @@ export default function DialogueTreeModal({ isOpen, onClose, characterId, sessio
             serifFontClass={serifFontClass}
           />
         ) : (
-          <div className="h-[calc(100%-6rem)] w-full">
+          <div className="min-h-0 flex-1">
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -363,10 +372,10 @@ export default function DialogueTreeModal({ isOpen, onClose, characterId, sessio
                 nodeStrokeWidth={3}
                 nodeColor="var(--color-primary)"
                 maskColor="rgba(30, 28, 27, 0.5)"
-                className=" border border-border rounded-md  overflow-hidden bg-[rgba(28,28,27,0.7)]"
+                className="overflow-hidden rounded-md border border-border bg-popover/90"
               />
               <Background color="var(--color-ink)" gap={16} size={1.5} />
-              <Panel position="top-right" className=" border border-border p-3 rounded-md  flex items-center gap-2">
+              <Panel position="top-right" className="flex items-center gap-2 rounded-md border border-border bg-background/90 p-3">
                 <span className={`text-primary text-xs ${fontClass}`}>
                   {layoutMethod === "elk" ? "ELK" : "Grid"} · {manualCount} {t("dialogue.manualPositions")}
                 </span>
@@ -398,12 +407,10 @@ export default function DialogueTreeModal({ isOpen, onClose, characterId, sessio
             onClose={() => setIsEditModalOpen(false)}
             onSave={saveEditContent}
             fontClass={fontClass}
-            serifFontClass={serifFontClass}
-            modalRef={editModalRef}
             t={t}
           />
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

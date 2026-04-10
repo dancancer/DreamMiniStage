@@ -24,25 +24,25 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
       platform: "ios",
       icon: <Apple size={20} />,
       url: "#", // Replace with actual iOS download link
-      color: "text-gray-300",
+      color: "text-foreground/80",
     },
     {
       platform: "android",
       icon: <Smartphone size={20} />,
       url: "#", // Replace with actual Android download link
-      color: "text-green-400",
+      color: "text-success",
     },
     {
       platform: "windows",
       icon: <Monitor size={20} />,
       url: "#", // Replace with actual Windows download link
-      color: "text-blue-400",
+      color: "text-sky",
     },
     {
       platform: "macos",
       icon: <Apple size={20} />,
       url: "#", // Replace with actual macOS download link
-      color: "text-gray-300",
+      color: "text-foreground/80",
     },
   ];
 
@@ -62,13 +62,13 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
           {/* Backdrop */}
-          <div className="absolute inset-0 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} />
+          <div className="absolute inset-0 bg-foreground/20 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} />
           
           {/* Modal */}
-          <div className="relative z-10 w-full max-w-md mx-4 bg-card rounded-2xl border border-muted-surface/50 overflow-hidden backdrop-filter backdrop-blur-sm animate-in fade-in zoom-in-95 slide-in-from-bottom-5 duration-300">
+          <div className="relative z-10 mx-4 w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card backdrop-blur-sm animate-in fade-in zoom-in-95 slide-in-from-bottom-5 duration-300">
             {/* Animated background */}
             <div className="absolute inset-0 bg-primary/5 opacity-60" />
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f59e0b' fill-opacity='0.03'%3E%3Cpath d='M30 30l30-30v60L30 30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,color-mix(in_oklch,var(--color-primary)_12%,transparent),transparent_58%)] opacity-60" />
             
             {/* Header */}
             <div className="relative p-6 pb-4">
@@ -86,7 +86,8 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
                   variant="ghost"
                   size="icon"
                   onClick={onClose}
-                  className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted/40"
+                  className="p-1 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                  aria-label={t("common.close")}
                 >
                   <X size={20} />
                 </Button>
@@ -101,7 +102,7 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
                     key={option.platform}
                     variant="outline"
                     onClick={() => handlePlatformDownload(option.url, option.platform)}
-                    className="w-full flex items-center p-4 h-auto bg-muted/60 hover:bg-muted rounded-xl border border-border/60 hover:border-border backdrop-blur-sm group active:scale-[0.98]"
+                    className="group h-auto w-full rounded-xl border border-border/60 bg-muted/60 p-4 backdrop-blur-sm hover:border-border hover:bg-muted active:scale-[0.98]"
                   >
                     <div className={`${option.color} mr-4`}>
                       {option.icon}
@@ -124,7 +125,7 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
 
             {/* Tip Section */}
             <div className="relative px-6 pb-6">
-              <div className="p-4 bg-accent/30 border border-border rounded-xl backdrop-blur-sm">
+              <div className="rounded-xl border border-border bg-accent/20 p-4 backdrop-blur-sm">
                 <p className={`text-foreground text-xs leading-relaxed ${langFontClass}`}>
                   {t("appDownload.tip")}
                 </p>

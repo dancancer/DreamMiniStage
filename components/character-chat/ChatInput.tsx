@@ -15,16 +15,13 @@
 "use client";
 
 import {
-  Children,
-  Fragment,
-  isValidElement,
   useCallback,
-  useMemo,
   useState,
 } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { trackButtonClick, trackFormSubmit } from "@/utils/google-analytics";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 //                              类型定义
@@ -39,7 +36,6 @@ interface ChatInputProps {
   onSuggestedInput: (input: string) => void;
   fontClass: string;
   t: (key: string) => string;
-  children?: React.ReactNode; // 用于放置 ControlPanel
 }
 
 // ============================================================================
@@ -55,13 +51,8 @@ export default function ChatInput({
   onSuggestedInput,
   fontClass,
   t,
-  children,
 }: ChatInputProps) {
   const [suggestionsCollapsed, setSuggestionsCollapsed] = useState(false);
-  const toolItems = useMemo(
-    () => flattenToolItems(children),
-    [children],
-  );
 
   const handleSubmit = useCallback((event: React.FormEvent) => {
     trackFormSubmit("page", "提交表单");
@@ -100,6 +91,7 @@ export default function ChatInput({
             value={userInput}
             onChange={setUserInput}
             disabled={isSending}
+            label={t("characterChat.typeMessage") || "Type a message..."}
             placeholder={t("characterChat.typeMessage") || "Type a message..."}
           />
           <SubmitButton
@@ -110,8 +102,6 @@ export default function ChatInput({
         </div>
 
       </form>
-
-      <ToolRail items={toolItems} />
     </div>
   );
 }
@@ -137,15 +127,20 @@ function SuggestionsArea({ suggestions, collapsed, onToggle, onSelect, isSending
         variant="ghost"
         size="icon"
         onClick={onToggle}
-        className="absolute -top-10 right-0 bg-overlay hover:bg-muted-surface text-primary-soft hover:text-cream p-1.5 h-auto w-auto border border-border hover:border-border hover:shadow z-10"
+        className="absolute -top-10 right-0 z-10 h-11 w-11 border border-border bg-overlay p-0 text-primary-soft hover:bg-muted-surface hover:text-foreground sm:h-10 sm:w-10"
         aria-label={collapsed ? "展开建议" : "收起建议"}
       >
         <CollapseIcon collapsed={collapsed} />
       </Button>
 
       {/* 建议列表 */}
-      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${collapsed ? "max-h-0 opacity-0 mb-0" : "max-h-40 opacity-100 mb-6"}`}>
-        <div className="flex flex-wrap gap-2.5">
+      <div
+        className={cn(
+          "grid overflow-hidden transition-[grid-template-rows,opacity,margin-bottom] duration-300 ease-out",
+          collapsed ? "mb-0 grid-rows-[0fr] opacity-0" : "mb-6 grid-rows-[1fr] opacity-100",
+        )}
+      >
+        <div className="flex flex-wrap gap-2.5 overflow-hidden">
           {suggestions.map((input, index) => (
             <Button
               key={index}
@@ -153,7 +148,7 @@ function SuggestionsArea({ suggestions, collapsed, onToggle, onSelect, isSending
               size="sm"
               onClick={() => onSelect(input)}
               disabled={isSending}
-              className={`bg-overlay hover:bg-muted-surface text-primary-soft hover:text-cream py-1.5 px-4 h-auto text-xs border border-border hover:border-border hover:shadow menu-item ${fontClass}`}
+              className={`menu-item min-h-11 border border-border bg-overlay px-4 py-1.5 text-xs text-primary-soft hover:bg-muted-surface hover:text-foreground sm:min-h-10 ${fontClass}`}
             >
               {input}
             </Button>
@@ -176,12 +171,16 @@ interface InputFieldProps {
   value: string;
   onChange: (val: string) => void;
   disabled: boolean;
+  label: string;
   placeholder: string;
 }
 
-function InputField({ value, onChange, disabled, placeholder }: InputFieldProps) {
+function InputField({ value, onChange, disabled, label, placeholder }: InputFieldProps) {
   return (
     <div className="flex-grow magical-input relative group">
+      <label htmlFor="send_textarea" className="sr-only">
+        {label}
+      </label>
       <div className="absolute -inset-0.5 bg-primary/10 rounded-md blur opacity-0 group-hover:opacity-100 transition duration-300" />
       <input
         type="text"
@@ -190,7 +189,7 @@ function InputField({ value, onChange, disabled, placeholder }: InputFieldProps)
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         data-tour="chat-input"
-        className="relative z-[1] w-full rounded-md border border-border bg-overlay px-3 py-2 text-cream text-sm leading-tight transition-all duration-300 focus:border-primary-soft focus:outline-none group-hover:border-border sm:px-4 sm:py-2.5"
+        className="relative z-[1] w-full rounded-md border border-border bg-overlay px-3 py-2 text-foreground text-sm leading-tight transition-[background-color,border-color] duration-300 focus:border-primary-soft focus:outline-none group-hover:border-border sm:px-4 sm:py-2.5"
         disabled={disabled}
       />
     </div>
@@ -213,7 +212,7 @@ function SubmitButton({ isSending, disabled, label }: SubmitButtonProps) {
       type="submit"
       variant="outline"
       disabled={disabled}
-      className="portal-button relative overflow-hidden bg-overlay hover:bg-muted-surface text-primary-soft hover:text-cream py-2 px-3 sm:px-4 h-auto text-sm border border-border hover:border-border"
+      className="portal-button relative h-11 overflow-hidden border border-border bg-overlay px-3 py-2 text-sm text-primary-soft hover:bg-muted-surface hover:text-foreground sm:h-10 sm:px-4"
     >
       {label}
     </Button>
@@ -222,58 +221,9 @@ function SubmitButton({ isSending, disabled, label }: SubmitButtonProps) {
 
 function LoadingSpinner() {
   return (
-    <div className="relative w-8 h-8 flex items-center justify-center">
+    <div className="relative flex h-11 w-11 items-center justify-center sm:h-10 sm:w-10">
       <div className="absolute inset-0 rounded-full border-2 border-t-primary-bright border-r-primary-soft border-b-ink-soft border-l-transparent animate-spin" />
       <div className="absolute inset-1 rounded-full border-2 border-t-ink-soft border-r-primary-bright border-b-primary-soft border-l-transparent animate-spin-slow" />
     </div>
   );
-}
-
-interface ToolRailProps {
-  items: React.ReactNode[];
-}
-
-function ToolRail({ items }: ToolRailProps) {
-  if (items.length === 0) {
-    return null;
-  }
-
-  return (
-    <div
-      data-chat-tool-rail="true"
-      className="mt-3 overflow-x-auto pb-2 sm:mt-4"
-    >
-      <div className="mx-auto flex max-w-4xl items-start gap-3">
-        {items.map((item, index) => (
-          <div
-            key={getToolRailItemKey(item, index)}
-            data-chat-tool-slot="true"
-            className="min-w-[18rem] shrink-0 self-stretch [&>*]:max-h-[18rem] [&>*]:w-[min(32rem,85vw)] [&>*]:min-w-[18rem] [&>*]:overflow-y-auto [&>*]:overscroll-contain"
-          >
-            {item}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function getToolRailItemKey(item: React.ReactNode, index: number): string {
-  if (isValidElement(item) && item.key != null) {
-    return `tool-${index}-${String(item.key)}`;
-  }
-  return `tool-${index}`;
-}
-
-function flattenToolItems(input: React.ReactNode): React.ReactNode[] {
-  return Children.toArray(input).flatMap((child) => {
-    if (!isValidElement(child)) {
-      return [child];
-    }
-    if (child.type !== Fragment) {
-      return [child];
-    }
-    const fragmentProps = child.props as { children?: React.ReactNode };
-    return flattenToolItems(fragmentProps.children);
-  });
 }

@@ -149,9 +149,11 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* ─── 头像区域 ─── */}
       <div className="flex items-center gap-4">
-        <div
+        <button
+          type="button"
           className="relative w-20 h-20 rounded-full overflow-hidden bg-muted cursor-pointer group"
           onClick={() => fileInputRef.current?.click()}
+          aria-label={language === "zh" ? "上传或更换 Persona 头像" : "Upload or replace persona avatar"}
         >
           {avatarPath ? (
             <Image
@@ -166,10 +168,10 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({
               <User className="w-8 h-8 text-muted-foreground" />
             </div>
           )}
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <Upload className="w-6 h-6 text-white" />
+          <div className="absolute inset-0 flex items-center justify-center bg-foreground/45 opacity-0 transition-opacity group-hover:opacity-100">
+            <Upload className="w-6 h-6 text-primary-foreground" />
           </div>
-        </div>
+        </button>
 
         <input
           ref={fileInputRef}

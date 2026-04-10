@@ -12,10 +12,17 @@
 
 "use client";
 
-import { RefObject } from "react";
-import { X, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { DialogueNode } from "@/hooks/useDialogueTreeData";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface DialogueEditModalProps {
   node: DialogueNode;
@@ -25,8 +32,6 @@ interface DialogueEditModalProps {
   onClose: () => void;
   onSave: () => void;
   fontClass: string;
-  serifFontClass: string;
-  modalRef: RefObject<HTMLDivElement | null>;
   t: (key: string) => string;
 }
 
@@ -38,66 +43,73 @@ export function DialogueEditModal({
   onClose,
   onSave,
   fontClass,
-  serifFontClass,
-  modalRef,
   t,
 }: DialogueEditModalProps) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center backdrop-blur-md z-20">
-      <div ref={modalRef} className=" bg-opacity-85 border border-border rounded-md p-6 w-[80%] max-w-2xl backdrop-filter backdrop-blur-sm ">
-        <div className="flex justify-between items-center mb-4">
-          <h4 className={"text-cream text-lg "}>{t("dialogue.editNode")}</h4>
-          <Button variant="ghost" size="icon" onClick={onClose} className="text-text-muted hover:text-primary-400" aria-label={t("common.close")}>
-            <X className="w-4 h-4" />
-          </Button>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl border-border bg-card/95">
+        <DialogHeader className="space-y-3">
+          <DialogTitle>{t("dialogue.editNode")}</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            {t("dialogue.memorySummary")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="rounded-md border border-border bg-muted/30 p-3">
+          <ol className={`ml-2 list-decimal list-inside text-sm text-foreground ${fontClass}`}>
+            {node.data.label.split(/——>|-->|->|→/).map((step, index) => (
+              <li key={index} className="mb-1">
+                {step.trim()}
+              </li>
+            ))}
+          </ol>
         </div>
 
-        <div className=" border border-border rounded-md p-3 mb-4 ">
-          <h5 className={"text-primary-400 text-sm mb-2 "}>{t("dialogue.memorySummary")}:</h5>
-          <div className="ml-2">
-            <ol className={`list-decimal list-inside ${fontClass} text-cream text-sm`}>
-              {node.data.label.split(/——>|-->|->|→/).map((step, index) => (
-                <li key={index} className="mb-1">
-                  {step.trim()}
-                </li>
-              ))}
-            </ol>
-          </div>
+        <div className="space-y-2">
+          <label htmlFor="dialogue-node-response" className="block text-sm font-medium text-foreground">
+            <span className="flex items-center">
+              <MessageSquare className="mr-1 h-3.5 w-3.5" />
+              {t("dialogue.response")}
+            </span>
+          </label>
+          <textarea
+            id="dialogue-node-response"
+            value={editContent}
+            onChange={(e) => onChange(e.target.value)}
+            className={`h-64 w-full rounded-md border border-border bg-background px-3 py-3 text-sm leading-relaxed text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background ${fontClass}`}
+            placeholder={t("dialogue.responsePlaceholder")}
+          />
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className={"block text-primary text-sm mb-2 "}>
-              <span className="flex items-center">
-                <MessageSquare className="w-3.5 h-3.5 mr-1" />
-                {t("dialogue.response")}
-              </span>
-            </label>
-            <textarea
-              value={editContent}
-              onChange={(e) => onChange(e.target.value)}
-              className={`w-full h-64 p-3 bg-coal border border-stroke-strong rounded-md text-cream fantasy-scrollbar focus:outline-none focus:border-primary-400 ${fontClass} text-sm leading-relaxed`}
-              placeholder={t("dialogue.responsePlaceholder")}
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-5 mt-4">
-          <Button variant="ghost" onClick={onClose} className="text-text-muted hover:text-primary-400" aria-label={t("common.cancel")} disabled={isSaving}>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label={t("common.cancel")}
+            disabled={isSaving}
+          >
             {t("common.cancel")}
           </Button>
           {isSaving ? (
-            <div className="relative w-8 h-8">
+            <div className="relative flex h-11 w-11 items-center justify-center sm:h-10 sm:w-10">
               <div className="absolute inset-0 rounded-full border-2 border-t-primary-bright border-r-primary-soft border-b-ink-soft border-l-transparent animate-spin"></div>
               <div className="absolute inset-1 rounded-full border-2 border-t-ink-soft border-r-primary-bright border-b-primary-soft border-l-transparent animate-spin-slow"></div>
             </div>
           ) : (
-            <Button variant="ghost" onClick={onSave} className="text-primary-400 hover:text-primary-300" aria-label={t("common.save")}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onSave}
+              className="text-primary hover:text-primary"
+              aria-label={t("common.save")}
+            >
               {t("common.save")}
             </Button>
           )}
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

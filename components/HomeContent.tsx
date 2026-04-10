@@ -32,12 +32,11 @@ import {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function HomeContent() {
-  const { t, fontClass } = useLanguage();
+  const { t, fontClass, language } = useLanguage();
   const router = useRouter();
 
   // ========== 本地状态 ==========
   const [mounted, setMounted] = useState(false);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
 
   // ========== 弹窗状态 ==========
   const [editingSession, setEditingSession] = useState<SessionWithCharacter | null>(null);
@@ -55,18 +54,6 @@ export default function HomeContent() {
   // ========== 初始化 ==========
   useEffect(() => {
     setMounted(true);
-
-    const yellowImg = new Image();
-    const redImg = new Image();
-    yellowImg.src = "/background_yellow.png";
-    redImg.src = "/background_red.png";
-
-    Promise.all([
-      new Promise((resolve) => (yellowImg.onload = resolve)),
-      new Promise((resolve) => (redImg.onload = resolve)),
-    ]).then(() => {
-      setImagesLoaded(true);
-    });
   }, []);
 
   // ========== 加载会话列表 ==========
@@ -136,71 +123,98 @@ export default function HomeContent() {
 
   if (!mounted) return null;
 
-  return (
-    <div className="flex flex-col h-full relative">
-      {/* ========== 背景层 ========== */}
-      <div
-        className={`absolute inset-0 z-0 opacity-35 transition-opacity duration-500 ${
-          imagesLoaded ? "opacity-35" : "opacity-0"
-        }`}
-      />
-      <div
-        className={`absolute inset-0 z-1 opacity-45 transition-opacity duration-500 mix-blend-multiply ${
-          imagesLoaded ? "opacity-45" : "opacity-0"
-        }`}
-      />
+  const headerEyebrow = language === "zh" ? "Session Stage" : "Session Stage";
+  const headerTitle = language === "zh" ? "会话舞台" : "Story Sessions";
+  const headerDescription = language === "zh"
+    ? "继续最近一段叙事，或从角色卡开启一幕新的对话。首页负责铺开线索，不抢走故事本身。"
+    : "Resume the latest narrative thread, or open a new scene from a character card. Home sets the stage without stealing the spotlight.";
 
+  return (
+    <div className="relative flex h-full min-h-0 flex-col">
       {/* ========== 装饰元素 ========== */}
-      <div className="absolute inset-0 pointer-events-none z-10">
-        <div className="absolute top-10 left-10 opacity-5">
-          <Star size={24} fill="var(--color-primary-bright)" color="var(--color-primary-bright)" />
+      <div className="pointer-events-none absolute inset-0 z-10">
+        <div className="absolute left-10 top-10 h-px w-28 bg-gradient-to-r from-primary/60 to-transparent" />
+        <div className="absolute left-10 top-14 opacity-10">
+          <Star size={18} fill="var(--color-primary-bright)" color="var(--color-primary-bright)" />
         </div>
-        <div className="absolute top-20 right-20 opacity-5">
-          <Star size={20} fill="var(--color-primary-bright)" color="var(--color-primary-bright)" />
+        <div className="absolute right-14 top-22 opacity-10">
+          <Star size={16} fill="var(--color-primary-bright)" color="var(--color-primary-bright)" />
         </div>
-        <div className="absolute bottom-20 left-1/4 opacity-5">
-          <Circle size={16} color="var(--color-sky)" />
+        <div className="absolute bottom-16 left-[26%] opacity-10">
+          <Circle size={14} color="var(--color-sky)" />
         </div>
-        <div className="absolute bottom-10 right-1/4 opacity-5">
-          <Circle size={24} color="var(--color-ink-soft)" />
+        <div className="absolute bottom-8 right-[18%] opacity-10">
+          <Circle size={22} color="var(--color-ink-soft)" />
         </div>
       </div>
 
       {/* ========== 主内容区 ========== */}
-      <div className="flex-1 overflow-y-auto relative z-20">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          {/* ========== 头部区域 ========== */}
-          <div className="flex items-center justify-between mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <h1 className="text-2xl font-cinzel magical-text">DreamMiniStage</h1>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNewSession}
-              className={`${fontClass} gap-2`}
-            >
-              <Plus className="h-4 w-4" />
-              {t("homePage.newSession")}
-            </Button>
-          </div>
+      <main
+        className="relative z-20 flex-1 overflow-y-auto"
+        aria-labelledby="home-heading"
+      >
+        <div className="mx-auto flex max-w-[80rem] flex-col gap-10 px-4 py-8 sm:px-6 sm:py-10">
+          <div className="grid gap-8 xl:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)] xl:items-start xl:gap-10">
+            {/* ========== 序章区域 ========== */}
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="max-w-xl xl:sticky xl:top-8">
+                <div className="flex items-center gap-3">
+                  <span className="h-px w-12 bg-gradient-to-r from-primary/65 to-transparent" />
+                  <p className="text-[10px] font-medium uppercase tracking-[0.32em] text-primary/75">
+                    {headerEyebrow}
+                  </p>
+                </div>
 
-          {/* ========== 会话列表 ========== */}
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64 animate-in fade-in duration-300">
-              <div className="relative w-16 h-16">
-                <div className="absolute inset-0 rounded-full border-2 border-t-primary-bright border-r-primary-soft border-b-ink-soft border-l-transparent animate-spin" />
-                <div className="absolute inset-2 rounded-full border-2 border-t-ink-soft border-r-primary-bright border-b-primary-soft border-l-transparent animate-spin-slow" />
+                <h1 id="home-heading" className="mt-4 text-3xl font-semibold tracking-[0.02em] text-foreground sm:text-4xl lg:text-[2.75rem]">
+                  {headerTitle}
+                </h1>
+
+                <p className={`mt-4 max-w-lg text-sm leading-7 text-ink sm:text-base ${fontClass}`}>
+                  {headerDescription}
+                </p>
+
+                <p className={`mt-5 max-w-md text-xs leading-6 text-ink-soft sm:text-sm ${fontClass}`}>
+                  {language === "zh"
+                    ? "舞台应该先承接叙事，再承接管理动作。新建入口保留在视线尽头，而不是压在标题上。"
+                    : "The stage should carry the story first and the management controls second. Keep the creation entry nearby, but not louder than the scene itself."}
+                </p>
               </div>
             </div>
-          ) : (
-            <SessionList
-              sessions={sessions}
-              onSessionClick={handleSessionClick}
-              onSessionEdit={handleSessionEdit}
-              onSessionDelete={handleSessionDelete}
-            />
-          )}
+
+            {/* ========== 舞台区域 ========== */}
+            <div className="min-w-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="flex justify-start xl:justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNewSession}
+                  className={`${fontClass} h-11 gap-2 rounded-full border-border/70 bg-background/60 px-5 text-foreground hover:border-primary/20 hover:bg-primary/10 sm:h-10`}
+                >
+                  <Plus className="h-4 w-4" />
+                  {t("homePage.newSession")}
+                </Button>
+              </div>
+
+              {/* ========== 会话列表 ========== */}
+              {isLoading ? (
+                <div className="flex h-64 items-center justify-center animate-in fade-in duration-300">
+                  <div className="relative h-16 w-16">
+                    <div className="absolute inset-0 rounded-full border-2 border-t-primary-bright border-r-primary-soft border-b-ink-soft border-l-transparent animate-spin" />
+                    <div className="absolute inset-2 rounded-full border-2 border-t-ink-soft border-r-primary-bright border-b-primary-soft border-l-transparent animate-spin-slow" />
+                  </div>
+                </div>
+              ) : (
+                <SessionList
+                  sessions={sessions}
+                  onSessionClick={handleSessionClick}
+                  onSessionEdit={handleSessionEdit}
+                  onSessionDelete={handleSessionDelete}
+                />
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
 
       {/* ========== 弹窗 ========== */}
       <SessionEditModal

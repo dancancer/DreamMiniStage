@@ -12,6 +12,7 @@
 
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -22,11 +23,7 @@ import {
   BookOpen,
   Regex,
   SlidersHorizontal,
-  Cpu,
-  Puzzle,
-  Palette,
   Settings2,
-  Database,
 } from "lucide-react";
 import { useUiLayout, type PanelId } from "@/contexts/ui-layout";
 import { cn } from "@/lib/utils";
@@ -69,23 +66,9 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "外观/高级",
-    items: [
-      { id: "tagColors", label: "标签颜色", panel: "tagColors", icon: <Palette size={16} /> },
-    ],
-  },
-  {
-    label: "数据",
-    items: [
-      { id: "data", label: "数据管理", panel: "data", icon: <Database size={16} /> },
-    ],
-  },
-  {
     label: "设置",
     items: [
       { id: "settingsHub", label: "设置菜单", panel: "settingsHub", icon: <Settings2 size={16} /> },
-      { id: "modelSettings", label: "模型设置", panel: "modelSettings", icon: <Cpu size={16} /> },
-      { id: "plugins", label: "插件管理", panel: "plugins", icon: <Puzzle size={16} /> },
     ],
   },
 ];
@@ -126,12 +109,23 @@ export default function LeftNav({ isOpen, onClose }: LeftNavProps) {
     const content = (
       <div
         className={cn(
-          "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-          isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted",
+          "group flex min-h-11 items-center gap-3 rounded-2xl border px-3.5 py-3 text-sm transition-[background-color,border-color,color,transform] duration-200",
+          isActive
+            ? "border-primary/35 bg-primary/12 text-primary"
+            : "border-transparent text-ink hover:-translate-y-px hover:border-border/80 hover:bg-card/55 hover:text-foreground",
         )}
       >
-        <span className="text-muted-foreground">{item.icon}</span>
-        <span className="truncate">{item.label}</span>
+        <span
+          className={cn(
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors",
+            isActive
+              ? "border-primary/25 bg-primary/12 text-primary"
+              : "border-transparent bg-background/45 text-ink-soft group-hover:bg-background/70 group-hover:text-foreground",
+          )}
+        >
+          {item.icon}
+        </span>
+        <span className="truncate font-medium">{item.label}</span>
       </div>
     );
 
@@ -142,6 +136,7 @@ export default function LeftNav({ isOpen, onClose }: LeftNavProps) {
           href={item.href}
           onClick={onClose}
           className="block"
+          aria-current={isActiveRoute ? "page" : undefined}
         >
           {content}
         </Link>
@@ -160,11 +155,20 @@ export default function LeftNav({ isOpen, onClose }: LeftNavProps) {
     );
   };
 
+  const renderGroupLabel = (label: string) => (
+    <div className="flex items-center gap-2.5 px-3">
+      <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.2em] text-primary/70">
+        {label}
+      </span>
+      <span className="h-px flex-1 bg-gradient-to-r from-border/70 to-transparent" />
+    </div>
+  );
+
   return (
     <>
       <div
         className={cn(
-          "fixed inset-0 z-30 bg-black/40 transition-opacity md:hidden",
+          "fixed inset-0 z-30 bg-foreground/45 backdrop-blur-sm transition-opacity md:hidden",
           isOpen ? "opacity-100" : "pointer-events-none opacity-0",
         )}
         onClick={onClose}
@@ -173,33 +177,48 @@ export default function LeftNav({ isOpen, onClose }: LeftNavProps) {
 
       <aside
         className={cn(
-          "fixed z-40 flex h-full w-72 flex-col border-r border-border bg-background transition-transform duration-300",
+          "stage-sidebar-surface fixed z-40 flex h-full w-[18rem] flex-col border-r border-border/75 transition-transform duration-300",
           isOpen ? "translate-x-0" : "-translate-x-full",
           "md:static md:translate-x-0",
         )}
       >
-        <div className="flex items-center justify-between px-4 py-3 h-9 border-b border-border box-content">
-          <div className="text-base font-semibold text-foreground">DreamMiniStage</div>
+        <div className="flex h-[4.25rem] items-center justify-between border-b border-border/70 px-5">
+          <div className="min-w-0">
+            <div className="truncate text-lg font-semibold tracking-[0.02em] text-foreground">
+              DreamMiniStage
+            </div>
+            <p className="mt-1 text-[10px] uppercase tracking-[0.26em] text-primary/75">
+              Immersive Story Stage
+            </p>
+          </div>
           <Button
             variant="ghost"
-            className="h-auto p-2 text-sm text-muted-foreground hover:text-foreground md:hidden"
+            className="h-11 rounded-full border border-border/70 px-3 text-sm text-muted-foreground hover:border-primary/20 hover:bg-primary/10 hover:text-foreground md:hidden"
             onClick={onClose}
+            aria-label="关闭导航"
           >
             关闭
           </Button>
         </div>
 
-        <div className="flex-1 overflow-auto p-3 space-y-4">
+        <nav aria-label="主导航" className="flex-1 space-y-4 overflow-auto px-3 py-4">
           {NAV_GROUPS.map((group) => (
             <div key={group.label} className="space-y-2">
-              <div className="px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {group.label}
-              </div>
+              {renderGroupLabel(group.label)}
               <div className="space-y-1">
                 {group.items.map(renderItem)}
               </div>
             </div>
           ))}
+        </nav>
+
+        <div className="mt-auto border-t border-border/70 px-5 pb-5 pt-4">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-primary/60">
+            Stage Note
+          </div>
+          <p className="mt-2 text-xs leading-6 text-ink-soft">
+            故事不该被工具打断。
+          </p>
         </div>
       </aside>
     </>

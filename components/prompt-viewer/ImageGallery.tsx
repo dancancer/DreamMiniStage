@@ -198,14 +198,20 @@ function ImageThumbnail({ image, onError }: ImageThumbnailProps) {
   // ========== 渲染 ==========
 
   return (
-    <div className={cn(
-      CSS_CLASSES.IMAGE_THUMBNAIL,
-      "relative aspect-square rounded-md overflow-hidden",
-      "bg-muted-surface border border-border",
-      "group cursor-pointer transition-all duration-200",
-      "hover:border-primary-soft hover:shadow-md",
-      hasError && "cursor-not-allowed opacity-50",
-    )}>
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={hasError || !image.url}
+      aria-label={`打开图片 ${image.id}`}
+      className={cn(
+        CSS_CLASSES.IMAGE_THUMBNAIL,
+        "relative aspect-square rounded-md overflow-hidden",
+        "bg-muted-surface border border-border",
+        "group transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "hover:border-primary-soft disabled:cursor-not-allowed disabled:opacity-50",
+        hasError && "cursor-not-allowed opacity-50",
+      )}
+    >
       {/* 加载状态 */}
       {isLoading && !hasError && (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -235,17 +241,16 @@ function ImageThumbnail({ image, onError }: ImageThumbnailProps) {
             style={{ maxHeight: `${UI_CONFIG.MAX_IMAGE_HEIGHT}px` }}
             onLoad={handleLoad}
             onError={handleError}
-            onClick={handleClick}
             loading="lazy"
           />
 
           {/* 悬停遮罩 */}
           <div className={cn(
-            "absolute inset-0 bg-black/20 opacity-0",
+            "absolute inset-0 bg-foreground/15 opacity-0",
             "group-hover:opacity-100 transition-opacity duration-200",
             "flex items-center justify-center",
           )}>
-            <div className="text-white text-xs font-medium px-2 py-1 bg-black/50 rounded">
+            <div className="rounded bg-background/80 px-2 py-1 text-xs font-medium text-foreground">
               点击查看
             </div>
           </div>
@@ -256,7 +261,7 @@ function ImageThumbnail({ image, onError }: ImageThumbnailProps) {
       <div className="absolute top-2 right-2">
         <ImageTypeIndicator type={image.type} />
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -272,11 +277,11 @@ function ImageTypeIndicator({ type }: ImageTypeIndicatorProps) {
   const config = {
     base64: {
       label: "B64",
-      className: "bg-blue-500/80 text-white",
+      className: "bg-accent/80 text-accent-foreground",
     },
     url: {
       label: "URL",
-      className: "bg-green-500/80 text-white",
+      className: "bg-primary/80 text-primary-foreground",
     },
   };
 

@@ -110,7 +110,7 @@ const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
     <>
       {/* 移动端遮罩 */}
       {isMobile && !isCollapsed && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
+        <div className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm" />
       )}
 
       <div
@@ -127,7 +127,7 @@ const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
               variant="outline"
               size="icon"
               onClick={() => { trackButtonClick("CharacterSidebar", "移动端关闭侧边栏"); toggleSidebar(); }}
-              className="h-8 w-8 rounded-full text-cream bg-surface border-stroke hover:bg-accent hover:text-accent-foreground hover:border-accent"
+              className="h-8 w-8 rounded-full border-stroke bg-surface text-foreground hover:border-accent hover:bg-accent hover:text-accent-foreground"
             >
               <X size={16} />
             </Button>
@@ -169,7 +169,7 @@ const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
           <div className="transition-all duration-300 ease-in-out px-6 max-h-[500px] opacity-100">
             <div className="space-y-1 my-2">
               <div className="menu-item flex p-2 rounded-md hover:bg-accent hover:text-accent-foreground overflow-hidden transition-all duration-300 group">
-                <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 mr-3 flex items-center justify-center text-cream bg-surface rounded-md border border-stroke  transition-all duration-300 group-hover:border-accent group-hover:text-accent-foreground group-">
+                <div className="mr-3 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-stroke bg-surface text-foreground transition-all duration-300 group-hover:border-accent group-hover:text-accent-foreground md:h-12 md:w-12">
                   {character.avatar_path ? (
                     <CharacterAvatarBackground avatarPath={character.avatar_path} />
                   ) : (
@@ -177,7 +177,7 @@ const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
                   )}
                 </div>
                 <div className="flex flex-col justify-center">
-                  <span className={"magical-text whitespace-nowrap overflow-hidden text-ellipsis block text-xs md:text-sm text-cream group-hover:text-accent-foreground transition-colors duration-300 "}>
+                  <span className={"magical-text block overflow-hidden text-ellipsis whitespace-nowrap text-xs text-foreground transition-colors duration-300 group-hover:text-accent-foreground md:text-sm"}>
                     {truncate(character.name, nameLimit)}
                   </span>
                   <p className={`text-ink-soft text-2xs md:text-xs ${fontClass} whitespace-nowrap overflow-hidden text-ellipsis mt-1`}>
@@ -242,7 +242,7 @@ const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
                 onClick={() => { trackButtonClick("CharacterSidebar", "打开高级设置"); setIsAdvancedSettingsOpen(true); }}
                 isMobile={isMobile}
                 fontClass={fontClass}
-                accentColor="blue"
+                accentColor="accent"
               />
             </div>
           </div>

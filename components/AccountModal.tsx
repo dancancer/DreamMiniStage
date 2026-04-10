@@ -83,7 +83,7 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-        className="relative w-full max-w-md bg-surface rounded-2xl border border-muted-surface/50 overflow-hidden p-0"
+        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card p-0 text-card-foreground"
         hideCloseButton
       >
         <DialogTitle className="sr-only">{t("account.title")}</DialogTitle>
@@ -91,7 +91,7 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
             动画背景 - Animated Background
             ═══════════════════════════════════════════════════════════ */}
         <div className="absolute inset-0 bg-primary/5 opacity-60" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f59e0b' fill-opacity='0.03'%3E%3Cpath d='M30 30l30-30v60L30 30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,color-mix(in_oklch,var(--color-primary)_12%,transparent),transparent_58%)] opacity-60" />
         
         {/* ═══════════════════════════════════════════════════════════
             头部区域 - Header Section
@@ -102,12 +102,13 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 text-text-muted hover:text-cream hover:bg-white/5"
+            className="absolute right-4 top-4 h-8 w-8 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            aria-label={t("common.close")}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
           
-          <h2 className={"text-xl font-bold text-cream mb-2 "}>
+          <h2 className={"mb-2 text-xl font-bold text-foreground"}>
             {t("account.title")}
           </h2>
           
@@ -134,7 +135,7 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
               
               {/* 在线状态指示器 - Online Indicator */}
               <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-canvas p-1">
-                <div className="w-full h-full rounded-full bg-green-500"></div>
+                <div className="w-full h-full rounded-full bg-success"></div>
               </div>
             </div>
 
@@ -152,14 +153,14 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
                         type="text"
                         value={editedUsername}
                         onChange={(e) => setEditedUsername(e.target.value)}
-                        className="flex-1 bg-input border border-muted-surface rounded-md px-3 py-2 text-cream text-sm focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20"
+                        className="flex-1 rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20"
                         autoFocus
                       />
                       <Button
                         size="sm"
                         onClick={handleSaveUsername}
                         disabled={isLoading || !editedUsername.trim()}
-                        className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-xs"
+                        className="px-3 py-2 bg-success hover:bg-success/90 text-deep text-xs"
                       >
                         {isLoading ? "..." : "✓"}
                       </Button>
@@ -178,7 +179,7 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
                     
                     {/* 成功消息 - Success Message */}
                     {successMessage && (
-                      <div className="mt-2 text-xs text-green-400 flex items-center gap-1">
+                      <div className="mt-2 flex items-center gap-1 text-xs text-success">
                         <CheckCircle2 className="h-3 w-3" />
                         <span>{successMessage}</span>
                       </div>
@@ -186,7 +187,7 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
                   </div>
                 ) : (
                   <div className="flex items-center justify-between group">
-                    <span className={`text-cream font-medium ${fontClass}`}>
+                    <span className={`font-medium text-foreground ${fontClass}`}>
                       {user.username}
                     </span>
                     <Button
@@ -211,7 +212,7 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
                     <span className={`text-text text-sm ${fontClass}`}>
                       {user.email}
                     </span>
-                    <div className="flex items-center gap-1 text-xs text-green-400">
+                    <div className="flex items-center gap-1 text-xs text-success">
                       <CheckCircle2 className="h-3 w-3" />
                       <span>{t("account.verified")}</span>
                     </div>
@@ -254,14 +255,14 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
         <div className="px-6 py-4">
           <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-md ${
             isGuest 
-              ? "bg-primary-500/10 border border-primary-500/20" 
-              : "bg-green-500/10 border border-green-500/20"
+              ? "border border-primary/20 bg-primary/10" 
+              : "bg-success/10 border border-success/20"
           }`}>
             <div className={`w-2 h-2 rounded-full ${
-              isGuest ? "bg-primary-400" : "bg-green-400"
+              isGuest ? "bg-primary-400" : "bg-success"
             }`}></div>
             <span className={`text-xs font-medium ${
-              isGuest ? "text-primary-300" : "text-green-300"
+              isGuest ? "text-primary" : "text-success"
             } ${fontClass}`}>
               {isGuest ? t("account.guestAccount") : t("account.verifiedAccount")}
             </span>
@@ -275,7 +276,7 @@ export default function AccountModal({ isOpen, onClose }: AccountModalProps) {
           <Button
             variant="destructive"
             onClick={handleLogout}
-            className="w-full group relative overflow-hidden bg-red-600/10 hover:bg-red-600/20 border border-red-500/30 hover:border-red-500/50 text-red-400 hover:text-red-300 rounded-xl py-3 px-4"
+            className="w-full group relative overflow-hidden rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-danger hover:bg-danger/20 hover:text-danger"
           >
             <div className="absolute inset-0 bg-destructive/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
             

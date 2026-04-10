@@ -43,12 +43,14 @@ export default function SessionContentView({
         : regexView;
 
   return (
-    <div className="flex h-full relative overflow-hidden">
-      <div className="flex-1 h-full flex flex-col min-w-0">
-        {mainView}
-      </div>
+    <>
+      <main className="relative flex h-full flex-1 overflow-hidden" aria-label="会话主内容">
+        <div className="flex h-full min-w-0 flex-1 flex-col">
+          {mainView}
+        </div>
+      </main>
       {loginModal}
       {dialogueTreeModal}
-    </div>
+    </>
   );
 }

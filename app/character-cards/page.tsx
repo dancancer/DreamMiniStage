@@ -18,6 +18,7 @@ import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Aperture, LayoutGrid, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { StageEmptyState } from "@/components/ui/stage-empty-state";
 import { useLanguage } from "@/app/i18n";
 import ImportCharacterModal from "@/components/ImportCharacterModal";
 import EditCharacterModal from "@/components/EditCharacterModal";
@@ -30,6 +31,7 @@ import { moveToTop } from "@/function/character/move-to-top";
 import { toast } from "@/lib/store/toast-store";
 import { useSessionStore } from "@/lib/store/session-store";
 import { getString, setString } from "@/lib/storage/client-storage";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 /**
  * Interface defining the structure of a character object
@@ -53,7 +55,7 @@ interface Character {
  * 2. 创建会话模式（mode=create-session）：点击角色卡创建新会话
  */
 function CharacterCardsContent() {
-  const { t, fontClass } = useLanguage();
+  const { t, fontClass, language } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -71,9 +73,9 @@ function CharacterCardsContent() {
   const [currentCharacter, setCurrentCharacter] = useState<Character | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "carousel">("grid");
   const [mounted, setMounted] = useState(false);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     const savedViewMode = getString("characterCardsViewMode");
@@ -84,27 +86,14 @@ function CharacterCardsContent() {
 
   useEffect(() => {
     setMounted(true);
-    
+
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
     window.addEventListener("resize", checkMobile);
-    
-    const yellowImg = new Image();
-    const redImg = new Image();
-    
-    yellowImg.src = "/background_yellow.png";
-    redImg.src = "/background_red.png";
-    
-    Promise.all([
-      new Promise(resolve => yellowImg.onload = resolve),
-      new Promise(resolve => redImg.onload = resolve),
-    ]).then(() => {
-      setImagesLoaded(true);
-    });
-    
+
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
@@ -213,29 +202,19 @@ function CharacterCardsContent() {
   if (!mounted) return null;
 
   return (
-    <div className="h-full w-full overflow-hidden  relative">
-      <div
-        className={`absolute inset-0 z-0 opacity-35 transition-opacity duration-500  ${
-          imagesLoaded ? "opacity-35" : "opacity-0"
-        }`}
-      />
-
-      <div
-        className={`absolute inset-0 z-1 opacity-45 transition-opacity duration-500  mix-blend-multiply ${
-          imagesLoaded ? "opacity-45" : "opacity-0"
-        }`}
-      />
-      
-      <div className="h-full w-full overflow-y-auto">
+    <div className="relative h-full w-full overflow-hidden">
+      <main className="h-full w-full overflow-y-auto" aria-labelledby="character-cards-heading">
         <div className="flex flex-col items-center justify-start w-full py-8">
           <div className="w-full max-w-4xl relative z-10 px-4">
-            <div className="flex justify-between items-center mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <header className="mb-8 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
-                <h1 className={"text-xl sm:text-2xl magical-login-text "}>{t("sidebar.characterCards")}</h1>
+                <h1 id="character-cards-heading" className={"text-xl sm:text-2xl magical-login-text "}>{t("sidebar.characterCards")}</h1>
                 <Button
+                  type="button"
                   variant="outline"
                   size="icon"
-                  className={`hidden md:flex ${fontClass}`}
+                  className={`hidden h-11 w-11 md:flex ${fontClass}`}
+                  aria-label={viewMode === "grid" ? "切换到轮播视图" : "切换到网格视图"}
                   onClick={() => {
                     trackButtonClick("view_mode_btn", "切换视图模式");
                     const newViewMode = viewMode === "grid" ? "carousel" : "grid";
@@ -252,15 +231,16 @@ function CharacterCardsContent() {
               </div>
               <div className="flex gap-2 sm:gap-3">
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
-                  className={fontClass}
+                  className={`${fontClass} h-11 px-4 sm:h-10`}
                   onClick={() => setIsImportModalOpen(true)}
                 >
                   {t("characterCardsPage.importCharacter")}
                 </Button>
               </div>
-            </div>
+            </header>
 
             {isLoading ? (
               <div className="flex justify-center items-center h-64 animate-in fade-in duration-300">
@@ -273,19 +253,20 @@ function CharacterCardsContent() {
                 </div>
               </div>
             ) : characters.length === 0 ? (
-              <div className="session-card p-8 text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="mb-6 opacity-60 text-primary-bright">
-                  <Star size={64} fill="currentColor" fillOpacity={0.3} className="mx-auto" />
-                </div>
-                <p className={"text-cream-soft mb-6 "}>{t("characterCardsPage.noCharacters")}</p>
-                <div
-                  className={`portal-button inline-block text-primary-soft hover:text-highlight px-5 py-2 border border-border rounded-md cursor-pointer ${fontClass} active:scale-95`}
-                  onClick={() => setIsImportModalOpen(true)}
-                >
-                  {t("characterCardsPage.importFirstCharacter")}
-                </div>
-              </div>
-            ) : viewMode === "grid" || isMobile ? (
+              <StageEmptyState
+                icon={<Star size={36} fill="currentColor" fillOpacity={0.18} />}
+                eyebrow={language === "zh" ? "角色库" : "Character Library"}
+                title={t("characterCardsPage.noCharacters")}
+                description={language === "zh"
+                  ? "先导入角色卡，再从角色开始新的叙事会话。"
+                  : "Import a character card first, then begin a new storytelling session from that role."}
+                note={language === "zh"
+                  ? "角色是舞台的入口。先把角色带进来，世界和会话才会真正开始运转。"
+                  : "Characters are the doorway into the stage. Once they arrive, the world and the session can actually start moving."}
+                primaryAction={{ label: t("characterCardsPage.importFirstCharacter"), onClick: () => setIsImportModalOpen(true) }}
+                className="animate-in fade-in slide-in-from-bottom-2 duration-300"
+              />
+            ) : viewMode === "grid" || isMobile || prefersReducedMotion ? (
               <CharacterCardGrid
                 characters={characters}
                 onEditClick={handleEditClick}
@@ -330,7 +311,7 @@ function CharacterCardsContent() {
           )}
 
         </div>
-      </div>
+      </main>
     </div>
   );
 }

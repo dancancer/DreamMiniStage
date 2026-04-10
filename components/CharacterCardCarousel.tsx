@@ -160,17 +160,13 @@ const CharacterCardCarousel: React.FC<CharacterCardCarouselProps> = ({
           return (
             <div
               key={character.id}
-              className={`absolute flex items-center justify-center max-w-[280px] max-h-[350px] w-[40vw] h-[50vw] left-[calc(50%-10vw)] top-[calc(50%-15vw)] rounded-[8px] ${opacityClass} ${
-                isCentered
-                  ? "shadow-[0_15px_35px_-18px_rgba(255,255,255,0.45)]"
-                  : "shadow-[0_12px_28px_-20px_rgba(0,0,0,0.55)]"
-              } transition-[transform,opacity,filter,box-shadow] duration-500 will-change-transform`}
+              className={`absolute left-[calc(50%-10vw)] top-[calc(50%-15vw)] flex h-[50vw] max-h-[350px] w-[40vw] max-w-[280px] items-center justify-center rounded-[8px] ${opacityClass} transition-[transform,opacity] duration-500 will-change-transform`}
               style={{
                 transform: `rotateY(${rotateY}deg) translateZ(${translateZDistance}vw) scale(${scale})`,
                 transformOrigin: "center center",
                 transition: isAnimating
-                  ? "transform 0.8s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.3s ease, filter 0.3s ease, box-shadow 0.3s ease"
-                  : "opacity 0.3s ease, filter 0.3s ease, box-shadow 0.3s ease",
+                  ? "transform 0.6s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.25s ease"
+                  : "opacity 0.25s ease",
               }}
             >
               {/* Character card content */}
@@ -178,16 +174,18 @@ const CharacterCardCarousel: React.FC<CharacterCardCarouselProps> = ({
                 {/* Action buttons */}
                 <div className="absolute top-2 right-2 flex space-x-1 z-10">
                   <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={(e: React.MouseEvent) => {trackButtonClick("edit_character_btn", "编辑角色"); onEditClick(character, e);}}
-                    className="h-auto w-auto p-1.5 bg-muted-surface hover:bg-muted-surface rounded-full text-primary-soft hover:text-highlight"
+                    className="h-10 w-10 rounded-full bg-muted-surface text-primary-soft hover:bg-muted-surface hover:text-highlight"
                     title={t("characterCardsPage.edit")}
                     aria-label={t("characterCardsPage.edit")}
                   >
                     <PencilLine className="h-3.5 w-3.5" />
                   </Button>
                   <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={(e: React.MouseEvent) => {
@@ -195,7 +193,7 @@ const CharacterCardCarousel: React.FC<CharacterCardCarouselProps> = ({
                       e.stopPropagation();
                       onDeleteClick(character.id);
                     }}
-                    className="h-auto w-auto p-1.5 bg-muted-surface hover:bg-muted-surface rounded-full text-primary-soft hover:text-highlight"
+                    className="h-10 w-10 rounded-full bg-muted-surface text-primary-soft hover:bg-muted-surface hover:text-highlight"
                     title={t("characterCardsPage.delete")}
                     aria-label={t("characterCardsPage.delete")}
                   >
@@ -204,9 +202,11 @@ const CharacterCardCarousel: React.FC<CharacterCardCarouselProps> = ({
                 </div>
                     
                 {/* 角色卡内容 - 点击创建会话并跳转 */}
-                <div
+                <button
+                  type="button"
                   onClick={() => handleCardClick(character.id)}
-                  className={`h-full flex flex-col cursor-pointer ${isCreatingSession ? "opacity-50 pointer-events-none" : ""}`}
+                  className={`flex h-full w-full flex-col text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${isCreatingSession ? "opacity-50 pointer-events-none" : "cursor-pointer"}`}
+                  aria-label={`打开角色 ${character.name}`}
                 >
                   <div className="relative w-full overflow-hidden rounded aspect-4/5">
                     {character.avatar_path ? (
@@ -230,7 +230,7 @@ const CharacterCardCarousel: React.FC<CharacterCardCarouselProps> = ({
                           size="icon"
                           onClick={(e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); handleRotateLeft(); }}
                           disabled={isAnimating}
-                          className="h-auto w-auto p-2 bg-muted-surface/90 hover:bg-muted-surface/95 rounded-full text-primary-soft hover:text-highlight backdrop-blur-sm border-muted-surface/50"
+                          className="h-11 w-11 rounded-full border-border/50 bg-muted-surface/90 p-0 text-primary-soft hover:bg-muted-surface/95 hover:text-highlight sm:h-10 sm:w-10"
                           aria-label="向左旋转"
                         >
                           <ArrowLeft className="h-4 w-4" />
@@ -240,7 +240,7 @@ const CharacterCardCarousel: React.FC<CharacterCardCarouselProps> = ({
                           size="icon"
                           onClick={(e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); handleRotateRight(); }}
                           disabled={isAnimating}
-                          className="h-auto w-auto p-2 bg-muted-surface/90 hover:bg-muted-surface/95 rounded-full text-primary-soft hover:text-highlight backdrop-blur-sm border-muted-surface/50"
+                          className="h-11 w-11 rounded-full border-border/50 bg-muted-surface/90 p-0 text-primary-soft hover:bg-muted-surface/95 hover:text-highlight sm:h-10 sm:w-10"
                           aria-label="向右旋转"
                         >
                           <ArrowRight className="h-4 w-4" />
@@ -248,7 +248,7 @@ const CharacterCardCarousel: React.FC<CharacterCardCarouselProps> = ({
                       </div>
                     )}
                   </div>
-                </div>
+                </button>
               </div>
             </div>
           );

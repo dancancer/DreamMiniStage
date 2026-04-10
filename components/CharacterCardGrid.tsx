@@ -22,6 +22,7 @@ import { trackButtonClick } from "@/utils/google-analytics";
 import { Button } from "@/components/ui/button";
 import { useSessionStore } from "@/lib/store/session-store";
 import { toast } from "@/lib/store/toast-store";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 /**
  * Interface definitions for the component's data structures
@@ -64,6 +65,7 @@ const CharacterCardGrid: React.FC<CharacterCardGridProps> = ({
   const router = useRouter();
   const [internalIsCreating, setInternalIsCreating] = useState(false);
   const { createSession } = useSessionStore();
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const isCreatingSession = externalIsCreating || internalIsCreating;
 
@@ -103,19 +105,20 @@ const CharacterCardGrid: React.FC<CharacterCardGridProps> = ({
       {characters.map((character, index) => (
         <div
           key={character.id}
-          className="scale-[0.75] sm:scale-[0.85] animate-in fade-in slide-in-from-bottom-2 duration-300"
+          className="animate-in fade-in slide-in-from-bottom-2 duration-300"
           style={{ animationDelay: `${index * 50}ms` }}
         >
           <Tilt
-            tiltMaxAngleX={-15}
-            tiltMaxAngleY={-15}
-            glareEnable={true}
+            tiltEnable={!prefersReducedMotion}
+            tiltMaxAngleX={-8}
+            tiltMaxAngleY={-8}
+            glareEnable={false}
             glareMaxOpacity={0.1}
             glareColor="var(--color-cream)"
             glarePosition="all"
             glareBorderRadius="8px"
-            scale={1.02}
-            transitionSpeed={2000}
+            scale={1}
+            transitionSpeed={prefersReducedMotion ? 0 : 600}
             className="h-full"
           >
             <div className="relative session-card h-full transition-all duration-300">
@@ -123,26 +126,29 @@ const CharacterCardGrid: React.FC<CharacterCardGridProps> = ({
               <div className="absolute top-1 right-1 sm:top-2 sm:right-2 flex space-x-0.5 sm:space-x-1 z-10">
                 {/* move character to top of the screen */}
                 <Button
+                  type="button"
                   variant="ghost"
                   size="icon"
                   onClick={(e) => {e.stopPropagation(); trackButtonClick("move_to_top_character_btn", "置顶角色"); onMoveToTopClick(character.id);}}
-                  className="p-2 sm:p-1.5 h-auto w-auto bg-muted-surface hover:bg-muted-surface rounded-full text-primary-soft hover:text-highlight"
+                  className="h-11 w-11 rounded-full bg-muted-surface text-primary-soft hover:bg-muted-surface hover:text-highlight sm:h-10 sm:w-10"
                   title={t("characterCardsPage.move_to_top")}
                   aria-label={t("characterCardsPage.move_to_top")}
                 >
-                  <ArrowUp className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                  <ArrowUp className="h-4 w-4" />
                 </Button>
                 <Button
+                  type="button"
                   variant="ghost"
                   size="icon"
                   onClick={(e) => {trackButtonClick("edit_character_btn", "编辑角色"); onEditClick(character, e);}}
-                  className="p-2 sm:p-1.5 h-auto w-auto bg-muted-surface hover:bg-muted-surface rounded-full text-primary-soft hover:text-highlight"
+                  className="h-11 w-11 rounded-full bg-muted-surface text-primary-soft hover:bg-muted-surface hover:text-highlight sm:h-10 sm:w-10"
                   title={t("characterCardsPage.edit")}
                   aria-label={t("characterCardsPage.edit")}
                 >
-                  <PencilLine className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                  <PencilLine className="h-4 w-4" />
                 </Button>
                 <Button
+                  type="button"
                   variant="ghost"
                   size="icon"
                   onClick={(e) => {
@@ -150,18 +156,20 @@ const CharacterCardGrid: React.FC<CharacterCardGridProps> = ({
                     e.stopPropagation();
                     onDeleteClick(character.id);
                   }}
-                  className="p-2 sm:p-1.5 h-auto w-auto bg-muted-surface hover:bg-muted-surface rounded-full text-primary-soft hover:text-highlight"
+                  className="h-11 w-11 rounded-full bg-muted-surface text-primary-soft hover:bg-muted-surface hover:text-highlight sm:h-10 sm:w-10"
                   title={t("characterCardsPage.delete")}
                   aria-label={t("characterCardsPage.delete")}
                 >
-                  <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             
               {/* 角色卡内容 - 点击创建会话并跳转 */}
-              <div
+              <button
+                type="button"
                 onClick={() => handleCardClick(character.id)}
-                className={`h-full flex flex-col cursor-pointer ${isCreatingSession ? "opacity-50 pointer-events-none" : ""}`}
+                className={`flex h-full w-full flex-col text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${isCreatingSession ? "opacity-50 pointer-events-none" : "cursor-pointer"}`}
+                aria-label={`打开角色 ${character.name}`}
               >
                 <div className="relative w-full overflow-hidden rounded aspect-4/5">
                   {character.avatar_path ? (
@@ -179,7 +187,7 @@ const CharacterCardGrid: React.FC<CharacterCardGridProps> = ({
                     <span className="line-clamp-2">{character.personality}</span>
                   </div>
                 </div>
-              </div>
+              </button>
             </div>
           </Tilt>
         </div>

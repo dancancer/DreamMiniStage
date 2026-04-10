@@ -58,6 +58,19 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
   size = "md",
   showDescription = true,
 }) => {
+  const isInteractive = Boolean(onClick);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick) {
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onClick();
+    }
+  };
+
   /* ─────────────────────────────────────────────────────────────────────────
      尺寸样式
      ───────────────────────────────────────────────────────────────────────── */
@@ -90,9 +103,14 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
   return (
     <div
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role={isInteractive ? "button" : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      aria-pressed={isInteractive ? isSelected || isActive : undefined}
       className={cn(
-        "relative flex items-start gap-3 rounded-lg border transition-all cursor-pointer",
+        "group relative flex items-start gap-3 rounded-lg border transition-all",
         styles.card,
+        isInteractive && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         isSelected
           ? "border-primary bg-primary/10"
           : "border-border hover:border-primary/50 hover:bg-accent/50",
@@ -124,8 +142,8 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
 
         {/* ─── 状态指示器 ─── */}
         {isDefault && (
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
-            <Star className="w-2.5 h-2.5 text-white" />
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary-500 rounded-full flex items-center justify-center">
+            <Star className="w-2.5 h-2.5 text-primary-foreground" />
           </div>
         )}
       </div>
@@ -196,11 +214,27 @@ export const PersonaCardCompact: React.FC<PersonaCardCompactProps> = ({
   isDefault = false,
   onClick,
 }) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick) {
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <div
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-pressed={onClick ? isSelected : undefined}
       className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors",
+        "flex items-center gap-2 rounded-md px-3 py-2 transition-colors",
+        onClick && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         isSelected ? "bg-primary/10" : "hover:bg-accent",
       )}
     >
@@ -225,7 +259,7 @@ export const PersonaCardCompact: React.FC<PersonaCardCompactProps> = ({
       <span className="flex-1 text-sm truncate">{persona.name}</span>
 
       {/* ─── 状态 ─── */}
-      {isDefault && <Star className="w-3 h-3 text-yellow-500" />}
+      {isDefault && <Star className="w-3 h-3 text-primary-500" />}
       {isSelected && <Check className="w-4 h-4 text-primary" />}
     </div>
   );

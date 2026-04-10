@@ -29,15 +29,15 @@ export function ToastProvider() {
       toastOptions={{
         classNames: {
           toast: " border border-border  ",
-          title: "text-cream font-medium",
-          description: "text-primary-soft",
+          title: "text-foreground font-medium",
+          description: "text-muted-foreground",
           actionButton: "bg-primary-bright text-deep hover:bg-primary-soft",
           cancelButton: "bg-muted-surface text-ink-soft hover:",
-          closeButton: "bg-muted-surface text-ink-soft hover: hover:text-primary-soft",
+          closeButton: "bg-muted-surface text-ink-soft hover: hover:text-foreground",
           success: "border-green-600/50",
           error: "border-red-600/50",
-          warning: "border-yellow-600/50",
-          info: "border-blue-600/50",
+          warning: "border-primary-600/50",
+          info: "border-accent/60",
         },
       }}
     />

@@ -40,31 +40,31 @@ interface Props {
 
 const STATUS_UI: Record<ScriptStatus["status"], { card: string; badge: string; label: string }> = {
   running: {
-    card: "border-border bg-overlay",
+    card: "border-border bg-card/50",
     badge: "bg-ink/20 text-ink-soft",
     label: "RUNNING",
   },
   completed: {
-    card: "border-green-500/30 bg-green-500/5",
-    badge: "bg-green-500/20 text-green-400",
+    card: "border-success/30 bg-success/10",
+    badge: "bg-success/20 text-success",
     label: "COMPLETED",
   },
   error: {
-    card: "border-red-500/30 bg-red-500/5",
-    badge: "bg-red-500/20 text-red-400",
+    card: "border-danger/30 bg-danger/10",
+    badge: "bg-danger/20 text-danger",
     label: "ERROR",
   },
 };
 
 const SUPPORT_UI = {
-  default: "bg-green-500/20 text-green-400",
-  conditional: "bg-amber-500/20 text-amber-300",
-  "fail-fast": "bg-red-500/20 text-red-300",
+  default: "bg-success/20 text-success",
+  conditional: "bg-primary/20 text-primary-300",
+  "fail-fast": "bg-danger/20 text-danger",
   unsupported: "bg-ink/20 text-ink-soft",
 } as const;
 
 const PRODUCT_ENTRY_UI = {
-  true: "bg-blue-500/20 text-blue-300",
+  true: "bg-accent/20 text-sky",
   false: "bg-ink/20 text-ink-soft",
 } as const;
 
@@ -92,7 +92,7 @@ function ScriptStatusCard({ script }: { script: ScriptStatus }) {
       
       {/* ========== 错误信息 ========== */}
       {script.message && (
-        <div className="mt-2 p-2 bg-black/30 rounded text-xs text-red-300 font-mono whitespace-pre-wrap">
+        <div className="mt-2 rounded bg-deep/70 p-2 font-mono text-xs text-danger whitespace-pre-wrap">
           {script.message}
         </div>
       )}
@@ -120,10 +120,10 @@ function HostCapabilitySection() {
         {capabilityCards.map((capability) => (
           <div
             key={capability.id}
-            className="rounded border border-border bg-overlay p-3"
+            className="rounded border border-border bg-card/50 p-3"
           >
             <div className="flex items-center justify-between gap-2">
-              <div className="text-sm font-medium text-cream">{capability.id}</div>
+              <div className="text-sm font-medium text-foreground">{capability.id}</div>
               <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${SUPPORT_UI[capability.support]}`}>
                 {capability.support}
               </span>
@@ -162,9 +162,9 @@ function RecentApiCallsSection({ recentApiCalls }: { recentApiCalls: ScriptHostA
       ) : (
         <div className="space-y-2">
           {recentApiCalls.map((entry) => (
-            <div key={`${entry.method}-${entry.timestamp}`} className="rounded border border-border bg-overlay p-3">
+            <div key={`${entry.method}-${entry.timestamp}`} className="rounded border border-border bg-card/50 p-3">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-xs text-cream">{entry.method}</span>
+                <span className="font-mono text-xs text-foreground">{entry.method}</span>
                 <span className="text-[10px] uppercase tracking-wide text-ink-soft">{entry.outcome}</span>
               </div>
               <div className="mt-1 text-xs text-ink-soft">
@@ -190,9 +190,9 @@ function RuntimeStateSection({ runtimeState }: { runtimeState: ScriptHostRuntime
       <SectionTitle>Runtime State</SectionTitle>
       <div className="grid gap-2 sm:grid-cols-3">
         {items.map(([label, value]) => (
-          <div key={label} className="rounded border border-border bg-overlay p-3">
+          <div key={label} className="rounded border border-border bg-card/50 p-3">
             <div className="text-[10px] uppercase tracking-wide text-ink-soft">{label}</div>
-            <div className="mt-1 text-sm font-medium text-cream">{value}</div>
+            <div className="mt-1 text-sm font-medium text-foreground">{value}</div>
           </div>
         ))}
       </div>
@@ -229,7 +229,7 @@ export default function ScriptDebugPanel({ isOpen, onClose, scripts, hostDebug }
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] p-0 flex flex-col">
         <DialogHeader className="p-4 border-b border-border">
-          <DialogTitle className="text-lg font-medium text-cream">
+          <DialogTitle className="text-lg font-medium text-foreground">
             Script Execution Debugger
           </DialogTitle>
           <DialogDescription className="text-sm text-ink-soft">

@@ -68,7 +68,7 @@ export default function MessageHeaderControls({
         active={fastModel}
         onClick={handleFastModelClick}
         tooltip={fastModel ? t("characterChat.disableFastModel") : t("characterChat.enableFastModel")}
-        activeColor="blue"
+        activeColor="accent"
         icon={<LightningIcon active={fastModel} />}
       />
     </>
@@ -83,18 +83,18 @@ interface ToggleButtonProps {
   active: boolean;
   onClick: () => void;
   tooltip: string;
-  activeColor: "primary" | "blue";
+  activeColor: "primary" | "accent";
   icon: React.ReactNode;
 }
 
 function ToggleButton({ active, onClick, tooltip, activeColor, icon }: ToggleButtonProps) {
   const colorStyles = {
     primary: {
-      active: "text-primary-400 hover:text-primary-300 border-primary-400/60 hover:border-primary-300/70 hover:shadow-[0_0_8px_rgba(252,211,77,0.4)]",
+      active: "text-primary-400 hover:text-primary-300 border-primary-400/60 hover:border-primary-300/70",
       inactive: "text-ink-soft hover:text-primary-soft border-stroke hover:border-stroke-strong",
     },
-    blue: {
-      active: "text-blue-500 hover:text-blue-400 border-blue-500/60 hover:border-blue-400/70 hover:shadow-[0_0_8px_rgba(59,130,246,0.4)]",
+    accent: {
+      active: "text-sky hover:text-cream border-accent/70 hover:border-primary-500/50",
       inactive: "text-ink-soft hover:text-primary-soft border-stroke hover:border-stroke-strong",
     },
   };
@@ -106,10 +106,11 @@ function ToggleButton({ active, onClick, tooltip, activeColor, icon }: ToggleBut
       variant="outline"
       size="icon"
       onClick={onClick}
-      className={`mx-1 h-6 w-6 bg-surface group relative ${style}`}
+      className={`group relative mx-0.5 h-11 w-11 bg-surface/80 sm:h-10 sm:w-10 ${style}`}
       data-tooltip={tooltip}
+      aria-label={tooltip}
     >
-      <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-overlay text-cream text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap border border-border">
+      <div className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded border border-border bg-popover px-2 py-1 text-xs text-popover-foreground opacity-0 transition-opacity duration-200 group-hover:opacity-100">
         {tooltip}
       </div>
       {icon}
@@ -122,5 +123,5 @@ function StreamIcon({ active }: { active: boolean }) {
 }
 
 function LightningIcon({ active }: { active: boolean }) {
-  return <Zap className={`w-3 h-3 ${active ? "text-blue-500" : ""}`} />;
+  return <Zap className={`w-3 h-3 ${active ? "text-sky" : ""}`} />;
 }
