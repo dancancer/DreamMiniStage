@@ -1,27 +1,13 @@
-/**
- * @input  hooks/script-bridge/types, lib/slash-command/executor, lib/audio/store, lib/data/roleplay/*, lib/slash-command/prompt-injection-store
- * @output adaptSlashExecutionContext
- * @pos    Slash 执行上下文适配器
- * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
- */
+/** Slash Context Adapter — 组装 ExecutionContext，领域模块位于 context-adapters/ */
 
 import type { ApiCallContext } from "./types";
 import type {
-  AuthorNoteState,
   ExecutionContext,
   SendOptions,
-  WorldBookEntryData,
   PresetInfo,
-  AudioChannelType,
-  AudioChannelSnapshot,
-  CharacterSummary,
-  ConnectionProfileState,
   PersonaLockType,
-  SlashToolRegistration,
 } from "@/lib/slash-command/types";
 import { executeSlashCommandScript } from "@/lib/slash-command/executor";
-import { getAudioManager } from "@/lib/audio/store";
-import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
 import {
   getPromptModelValue,
   getActivePromptPresetInfo,
@@ -38,32 +24,7 @@ import {
   setPromptStopStrings,
   updatePromptInstructState,
 } from "@/lib/prompt-config/service";
-import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
-import {
-  isVectorMemoryEnabled,
-  setVectorMemoryEnabled,
-} from "@/lib/vector-memory/manager";
-import {
-  getVectorChatsState,
-  getVectorFilesState,
-  getVectorMaxEntriesSetting,
-  getVectorQuerySetting,
-  getVectorThresholdSetting,
-  setVectorChatsState,
-  setVectorFilesState,
-  setVectorMaxEntriesSetting,
-  setVectorQuerySetting,
-  setVectorThresholdSetting,
-} from "@/lib/vector-memory/settings";
-import {
-  upsertPromptInjection,
-  listPromptInjections,
-  removePromptInjections,
-} from "@/lib/slash-command/prompt-injection-store";
-import type { WorldBookEntry } from "@/lib/models/world-book-model";
 import { createLoreRegexAdapters } from "./slash-context-lore-regex";
-import { getRegisteredScriptTools, invokeScriptTool, registerScriptTool, unregisterScriptTool } from "./tool-handlers";
-
 import {
   createDefaultAutoBackground,
   createDefaultLockBackground,
@@ -75,7 +36,6 @@ import {
   createDefaultSetTheme,
   createDefaultTogglePanels,
   createDefaultToggleVisualNovelMode,
-  applyChatDisplayMode,
   createDefaultSetAverageBackgroundColor,
   createDefaultSetChatDisplayMode,
   defaultCloseCurrentChat,
@@ -84,296 +44,19 @@ import {
   defaultShowButtonsPopup,
   defaultShowPopup,
 } from "./default-ui-host";
-
-const AUTHOR_NOTE_STORAGE_KEY = "dreamministage.author-note";
-const PERSONA_NAME_STORAGE_KEY = "dreamministage.persona-name";
-const PERSONA_LOCK_STORAGE_KEY = "dreamministage.persona-lock";
-const CONNECTION_PROFILES_STORAGE_KEY = "dreamministage.connection-profiles";
-const CONNECTION_PROFILE_SELECTED_KEY = "dreamministage.connection-profile-selected";
-const AUTHOR_NOTE_INJECTION_PREFIX = "note_injection";
-
-const DEFAULT_AUTHOR_NOTE_STATE: AuthorNoteState = {
-  text: "",
-  depth: 4,
-  frequency: 1,
-  position: "chat",
-  role: "system",
-};
-
-const DEFAULT_PERSONA_LOCK_STATE: Record<PersonaLockType, boolean> = {
-  chat: false,
-  character: false,
-  default: false,
-};
-
-function readStringFromStorage(storageKey: string): string {
-  if (typeof window === "undefined") {
-    return "";
-  }
-
-  try {
-    return window.localStorage.getItem(storageKey) || "";
-  } catch {
-    return "";
-  }
-}
-
-function writeStringToStorage(storageKey: string, value: string): string {
-  const normalized = String(value);
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(storageKey, normalized);
-  }
-  return normalized;
-}
-
-function createConnectionProfileId(name: string): string {
-  const normalizedName = normalizeScopeToken(name.trim().toLowerCase() || "profile");
-  const randomSuffix = Math.random().toString(36).slice(2, 8);
-  return `${normalizedName}_${Date.now().toString(36)}_${randomSuffix}`;
-}
-
-function normalizeConnectionProfile(value: unknown): ConnectionProfileState | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-
-  const raw = value as Record<string, unknown>;
-  if (typeof raw.name !== "string" || raw.name.trim().length === 0) {
-    return null;
-  }
-
-  const profile: ConnectionProfileState = {
-    ...raw,
-    id: typeof raw.id === "string" && raw.id.trim().length > 0
-      ? raw.id
-      : createConnectionProfileId(raw.name),
-    name: raw.name.trim(),
-  };
-  return profile;
-}
-
-function normalizeConnectionProfiles(value: unknown): ConnectionProfileState[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  const seenIds = new Set<string>();
-  const profiles: ConnectionProfileState[] = [];
-  for (const item of value) {
-    const profile = normalizeConnectionProfile(item);
-    if (!profile || seenIds.has(profile.id)) {
-      continue;
-    }
-    seenIds.add(profile.id);
-    profiles.push(profile);
-  }
-  return profiles;
-}
-
-function readConnectionProfilesFromStorage(): ConnectionProfileState[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const raw = window.localStorage.getItem(CONNECTION_PROFILES_STORAGE_KEY);
-    if (!raw || raw.trim().length === 0) {
-      return [];
-    }
-
-    return normalizeConnectionProfiles(JSON.parse(raw));
-  } catch {
-    return [];
-  }
-}
-
-function writeConnectionProfilesToStorage(
-  profiles: ConnectionProfileState[],
-): ConnectionProfileState[] {
-  const normalized = normalizeConnectionProfiles(profiles);
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(
-      CONNECTION_PROFILES_STORAGE_KEY,
-      JSON.stringify(normalized),
-    );
-  }
-  return normalized;
-}
-
-function readSelectedProfileIdFromStorage(): string {
-  return readStringFromStorage(CONNECTION_PROFILE_SELECTED_KEY).trim();
-}
-
-function writeSelectedProfileIdToStorage(profileId: string): string {
-  return writeStringToStorage(CONNECTION_PROFILE_SELECTED_KEY, profileId.trim());
-}
-
-function isAuthorNotePosition(value: unknown): value is AuthorNoteState["position"] {
-  return value === "before" || value === "after" || value === "chat";
-}
-
-function isAuthorNoteRole(value: unknown): value is AuthorNoteState["role"] {
-  return value === "system" || value === "user" || value === "assistant";
-}
-
-function normalizeAuthorNoteState(value: unknown): AuthorNoteState {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return { ...DEFAULT_AUTHOR_NOTE_STATE };
-  }
-
-  const raw = value as Record<string, unknown>;
-  const text = typeof raw.text === "string" ? raw.text : DEFAULT_AUTHOR_NOTE_STATE.text;
-  const depth = Number.isInteger(raw.depth) && Number(raw.depth) >= 0
-    ? Number(raw.depth)
-    : DEFAULT_AUTHOR_NOTE_STATE.depth;
-  const frequency = Number.isInteger(raw.frequency) && Number(raw.frequency) >= 0
-    ? Number(raw.frequency)
-    : DEFAULT_AUTHOR_NOTE_STATE.frequency;
-  const position = isAuthorNotePosition(raw.position)
-    ? raw.position
-    : DEFAULT_AUTHOR_NOTE_STATE.position;
-  const role = isAuthorNoteRole(raw.role)
-    ? raw.role
-    : DEFAULT_AUTHOR_NOTE_STATE.role;
-
-  return {
-    text,
-    depth,
-    frequency,
-    position,
-    role,
-  };
-}
-
-function readAuthorNoteStateFromStorage(): AuthorNoteState {
-  if (typeof window === "undefined") {
-    return { ...DEFAULT_AUTHOR_NOTE_STATE };
-  }
-
-  try {
-    const raw = window.localStorage.getItem(AUTHOR_NOTE_STORAGE_KEY);
-    if (!raw || raw.trim().length === 0) {
-      return { ...DEFAULT_AUTHOR_NOTE_STATE };
-    }
-    return normalizeAuthorNoteState(JSON.parse(raw));
-  } catch {
-    return { ...DEFAULT_AUTHOR_NOTE_STATE };
-  }
-}
-
-function writeAuthorNoteStateToStorage(state: AuthorNoteState): AuthorNoteState {
-  const normalized = normalizeAuthorNoteState(state);
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(AUTHOR_NOTE_STORAGE_KEY, JSON.stringify(normalized));
-  }
-  return normalized;
-}
-
-function normalizePersonaLockState(value: unknown): Record<PersonaLockType, boolean> {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return { ...DEFAULT_PERSONA_LOCK_STATE };
-  }
-
-  const raw = value as Record<string, unknown>;
-  return {
-    chat: raw.chat === true,
-    character: raw.character === true,
-    default: raw.default === true,
-  };
-}
-
-function readPersonaLockStateFromStorage(): Record<PersonaLockType, boolean> {
-  if (typeof window === "undefined") {
-    return { ...DEFAULT_PERSONA_LOCK_STATE };
-  }
-
-  try {
-    const raw = window.localStorage.getItem(PERSONA_LOCK_STORAGE_KEY);
-    if (!raw || raw.trim().length === 0) {
-      return { ...DEFAULT_PERSONA_LOCK_STATE };
-    }
-    return normalizePersonaLockState(JSON.parse(raw));
-  } catch {
-    return { ...DEFAULT_PERSONA_LOCK_STATE };
-  }
-}
-
-function writePersonaLockStateToStorage(
-  state: Record<PersonaLockType, boolean>,
-): Record<PersonaLockType, boolean> {
-  const normalized = normalizePersonaLockState(state);
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(PERSONA_LOCK_STORAGE_KEY, JSON.stringify(normalized));
-  }
-  return normalized;
-}
-
-function normalizeScopeToken(value: string): string {
-  return value.replace(/[^a-zA-Z0-9_-]/g, "_");
-}
-
-function getAuthorNoteInjectionId(ctx: ApiCallContext): string {
-  const scopeToken = [ctx.dialogueId, ctx.characterId, ctx.iframeId]
-    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
-    .join("_");
-  return `${AUTHOR_NOTE_INJECTION_PREFIX}_${normalizeScopeToken(scopeToken || "global")}`;
-}
-
-function syncAuthorNoteInjection(
-  ctx: ApiCallContext,
-  state: AuthorNoteState,
-): void {
-  const injectionId = getAuthorNoteInjectionId(ctx);
-  const normalizedText = state.text.trim();
-
-  if (normalizedText.length === 0) {
-    const removed = removePromptInjections([injectionId]);
-    if (removed > 0 && typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("DreamMiniStage:uninjectPrompts", {
-          detail: {
-            ids: [injectionId],
-            removed,
-            characterId: ctx.characterId,
-            dialogueId: ctx.dialogueId,
-            iframeId: ctx.iframeId,
-          },
-        }),
-      );
-    }
-    return;
-  }
-
-  const injection = upsertPromptInjection(
-    {
-      id: injectionId,
-      content: normalizedText,
-      role: state.role,
-      position: state.position === "chat" ? "in_chat" : state.position,
-      depth: state.depth,
-      should_scan: false,
-    },
-    {
-      characterId: ctx.characterId,
-      dialogueId: ctx.dialogueId,
-      iframeId: ctx.iframeId,
-    },
-  );
-
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(
-      new CustomEvent("DreamMiniStage:injectPrompts", {
-        detail: {
-          prompts: [injection],
-          once: false,
-          characterId: ctx.characterId,
-          dialogueId: ctx.dialogueId,
-          iframeId: ctx.iframeId,
-        },
-      }),
-    );
-  }
-}
+import {
+  syncAuthorNoteInjection,
+  readPersonaLockStateFromStorage,
+  writePersonaLockStateToStorage,
+  createStorageDefaults,
+} from "./context-adapters/storage-helpers";
+import { createWorldBookAdapters } from "./context-adapters/worldbook-adapter";
+import { createCharacterAdapters } from "./context-adapters/character-adapter";
+import {
+  createAudioAdapters,
+  createToolAdapters,
+  createPromptInjectionAdapters,
+} from "./context-adapters/tool-prompt-adapter";
 
 export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContext {
   const snapshot = ctx.getVariablesSnapshot();
@@ -382,13 +65,12 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     ? { ...snapshot.character[ctx.characterId] }
     : {};
 
+  /* ── 变量管理 ──────────────────────────────────────── */
   const hasCharacterVariable = (key: string): boolean =>
     Object.prototype.hasOwnProperty.call(characterVariables, key);
 
   const getLocalVariable = (key: string): unknown => {
-    if (hasCharacterVariable(key)) {
-      return characterVariables[key];
-    }
+    if (hasCharacterVariable(key)) return characterVariables[key];
     return globalVariables[key];
   };
 
@@ -398,7 +80,6 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
       ctx.setScriptVariable(key, value, "character", ctx.characterId);
       return;
     }
-
     globalVariables[key] = value;
     ctx.setScriptVariable(key, value, "global");
   };
@@ -409,7 +90,6 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
       ctx.deleteScriptVariable(key, "character", ctx.characterId);
       return;
     }
-
     delete globalVariables[key];
     ctx.deleteScriptVariable(key, "global");
   };
@@ -426,9 +106,7 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
 
   const listLocalVariables = (): string[] => {
     const keys = new Set<string>(Object.keys(globalVariables));
-    for (const key of Object.keys(characterVariables)) {
-      keys.add(key);
-    }
+    for (const key of Object.keys(characterVariables)) keys.add(key);
     return Array.from(keys);
   };
 
@@ -437,217 +115,43 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     ...characterVariables,
   });
 
-  // ─── 从域分组中解构回调，内部变量名不变 ───
+  /* ── 域回调解构 ─── */
   const _msg = ctx.messageCallbacks ?? {};
   const _chat = ctx.chatManagementCallbacks ?? {};
   const _cp = ctx.checkpointCallbacks ?? {};
+  const _grp = ctx.groupMemberCallbacks ?? {};
+  const _qr = ctx.quickReplyCallbacks ?? {};
+  const _expr = ctx.expressionCallbacks ?? {};
   const _host = ctx.hostCapabilityCallbacks ?? {};
-
+  const _wi = ctx.worldInfoCallbacks ?? {};
+  const _ui = ctx.uiCallbacks ?? {};
+  const _nav = ctx.navigationCallbacks ?? {};
   const onSend = _msg.onSend ?? (async (_text?: string, _options?: SendOptions) => {
     console.warn("[adaptContext] onSend 未提供");
   });
   const onTrigger = _msg.onTrigger ?? (async (_member?: string) => {
     console.warn("[adaptContext] onTrigger 未提供");
   });
-  const onSendAs = _msg.onSendAs;
-  const onSendSystem = _msg.onSendSystem;
-  const onImpersonate = _msg.onImpersonate;
-  const onContinue = _msg.onContinue;
-  const onSwipe = _msg.onSwipe;
   const onCloseChat = _chat.onCloseChat ?? (typeof document !== "undefined" ? defaultCloseCurrentChat : undefined);
-  const onGetChatName = _chat.onGetChatName;
-  const onRenameChat = _chat.onRenameChat;
-  const onSetInput = _chat.onSetInput;
-  const onOpenTemporaryChat = _chat.onOpenTemporaryChat;
-  const onForceSaveChat = _chat.onForceSaveChat;
-  const onHideMessages = _chat.onHideMessages;
-  const onUnhideMessages = _chat.onUnhideMessages;
-  const onCreateCheckpoint = _cp.onCreateCheckpoint;
-  const onCreateBranch = _cp.onCreateBranch;
-  const onGetCheckpoint = _cp.onGetCheckpoint;
-  const onListCheckpoints = _cp.onListCheckpoints;
-  const onGoCheckpoint = _cp.onGoCheckpoint;
-  const onExitCheckpoint = _cp.onExitCheckpoint;
-  const onGetCheckpointParent = _cp.onGetCheckpointParent;
-  const onDuplicateCharacter = _chat.onDuplicateCharacter;
-  const onNewChat = _chat.onNewChat;
-  const onGenerateImage = ctx.onGenerateImage;
-  const onTranslateText = _host.onTranslateText;
-  const onGetYouTubeTranscript = _host.onGetYouTubeTranscript;
-  const onGetImageGenerationConfig = ctx.onGetImageGenerationConfig;
-  const onSetImageGenerationConfig = ctx.onSetImageGenerationConfig;
-  const defaultGetInstructMode = () => {
-    return getPromptInstructState();
-  };
-  const defaultSetInstructMode = (patch: { enabled?: boolean; preset?: string }) => {
-    return updatePromptInstructState({
-      enabled: patch.enabled,
-      preset: patch.preset,
-    });
-  };
-  const defaultGetAuthorNoteState = (): AuthorNoteState => readAuthorNoteStateFromStorage();
-  const defaultSetAuthorNoteState = (
-    patch: Partial<AuthorNoteState>,
-  ): AuthorNoteState => {
-    const current = readAuthorNoteStateFromStorage();
-    const next = normalizeAuthorNoteState({
-      ...current,
-      ...patch,
-    });
-    const saved = writeAuthorNoteStateToStorage(next);
-    syncAuthorNoteInjection(ctx, saved);
-    return saved;
-  };
-  const defaultGetPersonaName = (): string => readStringFromStorage(PERSONA_NAME_STORAGE_KEY);
-  const defaultSetPersonaName = (name: string): string => {
-    return writeStringToStorage(PERSONA_NAME_STORAGE_KEY, name.trim());
-  };
-  const defaultListConnectionProfiles = (): ConnectionProfileState[] => {
-    return readConnectionProfilesFromStorage();
-  };
-  const defaultGetCurrentProfileName = (): string | null => {
-    const selectedId = readSelectedProfileIdFromStorage();
-    if (!selectedId) {
-      return null;
-    }
-
-    const profile = readConnectionProfilesFromStorage().find((item) => item.id === selectedId);
-    return profile?.name || null;
-  };
-  const defaultSetCurrentProfileName = (
-    name: string | null,
-    _options?: { await?: boolean; timeout?: number },
-  ): string | null => {
-    if (name === null) {
-      writeSelectedProfileIdToStorage("");
-      return null;
-    }
-
-    const target = name.trim();
-    const profiles = readConnectionProfilesFromStorage();
-    const matched = profiles.find((profile) => profile.name === target);
-    if (!matched) {
-      return "";
-    }
-
-    writeSelectedProfileIdToStorage(matched.id);
-    return matched.name;
-  };
-  const defaultCreateConnectionProfile = (name: string): ConnectionProfileState => {
-    const nextName = name.trim();
-    if (!nextName) {
-      throw new Error("/profile-create requires profile name");
-    }
-
-    const profiles = readConnectionProfilesFromStorage();
-    if (profiles.some((profile) => profile.name === nextName)) {
-      throw new Error(`/profile-create duplicate profile name: ${nextName}`);
-    }
-
-    const created: ConnectionProfileState = {
-      id: createConnectionProfileId(nextName),
-      name: nextName,
-    };
-    const nextProfiles = writeConnectionProfilesToStorage([...profiles, created]);
-    const selected = nextProfiles.find((profile) => profile.id === created.id);
-    if (!selected) {
-      throw new Error("/profile-create failed to persist profile");
-    }
-    writeSelectedProfileIdToStorage(selected.id);
-    return selected;
-  };
-  const defaultUpdateConnectionProfile = (): ConnectionProfileState => {
-    const selectedId = readSelectedProfileIdFromStorage();
-    const profiles = readConnectionProfilesFromStorage();
-    const selected = profiles.find((profile) => profile.id === selectedId);
-    if (!selected) {
-      throw new Error("/profile-update no profile selected");
-    }
-    return selected;
-  };
-  const defaultGetConnectionProfile = (
-    name?: string,
-  ): ConnectionProfileState | undefined => {
-    const profiles = readConnectionProfilesFromStorage();
-    if (name && name.trim().length > 0) {
-      return profiles.find((profile) => profile.name === name.trim());
-    }
-
-    const selectedId = readSelectedProfileIdFromStorage();
-    if (!selectedId) {
-      return undefined;
-    }
-    return profiles.find((profile) => profile.id === selectedId);
-  };
-  const defaultGetPromptPostProcessing = (): string => {
-    return getPromptPostProcessingValue();
-  };
-  const defaultSetPromptPostProcessing = (value: string): string => {
-    return setPromptPostProcessingValue(value.trim());
-  };
-  const defaultGetPersonaLockState = (
-    options?: { type?: PersonaLockType },
-  ): boolean => {
-    const type = options?.type || "chat";
-    return readPersonaLockStateFromStorage()[type];
-  };
-  const defaultGetStopStrings = (): string[] => getPromptStopStrings();
-  const defaultSetStopStrings = (stopStrings: string[]): string[] => {
-    return setPromptStopStrings(stopStrings);
-  };
-  const defaultGetModel = (): string => getPromptModelValue();
-  const defaultSetModel = (model: string): string => setPromptModelValue(model);
-  const onGetInstructMode = ctx.onGetInstructMode ?? defaultGetInstructMode;
-  const onSetInstructMode = ctx.onSetInstructMode ?? defaultSetInstructMode;
-  const onGetStopStrings = ctx.onGetStopStrings ?? defaultGetStopStrings;
-  const onSetStopStrings = ctx.onSetStopStrings ?? defaultSetStopStrings;
-  const onGetModel = ctx.onGetModel ?? defaultGetModel;
-  const onSelectProxyPreset = _host.onSelectProxyPreset;
-  const onSetModel = ctx.onSetModel ?? defaultSetModel;
-  const onGetAuthorNoteState = ctx.onGetAuthorNoteState ?? defaultGetAuthorNoteState;
-  const onSetAuthorNoteState = ctx.onSetAuthorNoteState ?? defaultSetAuthorNoteState;
-  const onGetPersonaName = ctx.onGetPersonaName ?? defaultGetPersonaName;
-  const onSetPersonaName = ctx.onSetPersonaName ?? defaultSetPersonaName;
-  const onGetCurrentProfileName = ctx.onGetCurrentProfileName ?? defaultGetCurrentProfileName;
-  const onSetCurrentProfileName = ctx.onSetCurrentProfileName ?? defaultSetCurrentProfileName;
-  const onListConnectionProfiles = ctx.onListConnectionProfiles ?? defaultListConnectionProfiles;
-  const onCreateConnectionProfile = ctx.onCreateConnectionProfile ?? defaultCreateConnectionProfile;
-  const onUpdateConnectionProfile = ctx.onUpdateConnectionProfile ?? defaultUpdateConnectionProfile;
-  const onGetConnectionProfile = ctx.onGetConnectionProfile ?? defaultGetConnectionProfile;
-  const onGetPromptPostProcessing = ctx.onGetPromptPostProcessing ?? defaultGetPromptPostProcessing;
-  const onSetPromptPostProcessing = ctx.onSetPromptPostProcessing ?? defaultSetPromptPostProcessing;
-  const onSyncPersona = ctx.onSyncPersona;
-  const onNarrateText = ctx.onNarrateText;
-  const _grp = ctx.groupMemberCallbacks ?? {};
-  const onGetGroupMember = _grp.onGetGroupMember;
-  const onGetGroupMemberCount = _grp.onGetGroupMemberCount;
-  const onAddGroupMember = _grp.onAddGroupMember;
-  const onRemoveGroupMember = _grp.onRemoveGroupMember;
-  const onMoveGroupMember = _grp.onMoveGroupMember;
-  const onPeekGroupMember = _grp.onPeekGroupMember;
-  const onSetGroupMemberEnabled = _grp.onSetGroupMemberEnabled;
-  const onAddSwipe = _msg.onAddSwipe;
-  const _qr = ctx.quickReplyCallbacks ?? {};
-  const onExecuteQuickReplyByIndex = _qr.onExecuteQuickReplyByIndex;
-  const onToggleGlobalQuickReplySet = _qr.onToggleGlobalQuickReplySet;
-  const onAddGlobalQuickReplySet = _qr.onAddGlobalQuickReplySet;
-  const onRemoveGlobalQuickReplySet = _qr.onRemoveGlobalQuickReplySet;
-  const onToggleChatQuickReplySet = _qr.onToggleChatQuickReplySet;
-  const onAddChatQuickReplySet = _qr.onAddChatQuickReplySet;
-  const onRemoveChatQuickReplySet = _qr.onRemoveChatQuickReplySet;
-  const onListQuickReplySets = _qr.onListQuickReplySets;
-  const onListQuickReplies = _qr.onListQuickReplies;
-  const onGetQuickReply = _qr.onGetQuickReply;
-  const onCreateQuickReply = _qr.onCreateQuickReply;
-  const onUpdateQuickReply = _qr.onUpdateQuickReply;
-  const onDeleteQuickReply = _qr.onDeleteQuickReply;
-  const onAddQuickReplyContextSet = _qr.onAddQuickReplyContextSet;
-  const onRemoveQuickReplyContextSet = _qr.onRemoveQuickReplyContextSet;
-  const onClearQuickReplyContextSets = _qr.onClearQuickReplyContextSets;
-  const onCreateQuickReplySet = _qr.onCreateQuickReplySet;
-  const onUpdateQuickReplySet = _qr.onUpdateQuickReplySet;
-  const onDeleteQuickReplySet = _qr.onDeleteQuickReplySet;
-  const onAskCharacter = ctx.onAskCharacter;
+  const storageDefaults = createStorageDefaults(ctx);
+  const onGetInstructMode = ctx.onGetInstructMode ?? (() => getPromptInstructState());
+  const onSetInstructMode = ctx.onSetInstructMode ?? ((p: { enabled?: boolean; preset?: string }) => updatePromptInstructState(p));
+  const onGetStopStrings = ctx.onGetStopStrings ?? (() => getPromptStopStrings());
+  const onSetStopStrings = ctx.onSetStopStrings ?? ((s: string[]) => setPromptStopStrings(s));
+  const onGetModel = ctx.onGetModel ?? (() => getPromptModelValue());
+  const onSetModel = ctx.onSetModel ?? ((m: string) => setPromptModelValue(m));
+  const onGetAuthorNoteState = ctx.onGetAuthorNoteState ?? storageDefaults.getAuthorNoteState;
+  const onSetAuthorNoteState = ctx.onSetAuthorNoteState ?? storageDefaults.setAuthorNoteState;
+  const onGetPersonaName = ctx.onGetPersonaName ?? storageDefaults.getPersonaName;
+  const onSetPersonaName = ctx.onSetPersonaName ?? storageDefaults.setPersonaName;
+  const onGetCurrentProfileName = ctx.onGetCurrentProfileName ?? storageDefaults.getCurrentProfileName;
+  const onSetCurrentProfileName = ctx.onSetCurrentProfileName ?? storageDefaults.setCurrentProfileName;
+  const onListConnectionProfiles = ctx.onListConnectionProfiles ?? storageDefaults.listConnectionProfiles;
+  const onCreateConnectionProfile = ctx.onCreateConnectionProfile ?? storageDefaults.createConnectionProfile;
+  const onUpdateConnectionProfile = ctx.onUpdateConnectionProfile ?? storageDefaults.updateConnectionProfile;
+  const onGetConnectionProfile = ctx.onGetConnectionProfile ?? storageDefaults.getConnectionProfile;
+  const onGetPromptPostProcessing = ctx.onGetPromptPostProcessing ?? (() => getPromptPostProcessingValue());
+  const onSetPromptPostProcessing = ctx.onSetPromptPostProcessing ?? ((v: string) => setPromptPostProcessingValue(v.trim()));
   const onSetPersonaLock = ctx.onSetPersonaLock
     ? async (
       state: "on" | "off" | "toggle",
@@ -656,648 +160,47 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
       const result = await Promise.resolve(ctx.onSetPersonaLock?.(state, options));
       if (typeof result === "boolean") {
         const lockType = options?.type || "chat";
-        const snapshot = readPersonaLockStateFromStorage();
-        snapshot[lockType] = result;
-        writePersonaLockStateToStorage(snapshot);
+        const snap = readPersonaLockStateFromStorage();
+        snap[lockType] = result;
+        writePersonaLockStateToStorage(snap);
       }
       return result as boolean;
     }
     : undefined;
-  const onGetPersonaLockState = ctx.onGetPersonaLockState ?? defaultGetPersonaLockState;
+  const onGetPersonaLockState = ctx.onGetPersonaLockState ?? ((
+    options?: { type?: PersonaLockType },
+  ) => readPersonaLockStateFromStorage()[options?.type || "chat"]);
   if (!ctx.onGetAuthorNoteState && !ctx.onSetAuthorNoteState) {
-    syncAuthorNoteInjection(ctx, defaultGetAuthorNoteState());
+    syncAuthorNoteInjection(ctx, storageDefaults.getAuthorNoteState());
   }
-  const _nav = ctx.navigationCallbacks ?? {};
-  const onReloadPage = _nav.onReloadPage;
-  const onGetClipboardText = _host.onGetClipboardText;
-  const onSetClipboardText = _host.onSetClipboardText;
-  const onImportVariables = _host.onImportVariables;
-  const onListGallery = _nav.onListGallery;
-  const onOpenDataBank = ctx.onOpenDataBank;
-  const onListDataBankEntries = ctx.onListDataBankEntries;
-  const onGetDataBankText = ctx.onGetDataBankText;
-  const onAddDataBankText = ctx.onAddDataBankText;
-  const onUpdateDataBankText = ctx.onUpdateDataBankText;
-  const onDeleteDataBankEntry = ctx.onDeleteDataBankEntry;
-  const onSetDataBankEntryEnabled = ctx.onSetDataBankEntryEnabled;
-  const onIngestDataBank = ctx.onIngestDataBank;
-  const onPurgeDataBank = ctx.onPurgeDataBank;
-  const onSearchDataBank = ctx.onSearchDataBank;
-  const defaultSetAverageBackgroundColor = createDefaultSetAverageBackgroundColor();
-  const defaultSetChatDisplayMode = createDefaultSetChatDisplayMode();
-  const defaultButtonsPopupCallback = typeof window !== "undefined"
-    ? defaultShowButtonsPopup
-    : undefined;
-  const defaultPopupCallback = typeof window !== "undefined"
-    ? defaultShowPopup
-    : undefined;
-  const defaultPickIconCallback = typeof window !== "undefined"
-    ? defaultPickIcon
-    : undefined;
-  const defaultIsMobileCallback = defaultIsMobile;
-  const onIsExtensionInstalled = _host.onIsExtensionInstalled;
-  const onGetExtensionEnabledState = _host.onGetExtensionEnabledState;
-  const onSetExtensionEnabled = _host.onSetExtensionEnabled;
-  const _ui = ctx.uiCallbacks ?? {};
-  const onTogglePanels = _ui.onTogglePanels;
-  const onResetPanels = _ui.onResetPanels ?? createDefaultResetPanels();
-  const onToggleVisualNovelMode = _ui.onToggleVisualNovelMode ?? createDefaultToggleVisualNovelMode();
-  const onSetBackground = _ui.onSetBackground ?? createDefaultSetBackground();
-  const onLockBackground = _ui.onLockBackground ?? createDefaultLockBackground();
-  const onUnlockBackground = _ui.onUnlockBackground ?? createDefaultUnlockBackground();
-  const onAutoBackground = _ui.onAutoBackground ?? createDefaultAutoBackground();
-  const onSetTheme = _ui.onSetTheme ?? createDefaultSetTheme();
-  const onSetMovingUiPreset = _ui.onSetMovingUiPreset ?? createDefaultSetMovingUiPreset();
-  const onSetCssVariable = _ui.onSetCssVariable ?? createDefaultSetCssVariable();
-  const resolvedTogglePanels = onTogglePanels ?? createDefaultTogglePanels();
-  const onSetAverageBackgroundColor = _ui.onSetAverageBackgroundColor ?? defaultSetAverageBackgroundColor;
-  const onSetChatDisplayMode = _ui.onSetChatDisplayMode ?? defaultSetChatDisplayMode;
-  const onShowButtonsPopup = _ui.onShowButtonsPopup ?? defaultButtonsPopupCallback;
-  const onShowPopup = _ui.onShowPopup ?? defaultPopupCallback;
-  const onPickIcon = _ui.onPickIcon ?? defaultPickIconCallback;
-  const onIsMobile = _ui.onIsMobile ?? defaultIsMobileCallback;
-  const onGenerateCaption = _ui.onGenerateCaption;
-  const onPlayNotificationSound = _ui.onPlayNotificationSound;
-  const onShowGallery = _nav.onShowGallery;
-  const _expr = ctx.expressionCallbacks ?? {};
-  const onUploadExpressionAsset = _expr.onUploadExpressionAsset;
-  const onSelectContextPreset = _nav.onSelectContextPreset ?? ((name?: string) => {
-    return selectPromptContextPreset(name);
-  });
-  const onSetExpression = _expr.onSetExpression;
-  const onSetExpressionFolderOverride = _expr.onSetExpressionFolderOverride;
-  const onGetLastExpression = _expr.onGetLastExpression;
-  const onListExpressions = _expr.onListExpressions;
-  const onClassifyExpression = _expr.onClassifyExpression;
+  const resolvedTogglePanels = _ui.onTogglePanels ?? createDefaultTogglePanels();
+  const onOpenTemporaryChat = _chat.onOpenTemporaryChat;
   const onJumpToMessage = _nav.onJumpToMessage;
-  const onRenderChatMessages = _nav.onRenderChatMessages;
-  const onSwitchCharacter = _nav.onSwitchCharacter;
-  const onRenameCurrentCharacter = _nav.onRenameCurrentCharacter;
-  const onParseReasoningBlock = _nav.onParseReasoningBlock;
-  const onApplyReasoningRegex = _nav.onApplyReasoningRegex;
-  const _wi = ctx.worldInfoCallbacks ?? {};
+  const onTranslateText = _host.onTranslateText;
+  const onGetYouTubeTranscript = _host.onGetYouTubeTranscript;
+  const onSelectProxyPreset = _host.onSelectProxyPreset;
   const onGetWorldInfoTimedEffect = _wi.onGetWorldInfoTimedEffect;
   const onSetWorldInfoTimedEffect = _wi.onSetWorldInfoTimedEffect;
-  const onRemovePromptInjections = ctx.onRemovePromptInjections;
 
-  const getWorldBookEntry = async (id: string): Promise<WorldBookEntryData | undefined> => {
-    if (!ctx.characterId) return undefined;
-    const wb = await WorldBookOperations.getWorldBook(ctx.characterId);
-    if (!wb) return undefined;
-    const entry = Object.values(wb).find(
-      (e: WorldBookEntry) => String(e.id) === id || String(e.entry_id) === id,
-    );
-    if (!entry) return undefined;
-    return {
-      id: String(entry.id || entry.entry_id || ""),
-      keys: entry.keys || [],
-      content: entry.content || "",
-      enabled: entry.enabled !== false,
-      comment: entry.comment,
-      priority: (entry as WorldBookEntry & { priority?: number }).priority,
-      depth: (entry as WorldBookEntry & { depth?: number }).depth,
-    };
-  };
-
-  const searchWorldBook = async (query: string): Promise<WorldBookEntryData[]> => {
-    if (!ctx.characterId || !query) return [];
-    const wb = await WorldBookOperations.getWorldBook(ctx.characterId);
-    if (!wb) return [];
-    const lowerQuery = query.toLowerCase();
-    return Object.values(wb)
-      .filter((e: WorldBookEntry) =>
-        e.keys?.some((k: string) => k.toLowerCase().includes(lowerQuery)) ||
-        e.content?.toLowerCase().includes(lowerQuery),
-      )
-      .map((e: WorldBookEntry) => ({
-        id: String(e.id || e.entry_id || ""),
-        keys: e.keys || [],
-        content: e.content || "",
-        enabled: e.enabled !== false,
-        comment: e.comment,
-      }));
-  };
-
-  const listWorldBookEntries = async (_bookName?: string): Promise<WorldBookEntryData[]> => {
-    const targetName = _bookName || ctx.characterId;
-    if (!targetName) return [];
-    const wb = await WorldBookOperations.getWorldBook(targetName);
-    if (!wb) return [];
-    return Object.values(wb).map((e: WorldBookEntry) => ({
-      id: String(e.id || e.entry_id || ""),
-      keys: e.keys || [],
-      content: e.content || "",
-      enabled: e.enabled !== false,
-      comment: e.comment,
-    }));
-  };
-
-  const createWorldBookEntry = async (
-    data: Partial<WorldBookEntryData>,
-    bookName?: string,
-  ): Promise<WorldBookEntryData | undefined> => {
-    const targetBook = (bookName || ctx.characterId || "").trim();
-    if (!targetBook) {
-      throw new Error("/createlore requires file=<book>");
-    }
-
-    const worldBook = await WorldBookOperations.getWorldBook(targetBook) || {};
-    const nextUid = Object.values(worldBook).reduce((maxUid, entry) => {
-      const ids = [entry.id, entry.entry_id]
-        .map((candidate) => Number.parseInt(String(candidate), 10))
-        .filter((candidate) => Number.isInteger(candidate) && candidate >= 0);
-      if (ids.length === 0) {
-        return maxUid;
-      }
-      return Math.max(maxUid, ...ids);
-    }, 0) + 1;
-
-    const keys = Array.isArray(data.keys)
-      ? data.keys.map((item) => String(item).trim()).filter((item) => item.length > 0)
-      : [];
-    const content = typeof data.content === "string" ? data.content : "";
-    const comment = typeof data.comment === "string" ? data.comment : undefined;
-    const enabled = data.enabled !== false;
-
-    const entry: WorldBookEntry = {
-      id: nextUid,
-      entry_id: String(nextUid),
-      keys,
-      content,
-      comment,
-      enabled,
-      selective: false,
-      constant: false,
-      position: 4,
-    };
-
-    const nextEntryIndex = Object.keys(worldBook).reduce((maxIndex, entryKey) => {
-      const matched = /^entry_(\d+)$/.exec(entryKey);
-      if (!matched) {
-        return maxIndex;
-      }
-      const parsed = Number.parseInt(matched[1], 10);
-      if (!Number.isInteger(parsed) || parsed < 0) {
-        return maxIndex;
-      }
-      return Math.max(maxIndex, parsed);
-    }, -1) + 1;
-
-    worldBook[`entry_${nextEntryIndex}`] = entry;
-    const saved = await WorldBookOperations.updateWorldBook(targetBook, worldBook);
-    if (!saved) {
-      throw new Error(`/createlore failed to persist entry in file=${targetBook}`);
-    }
-
-    return {
-      id: String(nextUid),
-      keys,
-      content,
-      comment,
-      enabled,
-    };
-  };
-
-  const getVectorWorldInfoState = (): boolean => isVectorMemoryEnabled();
-
-  const setVectorWorldInfoState = (enabled: boolean): boolean => {
-    setVectorMemoryEnabled(enabled);
-    return isVectorMemoryEnabled();
-  };
-
-  const getVectorChatsEnabled = (): boolean => getVectorChatsState();
-
-  const setVectorChatsEnabled = (enabled: boolean): boolean => setVectorChatsState(enabled);
-
-  const getVectorFilesEnabled = (): boolean => getVectorFilesState();
-
-  const setVectorFilesEnabled = (enabled: boolean): boolean => setVectorFilesState(enabled);
-
-  const getVectorQueryMessages = (): number => getVectorQuerySetting();
-
-  const setVectorQueryMessages = (value: number): number => setVectorQuerySetting(value);
-
-  const getVectorScoreThreshold = (): number => getVectorThresholdSetting();
-
-  const setVectorScoreThreshold = (value: number): number => setVectorThresholdSetting(value);
-
-  const getVectorMaxEntries = (): number => getVectorMaxEntriesSetting();
-
-  const setVectorMaxEntries = (value: number): number => setVectorMaxEntriesSetting(value);
-
-  const getPreset = async (): Promise<PresetInfo | undefined> => getActivePromptPresetInfo();
-
-  const setPreset = async (name: string): Promise<void> => {
-    await selectPromptPresetByName(name);
-  };
-
-  const listPresets = async (): Promise<PresetInfo[]> => listPromptPresets();
-
-  const playAudio = (url: string, audioOptions?: { volume?: number; loop?: boolean }) => {
-    const audioManager = getAudioManager();
-    audioManager.playAudio("bgm", { url, title: url, ...audioOptions });
-  };
-
-  const stopAudio = () => {
-    getAudioManager().stopAudio("bgm");
-  };
-
-  const pauseAudio = () => {
-    getAudioManager().pauseAudio("bgm");
-  };
-
-  const resumeAudio = () => {
-    const channel = getAudioManager().getChannel("bgm");
-    channel.play();
-  };
-
-  const setAudioVolume = (volume: number) => {
-    getAudioManager().setGlobalVolume(volume);
-  };
-
-  const playAudioByType = (type: AudioChannelType, track?: { url: string; title?: string }) => {
-    getAudioManager().playAudio(type, track);
-  };
-
-  const pauseAudioByType = (type: AudioChannelType) => {
-    getAudioManager().pauseAudio(type);
-  };
-
-  const stopAudioByType = (type: AudioChannelType) => {
-    getAudioManager().stopAudio(type);
-  };
-
-  const setAudioEnabledByType = (type: AudioChannelType, enabled: boolean) => {
-    getAudioManager().getChannel(type).setEnabled(enabled);
-  };
-
-  const setAudioModeByType = (type: AudioChannelType, mode: AudioChannelSnapshot["mode"]) => {
-    getAudioManager().getChannel(type).setMode(mode);
-  };
-
-  const getAudioListByType = (type: AudioChannelType) => {
-    return getAudioManager().getAudioList(type);
-  };
-
-  const appendAudioListByType = (type: AudioChannelType, list: Array<{ url: string; title?: string }>) => {
-    getAudioManager().appendAudioList(type, list);
-  };
-
-  const replaceAudioListByType = (type: AudioChannelType, list: Array<{ url: string; title?: string }>) => {
-    getAudioManager().replaceAudioList(type, list);
-  };
-
-  const getAudioStateByType = (type: AudioChannelType): AudioChannelSnapshot => {
-    const channelState = getAudioManager().getChannel(type).getState();
-    return {
-      enabled: channelState.enabled,
-      mode: channelState.mode,
-      currentUrl: channelState.currentUrl,
-      playlist: channelState.playlist.map((track) => ({ url: track.url, title: track.title })),
-      isPlaying: channelState.isPlaying,
-    };
-  };
-
-  const toCharacterSummary = (
-    record: {
-      id: string;
-      data?: {
-        name?: string;
-        data?: {
-          name?: string;
-          tags?: unknown[];
-        };
-      };
-    },
-  ): CharacterSummary => ({
-    id: record.id,
-    name: record.data?.name?.trim() || record.data?.data?.name?.trim() || record.id,
-    tags: Array.isArray(record.data?.data?.tags)
-      ? record.data.data.tags
-        .map((item) => String(item || "").trim())
-        .filter((item) => item.length > 0)
-      : undefined,
+  /* ── 领域适配器组装 ─── */
+  const worldBook = createWorldBookAdapters(ctx.characterId);
+  const character = createCharacterAdapters(ctx.characterId);
+  const audio = createAudioAdapters();
+  const promptInjection = createPromptInjectionAdapters(ctx, ctx.onRemovePromptInjections);
+  const toolAdapters = createToolAdapters({
+    characterId: ctx.characterId,
+    characterVariables,
+    globalVariables,
+    setLocalVariable,
+    deleteLocalVariable,
+    getExecutionContext: () => executionContext,
   });
-
-  const getCurrentCharacter = async (): Promise<CharacterSummary | undefined> => {
-    if (!ctx.characterId) return undefined;
-    const record = await LocalCharacterRecordOperations.getCharacterById(ctx.characterId);
-    if (!record) return undefined;
-    return toCharacterSummary(record);
-  };
-
-  const listCharacters = async (): Promise<CharacterSummary[]> => {
-    const records = await LocalCharacterRecordOperations.getAllCharacters();
-    return records.map(toCharacterSummary);
-  };
-
-  const resolveCharacterTagRecord = async (name?: string) => {
-    const target = (name || "").trim();
-    if (!target || target === "current") {
-      if (!ctx.characterId) {
-        return null;
-      }
-      return LocalCharacterRecordOperations.getCharacterById(ctx.characterId);
-    }
-
-    const records = await LocalCharacterRecordOperations.getAllCharacters();
-    return records.find((record) => {
-      const currentName = record.data?.data?.name || record.data?.name || "";
-      return record.id === target || currentName === target;
-    }) || null;
-  };
-
-  const readCharacterTags = (record: Awaited<ReturnType<typeof resolveCharacterTagRecord>>): string[] => {
-    const rawTags = Array.isArray(record?.data?.data?.tags) ? record.data.data.tags : [];
-    return Array.from(new Set(
-      rawTags
-        .map((item) => String(item || "").trim())
-        .filter((item) => item.length > 0),
-    ));
-  };
-
-  const writeCharacterTags = async (
-    record: NonNullable<Awaited<ReturnType<typeof resolveCharacterTagRecord>>>,
-    tags: string[],
-  ): Promise<boolean> => {
-    const updated = await LocalCharacterRecordOperations.updateCharacter(record.id, {
-      data: {
-        ...record.data.data,
-        tags,
-      },
-    });
-    return Boolean(updated);
-  };
-
-  const addCharacterTag = async (
-    tagName: string,
-    options?: { name?: string },
-  ): Promise<boolean> => {
-    const tag = tagName.trim();
-    if (!tag) {
-      return false;
-    }
-
-    const record = await resolveCharacterTagRecord(options?.name);
-    if (!record) {
-      return false;
-    }
-
-    const tags = readCharacterTags(record);
-    if (tags.includes(tag)) {
-      return false;
-    }
-
-    return writeCharacterTags(record, [...tags, tag]);
-  };
-
-  const removeCharacterTag = async (
-    tagName: string,
-    options?: { name?: string },
-  ): Promise<boolean> => {
-    const tag = tagName.trim();
-    if (!tag) {
-      return false;
-    }
-
-    const record = await resolveCharacterTagRecord(options?.name);
-    if (!record) {
-      return false;
-    }
-
-    const tags = readCharacterTags(record);
-    if (!tags.includes(tag)) {
-      return false;
-    }
-
-    return writeCharacterTags(record, tags.filter((item) => item !== tag));
-  };
-
-  const hasCharacterTag = async (
-    tagName: string,
-    options?: { name?: string },
-  ): Promise<boolean> => {
-    const tag = tagName.trim();
-    if (!tag) {
-      return false;
-    }
-
-    const record = await resolveCharacterTagRecord(options?.name);
-    if (!record) {
-      return false;
-    }
-
-    return readCharacterTags(record).includes(tag);
-  };
-
-  const listCharacterTags = async (options?: { name?: string }): Promise<string[]> => {
-    const record = await resolveCharacterTagRecord(options?.name);
-    if (!record) {
-      return [];
-    }
-    return readCharacterTags(record);
-  };
-
-  const listTools = async () => {
-    return getRegisteredScriptTools().map((tool) => ({
-      name: tool.name,
-      description: tool.description,
-      parameters: tool.parameters,
-    }));
-  };
-
-  const invokeTool = async (name: string, parameters: Record<string, unknown>) => {
-    return invokeScriptTool(name, parameters);
-  };
-
-  const resolveToolVariableEntries = (
-    value: unknown,
-    prefix = "arg",
-  ): Array<[string, unknown]> => {
-    const entries: Array<[string, unknown]> = [];
-    const visit = (currentValue: unknown, currentKey: string) => {
-      if (
-        typeof currentValue === "string"
-        || typeof currentValue === "number"
-        || typeof currentValue === "boolean"
-      ) {
-        entries.push([currentKey, currentValue]);
-      } else {
-        entries.push([currentKey, JSON.stringify(currentValue)]);
-      }
-
-      if (Array.isArray(currentValue)) {
-        currentValue.forEach((item, index) => {
-          visit(item, `${currentKey}.${index}`);
-        });
-        return;
-      }
-
-      if (currentValue && typeof currentValue === "object") {
-        Object.entries(currentValue).forEach(([key, item]) => {
-          visit(item, `${currentKey}.${key}`);
-        });
-      }
-    };
-
-    visit(value, prefix);
-    return entries;
-  };
-
-  const captureToolVariableSnapshot = (key: string): { key: string; existed: boolean; value: unknown } => {
-    const target = ctx.characterId ? characterVariables : globalVariables;
-    return Object.prototype.hasOwnProperty.call(target, key)
-      ? { key, existed: true, value: target[key] }
-      : { key, existed: false, value: undefined };
-  };
-
-  const withTemporaryToolVariables = async <T>(
-    parameters: Record<string, unknown>,
-    runner: () => Promise<T>,
-  ): Promise<T> => {
-    const entries = resolveToolVariableEntries(parameters);
-    const snapshots = entries.map(([key]) => captureToolVariableSnapshot(key));
-
-    entries.forEach(([key, value]) => {
-      setLocalVariable(key, value);
-    });
-
-    try {
-      return await runner();
-    } finally {
-      snapshots.forEach((snapshot) => {
-        if (snapshot.existed) {
-          setLocalVariable(snapshot.key, snapshot.value);
-          return;
-        }
-        deleteLocalVariable(snapshot.key);
-      });
-    }
-  };
-
-  const registerTool = async (registration: SlashToolRegistration): Promise<boolean> => {
-    if (registration.shouldRegister === false) {
-      return false;
-    }
-
-    return registerScriptTool(
-      registration.name,
-      registration.description,
-      {
-        type: "object",
-        properties: registration.parameters.properties ?? {},
-        required: registration.parameters.required,
-      },
-      async (parameters) => withTemporaryToolVariables(parameters, async () => {
-        return executionContext.runSlashCommand
-          ? executionContext.runSlashCommand(registration.action)
-          : "";
-      }),
-    );
-  };
-
-  const unregisterTool = async (name: string): Promise<boolean> => {
-    return unregisterScriptTool(name);
-  };
-
-  const getMessageReasoning = async (index: number): Promise<string | undefined> => {
-    const message = ctx.messages[index];
-    if (!message) {
-      throw new Error(`/get-reasoning message index out of range: ${index}`);
-    }
-    return message.thinkingContent || "";
-  };
-
-  const setMessageReasoning = async (index: number, reasoning: string): Promise<void> => {
-    const message = ctx.messages[index];
-    if (!message) {
-      throw new Error(`/set-reasoning message index out of range: ${index}`);
-    }
-    message.thinkingContent = reasoning;
-  };
-
-  const injectPrompt = async (prompt: string, options?: {
-    position?: "before" | "after" | "chat" | "in_chat" | "none";
-    depth?: number;
-    role?: "system" | "user" | "assistant";
-    ephemeral?: boolean;
-  }): Promise<void> => {
-    const injection = upsertPromptInjection(
-      {
-        content: prompt,
-        role: options?.role,
-        position: options?.position || "in_chat",
-        depth: options?.depth,
-      },
-      {
-        characterId: ctx.characterId,
-        dialogueId: ctx.dialogueId,
-        iframeId: ctx.iframeId,
-      },
-    );
-
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("DreamMiniStage:injectPrompts", {
-          detail: {
-            prompts: [injection],
-            once: options?.ephemeral === true,
-            characterId: ctx.characterId,
-            dialogueId: ctx.dialogueId,
-            iframeId: ctx.iframeId,
-          },
-        }),
-      );
-    }
-  };
-
-  const listInjectedPrompts = async () => {
-    return listPromptInjections({
-      characterId: ctx.characterId,
-      dialogueId: ctx.dialogueId,
-      iframeId: ctx.iframeId,
-    });
-  };
-
-  const removeInjectedPrompts = async (id?: string): Promise<number> => {
-    if (onRemovePromptInjections) {
-      const removed = await Promise.resolve(onRemovePromptInjections(id));
-      if (!Number.isInteger(removed) || removed < 0) {
-        throw new Error("removePromptInjections host callback must return non-negative integer");
-      }
-      return removed;
-    }
-
-    const scopedInjections = listPromptInjections({
-      characterId: ctx.characterId,
-      dialogueId: ctx.dialogueId,
-      iframeId: ctx.iframeId,
-    });
-    const targetIds = id
-      ? scopedInjections.filter((item) => item.id === id).map((item) => item.id)
-      : scopedInjections.map((item) => item.id);
-    if (targetIds.length === 0) {
-      return 0;
-    }
-
-    const removed = removePromptInjections(targetIds);
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("DreamMiniStage:uninjectPrompts", {
-          detail: {
-            ids: targetIds,
-            removed,
-            characterId: ctx.characterId,
-            dialogueId: ctx.dialogueId,
-            iframeId: ctx.iframeId,
-          },
-        }),
-      );
-    }
-    return removed;
-  };
-
+  const getPreset = async (): Promise<PresetInfo | undefined> => getActivePromptPresetInfo();
+  const setPreset = async (name: string): Promise<void> => { await selectPromptPresetByName(name); };
+  const listPresets = async (): Promise<PresetInfo[]> => listPromptPresets();
   const loreRegexAdapters = createLoreRegexAdapters(ctx);
+
+  /* ── ExecutionContext 对象组装 ──────────────────────── */
 
   const executionContext: ExecutionContext = {
     characterId: ctx.characterId,
@@ -1305,33 +208,33 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     messages: ctx.messages,
     onSend,
     onTrigger,
-    onSendAs,
-    onSendSystem,
-    onImpersonate,
-    onContinue,
-    onSwipe,
+    onSendAs: _msg.onSendAs,
+    onSendSystem: _msg.onSendSystem,
+    onImpersonate: _msg.onImpersonate,
+    onContinue: _msg.onContinue,
+    onSwipe: _msg.onSwipe,
     closeCurrentChat: onCloseChat,
-    getCurrentChatName: onGetChatName,
-    renameCurrentChat: onRenameChat,
-    setInputText: onSetInput,
+    getCurrentChatName: _chat.onGetChatName,
+    renameCurrentChat: _chat.onRenameChat,
+    setInputText: _chat.onSetInput,
     openTemporaryChat: onOpenTemporaryChat,
-    forceSaveChat: onForceSaveChat,
-    hideMessages: onHideMessages,
-    unhideMessages: onUnhideMessages,
-    createCheckpoint: onCreateCheckpoint,
-    createBranch: onCreateBranch,
-    getCheckpoint: onGetCheckpoint,
-    listCheckpoints: onListCheckpoints,
-    goCheckpoint: onGoCheckpoint,
-    exitCheckpoint: onExitCheckpoint,
-    getCheckpointParent: onGetCheckpointParent,
-    duplicateCharacter: onDuplicateCharacter,
-    createNewChat: onNewChat,
-    generateImage: onGenerateImage,
+    forceSaveChat: _chat.onForceSaveChat,
+    hideMessages: _chat.onHideMessages,
+    unhideMessages: _chat.onUnhideMessages,
+    createCheckpoint: _cp.onCreateCheckpoint,
+    createBranch: _cp.onCreateBranch,
+    getCheckpoint: _cp.onGetCheckpoint,
+    listCheckpoints: _cp.onListCheckpoints,
+    goCheckpoint: _cp.onGoCheckpoint,
+    exitCheckpoint: _cp.onExitCheckpoint,
+    getCheckpointParent: _cp.onGetCheckpointParent,
+    duplicateCharacter: _chat.onDuplicateCharacter,
+    createNewChat: _chat.onNewChat,
+    generateImage: ctx.onGenerateImage,
     translateText: onTranslateText,
     getYouTubeTranscript: onGetYouTubeTranscript,
-    getImageGenerationConfig: onGetImageGenerationConfig,
-    setImageGenerationConfig: onSetImageGenerationConfig,
+    getImageGenerationConfig: ctx.onGetImageGenerationConfig,
+    setImageGenerationConfig: ctx.onSetImageGenerationConfig,
     getInstructMode: onGetInstructMode,
     setInstructMode: onSetInstructMode,
     getStopStrings: onGetStopStrings,
@@ -1339,35 +242,35 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     getModel: onGetModel,
     setModel: onSetModel,
     selectProxyPreset: onSelectProxyPreset,
-    narrateText: onNarrateText,
-    getGroupMember: onGetGroupMember,
-    getGroupMemberCount: onGetGroupMemberCount,
-    addGroupMember: onAddGroupMember,
-    removeGroupMember: onRemoveGroupMember,
-    moveGroupMember: onMoveGroupMember,
-    peekGroupMember: onPeekGroupMember,
-    setGroupMemberEnabled: onSetGroupMemberEnabled,
-    addSwipe: onAddSwipe,
-    executeQuickReplyByIndex: onExecuteQuickReplyByIndex,
-    toggleGlobalQuickReplySet: onToggleGlobalQuickReplySet,
-    addGlobalQuickReplySet: onAddGlobalQuickReplySet,
-    removeGlobalQuickReplySet: onRemoveGlobalQuickReplySet,
-    toggleChatQuickReplySet: onToggleChatQuickReplySet,
-    addChatQuickReplySet: onAddChatQuickReplySet,
-    removeChatQuickReplySet: onRemoveChatQuickReplySet,
-    listQuickReplySets: onListQuickReplySets,
-    listQuickReplies: onListQuickReplies,
-    getQuickReply: onGetQuickReply,
-    createQuickReply: onCreateQuickReply,
-    updateQuickReply: onUpdateQuickReply,
-    deleteQuickReply: onDeleteQuickReply,
-    addQuickReplyContextSet: onAddQuickReplyContextSet,
-    removeQuickReplyContextSet: onRemoveQuickReplyContextSet,
-    clearQuickReplyContextSets: onClearQuickReplyContextSets,
-    createQuickReplySet: onCreateQuickReplySet,
-    updateQuickReplySet: onUpdateQuickReplySet,
-    deleteQuickReplySet: onDeleteQuickReplySet,
-    askCharacter: onAskCharacter,
+    narrateText: ctx.onNarrateText,
+    getGroupMember: _grp.onGetGroupMember,
+    getGroupMemberCount: _grp.onGetGroupMemberCount,
+    addGroupMember: _grp.onAddGroupMember,
+    removeGroupMember: _grp.onRemoveGroupMember,
+    moveGroupMember: _grp.onMoveGroupMember,
+    peekGroupMember: _grp.onPeekGroupMember,
+    setGroupMemberEnabled: _grp.onSetGroupMemberEnabled,
+    addSwipe: _msg.onAddSwipe,
+    executeQuickReplyByIndex: _qr.onExecuteQuickReplyByIndex,
+    toggleGlobalQuickReplySet: _qr.onToggleGlobalQuickReplySet,
+    addGlobalQuickReplySet: _qr.onAddGlobalQuickReplySet,
+    removeGlobalQuickReplySet: _qr.onRemoveGlobalQuickReplySet,
+    toggleChatQuickReplySet: _qr.onToggleChatQuickReplySet,
+    addChatQuickReplySet: _qr.onAddChatQuickReplySet,
+    removeChatQuickReplySet: _qr.onRemoveChatQuickReplySet,
+    listQuickReplySets: _qr.onListQuickReplySets,
+    listQuickReplies: _qr.onListQuickReplies,
+    getQuickReply: _qr.onGetQuickReply,
+    createQuickReply: _qr.onCreateQuickReply,
+    updateQuickReply: _qr.onUpdateQuickReply,
+    deleteQuickReply: _qr.onDeleteQuickReply,
+    addQuickReplyContextSet: _qr.onAddQuickReplyContextSet,
+    removeQuickReplyContextSet: _qr.onRemoveQuickReplyContextSet,
+    clearQuickReplyContextSets: _qr.onClearQuickReplyContextSets,
+    createQuickReplySet: _qr.onCreateQuickReplySet,
+    updateQuickReplySet: _qr.onUpdateQuickReplySet,
+    deleteQuickReplySet: _qr.onDeleteQuickReplySet,
+    askCharacter: ctx.onAskCharacter,
     getAuthorNoteState: onGetAuthorNoteState,
     setAuthorNoteState: onSetAuthorNoteState,
     getPersonaName: onGetPersonaName,
@@ -1380,77 +283,60 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     getConnectionProfile: onGetConnectionProfile,
     getPromptPostProcessing: onGetPromptPostProcessing,
     setPromptPostProcessing: onSetPromptPostProcessing,
-    syncPersona: onSyncPersona,
+    syncPersona: ctx.onSyncPersona,
     setPersonaLock: onSetPersonaLock,
     getPersonaLockState: onGetPersonaLockState,
-    reloadPage: onReloadPage,
-    listTools,
-    invokeTool,
-    registerTool,
-    unregisterTool,
-    addCharacterTag,
-    removeCharacterTag,
-    hasCharacterTag,
-    listCharacterTags,
-    getClipboardText: onGetClipboardText,
-    setClipboardText: onSetClipboardText,
-    importVariables: onImportVariables,
-    openDataBank: onOpenDataBank,
-    listDataBankEntries: onListDataBankEntries,
-    getDataBankText: onGetDataBankText,
-    addDataBankText: onAddDataBankText,
-    updateDataBankText: onUpdateDataBankText,
-    deleteDataBankEntry: onDeleteDataBankEntry,
-    setDataBankEntryEnabled: onSetDataBankEntryEnabled,
-    ingestDataBank: onIngestDataBank,
-    purgeDataBank: onPurgeDataBank,
-    searchDataBank: onSearchDataBank,
-    isExtensionInstalled: onIsExtensionInstalled,
-    getExtensionEnabledState: onGetExtensionEnabledState,
-    setExtensionEnabled: onSetExtensionEnabled,
+    reloadPage: _nav.onReloadPage,
+    ...toolAdapters,
+    ...character,
+    getClipboardText: _host.onGetClipboardText,
+    setClipboardText: _host.onSetClipboardText,
+    importVariables: _host.onImportVariables,
+    openDataBank: ctx.onOpenDataBank,
+    listDataBankEntries: ctx.onListDataBankEntries,
+    getDataBankText: ctx.onGetDataBankText,
+    addDataBankText: ctx.onAddDataBankText,
+    updateDataBankText: ctx.onUpdateDataBankText,
+    deleteDataBankEntry: ctx.onDeleteDataBankEntry,
+    setDataBankEntryEnabled: ctx.onSetDataBankEntryEnabled,
+    ingestDataBank: ctx.onIngestDataBank,
+    purgeDataBank: ctx.onPurgeDataBank,
+    searchDataBank: ctx.onSearchDataBank,
+    isExtensionInstalled: _host.onIsExtensionInstalled,
+    getExtensionEnabledState: _host.onGetExtensionEnabledState,
+    setExtensionEnabled: _host.onSetExtensionEnabled,
     togglePanels: resolvedTogglePanels,
-    resetPanels: onResetPanels,
-    toggleVisualNovelMode: onToggleVisualNovelMode,
-    setBackground: onSetBackground,
-    lockBackground: onLockBackground,
-    unlockBackground: onUnlockBackground,
-    autoBackground: onAutoBackground,
-    setTheme: onSetTheme,
-    setMovingUiPreset: onSetMovingUiPreset,
-    setCssVariable: onSetCssVariable,
-    setAverageBackgroundColor: onSetAverageBackgroundColor,
-    setChatDisplayMode: onSetChatDisplayMode,
-    showButtonsPopup: onShowButtonsPopup,
-    showPopup: onShowPopup,
-    pickIcon: onPickIcon,
-    isMobileDevice: onIsMobile,
-    generateCaption: onGenerateCaption,
-    playNotificationSound: onPlayNotificationSound,
-    listGallery: onListGallery,
-    showGallery: onShowGallery,
-    uploadExpressionAsset: onUploadExpressionAsset,
-    setExpression: onSetExpression,
-    setExpressionFolderOverride: onSetExpressionFolderOverride,
-    getLastExpression: onGetLastExpression,
-    listExpressions: onListExpressions,
-    classifyExpression: onClassifyExpression,
+    resetPanels: _ui.onResetPanels ?? createDefaultResetPanels(),
+    toggleVisualNovelMode: _ui.onToggleVisualNovelMode ?? createDefaultToggleVisualNovelMode(),
+    setBackground: _ui.onSetBackground ?? createDefaultSetBackground(),
+    lockBackground: _ui.onLockBackground ?? createDefaultLockBackground(),
+    unlockBackground: _ui.onUnlockBackground ?? createDefaultUnlockBackground(),
+    autoBackground: _ui.onAutoBackground ?? createDefaultAutoBackground(),
+    setTheme: _ui.onSetTheme ?? createDefaultSetTheme(),
+    setMovingUiPreset: _ui.onSetMovingUiPreset ?? createDefaultSetMovingUiPreset(),
+    setCssVariable: _ui.onSetCssVariable ?? createDefaultSetCssVariable(),
+    setAverageBackgroundColor: _ui.onSetAverageBackgroundColor ?? createDefaultSetAverageBackgroundColor(),
+    setChatDisplayMode: _ui.onSetChatDisplayMode ?? createDefaultSetChatDisplayMode(),
+    showButtonsPopup: _ui.onShowButtonsPopup ?? (typeof window !== "undefined" ? defaultShowButtonsPopup : undefined),
+    showPopup: _ui.onShowPopup ?? (typeof window !== "undefined" ? defaultShowPopup : undefined),
+    pickIcon: _ui.onPickIcon ?? (typeof window !== "undefined" ? defaultPickIcon : undefined),
+    isMobileDevice: _ui.onIsMobile ?? defaultIsMobile,
+    generateCaption: _ui.onGenerateCaption,
+    playNotificationSound: _ui.onPlayNotificationSound,
+    listGallery: _nav.onListGallery,
+    showGallery: _nav.onShowGallery,
+    uploadExpressionAsset: _expr.onUploadExpressionAsset,
+    setExpression: _expr.onSetExpression,
+    setExpressionFolderOverride: _expr.onSetExpressionFolderOverride,
+    getLastExpression: _expr.onGetLastExpression,
+    listExpressions: _expr.onListExpressions,
+    classifyExpression: _expr.onClassifyExpression,
     jumpToMessage: onJumpToMessage,
-    renderChatMessages: onRenderChatMessages,
-    selectContextPreset: onSelectContextPreset,
-    switchCharacter: onSwitchCharacter,
-    renameCurrentCharacter: onRenameCurrentCharacter,
-    getVectorWorldInfoState,
-    setVectorWorldInfoState,
-    getVectorChatsState: getVectorChatsEnabled,
-    setVectorChatsState: setVectorChatsEnabled,
-    getVectorFilesState: getVectorFilesEnabled,
-    setVectorFilesState: setVectorFilesEnabled,
-    getVectorMaxEntries,
-    setVectorMaxEntries,
-    getVectorQueryMessages,
-    setVectorQueryMessages,
-    getVectorScoreThreshold,
-    setVectorScoreThreshold,
+    renderChatMessages: _nav.onRenderChatMessages,
+    selectContextPreset: _nav.onSelectContextPreset ?? ((name?: string) => selectPromptContextPreset(name)),
+    switchCharacter: _nav.onSwitchCharacter,
+    renameCurrentCharacter: _nav.onRenameCurrentCharacter,
+    ...worldBook,
     getVariable: getLocalVariable,
     setVariable: setLocalVariable,
     deleteVariable: deleteLocalVariable,
@@ -1458,17 +344,11 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     dumpVariables: dumpLocalVariables,
     getScopedVariable: (scope, key) => scope === "global" ? globalVariables[key] : getLocalVariable(key),
     setScopedVariable: (scope, key, value) => {
-      if (scope === "global") {
-        setGlobalVariable(key, value);
-        return;
-      }
+      if (scope === "global") { setGlobalVariable(key, value); return; }
       setLocalVariable(key, value);
     },
     deleteScopedVariable: (scope, key) => {
-      if (scope === "global") {
-        deleteGlobalVariable(key);
-        return;
-      }
+      if (scope === "global") { deleteGlobalVariable(key); return; }
       deleteLocalVariable(key);
     },
     listScopedVariables: (scope) => scope === "global"
@@ -1477,10 +357,6 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     dumpScopedVariables: (scope) => scope === "global"
       ? { ...globalVariables }
       : dumpLocalVariables(),
-    getWorldBookEntry,
-    searchWorldBook,
-    listWorldBookEntries,
-    createWorldBookEntry,
     getPreset,
     setPreset,
     listPresets,
@@ -1488,41 +364,22 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
     setPromptEntriesEnabled,
     setMessageRole: async (index, role) => {
       const message = ctx.messages[index];
-      if (!message) {
-        throw new Error(`/message-role message index out of range: ${index}`);
-      }
+      if (!message) throw new Error(`/message-role message index out of range: ${index}`);
       message.role = role;
     },
     setMessageName: async (index, name) => {
       const message = ctx.messages[index];
-      if (!message) {
-        throw new Error(`/message-name message index out of range: ${index}`);
-      }
+      if (!message) throw new Error(`/message-name message index out of range: ${index}`);
       message.name = name;
     },
-    getMessageReasoning,
-    setMessageReasoning,
-    parseReasoningBlock: onParseReasoningBlock,
-    applyReasoningRegex: onApplyReasoningRegex,
-    injectPrompt,
-    listPromptInjections: listInjectedPrompts,
-    removePromptInjections: removeInjectedPrompts,
-    playAudio,
-    stopAudio,
-    pauseAudio,
-    resumeAudio,
-    setAudioVolume,
-    playAudioByType,
-    pauseAudioByType,
-    stopAudioByType,
-    setAudioEnabledByType,
-    setAudioModeByType,
-    getAudioListByType,
-    replaceAudioListByType,
-    appendAudioListByType,
-    getAudioStateByType,
-    getCurrentCharacter,
-    listCharacters,
+    getMessageReasoning: promptInjection.getMessageReasoning,
+    setMessageReasoning: promptInjection.setMessageReasoning,
+    parseReasoningBlock: _nav.onParseReasoningBlock,
+    applyReasoningRegex: _nav.onApplyReasoningRegex,
+    injectPrompt: promptInjection.injectPrompt,
+    listPromptInjections: promptInjection.listInjectedPrompts,
+    removePromptInjections: promptInjection.removeInjectedPrompts,
+    ...audio,
     getWorldInfoTimedEffect: onGetWorldInfoTimedEffect,
     setWorldInfoTimedEffect: onSetWorldInfoTimedEffect,
     ...loreRegexAdapters,

@@ -1,0 +1,391 @@
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║           Prompt Entry / Audio / Generation Core Handlers                 ║
+ * ║                                                                           ║
+ * ║  PromptEntry操作、音频控制、文本生成核心命令                                  ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
+ */
+
+import type { CommandHandler } from "../../types";
+import { parseBoolean } from "../../utils/helpers";
+import {
+  parseStrictBoolean,
+  parseGenerateRole,
+  parseGenerateLength,
+  parseStopSequences,
+  normalizeSummarizeSource,
+  normalizeSummarizeText,
+} from "./_helpers";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   内部类型 & 辅助函数（仅限本模块使用）
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+type PromptEntryReturnType = "simple" | "list" | "dict";
+type PromptEntrySwitchState = "on" | "off" | "toggle";
+
+interface PromptEntrySnapshot {
+  identifier: string;
+  name: string;
+  enabled: boolean;
+}
+
+const DEFAULT_SUMMARIZE_PROMPT = "Summarize the provided chat or text. Preserve concrete facts, decisions, named entities, unresolved threads, and tone. Do not invent new content.";
+
+function parsePromptEntryTargets(raw: string | undefined): string[] {
+  const normalized = (raw || "").trim();
+  if (!normalized) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(normalized);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((item) => String(item).trim())
+        .filter((item) => item.length > 0);
+    }
+    if (typeof parsed === "string") {
+      return parsed.trim().length > 0 ? [parsed.trim()] : [];
+    }
+  } catch {
+    // keep raw as plain string
+  }
+
+  return [normalized];
+}
+
+function collectPromptTargets(
+  key: "identifier" | "name",
+  namedArgs: Record<string, string>,
+  invocationMeta: Parameters<CommandHandler>[4],
+): string[] {
+  const rawValues: string[] = [];
+  const metaValues = invocationMeta?.namedArgumentList
+    ?.filter((item) => item.name === key)
+    .map((item) => item.value) || [];
+  rawValues.push(...metaValues);
+
+  if (rawValues.length === 0 && namedArgs[key] !== undefined) {
+    rawValues.push(namedArgs[key]);
+  }
+
+  const values = rawValues.flatMap((item) => parsePromptEntryTargets(item));
+  return Array.from(new Set(values));
+}
+
+function normalizePromptEntryReturnType(raw: string | undefined): PromptEntryReturnType {
+  const normalized = (raw || "simple").trim().toLowerCase();
+  if (normalized === "simple" || normalized === "list" || normalized === "dict") {
+    return normalized;
+  }
+  throw new Error(`/getpromptentry invalid return type: ${raw || ""}`);
+}
+
+function normalizePromptEntryState(raw: string | undefined): PromptEntrySwitchState {
+  const normalized = (raw || "toggle").trim().toLowerCase();
+  if (normalized === "toggle" || normalized === "on" || normalized === "off") {
+    return normalized;
+  }
+  if (normalized === "true" || normalized === "1") return "on";
+  if (normalized === "false" || normalized === "0") return "off";
+  throw new Error(`/setpromptentry invalid state: ${raw || ""}`);
+}
+
+function resolvePromptEntries(
+  entries: PromptEntrySnapshot[],
+  identifiers: string[],
+  names: string[],
+): PromptEntrySnapshot[] {
+  const selected = new Map<string, PromptEntrySnapshot>();
+  const byIdentifier = new Map(entries.map((entry) => [entry.identifier, entry]));
+
+  for (const identifier of identifiers) {
+    const matched = byIdentifier.get(identifier);
+    if (matched) {
+      selected.set(matched.identifier, matched);
+    }
+  }
+
+  if (names.length > 0) {
+    const nameSet = new Set(names);
+    for (const entry of entries) {
+      if (nameSet.has(entry.name)) {
+        selected.set(entry.identifier, entry);
+      }
+    }
+  }
+
+  return Array.from(selected.values());
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Prompt Entry 命令
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** /listpresets - 列出所有可用预设 */
+export const handleListPresets: CommandHandler = async (_args, _namedArgs, ctx, pipe) => {
+  if (!ctx.listPresets) return pipe;
+  const presets = ctx.listPresets();
+  return JSON.stringify(presets);
+};
+
+/** /getpromptentry - 获取指定 prompt 条目的启用状态 */
+export const handleGetPromptEntry: CommandHandler = async (
+  _args,
+  namedArgs,
+  ctx,
+  _pipe,
+  invocationMeta,
+) => {
+  if (!ctx.listPromptEntries) {
+    throw new Error("/getpromptentry is not available in current context");
+  }
+
+  const identifiers = collectPromptTargets("identifier", namedArgs, invocationMeta);
+  const names = collectPromptTargets("name", namedArgs, invocationMeta);
+  if (identifiers.length === 0 && names.length === 0) {
+    throw new Error("/getpromptentry requires identifier or name");
+  }
+
+  let returnType = normalizePromptEntryReturnType(namedArgs.return);
+  const entries = await Promise.resolve(ctx.listPromptEntries());
+  const matched = resolvePromptEntries(entries, identifiers, names);
+  const states = new Map(matched.map((entry) => [entry.identifier, entry.enabled === true]));
+  if (states.size === 0) {
+    return "";
+  }
+
+  if (returnType === "simple" && states.size > 1) {
+    returnType = identifiers.length > 0 ? "dict" : "list";
+  }
+
+  if (returnType === "list") {
+    return JSON.stringify(Array.from(states.values()));
+  }
+  if (returnType === "dict") {
+    return JSON.stringify(Object.fromEntries(states));
+  }
+  return states.values().next().value ? "true" : "false";
+};
+
+/** /setpromptentry - 设置指定 prompt 条目的启用状态 */
+export const handleSetPromptEntry: CommandHandler = async (
+  args,
+  namedArgs,
+  ctx,
+  pipe,
+  invocationMeta,
+) => {
+  if (!ctx.listPromptEntries || !ctx.setPromptEntriesEnabled) {
+    throw new Error("/setpromptentry is not available in current context");
+  }
+
+  const identifiers = collectPromptTargets("identifier", namedArgs, invocationMeta);
+  const names = collectPromptTargets("name", namedArgs, invocationMeta);
+  if (identifiers.length === 0 && names.length === 0) {
+    throw new Error("/setpromptentry requires identifier or name");
+  }
+
+  const state = normalizePromptEntryState(args[0] || namedArgs.state || pipe);
+  const entries = await Promise.resolve(ctx.listPromptEntries());
+  const matched = resolvePromptEntries(entries, identifiers, names);
+  if (matched.length === 0) {
+    return "";
+  }
+
+  const updates = matched.map((entry) => ({
+    identifier: entry.identifier,
+    enabled: state === "toggle"
+      ? !entry.enabled
+      : state === "on",
+  }));
+  await Promise.resolve(ctx.setPromptEntriesEnabled(updates));
+  return "";
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Audio 命令
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** /audio <action> [args] - 音频播放控制 */
+export const handleAudio: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (args.length === 0) return pipe;
+  const action = args[0].toLowerCase();
+  const rest = args.slice(1);
+
+  if (action === "play") {
+    if (!ctx.playAudio) return pipe;
+    const url = rest[0] || namedArgs.url || pipe;
+    const volume = namedArgs.volume ? parseFloat(namedArgs.volume) : undefined;
+    const loop = namedArgs.loop === "true" || namedArgs.loop === "1";
+    await ctx.playAudio(url, { volume, loop });
+    return pipe;
+  }
+  if (action === "stop") {
+    if (!ctx.stopAudio) return pipe;
+    await ctx.stopAudio();
+    return pipe;
+  }
+  if (action === "pause") {
+    if (!ctx.pauseAudio) return pipe;
+    await ctx.pauseAudio();
+    return pipe;
+  }
+  if (action === "resume") {
+    if (!ctx.resumeAudio) return pipe;
+    await ctx.resumeAudio();
+    return pipe;
+  }
+  if (action === "volume") {
+    if (!ctx.setAudioVolume || rest.length === 0) return pipe;
+    const volume = parseFloat(rest[0]);
+    await ctx.setAudioVolume(volume);
+    return pipe;
+  }
+  return pipe;
+};
+
+/** /play <url> - 播放音频的快捷命令 */
+export const handlePlay: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.playAudio) return pipe;
+  const url = args[0] || pipe;
+  if (!url) return pipe;
+  const volume = namedArgs.volume ? parseFloat(namedArgs.volume) : undefined;
+  const loop = namedArgs.loop === "true" || namedArgs.loop === "1";
+  await ctx.playAudio(url, { volume, loop });
+  return pipe;
+};
+
+/** /stop - 停止音频播放 */
+export const handleStop: CommandHandler = async (_args, _namedArgs, ctx, pipe) => {
+  if (!ctx.stopAudio) return pipe;
+  await ctx.stopAudio();
+  return pipe;
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   生成命令
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** /gen <prompt> - 生成文本（显示结果） */
+export const handleGen: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.generate) return pipe;
+  const prompt = args.join(" ") || pipe;
+  if (!prompt) return pipe;
+  const options = {
+    maxTokens: namedArgs.max ? parseInt(namedArgs.max, 10) : undefined,
+    temperature: namedArgs.temp ? parseFloat(namedArgs.temp) : undefined,
+  };
+  return await ctx.generate(prompt, options);
+};
+
+/** /genq <prompt> - 静默生成文本（不显示） */
+export const handleGenQuiet: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.generateQuiet && !ctx.generate) return pipe;
+  const prompt = args.join(" ") || pipe;
+  if (!prompt) return pipe;
+  const options = {
+    maxTokens: namedArgs.max ? parseInt(namedArgs.max, 10) : undefined,
+    temperature: namedArgs.temp ? parseFloat(namedArgs.temp) : undefined,
+  };
+  const generator = ctx.generateQuiet || ctx.generate;
+  return await generator!(prompt, options);
+};
+
+/** /genraw <prompt> - 原始生成（不拼接聊天历史） */
+export const handleGenRaw: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.generateRaw) {
+    throw new Error("/genraw is not available in current context");
+  }
+
+  const prompt = (args.join(" ") || pipe || "").trim();
+  if (!prompt) {
+    throw new Error("/genraw requires prompt");
+  }
+
+  const result = await ctx.generateRaw(prompt, {
+    lock: parseStrictBoolean(namedArgs.lock, "genraw", "lock", false),
+    instruct: parseStrictBoolean(namedArgs.instruct, "genraw", "instruct", true),
+    as: parseGenerateRole(namedArgs.as),
+    systemPrompt: namedArgs.system || "",
+    prefillPrompt: namedArgs.prefill || "",
+    responseLength: parseGenerateLength(namedArgs.length),
+    trimNames: parseStrictBoolean(namedArgs.trim, "genraw", "trim", true),
+    stopSequences: parseStopSequences(namedArgs.stop),
+  });
+  if (typeof result !== "string") {
+    throw new Error("/genraw host returned non-string result");
+  }
+  return result;
+};
+
+/** /summarize [text] - 使用主生成能力做摘要 */
+export const handleSummarize: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  const source = normalizeSummarizeSource(namedArgs.source);
+  parseStrictBoolean(namedArgs.quiet, "summarize", "quiet", false);
+
+  if (source !== "main") {
+    throw new Error(`/summarize unsupported source: ${source}`);
+  }
+  if (!ctx.generateRaw) {
+    throw new Error("/summarize is not available in current context");
+  }
+
+  const text = normalizeSummarizeText(args, pipe, ctx.messages);
+  if (!text) {
+    return "";
+  }
+
+  const prompt = (namedArgs.prompt || DEFAULT_SUMMARIZE_PROMPT).trim() || DEFAULT_SUMMARIZE_PROMPT;
+  const result = await Promise.resolve(ctx.generateRaw(text, {
+    lock: false,
+    instruct: true,
+    as: "system",
+    systemPrompt: prompt,
+    responseLength: 256,
+    trimNames: true,
+  }));
+  if (typeof result !== "string") {
+    throw new Error("/summarize host returned non-string result");
+  }
+  return result;
+};
+
+/** /generate-stop - 中止当前生成 */
+export const handleGenerateStop: CommandHandler = async (_args, _namedArgs, ctx, _pipe) => {
+  if (!ctx.stopGeneration) {
+    throw new Error("/generate-stop is not available in current context");
+  }
+
+  const stopped = await Promise.resolve(ctx.stopGeneration());
+  if (typeof stopped !== "boolean") {
+    throw new Error("/generate-stop host returned non-boolean result");
+  }
+  return String(stopped);
+};
+
+/** /inject <prompt> - 临时注入提示词到下一次生成 */
+export const handleInject: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.injectPrompt) return pipe;
+  const prompt = args.join(" ") || pipe;
+  if (!prompt) return pipe;
+  const options = {
+    position: namedArgs.position as "before" | "after" | "chat" | "in_chat" | "none" | undefined,
+    depth: namedArgs.depth ? parseInt(namedArgs.depth, 10) : undefined,
+    role: namedArgs.role as "system" | "user" | "assistant" | undefined,
+    ephemeral: parseBoolean(namedArgs.ephemeral, true),
+  };
+  await ctx.injectPrompt(prompt, options);
+  return pipe;
+};
+
+/** /activatelore <name> - 手动激活 World Info 条目 */
+export const handleActivateLore: CommandHandler = async (args, namedArgs, ctx, pipe) => {
+  if (!ctx.activateWorldInfoEntry) return pipe;
+  const name = args[0] || namedArgs.name || pipe;
+  if (!name) return pipe;
+  const duration = namedArgs.duration ? parseInt(namedArgs.duration, 10) : undefined;
+  await ctx.activateWorldInfoEntry(name, { duration });
+  return pipe;
+};
