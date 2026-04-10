@@ -238,9 +238,81 @@ export const ScriptSandbox = memo(function ScriptSandbox({
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function buildSrcdoc(html: string): string {
-  const withTransparentBg = injectTransparentBackground(html);
+  const normalizedHtml = normalizeLegacyGlobalApis(html);
+  const withTransparentBg = injectTransparentBackground(normalizedHtml);
   // React 的 srcDoc 属性会自动处理转义，无需手动 escape
   return SLASH_RUNNER_API_SHIM + withTransparentBg;
+}
+
+function normalizeLegacyGlobalApis(html: string): string {
+  return html.replace(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi, (fullMatch, attrs, body) => {
+    const normalizedBody = LEGACY_TAVERNHELPER_GLOBALS.reduce((currentBody, alias) => {
+      if (declaresLocalAlias(currentBody, alias)) {
+        return currentBody;
+      }
+
+      return currentBody
+        .replace(
+          createLegacyTypeofPattern(alias),
+          `typeof window.TavernHelper?.${alias} $1 $2function$2`,
+        )
+        .replace(
+          createLegacyCallPattern(alias),
+          `$1window.TavernHelper?.${alias}(`,
+        );
+    }, body);
+
+    if (normalizedBody === body) {
+      return fullMatch;
+    }
+
+    return `<script${attrs}>${normalizedBody}</script>`;
+  });
+}
+
+const LEGACY_TAVERNHELPER_GLOBALS = [
+  "triggerSlash",
+  "getChatMessages",
+  "getCurrentMessageId",
+  "eventOn",
+  "eventEmit",
+  "getVariables",
+  "replaceVariables",
+  "insertVariables",
+  "deleteVariable",
+  "setVariable",
+  "getVariable",
+  "generate",
+  "generateRaw",
+];
+
+function declaresLocalAlias(scriptBody: string, alias: string): boolean {
+  const escapedAlias = escapeRegExp(alias);
+  const localDeclarationPattern = new RegExp(
+    String.raw`\b(?:async\s+function\s+${escapedAlias}\s*\(|function\s+${escapedAlias}\s*\(|(?:const|let|var)\s+${escapedAlias}\b)`,
+    "m",
+  );
+  return localDeclarationPattern.test(scriptBody);
+}
+
+function createLegacyTypeofPattern(alias: string): RegExp {
+  const escapedAlias = escapeRegExp(alias);
+  return new RegExp(
+    String.raw`typeof\s+${escapedAlias}\s*(==|===)\s*(["'])function\2`,
+    "g",
+  );
+}
+
+function createLegacyCallPattern(alias: string): RegExp {
+  const escapedAlias = escapeRegExp(alias);
+  return new RegExp(
+    String.raw`(^|[^\w$.])${escapedAlias}\s*\(`,
+    "gm",
+  );
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function injectTransparentBackground(html: string): string {

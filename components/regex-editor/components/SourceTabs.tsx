@@ -21,6 +21,9 @@ interface SourceTabsProps {
   presetSource: SourceScripts | null;
   fontClass: string;
   t: (key: string) => string;
+  allowScopedTab?: boolean;
+  fallbackGlobalId?: string;
+  fallbackGlobalLabel?: string;
   onTabChange: (tab: "scoped" | "global" | "preset") => void;
   onGlobalIdChange: (id: string | null) => void;
   onRefreshGlobal: () => void;
@@ -33,6 +36,9 @@ export function SourceTabs({
   presetSource,
   fontClass,
   t,
+  allowScopedTab = true,
+  fallbackGlobalId,
+  fallbackGlobalLabel = "默认全局规则",
   onTabChange,
   onGlobalIdChange,
   onRefreshGlobal,
@@ -44,14 +50,16 @@ export function SourceTabs({
     <div className="px-3 sm:px-4 py-2 border-b border-border/60 flex flex-wrap items-center gap-2 sm:gap-3">
       {/* 标签按钮组 */}
       <div className="flex items-center gap-1.5">
-        <Button
-          variant={sourceTab === "scoped" ? "default" : "outline"}
-          size="sm"
-          onClick={() => onTabChange("scoped")}
-          className="h-8"
-        >
-          {t("regexScriptEditor.tabScoped")}
-        </Button>
+        {allowScopedTab ? (
+          <Button
+            variant={sourceTab === "scoped" ? "default" : "outline"}
+            size="sm"
+            onClick={() => onTabChange("scoped")}
+            className="h-8"
+          >
+            {t("regexScriptEditor.tabScoped")}
+          </Button>
+        ) : null}
         <Button
           variant={sourceTab === "global" ? "default" : "outline"}
           size="sm"
@@ -80,7 +88,9 @@ export function SourceTabs({
             className="bg-muted-surface border border-border rounded px-2 py-1 text-sm text-cream-soft"
           >
             {globalSources.length === 0 && (
-              <option value="">{t("regexScriptEditor.noGlobalSources")}</option>
+              <option value={fallbackGlobalId || ""}>
+                {fallbackGlobalLabel}
+              </option>
             )}
             {globalSources.map((g) => (
               <option key={g.ownerId} value={g.ownerId}>

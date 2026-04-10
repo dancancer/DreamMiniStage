@@ -8,56 +8,56 @@
  * 4. 保持简洁：只做一件事，并做到极致
  */
 
-// 从 app/globals.css 提取的CSS变量定义
-// 深色主题默认值（与 shadcn 默认色阶对齐）
+// 从 app/globals.css 提取的 CSS 变量定义
+// 深色主题默认值（与 Velvet Stage 配色保持一致）
 const CSS_VARIABLES = {
   // 背景层级
-  "--color-canvas": "oklch(0.145 0 0)",
-  "--color-surface": "oklch(0.187 0 0)",
-  "--color-layer": "oklch(0.212 0 0)",
-  "--color-deep": "oklch(0.246 0 0)",
-  "--color-ember": "oklch(0.238 0 0)",
-  "--color-coal": "oklch(0.296 0 0)",
-  "--color-muted-surface": "oklch(0.259 0 0)",
-  "--color-overlay": "oklch(0.254 0 0)",
-  "--color-card": "oklch(0.205 0 0)",
-  "--color-input": "oklch(1 0 0 / 15%)",
+  "--color-canvas": "oklch(0.17 0.01 330)",
+  "--color-surface": "oklch(0.2 0.012 332)",
+  "--color-layer": "oklch(0.23 0.014 332)",
+  "--color-deep": "oklch(0.26 0.016 334)",
+  "--color-ember": "oklch(0.3 0.04 348)",
+  "--color-coal": "oklch(0.29 0.012 332)",
+  "--color-muted-surface": "oklch(0.25 0.012 334)",
+  "--color-overlay": "oklch(0.28 0.024 340)",
+  "--color-card": "oklch(0.21 0.014 332)",
+  "--color-input": "oklch(0.29 0.01 334 / 80%)",
 
   // 边框和线条
-  "--color-stroke": "oklch(1 0 0 / 10%)",
-  "--color-stroke-strong": "oklch(0.65 0 0)",
+  "--color-stroke": "oklch(0.36 0.012 334 / 70%)",
+  "--color-stroke-strong": "oklch(0.54 0.04 340 / 80%)",
 
   // 文本颜色
-  "--color-text": "oklch(0.985 0 0)",
-  "--color-text-muted": "oklch(0.708 0 0)",
-  "--color-ink": "oklch(0.785 0 0)",
-  "--color-ink-soft": "oklch(0.641 0 0)",
+  "--color-text": "oklch(0.94 0.006 335)",
+  "--color-text-muted": "oklch(0.71 0.012 330)",
+  "--color-ink": "oklch(0.82 0.014 332)",
+  "--color-ink-soft": "oklch(0.69 0.02 338)",
 
   // 主题色
-  "--color-primary-soft": "oklch(0.708 0 0)",
-  "--color-cream": "oklch(0.985 0 0)",
-  "--color-cream-soft": "oklch(0.708 0 0)",
-  "--color-primary": "oklch(0.922 0 0)",
-  "--color-primary-bright": "oklch(0.922 0 0)",
-  "--color-primary-50": "#fafafa",
-  "--color-primary-100": "#f5f5f5",
-  "--color-primary-200": "#e5e5e5",
-  "--color-primary-300": "#d4d4d4",
-  "--color-primary-400": "#a3a3a3",
-  "--color-primary-500": "#737373",
-  "--color-primary-600": "#525252",
-  "--color-primary-700": "#404040",
-  "--color-primary-800": "#262626",
-  "--color-primary-900": "#171717",
-  "--color-highlight": "oklch(0.269 0 0)",
-  "--color-sand": "oklch(0.269 0 0)",
+  "--color-primary-soft": "oklch(0.74 0.08 352)",
+  "--color-cream": "oklch(0.94 0.006 335)",
+  "--color-cream-soft": "oklch(0.82 0.014 332)",
+  "--color-primary": "oklch(0.56 0.18 8)",
+  "--color-primary-bright": "oklch(0.69 0.12 8)",
+  "--color-primary-50": "oklch(0.982 0.005 8)",
+  "--color-primary-100": "oklch(0.956 0.014 8)",
+  "--color-primary-200": "oklch(0.908 0.032 8)",
+  "--color-primary-300": "oklch(0.81 0.07 8)",
+  "--color-primary-400": "oklch(0.69 0.12 8)",
+  "--color-primary-500": "oklch(0.61 0.16 8)",
+  "--color-primary-600": "oklch(0.56 0.18 8)",
+  "--color-primary-700": "oklch(0.48 0.14 8)",
+  "--color-primary-800": "oklch(0.39 0.1 8)",
+  "--color-primary-900": "oklch(0.29 0.06 8)",
+  "--color-highlight": "oklch(0.75 0.1 8)",
+  "--color-sand": "oklch(0.63 0.08 352)",
 
   // 状态色
-  "--color-success": "oklch(0.696 0.17 162.48)",
-  "--color-info": "oklch(0.769 0.188 70.08)",
-  "--color-sky-strong": "oklch(0.739 0.17 162.48)",
-  "--color-sky": "oklch(0.696 0.17 162.48)",
-  "--color-danger": "oklch(0.704 0.191 22.216)",
+  "--color-success": "oklch(0.67 0.11 155)",
+  "--color-info": "oklch(0.68 0.07 338)",
+  "--color-sky-strong": "oklch(0.74 0.06 338)",
+  "--color-sky": "oklch(0.68 0.07 338)",
+  "--color-danger": "oklch(0.63 0.21 24)",
 } as const;
 
 type CssVariableName = keyof typeof CSS_VARIABLES;
@@ -70,7 +70,7 @@ type CssVariableName = keyof typeof CSS_VARIABLES;
  * 
  * @example
  * inlineCssVariables("color: var(--color-danger);")
- * // 返回 "color: oklch(0.704 0.191 22.216);"
+ * // 返回 "color: oklch(0.63 0.21 24);"
  */
 export function inlineCssVariables(cssText: string): string {
   if (!cssText || !cssText.includes("var(--")) {

@@ -203,7 +203,7 @@ export default function WorldBookEntryEditor({
                             type="text"
                             value={key}
                             onChange={(e) => handleSecondaryKeywordChange(index, e.target.value)}
-                            className={`flex-1 bg-muted-surface/80 border border-border/60 rounded-md px-3 py-2.5 text-cream-soft focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 backdrop-blur-sm ${fontClass}`}
+                            className={`flex-1 bg-muted-surface/80 border border-border/60 rounded-md px-3 py-2.5 text-cream-soft focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent/50 transition-all duration-300 backdrop-blur-sm ${fontClass}`}
                             placeholder={t("worldBook.keywordPlaceholder")}
                           />
                           <Button
@@ -220,7 +220,7 @@ export default function WorldBookEntryEditor({
                         variant="link"
                         size="sm"
                         onClick={handleAddSecondaryKeyword}
-                        className={`text-blue-400 hover:text-blue-300 ${fontClass}`}
+                        className={`text-sky hover:text-cream-soft ${fontClass}`}
                       >
                         <Plus size={14} />
                         <span>{t("worldBook.addKeyword")}</span>
@@ -277,9 +277,9 @@ export default function WorldBookEntryEditor({
                         type="checkbox"
                         checked={editingEntry.use_regex}
                         onChange={(e) => onEntryChange({ ...editingEntry, use_regex: e.target.checked })}
-                        className="w-4 h-4 rounded border-border  text-blue-500 focus:ring-blue-500/50 focus:ring-2 transition-all duration-300"
+                        className="w-4 h-4 rounded border-border text-sky focus:ring-accent/50 focus:ring-2 transition-all duration-300"
                       />
-                      <span className="text-sm text-cream-soft group-hover:text-blue-200 transition-colors duration-300">{t("worldBook.regexLabel")}</span>
+                      <span className="text-sm text-cream-soft group-hover:text-sky transition-colors duration-300">{t("worldBook.regexLabel")}</span>
                     </label>
                 
                     <label className={`flex items-center space-x-3 cursor-pointer p-3 rounded-md bg-muted-surface/40 border border-border/40 hover:bg-muted-surface/60 hover:border-border/60 transition-all duration-300 group ${fontClass}`}>
@@ -297,9 +297,9 @@ export default function WorldBookEntryEditor({
                         type="checkbox"
                         checked={editingEntry.constant}
                         onChange={(e) => onEntryChange({ ...editingEntry, constant: e.target.checked })}
-                        className="w-4 h-4 rounded border-border  text-purple-500 focus:ring-purple-500/50 focus:ring-2 transition-all duration-300"
+                        className="w-4 h-4 rounded border-border text-primary-500 focus:ring-primary-500/50 focus:ring-2 transition-all duration-300"
                       />
-                      <span className="text-sm text-cream-soft group-hover:text-purple-200 transition-colors duration-300">{t("worldBook.constantLabel")}</span>
+                      <span className="text-sm text-cream-soft group-hover:text-primary-200 transition-colors duration-300">{t("worldBook.constantLabel")}</span>
                     </label>
                   </div>
 

@@ -31,12 +31,12 @@ export default function TopBar({ onToggleNav }: TopBarProps) {
   const { theme, toggleTheme } = useTheme();
   const { headerContent } = useHeaderContent();
 
-  const title = useMemo(() => {
-    // 会话页面不显示标题
-    if (pathname.startsWith("/session")) return "";
-    if (pathname.startsWith("/character-cards")) return "角色卡";
-    if (pathname === "/") return "首页";
-    return "工作区";
+  const routeMeta = useMemo(() => {
+    if (pathname.startsWith("/session")) return { title: "会话", note: "继续当前叙事" };
+    if (pathname.startsWith("/character-cards")) return { title: "角色卡", note: "安排登场角色" };
+    if (pathname.startsWith("/personas")) return { title: "用户角色", note: "维持代入视角" };
+    if (pathname === "/") return { title: "首页", note: "会话舞台总览" };
+    return { title: "工作区", note: "保持叙事节奏" };
   }, [pathname]);
 
   const toggleLanguage = () => {
@@ -45,32 +45,57 @@ export default function TopBar({ onToggleNav }: TopBarProps) {
     document.documentElement.lang = next;
   };
 
+  const chromeButtonClass =
+    "h-11 rounded-2xl border border-border/70 bg-background/55 px-3 text-ink hover:border-primary/20 hover:bg-primary/10 hover:text-foreground sm:h-10";
+
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/80 px-4 py-3 backdrop-blur">
+    <header className="stage-topbar-surface sticky top-0 z-20 flex h-[4.25rem] items-center justify-between border-b border-border/70 px-4 sm:px-5">
       <div className="flex items-center gap-3">
         <Button
           variant="outline"
           size="icon"
           onClick={onToggleNav}
-          className="md:hidden"
+          className="h-11 w-11 rounded-2xl border border-border/70 bg-background/55 text-ink-soft hover:border-primary/20 hover:bg-primary/10 hover:text-foreground md:hidden"
           aria-label="打开导航"
         >
           <Menu size={18} />
         </Button>
         {headerContent ? (
-          <div className="flex items-center gap-3 min-w-0">{headerContent}</div>
+          <div className="min-w-0">{headerContent}</div>
         ) : (
-          title ? <div className="text-sm font-semibold text-foreground">{title}</div> : null
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-[0.28em] text-primary/75">
+              {routeMeta.note}
+            </div>
+            <div className="mt-1 truncate text-sm font-semibold text-foreground sm:text-base">
+              {routeMeta.title}
+            </div>
+          </div>
         )}
       </div>
 
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={toggleLanguage} aria-label="切换语言">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleLanguage}
+          aria-label="切换语言"
+          className={chromeButtonClass}
+        >
           <Languages size={16} />
           <span className="hidden sm:inline">{language === "zh" ? "中文" : "English"}</span>
         </Button>
 
-        <Button variant="outline" size="sm" onClick={toggleTheme} aria-label="切换主题">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleTheme}
+          aria-label="切换主题"
+          className={cn(
+            chromeButtonClass,
+            theme === "dark" && "border-primary/20 bg-primary/12 text-primary",
+          )}
+        >
           {theme === "dark" ? <Moon size={16} /> : <Sun size={16} />}
           <span className="hidden sm:inline">{theme === "dark" ? "暗色" : "浅色"}</span>
         </Button>

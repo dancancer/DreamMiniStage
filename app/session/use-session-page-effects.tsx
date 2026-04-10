@@ -17,14 +17,14 @@ import { useEffect } from "react";
 import { ChatTopBarContent } from "@/components/chat/ChatTopBarContent";
 import { useHeaderContent } from "@/contexts/header-content";
 import { createSessionMessageEventHandlers } from "@/app/session/session-message-events";
+import { SESSION_OPEN_BRANCHES_EVENT } from "@/app/session/session-ui-events";
 import type { Character, DialogueMessage } from "@/types/character-dialogue";
 
 export function useSessionHeaderContent(params: {
   currentCharacter: Character | null;
   characterView: "chat" | "worldbook" | "preset" | "regex";
-  onOpenBranches: () => void;
 }) {
-  const { currentCharacter, characterView, onOpenBranches } = params;
+  const { currentCharacter, characterView } = params;
   const { setHeaderContent } = useHeaderContent();
 
   useEffect(() => {
@@ -37,11 +37,10 @@ export function useSessionHeaderContent(params: {
       <ChatTopBarContent
         character={currentCharacter}
         activeView={characterView}
-        onOpenBranches={onOpenBranches}
       />,
     );
     return () => setHeaderContent(null);
-  }, [currentCharacter, characterView, onOpenBranches, setHeaderContent]);
+  }, [currentCharacter, characterView, setHeaderContent]);
 }
 
 export function useSessionDialogueDataSync(params: {
@@ -145,4 +144,19 @@ export function useSessionMessageEvents(params: {
       window.removeEventListener("DreamMiniStage:refreshOneMessage", handlers.handleRefreshOneMessage as EventListener);
     };
   }, [characterId, dialogueMessages, regenerateDialogueMessage, setDialogueMessages, onError]);
+}
+
+export function useSessionUiEvents(params: {
+  onOpenBranches: () => void;
+}) {
+  const { onOpenBranches } = params;
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.addEventListener(SESSION_OPEN_BRANCHES_EVENT, onOpenBranches);
+    return () => window.removeEventListener(SESSION_OPEN_BRANCHES_EVENT, onOpenBranches);
+  }, [onOpenBranches]);
 }

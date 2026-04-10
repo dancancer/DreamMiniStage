@@ -14,6 +14,12 @@
       "classification": "expected-failfast"
     },
     {
+      "id": "console-resource-connection-closed",
+      "level": "error",
+      "messageIncludes": "Failed to load resource: net::ERR_CONNECTION_CLOSED",
+      "classification": "known-noise"
+    },
+    {
       "id": "console-llm-method-failed",
       "level": "error",
       "messageIncludes": "Method execution failed: invokeLLM Error: [llmTool.invokeLLM] 401 P4 replay mock unauthorized",
@@ -26,10 +32,42 @@
       "classification": "expected-failfast"
     },
     {
+      "id": "console-dialogue-generation-stream-401",
+      "level": "error",
+      "messageIncludes": "Dialogue generation error: Error: [llmTool.invokeLLMStream] 401 P4 replay mock unauthorized",
+      "classification": "expected-failfast"
+    },
+    {
       "id": "console-stream-no-response",
       "level": "error",
       "messageIncludes": "Streaming error: Error: No response returned from workflow",
       "classification": "expected-failfast"
+    },
+    {
+      "id": "console-plugin-registry-fetch-failed",
+      "level": "error",
+      "messageIncludes": "❌ Failed to load plugin registry: TypeError: Failed to fetch",
+      "classification": "known-noise"
+    },
+    {
+      "id": "console-plugin-discovery-fetch-failed",
+      "level": "error",
+      "messageIncludes": "❌ Plugin discovery failed: TypeError: Failed to fetch",
+      "classification": "known-noise"
+    },
+    {
+      "id": "console-plugin-module-fetch-failed",
+      "level": "error",
+      "messageIncludes": "❌ Failed to load module /plugins/",
+      "messageRegex": "TypeError: Failed to fetch",
+      "classification": "known-noise"
+    },
+    {
+      "id": "console-plugin-load-fetch-failed",
+      "level": "error",
+      "messageIncludes": "❌ Failed to load plugin ",
+      "messageRegex": "TypeError: Failed to fetch",
+      "classification": "known-noise"
     },
     {
       "id": "console-missing-node-tools",
@@ -84,7 +122,7 @@
       "eventType": "requestfailed",
       "method": "GET",
       "urlIncludes": "https://www.googletagmanager.com/gtag/js",
-      "errorIncludes": "net::ERR_ABORTED",
+      "errorRegex": "net::ERR_(ABORTED|CONNECTION_CLOSED)",
       "classification": "known-noise"
     },
     {
@@ -92,6 +130,30 @@
       "eventType": "requestfailed",
       "method": "GET",
       "urlIncludes": "https://va.vercel-scripts.com/v1/script.debug.js",
+      "errorRegex": "net::ERR_(ABORTED|CONNECTION_CLOSED)",
+      "classification": "known-noise"
+    },
+    {
+      "id": "network-plugin-asset-aborted",
+      "eventType": "requestfailed",
+      "method": "GET",
+      "urlRegex": "^http://127\\.0\\.0\\.1:3303/plugins/.+",
+      "errorIncludes": "net::ERR_ABORTED",
+      "classification": "known-noise"
+    },
+    {
+      "id": "network-local-icon-aborted",
+      "eventType": "requestfailed",
+      "method": "GET",
+      "urlRegex": "^http://127\\.0\\.0\\.1:3303/api-icons/.+",
+      "errorIncludes": "net::ERR_ABORTED",
+      "classification": "known-noise"
+    },
+    {
+      "id": "network-next-stack-frame-aborted",
+      "eventType": "requestfailed",
+      "method": "POST",
+      "urlIncludes": "http://127.0.0.1:3303/__nextjs_original-stack-frames",
       "errorIncludes": "net::ERR_ABORTED",
       "classification": "known-noise"
     },

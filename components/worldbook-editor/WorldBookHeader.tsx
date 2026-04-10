@@ -65,13 +65,13 @@ export function WorldBookHeader({
               {t("worldBook.enabled")}: {enabledCount}
             </span>
             <span>•</span>
-            <span className="text-blue-400 whitespace-nowrap">
+            <span className="text-sky whitespace-nowrap">
               {t("worldBook.constant")}: {constantCount}
             </span>
             {filterBy !== "all" && (
               <>
                 <span>•</span>
-                <span className="text-green-400 whitespace-nowrap">
+                <span className="text-primary-soft whitespace-nowrap">
                   {t("worldBook.filtered")}: {filteredCount}
                 </span>
               </>

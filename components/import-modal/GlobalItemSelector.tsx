@@ -54,8 +54,8 @@ function LoadingState({ text, serifFontClass }: { text: string; serifFontClass: 
     <div className="flex items-center justify-center py-6">
       <div className="flex items-center space-x-2">
         <div className="relative">
-          <div className="w-4 h-4 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-          <div className="absolute inset-0 w-4 h-4 border-2 border-transparent border-r-blue-400 rounded-full animate-spin animate-reverse" />
+          <div className="w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+          <div className="absolute inset-0 w-4 h-4 border-2 border-transparent border-r-primary-400 rounded-full animate-spin animate-reverse" />
         </div>
         <span className={"text-ink-soft text-sm "}>{text}</span>
       </div>
@@ -99,7 +99,7 @@ function ItemCard({ item, isSelected, isDeleting, deleteTitle, serifFontClass, o
     <label
       className={`relative block p-2.5 border rounded-md cursor-pointer transition-all duration-300 group ${
         isSelected
-          ? "border-blue-500/60 bg-info/10 shadow-blue-500/10"
+          ? "border-accent/60 bg-accent/10"
           : "border-border/60 hover:border-border/80 hover:bg-muted-surface/30"
       }`}
     >
@@ -111,7 +111,7 @@ function ItemCard({ item, isSelected, isDeleting, deleteTitle, serifFontClass, o
           {item.description && <p className="text-ink-soft text-xs mt-0.5 line-clamp-2">{item.description}</p>}
           <div className="flex items-center space-x-3 mt-1.5 text-xs text-ink-soft/80">
             <span className="flex items-center">
-              <span className="w-1.5 h-1.5 bg-blue-400/60 rounded-full mr-1" />
+              <span className="w-1.5 h-1.5 bg-accent/70 rounded-full mr-1" />
               {item.count}
             </span>
             <span className="flex items-center">
@@ -143,7 +143,7 @@ function ItemCard({ item, isSelected, isDeleting, deleteTitle, serifFontClass, o
           </Button>
           <div className={`relative w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
             isSelected
-              ? "border-blue-500 bg-info shadow-blue-500/30"
+              ? "border-accent bg-accent"
               : "border-border group-hover:border-border"
           }`}>
             {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />}

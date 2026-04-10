@@ -14,7 +14,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/app/i18n";
 import { toast } from "@/lib/store/toast-store";
 import { useCharacterDialogue } from "@/hooks/useCharacterDialogue";
@@ -22,6 +22,10 @@ import { useCharacterLoader } from "@/hooks/useCharacterLoader";
 import { useUIStore } from "@/lib/store/ui-store";
 import { useUserStore } from "@/lib/store/user-store";
 import { useSessionStore } from "@/lib/store/session-store";
+import {
+  useSessionToolModesStore,
+  type SessionToolModes,
+} from "@/lib/store/session-tool-modes";
 import { useSessionPageActions } from "@/app/session/use-session-page-actions";
 import SessionPageLayout from "@/app/session/session-page-layout";
 import { useSessionHostDebug } from "@/app/session/use-session-host-debug";
@@ -32,32 +36,19 @@ import {
   useSessionHeaderContent,
   useSessionMessageEvents,
   useSessionPresetActivation,
+  useSessionUiEvents,
 } from "@/app/session/use-session-page-effects";
 import {
+  EmptySessionScreen,
   ErrorScreen,
   LoadingScreen,
-  RedirectScreen,
 } from "@/app/session/session-state-screens";
 import type { SessionGalleryItem } from "@/app/session/session-gallery";
 
-type PerspectiveMode = { active: boolean; mode: "novel" | "screenplay" | "chat" };
-type ActiveModesConfig = {
-  "story-progress": boolean;
-  perspective: PerspectiveMode;
-  "scene-setting": boolean;
-};
-
 function SessionPageContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const sessionId = searchParams.get("id");
   const { t, fontClass, serifFontClass, language } = useLanguage();
-
-  useEffect(() => {
-    if (!sessionId) {
-      router.replace("/");
-    }
-  }, [sessionId, router]);
 
   const { characterId, sessionError } = useSessionRouteState(sessionId, t);
   const characterView = useUIStore((state) => state.characterView);
@@ -95,11 +86,21 @@ function SessionPageContent() {
     open: false,
     items: [],
   });
-  const [activeModes, setActiveModes] = useState<ActiveModesConfig>({
-    "story-progress": false,
-    perspective: { active: false, mode: "novel" },
-    "scene-setting": false,
-  });
+  const activeModes = useSessionToolModesStore((state) => state.activeModes);
+  const setActiveModes = useSessionToolModesStore((state) => state.setActiveModes);
+  const resetModes = useSessionToolModesStore((state) => state.resetModes);
+  const setActiveModesBridge = useCallback(
+    (updater: React.SetStateAction<Record<string, unknown>>) => {
+      setActiveModes((prev) => {
+        const prevRecord = prev as unknown as Record<string, unknown>;
+        const nextRecord = typeof updater === "function"
+          ? updater(prevRecord)
+          : updater;
+        return nextRecord as unknown as SessionToolModes;
+      });
+    },
+    [setActiveModes],
+  );
   const sessionHostDebug = useSessionHostDebug();
 
   const currentCharacterName = characterNameOverride || loader.character?.name || "";
@@ -120,6 +121,10 @@ function SessionPageContent() {
     setCharacterNameOverride(null);
   }, [characterId]);
 
+  useEffect(() => {
+    resetModes();
+  }, [resetModes, sessionId]);
+
   const handleOpenBranches = useCallback(() => {
     setIsBranchOpen(true);
   }, []);
@@ -127,6 +132,8 @@ function SessionPageContent() {
   useSessionHeaderContent({
     currentCharacter,
     characterView: normalizedCharacterView,
+  });
+  useSessionUiEvents({
     onOpenBranches: handleOpenBranches,
   });
   useSessionDialogueDataSync({
@@ -161,7 +168,7 @@ function SessionPageContent() {
     language,
     dialogue,
     setUserInput,
-    activeModes,
+    activeModes: activeModes as unknown as Record<string, unknown>,
     setCharacterNameOverride,
     setGalleryState,
     t,
@@ -170,7 +177,22 @@ function SessionPageContent() {
   });
 
   if (!sessionId) {
-    return <RedirectScreen text={t("characterChat.redirecting") || "Redirecting..."} />;
+    return (
+      <EmptySessionScreen
+        eyebrow={language === "zh" ? "会话入口" : "Session Entry"}
+        title={language === "zh" ? "还没有打开会话" : "No session selected"}
+        message={language === "zh"
+          ? "从首页选择已有会话，或先创建一个新的叙事会话。"
+          : "Choose an existing session from Home, or create a new storytelling session first."}
+        note={language === "zh"
+          ? "会话页只负责继续叙事，不负责替你猜下一步去哪里。"
+          : "The session page is for continuing the story, not for guessing where you meant to go next."}
+        primaryHref="/"
+        primaryLabel={language === "zh" ? "返回首页" : "Go to Home"}
+        secondaryHref="/character-cards?mode=create-session"
+        secondaryLabel={language === "zh" ? "创建新会话" : "Create a Session"}
+      />
+    );
   }
 
   if (sessionError) {
@@ -217,8 +239,8 @@ function SessionPageContent() {
       sessionId={sessionId}
       userInput={userInput}
       setUserInput={setUserInput}
-      activeModes={activeModes as Record<string, unknown>}
-      setActiveModes={setActiveModes as React.Dispatch<React.SetStateAction<Record<string, unknown>>>}
+      activeModes={activeModes as unknown as Record<string, unknown>}
+      setActiveModes={setActiveModesBridge}
       fontClass={fontClass}
       serifFontClass={serifFontClass}
       language={language as "zh" | "en"}

@@ -15,6 +15,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { getDisplayUsername, setDisplayUsername } from "@/utils/username-helper";
 import { useApiConfig } from "@/hooks/useApiConfig";
 import { useScriptBridge } from "@/hooks/useScriptBridge";
@@ -39,21 +40,40 @@ import type {
 } from "@/lib/slash-command/types";
 import { useLocalStorageBoolean } from "@/hooks/useLocalStorage";
 import { resolveStreamingEnabled } from "@/lib/model-runtime";
-import UserNameSettingModal from "@/components/UserNameSettingModal";
-import ScriptDebugPanel from "@/components/ScriptDebugPanel";
 import type { TavernHelperScript } from "@/lib/models/character-model";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  SESSION_EXPORT_JSONL_EVENT,
+  SESSION_IMPORT_JSONL_EVENT,
+  SESSION_OPEN_SCRIPT_DEBUG_EVENT,
+  SESSION_OPEN_USER_NAME_MODAL_EVENT,
+} from "@/app/session/session-ui-events";
 
 import {
   ApiSelector,
   ChatInput,
-  ControlPanel,
   MessageHeaderControls,
   MessageList,
   type Message,
 } from "@/components/character-chat";
 import type { ChatStreamingIntent } from "@/components/character-chat/streaming-types";
+
+const LazyUserNameSettingModal = dynamic(
+  () => import("@/components/UserNameSettingModal"),
+  {
+    ssr: false,
+    loading: () => null,
+  },
+);
+
+const LazyScriptDebugPanel = dynamic(
+  () => import("@/components/ScriptDebugPanel"),
+  {
+    ssr: false,
+    loading: () => null,
+  },
+);
 
 // ============================================================================
 //                              类型定义
@@ -94,7 +114,6 @@ interface Props {
   // ─── 提示词查看器参数 ───
   dialogueKey?: string;
   chatName?: string;
-  footerSlot?: React.ReactNode;
   // ─── Slash Command 回调 ───
   onSendMessage?: (text: string, options?: SendOptions) => void | Promise<void>;
   onTriggerGeneration?: () => void | Promise<void>;
@@ -244,7 +263,6 @@ export default function CharacterChatPanel({
   language,
   dialogueKey,
   chatName,
-  footerSlot,
   onSendMessage,
   onTriggerGeneration,
   onSendAs,
@@ -422,6 +440,37 @@ export default function CharacterChatPanel({
     setCurrentDisplayName(getDisplayUsername());
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleOpenUserNameModal = () => setShowUserNameModal(true);
+    const handleOpenScriptDebug = () => setShowScriptDebugPanel(true);
+    const handleExportJsonl = () => {
+      void onExportJsonl?.();
+    };
+    const handleImportJsonl = (event: Event) => {
+      const file = (event as CustomEvent<File>).detail;
+      if (!file) {
+        return;
+      }
+      void onImportJsonl?.(file);
+    };
+
+    window.addEventListener(SESSION_OPEN_USER_NAME_MODAL_EVENT, handleOpenUserNameModal);
+    window.addEventListener(SESSION_OPEN_SCRIPT_DEBUG_EVENT, handleOpenScriptDebug);
+    window.addEventListener(SESSION_EXPORT_JSONL_EVENT, handleExportJsonl);
+    window.addEventListener(SESSION_IMPORT_JSONL_EVENT, handleImportJsonl as EventListener);
+
+    return () => {
+      window.removeEventListener(SESSION_OPEN_USER_NAME_MODAL_EVENT, handleOpenUserNameModal);
+      window.removeEventListener(SESSION_OPEN_SCRIPT_DEBUG_EVENT, handleOpenScriptDebug);
+      window.removeEventListener(SESSION_EXPORT_JSONL_EVENT, handleExportJsonl);
+      window.removeEventListener(SESSION_IMPORT_JSONL_EVENT, handleImportJsonl as EventListener);
+    };
+  }, [onExportJsonl, onImportJsonl]);
+
   // ═══════════════════════════════════════════════════════════════
   // 广播最新消息到脚本系统
   // 
@@ -576,30 +625,17 @@ export default function CharacterChatPanel({
         onSuggestedInput={onSuggestedInput}
         fontClass={fontClass}
         t={t}
-      >
-        {footerSlot}
-        <ControlPanel
-          activeModes={activeModes as { "story-progress": boolean; perspective: { active: boolean; mode: "novel" | "protagonist" }; "scene-setting": boolean }}
-          setActiveModes={setActiveModes}
-          onOpenUserNameModal={() => setShowUserNameModal(true)}
-          onOpenScriptDebug={() => setShowScriptDebugPanel(true)}
-          t={t}
-          dialogueKey={dialogueKey}
-          characterId={character?.id}
-          onExportJsonl={onExportJsonl}
-          onImportJsonl={onImportJsonl}
-        />
-      </ChatInput>
+      />
 
       {/* 模态框 */}
-      <UserNameSettingModal
+      <LazyUserNameSettingModal
         isOpen={showUserNameModal}
         onClose={() => setShowUserNameModal(false)}
         currentDisplayName={currentDisplayName}
         onSave={handleUserNameSave}
       />
 
-      <ScriptDebugPanel
+      <LazyScriptDebugPanel
         isOpen={showScriptDebugPanel}
         onClose={() => setShowScriptDebugPanel(false)}
         scripts={scriptBridge.scriptStatuses}

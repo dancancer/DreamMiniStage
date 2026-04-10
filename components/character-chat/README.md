@@ -13,7 +13,6 @@
 | `MessageItem.tsx` | 子组件 | 消息项 |
 | `MessageHeaderControls.tsx` | 子组件 | 消息头部控件 |
 | `ChatInput.tsx` | 子组件 | 输入框 |
-| `ControlPanel.tsx` | 子组件 | 控制面板 |
 | `ApiSelector.tsx` | 子组件 | API 选择器 |
 | `SessionToolbar.tsx` | 子组件 | 会话级工具栏 |
 | `SessionToolbar.tsx` | 新组件 | 显示当前模型、Streaming/快速开关与滑动提示的工具栏，并以 `apiSelector` 与 `modeControls` 插槽承接控制元素。 |
@@ -26,5 +25,9 @@
 ## 最新变更（2026-03-20）
 
 - `SessionToolbar.tsx` 已新增会话级工具栏雏形，并由 `index.ts` 统一导出，供后续把模型 / streaming / fast mode / swipe 这类会话级控制从消息头迁出。
-- `ChatInput.tsx` 现在会把页脚工具收口为受限高度、可横向滚动的 tool rail，避免群聊 / checkpoint / MVU 调试面板把输入区无限撑高，挤压消息滚动区。
 - `MessageList.tsx` 与 `CharacterChatPanel.tsx` 已补上 `min-h-0` 收口，确保聊天主轴继续把剩余高度优先让给消息列表，而不是被底部工具吞掉。
+
+## 最新变更（2026-04-03）
+
+- `ControlPanel.tsx` 已从聊天主界面退役，低频会话工具迁移到右侧的 `SessionToolsPanel`，避免把管理性操作继续堆在输入区旁边。
+- `ChatInput.tsx` 已回归单一职责：只负责建议输入、文本输入与发送，不再承载 tool rail / floating tool 这类过渡性布局逻辑。

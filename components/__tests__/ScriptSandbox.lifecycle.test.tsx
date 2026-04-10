@@ -79,7 +79,7 @@ describe("ScriptSandbox lifecycle", () => {
     unmountSandbox(rendered);
   });
 
-  it("keeps legacy global triggerSlash calls intact for shim compatibility", () => {
+  it("rewrites legacy global triggerSlash calls to TavernHelper", () => {
     const rendered = renderSandbox(
       "segment_legacy_trigger_slash",
     );
@@ -99,8 +99,67 @@ describe("ScriptSandbox lifecycle", () => {
 
     const srcdoc = rendered.iframe.getAttribute("srcdoc") || "";
 
-    expect(srcdoc).toContain("typeof triggerSlash === \"function\"");
-    expect(srcdoc).toContain("triggerSlash('/send hello|/trigger')");
+    expect(srcdoc).not.toContain("typeof triggerSlash === \"function\"");
+    expect(srcdoc).not.toMatch(/(^|[^\w$.])triggerSlash\s*\(/m);
+    expect(srcdoc).toContain("typeof window.TavernHelper?.triggerSlash === \"function\"");
+    expect(srcdoc).toContain("window.TavernHelper?.triggerSlash('/send hello|/trigger')");
+
+    unmountSandbox(rendered);
+  });
+
+  it("rewrites legacy message api globals to TavernHelper", () => {
+    const rendered = renderSandbox("segment_legacy_message_globals");
+
+    act(() => {
+      rendered.root.render(
+        <ScriptSandbox
+          id="segment_legacy_message_globals"
+          html={`<html><body><script>
+            async function initWithData() {
+              if (typeof getChatMessages === "function" && typeof getCurrentMessageId === "function") {
+                await getChatMessages(0);
+                getCurrentMessageId();
+              }
+            }
+          </script></body></html>`}
+        />,
+      );
+    });
+
+    const srcdoc = rendered.iframe.getAttribute("srcdoc") || "";
+
+    expect(srcdoc).not.toContain("typeof getChatMessages === \"function\"");
+    expect(srcdoc).not.toContain("typeof getCurrentMessageId === \"function\"");
+    expect(srcdoc).not.toMatch(/(^|[^\w$.])getChatMessages\s*\(/m);
+    expect(srcdoc).not.toMatch(/(^|[^\w$.])getCurrentMessageId\s*\(/m);
+    expect(srcdoc).toContain("typeof window.TavernHelper?.getChatMessages === \"function\"");
+    expect(srcdoc).toContain("typeof window.TavernHelper?.getCurrentMessageId === \"function\"");
+    expect(srcdoc).toContain("window.TavernHelper?.getChatMessages(0)");
+    expect(srcdoc).toContain("window.TavernHelper?.getCurrentMessageId()");
+
+    unmountSandbox(rendered);
+  });
+
+  it("rewrites legacy event api globals to TavernHelper", () => {
+    const rendered = renderSandbox("segment_legacy_event_globals");
+
+    act(() => {
+      rendered.root.render(
+        <ScriptSandbox
+          id="segment_legacy_event_globals"
+          html={`<html><body><script>
+            eventOn("DreamMiniStage:test", () => {
+              console.log("ok");
+            });
+          </script></body></html>`}
+        />,
+      );
+    });
+
+    const srcdoc = rendered.iframe.getAttribute("srcdoc") || "";
+
+    expect(srcdoc).not.toMatch(/(^|[^\w$.])eventOn\s*\(/m);
+    expect(srcdoc).toContain("window.TavernHelper?.eventOn(\"DreamMiniStage:test\"");
 
     unmountSandbox(rendered);
   });

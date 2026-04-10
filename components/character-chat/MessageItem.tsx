@@ -372,14 +372,14 @@ function MessageHeader({
           onClick={onTruncate}
           tooltip={t("characterChat.jumpToMessage")}
           icon={<TruncateIcon />}
-          hoverColor="green"
+          hoverColor="success"
         />
         {showRegenerateButton && (
           <ActionButton
             onClick={onRegenerate}
             tooltip={t("characterChat.regenerateMessage")}
             icon={<RegenerateIcon />}
-            hoverColor="orange"
+            hoverColor="primary"
           />
         )}
       </div>
@@ -403,13 +403,13 @@ interface ActionButtonProps {
   onClick: () => void;
   tooltip: string;
   icon: React.ReactNode;
-  hoverColor: "green" | "orange";
+  hoverColor: "success" | "primary";
 }
 
 function ActionButton({ onClick, tooltip, icon, hoverColor }: ActionButtonProps) {
-  const colorClass = hoverColor === "green"
-    ? "hover:text-green-400 hover:shadow-[0_0_8px_rgba(34,197,94,0.4)]"
-    : "hover:text-orange-400 hover:shadow-[0_0_8px_rgba(249,115,22,0.4)]";
+  const colorClass = hoverColor === "success"
+    ? "hover:text-success"
+    : "hover:text-primary-300";
 
   return (
     <Button

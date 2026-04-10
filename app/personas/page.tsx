@@ -14,10 +14,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Star, Trash2, Edit2, Download, Upload, User } from "lucide-react";
+import { Plus, Star, Trash2, Edit2, Download, User } from "lucide-react";
 import Image from "next/image";
 import { useLanguage } from "@/app/i18n";
 import { Button } from "@/components/ui/button";
+import { StageEmptyState } from "@/components/ui/stage-empty-state";
 import {
   Dialog,
   DialogContent,
@@ -120,7 +121,7 @@ export default function PersonasPage() {
   return (
     <div className="flex flex-col h-full">
       {/* ─── 页面头部 ─── */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <header className="flex flex-col gap-4 border-b border-border px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold">
             {language === "zh" ? "用户角色" : "Personas"}
@@ -131,12 +132,12 @@ export default function PersonasPage() {
               : "Manage your identities in conversations"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={exportAll}>
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+          <Button type="button" variant="outline" size="sm" onClick={exportAll} className="h-11 px-4 sm:h-10">
             <Download className="w-4 h-4 mr-2" />
             {language === "zh" ? "导出" : "Export"}
           </Button>
-          <Button size="sm" onClick={handleCreate}>
+          <Button type="button" size="sm" onClick={handleCreate} className="h-11 px-4 sm:h-10">
             <Plus className="w-4 h-4 mr-2" />
             {language === "zh" ? "新建" : "New"}
           </Button>
@@ -230,22 +231,19 @@ function EmptyState({
   language: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center h-64 text-center">
-      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-        <User className="w-8 h-8 text-muted-foreground" />
-      </div>
-      <h3 className="text-lg font-medium mb-2">
-        {language === "zh" ? "还没有用户角色" : "No personas yet"}
-      </h3>
-      <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-        {language === "zh"
+    <div className="mx-auto max-w-2xl">
+      <StageEmptyState
+        icon={<User className="h-9 w-9" />}
+        eyebrow={language === "zh" ? "身份层" : "Identity Layer"}
+        title={language === "zh" ? "还没有用户角色" : "No personas yet"}
+        description={language === "zh"
           ? "创建用户角色来定义你在对话中的身份，包括名称、描述和头像"
           : "Create personas to define your identity in conversations, including name, description and avatar"}
-      </p>
-      <Button onClick={onCreate}>
-        <Plus className="w-4 h-4 mr-2" />
-        {language === "zh" ? "创建第一个角色" : "Create your first persona"}
-      </Button>
+        note={language === "zh"
+          ? "这一步是可选的，但在多角色叙事里能帮你保持稳定视角。"
+          : "This step is optional, but it helps maintain a consistent point of view in multi-character sessions."}
+        primaryAction={{ label: language === "zh" ? "创建第一个角色" : "Create your first persona", onClick: onCreate }}
+      />
     </div>
   );
 }
@@ -276,17 +274,21 @@ function PersonaCard({
   language,
 }: PersonaCardProps) {
   return (
-    <div
+    <article
       className={cn(
         "group relative rounded-lg border p-4 transition-all cursor-pointer",
         isActive
           ? "border-primary bg-primary/5 ring-2 ring-primary/20"
           : "border-border hover:border-primary/50 hover:bg-accent/50",
       )}
-      onClick={onActivate}
     >
       {/* ─── 头像和信息 ─── */}
-      <div className="flex items-start gap-3">
+      <button
+        type="button"
+        onClick={onActivate}
+        className="flex w-full items-start gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        aria-label={language === "zh" ? `激活用户角色 ${persona.name}` : `Activate persona ${persona.name}`}
+      >
         <div className="relative w-12 h-12 rounded-full overflow-hidden bg-muted shrink-0">
           {persona.avatarPath ? (
             <Image
@@ -302,8 +304,8 @@ function PersonaCard({
             </div>
           )}
           {isDefault && (
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center">
-              <Star className="w-3 h-3 text-white fill-white" />
+            <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+              <Star className="h-3 w-3 fill-current text-current" />
             </div>
           )}
         </div>
@@ -323,38 +325,46 @@ function PersonaCard({
             </p>
           )}
         </div>
-      </div>
+      </button>
 
       {/* ─── 操作按钮 ─── */}
-      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
         <Button
+          type="button"
           variant="ghost"
           size="icon"
-          className="h-7 w-7"
+          className="h-10 w-10"
           onClick={(e) => { e.stopPropagation(); onSetDefault(); }}
+          aria-label={isDefault
+            ? (language === "zh" ? "取消默认角色" : "Unset default persona")
+            : (language === "zh" ? "设为默认角色" : "Set default persona")}
           title={isDefault
             ? (language === "zh" ? "取消默认" : "Unset default")
             : (language === "zh" ? "设为默认" : "Set as default")}
         >
-          <Star className={cn("w-4 h-4", isDefault ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground")} />
+          <Star className={cn("w-4 h-4", isDefault ? "fill-primary text-primary" : "text-muted-foreground")} />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
-          className="h-7 w-7"
+          className="h-10 w-10"
           onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          aria-label={language === "zh" ? `编辑用户角色 ${persona.name}` : `Edit persona ${persona.name}`}
         >
           <Edit2 className="w-4 h-4 text-muted-foreground" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
-          className="h-7 w-7"
+          className="h-10 w-10"
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          aria-label={language === "zh" ? `删除用户角色 ${persona.name}` : `Delete persona ${persona.name}`}
         >
           <Trash2 className="w-4 h-4 text-destructive" />
         </Button>
       </div>
-    </div>
+    </article>
   );
 }

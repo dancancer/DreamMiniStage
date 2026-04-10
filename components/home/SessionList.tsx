@@ -19,6 +19,7 @@ import { MessageSquarePlus } from "lucide-react";
 import { SessionWithCharacter } from "@/types/session";
 import SessionCard from "./SessionCard";
 import { useLanguage } from "@/app/i18n";
+import { StageEmptyState } from "@/components/ui/stage-empty-state";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    类型定义
@@ -36,20 +37,23 @@ export interface SessionListProps {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function EmptyState() {
-  const { t, fontClass } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="w-16 h-16 rounded-full bg-muted-surface flex items-center justify-center mb-4">
-        <MessageSquarePlus className="w-8 h-8 text-ink-soft" />
-      </div>
-      <h3 className="text-lg text-cream-soft mb-2">
-        {t("homePage.noSessions")}
-      </h3>
-      <p className={`text-sm text-ink-soft text-center ${fontClass}`}>
-        {t("homePage.noSessionsHint")}
-      </p>
-    </div>
+    <StageEmptyState
+      icon={<MessageSquarePlus className="h-9 w-9" />}
+      eyebrow={language === "zh" ? "会话舞台" : "Story Flow"}
+      title={t("homePage.noSessions")}
+      description={t("homePage.noSessionsHint")}
+      note={language === "zh"
+        ? "从角色开始一次新会话，会比直接堆积素材更容易进入叙事节奏。"
+        : "Starting from a character keeps the narrative momentum clearer than piling up raw materials first."}
+      primaryAction={{
+        label: language === "zh" ? "创建新会话" : "Create Session",
+        href: "/character-cards?mode=create-session",
+      }}
+      className="mx-auto w-full max-w-3xl xl:mx-0"
+    />
   );
 }
 

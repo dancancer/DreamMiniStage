@@ -12,12 +12,14 @@
 
 "use client";
 
-import { BookText, SlidersHorizontal, Regex, UserRound, GitBranch } from "lucide-react";
+import { BookText, UserRound, Wrench } from "lucide-react";
 import { CharacterAvatarBackground } from "@/components/CharacterAvatarBackground";
 import { trackButtonClick } from "@/utils/google-analytics";
 import { useLanguage } from "@/app/i18n";
 import { useUIStore } from "@/lib/store/ui-store";
+import { useUiLayout } from "@/contexts/ui-layout";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ChatTopBarContentProps {
   character?: {
@@ -25,37 +27,47 @@ interface ChatTopBarContentProps {
     avatar_path?: string;
   };
   activeView: "chat" | "worldbook" | "regex" | "preset";
-  onOpenBranches?: () => void;
 }
 
-export function ChatTopBarContent({ character, activeView, onOpenBranches }: ChatTopBarContentProps) {
+export function ChatTopBarContent({ character, activeView }: ChatTopBarContentProps) {
   const { t } = useLanguage();
   const setCharacterView = useUIStore((state) => state.setCharacterView);
+  const { openPanel } = useUiLayout();
   const name = character?.name ?? (t("characterChat.noCharacter") ?? "未选择角色");
+  const stageLabel = activeView === "worldbook"
+    ? t("characterChat.worldBook")
+    : activeView === "preset"
+      ? "预设"
+      : activeView === "regex"
+        ? "正则脚本"
+        : "叙事中";
 
   return (
-    <div className="flex items-center gap-4 min-w-0">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+    <div className="flex min-w-0 items-center justify-between gap-4">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-background/45">
           {character?.avatar_path ? (
             <CharacterAvatarBackground avatarPath={character.avatar_path} />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-muted-surface">
+            <div className="flex h-full w-full items-center justify-center rounded-full bg-muted-surface">
               <UserRound className="h-4 w-4 text-ink" strokeWidth={1.5} />
             </div>
           )}
         </div>
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-foreground truncate max-w-[160px]">
+          <div className="text-[10px] uppercase tracking-[0.26em] text-primary-soft/70">
+            {stageLabel}
+          </div>
+          <div className="max-w-[180px] truncate text-sm font-semibold text-foreground">
             {name}
           </div>
-          <div className="text-xs text-muted-foreground truncate max-w-[160px]">
+          <div className="max-w-[220px] truncate text-xs text-ink-soft">
             {t("characterChat.chattingWith") ?? "聊天中"}
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
         <IconButton
           label={t("characterChat.worldBook")}
           icon={<BookText className="h-4 w-4" strokeWidth={1.5} />}
@@ -66,29 +78,11 @@ export function ChatTopBarContent({ character, activeView, onOpenBranches }: Cha
           }}
         />
         <IconButton
-          label={t("characterChat.regex")}
-          icon={<Regex className="h-4 w-4" strokeWidth={1.5} />}
-          active={activeView === "regex"}
+          label="会话工具"
+          icon={<Wrench className="h-4 w-4" strokeWidth={1.5} />}
           onClick={() => {
-            trackButtonClick("page", "切换正则编辑器");
-            setCharacterView(activeView === "regex" ? "chat" : "regex");
-          }}
-        />
-        <IconButton
-          label={t("characterChat.preset")}
-          icon={<SlidersHorizontal className="h-4 w-4" strokeWidth={1.5} />}
-          active={activeView === "preset"}
-          onClick={() => {
-            trackButtonClick("page", "切换预设编辑器");
-            setCharacterView(activeView === "preset" ? "chat" : "preset");
-          }}
-        />
-        <IconButton
-          label="剧情分支"
-          icon={<GitBranch className="h-4 w-4" strokeWidth={1.5} />}
-          onClick={() => {
-            trackButtonClick("page", "打开剧情分支");
-            onOpenBranches?.();
+            trackButtonClick("page", "打开会话工具");
+            openPanel("sessionTools");
           }}
         />
       </div>
@@ -109,13 +103,16 @@ function IconButton({
 }) {
   return (
     <Button
-      variant={active ? "default" : "outline"}
+      variant="outline"
       size="sm"
       onClick={onClick}
-      className="gap-2"
+      className={cn(
+        "h-10 gap-2 rounded-full border border-border/70 bg-background/45 px-3 text-ink-soft hover:border-primary/20 hover:bg-primary/10 hover:text-foreground",
+        active && "border-primary/25 bg-primary/12 text-primary",
+      )}
     >
       {icon}
-      <span className="hidden sm:inline">{label}</span>
+      <span className="hidden md:inline">{label}</span>
     </Button>
   );
 }

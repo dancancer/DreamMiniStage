@@ -64,7 +64,7 @@ export function HeaderBar({
             {filterBy !== "all" && (
               <>
                 <span>•</span>
-                <span className="text-blue-400 whitespace-nowrap">{t("regexScriptEditor.filteredCount")} {filteredCount}</span>
+                <span className="text-sky whitespace-nowrap">{t("regexScriptEditor.filteredCount")} {filteredCount}</span>
               </>
             )}
           </div>

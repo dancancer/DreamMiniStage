@@ -566,9 +566,9 @@ function MessageCard({ message, isExpanded, onToggle, searchResult }: MessageCar
 
   // 角色颜色映射
   const roleColors: Record<PromptMessage["role"], string> = {
-    system: "bg-blue-500/10 border-blue-500/30 text-blue-400",
-    user: "bg-green-500/10 border-green-500/30 text-green-400",
-    assistant: "bg-purple-500/10 border-purple-500/30 text-purple-400",
+    system: "bg-accent/15 border-accent/40 text-sky",
+    user: "bg-muted-surface/80 border-border text-ink-soft",
+    assistant: "bg-primary/10 border-primary/30 text-primary-300",
   };
 
   // 处理搜索高亮

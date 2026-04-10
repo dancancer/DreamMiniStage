@@ -199,7 +199,7 @@ export default function RegexScriptEntryEditor({
               <div className={`mt-1 text-2xs text-ink-soft/80 ${fontClass}`}>
                 {(localScript.replaceString || "").length === 0 ? 
                   <span className="flex items-center">
-                    <AlertCircle className="h-3 w-3 mr-1 text-orange-400" />
+                    <AlertCircle className="h-3 w-3 mr-1 text-primary-400" />
                     {t("regexScriptEditor.emptyReplaceHint") || "Empty: Will remove matched text"}
                   </span> : 
                   `${(localScript.replaceString || "").length} characters`

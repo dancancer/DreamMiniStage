@@ -15,6 +15,7 @@
 | `PluginsPanel.tsx` | 面板 | 插件管理 |
 | `PresetsPanel.tsx` | 面板 | 预设管理 |
 | `RegexPanel.tsx` | 面板 | 正则管理 |
+| `SessionToolsPanel.tsx` | 面板 | 会话低频工具 |
 | `SettingsHubPanel.tsx` | 面板 | 设置中心 |
 | `TagColorsPanel.tsx` | 面板 | 标签颜色 |
 | `WorldbookPanel.tsx` | 面板 | 世界书管理 |

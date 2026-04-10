@@ -49,9 +49,13 @@ interface WorldBookEditorProps {
   dialogueKey?: string;
   /** 可选：初始层级（默认为 character） */
   initialBookLevel?: "character" | "dialogue" | "global";
+  /** 可选：允许切换的层级列表 */
+  availableBookLevels?: Array<"character" | "dialogue" | "global">;
   /** 可选：全局世界书键（用于编辑全局世界书） */
   globalKey?: string;
 }
+
+type WorldBookLevel = "character" | "dialogue" | "global";
 
 export default function WorldBookEditor({
   onClose,
@@ -59,6 +63,7 @@ export default function WorldBookEditor({
   characterId,
   dialogueKey,
   initialBookLevel = "character",
+  availableBookLevels,
   globalKey,
 }: WorldBookEditorProps) {
   const { t, fontClass, serifFontClass } = useLanguage();
@@ -75,6 +80,26 @@ export default function WorldBookEditor({
   const [bookLevel, setBookLevel] = useState<"character" | "dialogue" | "global">(
     initialBookLevel,
   );
+
+  const resolvedBookLevels = useMemo<WorldBookLevel[]>(() => {
+    if (availableBookLevels && availableBookLevels.length > 0) {
+      return availableBookLevels;
+    }
+
+    return [
+      "character" as const,
+      ...(dialogueKey ? (["dialogue"] as const) : []),
+      ...(globalKey ? (["global"] as const) : []),
+    ];
+  }, [availableBookLevels, dialogueKey, globalKey]);
+
+  useEffect(() => {
+    if (resolvedBookLevels.includes(bookLevel)) {
+      return;
+    }
+
+    setBookLevel(resolvedBookLevels[0] || "character");
+  }, [bookLevel, resolvedBookLevels]);
 
   // 计算存储键（好品味：无 if-else）
   const storageKey = useMemo(() => {
@@ -366,7 +391,7 @@ export default function WorldBookEditor({
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* 层级选择器（仅在支持多层级时显示） */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      {(dialogueKey || globalKey) && (
+      {resolvedBookLevels.length > 1 && (
         <div className="px-6 py-3 border-b border-cream-soft/20 bg-cream-soft/5">
           <div className="flex items-center gap-3">
             <span className={`text-sm text-cream-soft/70 ${fontClass}`}>
@@ -377,9 +402,15 @@ export default function WorldBookEditor({
               onChange={(e) => setBookLevel(e.target.value as "character" | "dialogue" | "global")}
               className={`px-3 py-1.5 rounded bg-ink-soft/30 border border-cream-soft/20 text-cream-soft ${fontClass} hover:bg-ink-soft/40 transition-colors`}
             >
-              <option value="character">角色级（所有会话共享）</option>
-              {dialogueKey && <option value="dialogue">会话级（仅当前会话）</option>}
-              {globalKey && <option value="global">全局级（编辑中）</option>}
+              {resolvedBookLevels.includes("character") ? (
+                <option value="character">角色级（所有会话共享）</option>
+              ) : null}
+              {resolvedBookLevels.includes("dialogue") ? (
+                <option value="dialogue">会话级（仅当前会话）</option>
+              ) : null}
+              {resolvedBookLevels.includes("global") ? (
+                <option value="global">全局级（编辑中）</option>
+              ) : null}
             </select>
             <span className={`text-xs text-cream-soft/50 ${fontClass}`}>
               {bookLevel === "character" && "此层级的世界书在该角色的所有会话中生效"}

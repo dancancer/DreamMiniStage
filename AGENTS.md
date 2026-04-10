@@ -91,6 +91,47 @@ import { cn } from "@/lib/utils";
 - Never commit secrets; keep tokens in `.env.local`. Remember `NEXT_PUBLIC_*` values ship to clients—use server-side proxies for sensitive keys.
 - When sharing builds, scrub user data in `public/` or exported `out/`; prefer Docker or local `.env.local` for testing external model providers.
 
+## Design Context
+
+### Users
+DreamMiniStage 面向重视氛围、沉浸感与角色代入的叙事创作者和体验者。用户进入产品时，不是在使用一块普通的效率面板，而是在进入一个可停留、可展开、可继续叙事的舞台空间。核心任务不是机械地管理素材，而是在角色、会话、世界书与提示词之间维持连续的叙事心流。
+
+### Brand Personality
+品牌气质应当是：沉浸、克制、带仪式感。
+
+界面情绪目标：
+- 让用户感到被故事包裹，而不是被工具打断
+- 让叙事相关操作显得珍贵、明确、可控
+- 保留幻想感与文学感，但避免廉价奇幻和泛滥装饰
+
+### Aesthetic Direction
+产品定位是“沉浸式叙事舞台”，不是普通创作者控制台。
+
+视觉方向：
+- 以月夜、纸页、舞台灯光、静谧空间为核心意象
+- 双主题都要认真设计，而不是简单反色
+- 当前配色主轴为 Velvet Stage：黑莓酒红、烟墨中性、冷纸白高光
+- Dark 主题承担主舞台气质：黑莓酒红、丝绒幕布、低照度烟墨层次
+- Light 主题承担纸页与排演稿气质：冷灰纸白、覆盆子深红、雾玫瑰辅助色
+
+已有品牌线索：
+- 图标与关键交互应统一回到酒红主轴，而不是继续沿用旧琥珀/淡蓝组合
+- 系统内联样式、iframe 与主主题必须共享同一套色彩叙事，禁止出现第二套旧配色
+
+反方向：
+- 不要 AI 味很重的紫蓝渐变
+- 不要继续沿用琥珀主色与淡蓝信息色的旧组合
+- 不要纯黑纯白的大面积底色
+- 不要高饱和赛博霓虹
+- 不要把整站做成单纯的管理后台
+
+### Design Principles
+1. 颜色服务叙事，不服务噱头。所有强调色都必须承担层级、语义或情绪职责。
+2. Dark 和 Light 都是独立舞台，不是同一套 token 的机械翻转。
+3. 中性色必须带品牌倾向，避免死灰；深色偏夜蓝，浅色偏暖纸。
+4. 主色要珍贵而节制，让关键动作、标题与高亮具有“被点亮”的感觉。
+5. 信息色与品牌色分工明确，避免一个颜色同时承担 CTA、链接、提示、状态四种职责。
+
 ---
 
 ## 说明

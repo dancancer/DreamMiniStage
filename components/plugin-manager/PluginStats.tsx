@@ -40,7 +40,7 @@ export function PluginStats({ plugins }: PluginStatsProps) {
     <div className="flex items-center justify-between text-xs">
       <div className="flex items-center space-x-3 text-primary-soft">
         <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
           <span>{t("plugins.systemStatus")}</span>
         </div>
         <span className="text-ink">•</span>

@@ -424,16 +424,16 @@ export default function Sidebar({ isOpen, toggleSidebar, openLoginModal, openAcc
               rel="noopener noreferrer"
               className={`focus:outline-none group relative overflow-hidden rounded-md w-full transition-all duration-300 ${!isOpen ? "p-2 flex justify-center" : "py-1.5 px-2 flex items-center justify-center"}`}
             >
-              <div className="absolute inset-0 bg-success/10 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0" />
+              <div className="absolute inset-0 bg-accent/12 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0" />
               <div className="absolute inset-0 w-full h-full bg-stroke opacity-0 group-hover:opacity-10 transition-opacity duration-300 z-0" />
-              <div className="absolute bottom-0 left-0 h-[1px] bg-success/40 w-0 group-hover:w-full transition-all duration-500 z-5" />
+              <div className="absolute bottom-0 left-0 h-[1px] bg-accent/50 w-0 group-hover:w-full transition-all duration-500 z-5" />
               <div className="relative flex items-center justify-center transition-all duration-300 z-10">
-                <div className={`${isOpen ? "w-6 h-6" : "w-8 h-8"} flex items-center justify-center flex-shrink-0 text-green-400 group-hover:text-green-300 transition-colors duration-300`}>
+                <div className={`${isOpen ? "w-6 h-6" : "w-8 h-8"} flex items-center justify-center flex-shrink-0 text-sky group-hover:text-cream transition-colors duration-300`}>
                   <Settings size={isOpen ? 14 : 16} />
                 </div>
                 {isOpen && (
                   <div className={`${sectionLabelWrapperClass} ${isOpen ? "opacity-100 delay-[50ms]" : "opacity-0 delay-0"}`}>
-                    <span className={`magical-text whitespace-nowrap block text-xs font-medium text-green-400 group-hover:text-green-300 transition-colors duration-300 ${fontClass}`}>
+                    <span className={`magical-text whitespace-nowrap block text-xs font-medium text-sky group-hover:text-cream transition-colors duration-300 ${fontClass}`}>
                       {isOpen && t("sidebar.goToUpdate").split("").map((char, index) => (
                         <span 
                           key={index} 

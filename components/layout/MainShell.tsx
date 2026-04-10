@@ -59,12 +59,17 @@ export default function MainShell({ children }: MainShellProps) {
   return (
     <UiLayoutProvider>
       <HeaderContentProvider>
-        <div className="flex h-full bg-background text-foreground">
+        <div className="stage-shell flex h-full text-foreground">
+          <div className="pointer-events-none absolute left-[max(18rem,18vw)] top-20 h-72 w-72 rounded-full bg-primary/8 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-[-8rem] right-[-3rem] h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+          <div className="pointer-events-none absolute left-[42%] top-[18%] h-px w-40 bg-gradient-to-r from-transparent via-border/80 to-transparent" />
+
           <LeftNav isOpen={navOpen} onClose={closeNav} />
 
-          <div className="flex min-w-0 flex-1 flex-col">
+          <div className="relative z-10 flex min-w-0 flex-1 flex-col">
             <TopBar onToggleNav={toggleNav} />
-            <div className="flex-1 overflow-auto bg-background">
+            <div className="relative flex-1 overflow-auto">
+              <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-border/70 to-transparent" />
               {children}
             </div>
           </div>

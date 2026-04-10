@@ -55,13 +55,13 @@ const FILTER_OPTIONS = [
     value: "enabled" as const,
     labelKey: "plugins.enabled",
     icon: CheckCircle,
-    color: "text-green-400",
+    color: "text-success",
   },
   {
     value: "disabled" as const,
     labelKey: "plugins.disabled",
     icon: AlertCircle,
-    color: "text-gray-400",
+    color: "text-ink-soft",
   },
 ];
 

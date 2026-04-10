@@ -6,10 +6,10 @@ import { useCheckpointStore } from "@/lib/checkpoint/store";
 
 interface Props {
   dialogueId?: string;
-  messages: Array<{ id: string; content?: string }>;
+  messages?: Array<{ id: string; content?: string }>;
 }
 
-export default function CheckpointPanel({ dialogueId, messages }: Props) {
+export default function CheckpointPanel({ dialogueId, messages = [] }: Props) {
   const dialogueMap = useCheckpointStore((state) => state.dialogues);
   const resolvedDialogueId = dialogueId || "";
 
@@ -22,12 +22,14 @@ export default function CheckpointPanel({ dialogueId, messages }: Props) {
     }
 
     const record = dialogueMap[resolvedDialogueId];
-    const entries = messages
-      .map((message, index) => {
-        const checkpoint = record?.messageToCheckpoint?.[message.id];
-        return checkpoint ? `${index}: ${checkpoint}` : null;
-      })
-      .filter((entry): entry is string => Boolean(entry));
+    const entries = messages.length > 0
+      ? messages
+        .map((message, index) => {
+          const checkpoint = record?.messageToCheckpoint?.[message.id];
+          return checkpoint ? `${index}: ${checkpoint}` : null;
+        })
+        .filter((entry): entry is string => Boolean(entry))
+      : Array.from(new Set(Object.values(record?.messageToCheckpoint || {})));
 
     return {
       currentCheckpoint: record?.currentCheckpoint || "",

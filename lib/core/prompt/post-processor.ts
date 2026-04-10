@@ -552,6 +552,7 @@ export function postProcessMessages(
     options.mode === PostProcessingMode.STRICT
   ) {
     result = convertMidSystemToUser(result);
+    result = mergeConsecutiveRoles(result);
   }
 
   if (options.mode === PostProcessingMode.STRICT) {

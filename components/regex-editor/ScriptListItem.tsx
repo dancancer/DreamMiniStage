@@ -271,7 +271,7 @@ function StatusBadges({ script, t }: StatusBadgesProps) {
 
       {script.extensions?.imported && (
         <span className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-2xs sm:text-xs font-medium transition-all duration-300 backdrop-blur-sm border bg-info/15 text-info border-info/30 hover:bg-info/25 hover:border-info/40 hover:text-info">
-          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400/80 rounded-full mr-1 sm:mr-2  shadow-blue-400/50" />
+          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-accent/80 rounded-full mr-1 sm:mr-2" />
           {t("worldBook.imported")}
         </span>
       )}

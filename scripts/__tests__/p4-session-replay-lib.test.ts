@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { analyzeNoiseBaseline, buildReplayRunIndex, renderReplayFailureDigest, renderReplayJobSummaryMarkdown, resolveReplayArtifactLayout } from "../p4-session-replay-lib.mjs";
 
@@ -24,6 +26,155 @@ describe("analyzeNoiseBaseline", () => {
     expect(report.ruleAudit.console.unusedRuleIds).toEqual(["console-b"]);
     expect(report.ruleAudit.network.unusedRuleIds).toEqual(["network-a"]);
     expect(report.unknownSignatureCount).toBe(0);
+  });
+
+  it("treats streaming 401 dialogue generation errors as expected fail-fast in the checked-in baseline", () => {
+    const baseline = JSON.parse(fs.readFileSync(
+      path.resolve(import.meta.dirname, "../../docs/plan/2026-03-03-sillytavern-gap-reduction/p4-session-replay-noise-baseline.json"),
+      "utf8",
+    ));
+
+    const report = analyzeNoiseBaseline({
+      baseline,
+      consoleEvents: [
+        {
+          level: "error",
+          message: "Dialogue generation error: Error: [llmTool.invokeLLMStream] 401 P4 replay mock unauthorized Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/MODEL_AUTHENTICATION/",
+        },
+      ],
+      networkEvents: [],
+    });
+
+    expect(report.unknownSignatureCount).toBe(0);
+    expect(report.console.known).toEqual([
+      expect.objectContaining({ id: "console-dialogue-generation-stream-401", count: 1 }),
+    ]);
+  });
+
+  it("treats replay environment connection-close and plugin asset fetch abort noise as known in the checked-in baseline", () => {
+    const baseline = JSON.parse(fs.readFileSync(
+      path.resolve(import.meta.dirname, "../../docs/plan/2026-03-03-sillytavern-gap-reduction/p4-session-replay-noise-baseline.json"),
+      "utf8",
+    ));
+
+    const report = analyzeNoiseBaseline({
+      baseline,
+      consoleEvents: [
+        {
+          level: "error",
+          message: "Failed to load resource: net::ERR_CONNECTION_CLOSED",
+        },
+        {
+          level: "error",
+          message: "❌ Failed to load plugin registry: TypeError: Failed to fetch at PluginDiscovery.getPluginDirectoriesFromRegistry",
+        },
+        {
+          level: "error",
+          message: "❌ Plugin discovery failed: TypeError: Failed to fetch at PluginDiscovery.getPluginDirectoriesFromRegistry",
+        },
+        {
+          level: "error",
+          message: "❌ Failed to load module /plugins/dialogue-stats/main.js: TypeError: Failed to fetch at PluginDiscovery.loadPluginModule",
+        },
+        {
+          level: "error",
+          message: "❌ Failed to load plugin dialogue-stats: TypeError: Failed to fetch at PluginDiscovery.loadPluginModule",
+        },
+      ],
+      networkEvents: [
+        {
+          eventType: "requestfailed",
+          method: "GET",
+          url: "https://www.googletagmanager.com/gtag/js?id=G-KDEPSL9CJG",
+          status: null,
+          error: "net::ERR_CONNECTION_CLOSED",
+        },
+        {
+          eventType: "requestfailed",
+          method: "GET",
+          url: "https://va.vercel-scripts.com/v1/script.debug.js",
+          status: null,
+          error: "net::ERR_CONNECTION_CLOSED",
+        },
+        {
+          eventType: "requestfailed",
+          method: "GET",
+          url: "http://127.0.0.1:3303/plugins/plugin-registry.json",
+          status: null,
+          error: "net::ERR_ABORTED",
+        },
+        {
+          eventType: "requestfailed",
+          method: "GET",
+          url: "http://127.0.0.1:3303/plugins/dialogue-stats/main.js",
+          status: null,
+          error: "net::ERR_ABORTED",
+        },
+        {
+          eventType: "requestfailed",
+          method: "GET",
+          url: "http://127.0.0.1:3303/api-icons/openai.svg",
+          status: null,
+          error: "net::ERR_ABORTED",
+        },
+        {
+          eventType: "requestfailed",
+          method: "POST",
+          url: "http://127.0.0.1:3303/__nextjs_original-stack-frames",
+          status: null,
+          error: "net::ERR_ABORTED",
+        },
+      ],
+    });
+
+    expect(report.unknownSignatureCount).toBe(0);
+    expect(report.console.known).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "console-resource-connection-closed", count: 1 }),
+      expect.objectContaining({ id: "console-plugin-registry-fetch-failed", count: 1 }),
+      expect.objectContaining({ id: "console-plugin-discovery-fetch-failed", count: 1 }),
+      expect.objectContaining({ id: "console-plugin-module-fetch-failed", count: 1 }),
+      expect.objectContaining({ id: "console-plugin-load-fetch-failed", count: 1 }),
+    ]));
+    expect(report.network.known).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "network-ga-script-aborted", count: 1 }),
+      expect.objectContaining({ id: "network-vercel-script-aborted", count: 1 }),
+      expect.objectContaining({ id: "network-plugin-asset-aborted", count: 2 }),
+      expect.objectContaining({ id: "network-local-icon-aborted", count: 1 }),
+      expect.objectContaining({ id: "network-next-stack-frame-aborted", count: 1 }),
+    ]));
+  });
+
+  it("does not hide real plugin load failures behind the fetch-noise baseline", () => {
+    const baseline = JSON.parse(fs.readFileSync(
+      path.resolve(import.meta.dirname, "../../docs/plan/2026-03-03-sillytavern-gap-reduction/p4-session-replay-noise-baseline.json"),
+      "utf8",
+    ));
+
+    const report = analyzeNoiseBaseline({
+      baseline,
+      consoleEvents: [
+        {
+          level: "error",
+          message: "❌ Failed to load module /plugins/dialogue-stats/main.js: SyntaxError: Unexpected token 'export'",
+        },
+        {
+          level: "error",
+          message: "❌ Failed to load plugin dialogue-stats: Error: Missing required field: name",
+        },
+      ],
+      networkEvents: [],
+    });
+
+    expect(report.unknownSignatureCount).toBe(2);
+    expect(report.console.known).toEqual([]);
+    expect(report.console.unknown).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        signature: "error|❌ Failed to load module /plugins/dialogue-stats/main.js: SyntaxError: Unexpected token 'export'",
+      }),
+      expect.objectContaining({
+        signature: "error|❌ Failed to load plugin dialogue-stats: Error: Missing required field: name",
+      }),
+    ]));
   });
 });
 

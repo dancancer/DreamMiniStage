@@ -18,6 +18,7 @@ import { useUiLayout, type PanelId } from "@/contexts/ui-layout";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { isVectorMemoryEnabled, setVectorMemoryEnabled } from "@/lib/vector-memory/manager";
+import { PanelCard, PanelShell } from "@/components/panels/shared/PanelShell";
 
 interface SettingEntry {
   id: PanelId;
@@ -49,16 +50,14 @@ export function SettingsHubPanel() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-auto p-4">
-      <div className="space-y-1">
-        <div className="text-base font-semibold text-foreground">设置菜单</div>
-        <div className="text-sm text-muted-foreground">
-          集中管理模型、插件、标签、数据与向量检索开关。
-        </div>
-      </div>
-
+    <PanelShell
+      title="设置菜单"
+      description="集中管理模型、插件、标签、数据与向量检索开关。"
+      bodyClassName="space-y-3"
+      embeddedHeaderMode="none"
+    >
       <div className="grid grid-cols-1 gap-3">
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
+        <PanelCard>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="rounded-md bg-muted px-2 py-2 text-muted-foreground">
@@ -76,12 +75,11 @@ export function SettingsHubPanel() {
               aria-label="切换向量检索"
             />
           </div>
-        </div>
+        </PanelCard>
 
         {SETTINGS.map((item) => (
-          <div
+          <PanelCard
             key={item.id}
-            className="rounded-lg border border-border bg-muted/30 p-4"
           >
             <div className="flex items-center gap-3">
               <div className="rounded-md bg-muted px-2 py-2 text-muted-foreground">
@@ -95,9 +93,9 @@ export function SettingsHubPanel() {
                 打开
               </Button>
             </div>
-          </div>
+          </PanelCard>
         ))}
       </div>
-    </div>
+    </PanelShell>
   );
 }

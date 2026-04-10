@@ -19,10 +19,13 @@ import {
   getEvaluatorForDialogue,
   persistVariables,
 } from "@/lib/core/macro-evaluator-manager";
+import { getPromptConfigSnapshot } from "@/lib/store/prompt-config-store";
 import type { STCombinedPreset, STOpenAIPreset, STPrompt, MacroEnv, ChatMessage, PromptNames, PostProcessingMode, STContextPreset, STSyspromptPreset } from "@/lib/core/st-preset-types";
 import { DEFAULT_CONTEXT_PRESET, DEFAULT_SAMPLING_PARAMS } from "@/lib/core/st-preset-types";
+import { getPromptsFromBestGroup } from "@/lib/core/prompt/sorting";
 import type { Preset, PresetPrompt } from "@/lib/models/preset-model";
 import { getVectorMemoryManager } from "@/lib/vector-memory/manager";
+import { getDialogueSummaryInjectionContent } from "@/function/dialogue/dialogue-summary";
 
 /** 系统预设类型（开发期允许自定义字符串标识） */
 export type SystemPresetType = "none" | string;
@@ -76,6 +79,7 @@ export class PresetNodeTools extends NodeTool {
     sysprompt?: STSyspromptPreset & { enabled?: boolean },
     promptNames?: PromptNames,
     postProcessingMode?: PostProcessingMode,
+    activePresetId?: string,
   ): Promise<{ messages: ChatMessage[]; presetId?: string }> {
     try {
       /* ═══════════════════════════════════════════════════════════════════════
@@ -93,7 +97,8 @@ export class PresetNodeTools extends NodeTool {
          2. 加载预设配置
          ═══════════════════════════════════════════════════════════════════════ */
 
-      const { openaiPreset, presetId, presetContext, presetSysprompt } = await this.loadUserEnabledPreset();
+      const runtimePresetId = activePresetId || getPromptConfigSnapshot().activePresetId || undefined;
+      const { openaiPreset, presetId, presetContext, presetSysprompt } = await this.loadUserEnabledPreset(runtimePresetId);
       const effectiveContext = contextPreset || presetContext;
       const effectiveSysprompt = sysprompt?.enabled === false
         ? undefined
@@ -198,6 +203,14 @@ export class PresetNodeTools extends NodeTool {
           identifier: "3_vectors",
         });
       }
+      const dialogueSummaryText = await getDialogueSummaryInjectionContent(effectiveDialogueKey);
+      if (dialogueSummaryText) {
+        messages.unshift({
+          role: "system",
+          content: dialogueSummaryText,
+          identifier: "2_summary",
+        });
+      }
       const normalizedMessages: ChatMessage[] = messages
         .filter((m) => m.role === "system" || m.role === "user" || m.role === "assistant")
         .map((m) => ({
@@ -271,58 +284,96 @@ export class PresetNodeTools extends NodeTool {
    * 加载用户导入且启用的预设
    * 优先从 IndexedDB 加载，回退到内置默认预设
    */
-  private static async loadUserEnabledPreset(): Promise<{
+  private static getOrderedPromptsFromPreset(preset: Preset): PresetPrompt[] {
+    const prompts = Array.isArray(preset.prompts) ? preset.prompts : [];
+    const hasExplicitOrder = prompts.some(
+      (prompt) => prompt.position !== undefined || prompt.group_id !== undefined,
+    );
+
+    if (!hasExplicitOrder) {
+      return prompts.filter((prompt) => prompt.enabled !== false);
+    }
+
+    return getPromptsFromBestGroup(prompts, true);
+  }
+
+  private static buildRuntimePresetResult(
+    preset: Preset,
+    orderedPrompts: PresetPrompt[],
+  ): {
+    openaiPreset: STOpenAIPreset;
+    presetId: string;
+    presetContext?: STContextPreset;
+    presetSysprompt?: STSyspromptPreset;
+  } {
+    const openaiPreset = this.convertToSTOpenAIPreset(preset, orderedPrompts);
+    console.log(`[PresetNodeTools] Converted to STOpenAIPreset with ${openaiPreset.prompts.length} prompts`);
+
+    return {
+      openaiPreset,
+      presetId: preset.id || "default",
+      presetContext: preset.context,
+      presetSysprompt: preset.sysprompt,
+    };
+  }
+
+  private static async loadUserEnabledPreset(selectedPresetId?: string): Promise<{
     openaiPreset: STOpenAIPreset;
     presetId: string;
     presetContext?: STContextPreset;
     presetSysprompt?: STSyspromptPreset;
   }> {
-    try {
-      // 1. 查找用户启用的预设
-      const allPresets = await PresetOperations.getAllPresets();
-      console.log(`[PresetNodeTools] Found ${allPresets.length} presets in IndexedDB`);
-      
-      for (const p of allPresets) {
-        console.log(`[PresetNodeTools] Preset: ${p.name}, enabled=${p.enabled}, id=${p.id}, prompts=${p.prompts?.length}, prompt_order=${p.prompt_order?.length}`);
-      }
-      
-      const enabledPreset = allPresets.find((preset) => preset.enabled !== false);
+    if (selectedPresetId) {
+      const selectedPreset = await PresetOperations.getPreset(selectedPresetId);
 
-      if (enabledPreset && enabledPreset.id) {
-        console.log(`[PresetNodeTools] Using user enabled preset: ${enabledPreset.name} (${enabledPreset.id})`);
-        console.log(`[PresetNodeTools] Preset has prompt_order: ${!!enabledPreset.prompt_order}, length: ${enabledPreset.prompt_order?.length || 0}`);
-        
-        // 2. 获取排序后的 prompts
-        const orderedPrompts = await PresetOperations.getOrderedPrompts(enabledPreset.id);
-        console.log(`[PresetNodeTools] Got ${orderedPrompts.length} ordered prompts`);
-        
-        if (orderedPrompts.length > 0) {
-          // 3. 转换为 STOpenAIPreset 格式
-          const openaiPreset = this.convertToSTOpenAIPreset(enabledPreset, orderedPrompts);
-          console.log(`[PresetNodeTools] Converted to STOpenAIPreset with ${openaiPreset.prompts.length} prompts`);
+      if (selectedPreset?.id) {
+        const orderedPrompts = this.getOrderedPromptsFromPreset(selectedPreset);
+        console.log(
+          `[PresetNodeTools] Using runtime selected preset: ${selectedPreset.name} (${selectedPreset.id}), prompts=${orderedPrompts.length}`,
+        );
 
-          return {
-            openaiPreset,
-            presetId: enabledPreset.id,
-            presetContext: enabledPreset.context,
-            presetSysprompt: enabledPreset.sysprompt,
-          };
-        } else {
-          console.warn(`[PresetNodeTools] No ordered prompts found for preset ${enabledPreset.id}`);
+        if (orderedPrompts.length === 0) {
+          throw new Error(`Runtime selected preset has no enabled prompts: ${selectedPreset.id}`);
         }
-      } else {
-        console.log("[PresetNodeTools] No enabled preset found in IndexedDB");
+
+        return this.buildRuntimePresetResult(selectedPreset, orderedPrompts);
       }
 
-      // 回退到极简默认预设（不再加载内置文件）
-      console.log("[PresetNodeTools] Falling back to minimal default preset");
-      const defaultPreset = this.getFallbackOpenAIPreset();
-      return { openaiPreset: defaultPreset, presetId: "default" };
-    } catch (error) {
-      console.error("[PresetNodeTools] Failed to load user preset:", error);
-      const defaultPreset = this.getFallbackOpenAIPreset();
-      return { openaiPreset: defaultPreset, presetId: "default" };
+      console.warn(`[PresetNodeTools] Runtime selected preset not found: ${selectedPresetId}`);
     }
+
+    const allPresets = await PresetOperations.getAllPresets();
+    console.log(`[PresetNodeTools] Found ${allPresets.length} presets in IndexedDB`);
+
+    for (const preset of allPresets) {
+      console.log(
+        `[PresetNodeTools] Preset: ${preset.name}, enabled=${preset.enabled}, id=${preset.id}, prompts=${preset.prompts?.length}, prompt_order=${preset.prompt_order?.length}`,
+      );
+    }
+
+    const enabledPreset = allPresets.find((preset) => preset.enabled !== false);
+    if (!enabledPreset?.id) {
+      console.log("[PresetNodeTools] No enabled preset found in IndexedDB");
+      console.log("[PresetNodeTools] Falling back to minimal default preset");
+      return {
+        openaiPreset: this.getFallbackOpenAIPreset(),
+        presetId: "default",
+      };
+    }
+
+    console.log(`[PresetNodeTools] Using user enabled preset: ${enabledPreset.name} (${enabledPreset.id})`);
+    console.log(
+      `[PresetNodeTools] Preset has prompt_order: ${!!enabledPreset.prompt_order}, length: ${enabledPreset.prompt_order?.length || 0}`,
+    );
+
+    const orderedPrompts = this.getOrderedPromptsFromPreset(enabledPreset);
+    console.log(`[PresetNodeTools] Got ${orderedPrompts.length} ordered prompts`);
+
+    if (orderedPrompts.length === 0) {
+      throw new Error(`Enabled preset has no enabled prompts: ${enabledPreset.id}`);
+    }
+
+    return this.buildRuntimePresetResult(enabledPreset, orderedPrompts);
   }
 
   /**

@@ -46,13 +46,25 @@ interface Props {
   onClose: () => void;
   characterName: string;
   characterId: string;
+  initialSourceTab?: "scoped" | "global" | "preset";
+  allowScopedTab?: boolean;
+  defaultGlobalOwnerId?: string;
+  globalLabel?: string;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    主组件
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export default function RegexScriptEditor({ onClose, characterName, characterId }: Props) {
+export default function RegexScriptEditor({
+  onClose,
+  characterName,
+  characterId,
+  initialSourceTab = "scoped",
+  allowScopedTab = true,
+  defaultGlobalOwnerId = "__global_regex_workspace__",
+  globalLabel = "默认全局规则",
+}: Props) {
   const { t, fontClass, serifFontClass } = useLanguage();
 
   // ─── 数据层 ───
@@ -82,23 +94,29 @@ export default function RegexScriptEditor({ onClose, characterName, characterId 
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [filterBy, setFilterBy] = useState<FilterType>("all");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [sourceTab, setSourceTab] = useState<"scoped" | "global" | "preset">("scoped");
+  const [sourceTab, setSourceTab] = useState<"scoped" | "global" | "preset">(initialSourceTab);
   const [activeGlobalId, setActiveGlobalId] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedScripts, setSelectedScripts] = useState<Set<string>>(new Set());
 
   // ─── 来源选择逻辑 ───
   useEffect(() => {
-    if (sourceTab === "global" && !activeGlobalId && globalSources.length > 0) {
-      setActiveGlobalId(globalSources[0].ownerId);
+    if (sourceTab === "global" && !activeGlobalId) {
+      setActiveGlobalId(globalSources[0]?.ownerId || defaultGlobalOwnerId);
     }
-  }, [sourceTab, activeGlobalId, globalSources]);
+  }, [sourceTab, activeGlobalId, defaultGlobalOwnerId, globalSources]);
+
+  useEffect(() => {
+    if (!allowScopedTab && sourceTab === "scoped") {
+      setSourceTab("global");
+    }
+  }, [allowScopedTab, sourceTab]);
 
   const currentOwnerId = useMemo(() => {
-    if (sourceTab === "global") return activeGlobalId || "";
+    if (sourceTab === "global") return activeGlobalId || defaultGlobalOwnerId;
     if (sourceTab === "preset") return presetSource?.ownerId || "";
     return characterId;
-  }, [activeGlobalId, characterId, presetSource, sourceTab]);
+  }, [activeGlobalId, characterId, defaultGlobalOwnerId, presetSource, sourceTab]);
 
   const currentScripts = useMemo(() => {
     if (sourceTab === "global") {
@@ -292,6 +310,9 @@ export default function RegexScriptEditor({ onClose, characterName, characterId 
         presetSource={presetSource}
         fontClass={fontClass}
         t={t}
+        allowScopedTab={allowScopedTab}
+        fallbackGlobalId={defaultGlobalOwnerId}
+        fallbackGlobalLabel={globalLabel}
         onTabChange={setSourceTab}
         onGlobalIdChange={setActiveGlobalId}
         onRefreshGlobal={reloadGlobals}

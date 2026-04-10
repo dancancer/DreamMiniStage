@@ -110,7 +110,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
               className={cn(
                 "w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center",
                 "hover:ring-2 hover:ring-primary/50 transition-all",
-                isTemporary && "ring-2 ring-yellow-500/50",
+                isTemporary && "ring-2 ring-primary/40",
               )}
             >
               {currentPersona?.avatarPath ? (
@@ -158,7 +158,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
             className={cn(
               "w-full flex items-center gap-3 p-2 rounded-lg",
               "bg-accent/50 hover:bg-accent transition-colors",
-              isTemporary && "border border-yellow-500/50",
+              isTemporary && "border border-primary/40",
             )}
           >
             {/* ─── 头像 ─── */}

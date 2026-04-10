@@ -16,12 +16,12 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ToastProvider } from "@/components/ToastProvider";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { Analytics } from "@vercel/analytics/react";
+import { createThemeInitScript } from "@/lib/theme/initial-theme";
 
 // Define viewport configuration
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "var(--color-canvas)" },
     { media: "(prefers-color-scheme: dark)", color: "var(--color-canvas)" },
@@ -97,8 +97,12 @@ export default function RootLayout({
   children,
 }: { children: React.ReactNode }) {
   return (
-    <html lang="zh" className="h-full" data-theme="dark">
+    <html lang="zh" className="h-full" suppressHydrationWarning>
       <body className="h-full bg-canvas text-text font-sans antialiased">
+        <script
+          id="dreamministage-theme-init"
+          dangerouslySetInnerHTML={{ __html: createThemeInitScript() }}
+        />
         <ThemeProvider>
           <GoogleAnalytics />
           <SoundProvider>

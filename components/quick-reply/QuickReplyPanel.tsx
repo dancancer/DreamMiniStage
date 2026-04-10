@@ -23,7 +23,7 @@ import {
 
 interface Props {
   dialogueId?: string;
-  onExecuteQuickReply: (index: number) => void | Promise<void>;
+  onExecuteQuickReply?: (index: number) => void | Promise<void>;
 }
 
 function summarizeSetScope(scope: string, visible: boolean): string {
@@ -129,19 +129,21 @@ export default function QuickReplyPanel({ dialogueId, onExecuteQuickReply }: Pro
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {visibleReplies.map((entry, index) => (
-        <Button
-          key={`${entry.scope}:${entry.set.name}:${entry.reply.id}`}
-          type="button"
-          variant="outline"
-          size="sm"
-          data-quick-reply-index={index}
-          className="bg-overlay hover:bg-muted-surface border-border text-primary-soft"
-          onClick={() => void onExecuteQuickReply(index)}
-        >
-          {entry.reply.label}
-        </Button>
-      ))}
+      {onExecuteQuickReply
+        ? visibleReplies.map((entry, index) => (
+          <Button
+            key={`${entry.scope}:${entry.set.name}:${entry.reply.id}`}
+            type="button"
+            variant="outline"
+            size="sm"
+            data-quick-reply-index={index}
+            className="bg-overlay hover:bg-muted-surface border-border text-primary-soft"
+            onClick={() => void onExecuteQuickReply(index)}
+          >
+            {entry.reply.label}
+          </Button>
+        ))
+        : null}
 
       <Dialog>
         <DialogTrigger asChild>

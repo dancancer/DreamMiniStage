@@ -45,24 +45,24 @@ export interface DialogueNodeData {
 function getNodeColors(id: string, isCurrentPath: boolean) {
   if (id === "root") {
     return {
-      border: "border-purple-700",
-      hoverBorder: "hover:border-purple-500",
-      text: "text-purple-200",
-      expandIcon: "text-purple-400",
-      jumpButton: "text-purple-400 hover:text-purple-300",
-      handle: "!bg-purple-500 !border-purple-700",
-      hoverText: "hover:text-purple-300",
+      border: "border-accent/70",
+      hoverBorder: "hover:border-accent",
+      text: "text-sky",
+      expandIcon: "text-sky",
+      jumpButton: "text-sky hover:text-cream",
+      handle: "!bg-accent !border-accent",
+      hoverText: "hover:text-cream",
     };
   }
   if (isCurrentPath) {
     return {
-      border: "border-red-800",
-      hoverBorder: "hover:border-red-600",
-      text: "text-red-200",
-      expandIcon: "text-red-400",
-      jumpButton: "text-red-400 hover:text-red-300",
-      handle: "!bg-red-500 !border-red-700",
-      hoverText: "hover:text-red-300",
+      border: "border-primary/70",
+      hoverBorder: "hover:border-primary",
+      text: "text-primary-200",
+      expandIcon: "text-primary-300",
+      jumpButton: "text-primary-300 hover:text-cream",
+      handle: "!bg-primary !border-primary-700",
+      hoverText: "hover:text-cream",
     };
   }
   return {
@@ -131,10 +131,10 @@ export function DialogueNodeComponent({ id, data }: NodeProps<DialogueNodeData>)
     >
       {/* Root 节点提示 */}
       {showRootTooltip && (
-        <div className="absolute -top-14 right-0 z-20 bg-surface border border-primary-700 rounded-md p-2  max-w-[200px] text-xs text-primary-400 animate-fade-in">
+        <div className="absolute -top-14 right-0 z-20 max-w-[200px] animate-fade-in rounded-md border border-accent/60 bg-surface p-2 text-xs text-sky">
           <div className="relative">
             {t("dialogue.rootNodeCannotJump")}
-            <div className="absolute -bottom-6 right-4 w-0 h-0 border-8 border-transparent border-t-primary-700"></div>
+            <div className="absolute -bottom-6 right-4 h-0 w-0 border-8 border-transparent border-t-accent/60"></div>
           </div>
         </div>
       )}
@@ -153,7 +153,7 @@ export function DialogueNodeComponent({ id, data }: NodeProps<DialogueNodeData>)
           disabled={isJumping}
         >
           {isJumping ? (
-            <div className="w-4 h-4 rounded-full border-2 border-t-transparent border-primary-400 animate-spin"></div>
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-300 border-t-transparent"></div>
           ) : (
             <CornerDownRight className="w-3.5 h-3.5" />
           )}

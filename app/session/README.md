@@ -23,9 +23,16 @@
 | `session-quick-reply-store.ts` | QR 适配 | Quick Reply store 到 slash 执行器接口的适配层 |
 | `session-store-hosts.ts` | store 宿主 | checkpoint / group / timed-effect 宿主收口 |
 | `session-slash-executor.ts` | slash 执行器 | slash 上下文组装、变量读写、Quick Reply 执行 |
+| `session-ui-events.ts` | UI 事件 | 会话工具侧栏到主界面的低频事件桥 |
 | `session-switch.ts` | 工具 | 会话切换/临时会话命名策略 |
 | `use-session-page-effects.tsx` | 页面副作用 | header / preset / reload / message events 副作用收口 |
 | `use-session-route-state.ts` | 路由状态 | sessionId -> characterId / error 解析 |
+
+## 最新变更（2026-04-03）
+
+- `/session` 的低频工具已迁入右侧 `SessionToolsPanel`；聊天主界面不再直接暴露 Quick Reply、群聊成员、Checkpoint / Branch、用户名、Script Debug、JSONL 导入导出。
+- `session-ui-events.ts` 负责把侧栏里的低频动作桥接回主聊天面板，避免重新把这些控制塞回 `CharacterChatPanel`。
+- `WorldbookPanel` 已补上“当前会话世界书 / 全局世界书库”两种明确模式，和 `Regex / Preset` 的全局工作区语义保持一致。
 
 ## 最新变更（2026-03-07）
 

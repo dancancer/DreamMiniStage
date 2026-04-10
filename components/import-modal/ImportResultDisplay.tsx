@@ -59,8 +59,8 @@ interface FileListProps {
 
 function FileList({ files, label, color }: FileListProps) {
   const colorClasses = color === "green"
-    ? { text: "text-green-400", dot: "bg-green-400", dotSm: "bg-green-400/60", scrollbar: "scrollbar-thumb-green-400/30" }
-    : { text: "text-red-400", dot: "bg-red-400", dotSm: "bg-red-400/60", scrollbar: "scrollbar-thumb-red-400/30" };
+    ? { text: "text-success", dot: "bg-success", dotSm: "bg-success/60", scrollbar: "scrollbar-thumb-success/30" }
+    : { text: "text-danger", dot: "bg-danger", dotSm: "bg-danger/60", scrollbar: "scrollbar-thumb-danger/30" };
 
   return (
     <div>
@@ -92,14 +92,14 @@ interface ErrorListProps {
 function ErrorList({ errors, label }: ErrorListProps) {
   return (
     <div>
-      <p className="text-red-400 font-medium flex items-center mt-2">
-        <span className="w-1.5 h-1.5 bg-red-400 rounded-full mr-2" />
+      <p className="mt-2 flex items-center font-medium text-danger">
+        <span className="w-1.5 h-1.5 bg-danger rounded-full mr-2" />
         {label}:
       </p>
-      <ul className="list-none text-red-400/80 ml-3 space-y-0.5 max-h-24 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-red-400/30">
+      <ul className="list-none ml-3 max-h-24 space-y-0.5 overflow-y-auto scrollbar-thin scrollbar-track-transparent text-danger/80 scrollbar-thumb-danger/30">
         {errors.map((error, index) => (
           <li key={index} className="flex items-start">
-            <span className="w-1 h-1 bg-red-400/60 rounded-full mr-2 mt-1.5 flex-shrink-0" />
+            <span className="mt-1.5 mr-2 h-1 w-1 flex-shrink-0 rounded-full bg-danger/60" />
             <span className="text-xs break-words">{error}</span>
           </li>
         ))}
@@ -179,15 +179,15 @@ export function ImportResultDisplay({
       <h3 className={"text-xs font-medium text-cream-soft mb-1.5 "}>{title}</h3>
       <div className="space-y-1 text-xs">
         {/* 已导入数量 */}
-        <p className="text-green-400 flex items-center">
-          <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-2 animate-pulse" />
+        <p className="flex items-center text-success">
+          <span className="w-1.5 h-1.5 bg-success rounded-full mr-2 animate-pulse" />
           {importedLabel.replace("{count}", result.importedCount.toString())}
         </p>
 
         {/* 已跳过数量 */}
         {result.skippedCount > 0 && (
-          <p className="text-yellow-400 flex items-center">
-            <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-2" />
+          <p className="text-primary-300 flex items-center">
+            <span className="w-1.5 h-1.5 bg-primary-400 rounded-full mr-2" />
             {skippedLabel.replace("{count}", result.skippedCount.toString())}
           </p>
         )}

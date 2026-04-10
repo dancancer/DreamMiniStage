@@ -9,6 +9,7 @@
 
 import { createContext, useContext, useEffect, useMemo } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { THEME_STORAGE_KEY, resolveThemeMode } from "@/lib/theme/initial-theme";
 
 type ThemeMode = "light" | "dark";
 
@@ -20,30 +21,27 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "DreamMiniStage-theme";
-
 const resolveInitialTheme = (): ThemeMode => {
+  const prefersDark = typeof window !== "undefined"
+    && window.matchMedia("(prefers-color-scheme: dark)").matches;
+
   if (typeof document !== "undefined") {
-    const preset = document.documentElement.dataset.theme;
-    if (preset === "light" || preset === "dark") {
-      return preset;
-    }
+    return resolveThemeMode(document.documentElement.dataset.theme, null, prefersDark);
   }
-  if (typeof window === "undefined") {
-    return "dark";
-  }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
+  return resolveThemeMode(null, null, prefersDark);
 };
 
 const applyTheme = (mode: ThemeMode) => {
   const root = document.documentElement;
   root.dataset.theme = mode;
   root.classList.toggle("dark", mode === "dark");
+  root.style.colorScheme = mode;
 };
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { value: theme, setValue: setTheme } = useLocalStorage<ThemeMode>(
-    STORAGE_KEY,
+    THEME_STORAGE_KEY,
     resolveInitialTheme(),
     {
       serializer: (mode) => mode,

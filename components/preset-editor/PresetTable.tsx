@@ -174,7 +174,7 @@ const PresetRow = memo(function PresetRow({
                 preset.enabled !== false
                   ? preset.totalPrompts > 0
                     ? " text-primary-200/90 border-primary-600/30"
-                    :  "text-blue-200/90 border-blue-600/30"
+                    :  "text-sky/90 border-accent/30"
                   : " text-stone-300/90 border-stone-500/30"
               }`}
             >
@@ -183,7 +183,7 @@ const PresetRow = memo(function PresetRow({
                   preset.enabled !== false
                     ? preset.totalPrompts > 0
                       ? "bg-primary-400/90 border border-primary-500/60"
-                      : "bg-blue-400/90 border border-blue-500/60"
+                      : "bg-accent/80 border border-accent/70"
                     : "bg-stone-400/90 border border-stone-500/60"
                 }`}
               />
@@ -224,7 +224,7 @@ const PresetRow = memo(function PresetRow({
         <td className="p-1.5 sm:p-3">
           <div className="flex items-center space-x-0.5 sm:space-x-1">
             <ActionButton title={t("preset.editPresetName")} onClick={handleEditName} iconType="edit" />
-            <ActionButton title={t("preset.copyPreset")} onClick={handleCopy} className="text-sky hover:text-sky/80" iconType="copy" />
+            <ActionButton title={t("preset.copyPreset")} onClick={handleCopy} className="text-primary-soft hover:text-primary-300" iconType="copy" />
             <ActionButton title={t("preset.deletePreset")} onClick={handleDelete} className="text-red-400 hover:text-red-300" iconType="delete" />
           </div>
         </td>
@@ -362,7 +362,7 @@ const PromptCard = memo(function PromptCard({
           />
           <span className="text-xs sm:text-sm text-primary-soft">{prompt.name}</span>
           {prompt.system_prompt && (
-            <span className="text-[10px] sm:text-2xs px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-200 border border-blue-700/40">
+            <span className="text-[10px] sm:text-2xs px-1.5 py-0.5 rounded bg-accent/25 text-sky border border-accent/40">
               {t("preset.systemPrompt")}
             </span>
           )}

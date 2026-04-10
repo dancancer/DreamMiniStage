@@ -14,11 +14,7 @@
 "use client";
 
 import React from "react";
-import WorldBookEditor from "@/components/WorldBookEditor";
-import RegexScriptEditor from "@/components/RegexScriptEditor";
-import PresetEditor from "@/components/PresetEditor";
-import LoginModal from "@/components/LoginModal";
-import DialogueTreeModal from "@/components/DialogueTreeModal";
+import dynamic from "next/dynamic";
 import CharacterChatPanel from "@/components/CharacterChatPanel";
 import SessionContentView from "@/app/session/session-content-view";
 import SessionChatView from "@/app/session/session-chat-view";
@@ -30,6 +26,31 @@ import type {
 } from "@/hooks/script-bridge/host-debug-state";
 import type { useSessionPageActions } from "@/app/session/use-session-page-actions";
 import type { SendOptions } from "@/lib/slash-command/types";
+
+const LazyWorldBookEditor = dynamic(() => import("@/components/WorldBookEditor"), {
+  ssr: false,
+  loading: () => <SessionDeferredState label="正在载入世界书…" />,
+});
+
+const LazyRegexScriptEditor = dynamic(() => import("@/components/RegexScriptEditor"), {
+  ssr: false,
+  loading: () => <SessionDeferredState label="正在载入正则脚本…" />,
+});
+
+const LazyPresetEditor = dynamic(() => import("@/components/PresetEditor"), {
+  ssr: false,
+  loading: () => <SessionDeferredState label="正在载入预设…" />,
+});
+
+const LazyLoginModal = dynamic(() => import("@/components/LoginModal"), {
+  ssr: false,
+  loading: () => null,
+});
+
+const LazyDialogueTreeModal = dynamic(() => import("@/components/DialogueTreeModal"), {
+  ssr: false,
+  loading: () => null,
+});
 
 interface DialogueController {
   messages: DialogueMessage[];
@@ -85,6 +106,16 @@ interface Props {
   hostDebug: ScriptHostDebugSnapshot;
   hostDebugState: ScriptHostDebugState;
   onHostDebugUpdate: (snapshot: ScriptHostDebugSnapshot) => void;
+}
+
+function SessionDeferredState({ label }: { label: string }) {
+  return (
+    <div className="flex h-full items-center justify-center px-4">
+      <div className="session-card w-full max-w-md rounded-[1.25rem] border border-border/90 bg-card/95 p-6 text-center text-sm text-ink-soft">
+        {label}
+      </div>
+    </div>
+  );
 }
 
 function buildChatPanelProps(params: Omit<Props, "characterView" | "galleryState" | "setGalleryState" | "isLoginModalOpen" | "setIsLoginModalOpen" | "isBranchOpen" | "setIsBranchOpen" | "setCharacterView">): React.ComponentProps<typeof CharacterChatPanel> {
@@ -194,7 +225,6 @@ export default function SessionPageLayout(props: Props) {
     isBranchOpen,
     setIsBranchOpen,
     dialogue,
-    actions,
     setCharacterView,
   } = props;
   const chatPanelProps = buildChatPanelProps(props);
@@ -204,43 +234,40 @@ export default function SessionPageLayout(props: Props) {
       characterView={characterView}
       chatView={(
         <SessionChatView
-          sessionId={sessionId}
-          messages={dialogue.messages}
-          onExecuteQuickReply={actions.handleExecuteQuickReplyPanel}
           galleryState={galleryState}
           onCloseGallery={() => setGalleryState((current) => ({ ...current, open: false }))}
           chatPanelProps={chatPanelProps}
         />
       )}
       worldbookView={(
-        <WorldBookEditor
+        <LazyWorldBookEditor
           onClose={() => setCharacterView("chat")}
           characterName={currentCharacterName}
           characterId={characterId}
         />
       )}
       presetView={(
-        <PresetEditor
+        <LazyPresetEditor
           onClose={() => setCharacterView("chat")}
           characterName={currentCharacterName}
           characterId={characterId}
         />
       )}
       regexView={(
-        <RegexScriptEditor
+        <LazyRegexScriptEditor
           onClose={() => setCharacterView("chat")}
           characterName={currentCharacterName}
           characterId={characterId}
         />
       )}
       loginModal={(
-        <LoginModal
+        <LazyLoginModal
           isOpen={isLoginModalOpen}
           onClose={() => setIsLoginModalOpen(false)}
         />
       )}
       dialogueTreeModal={(
-        <DialogueTreeModal
+        <LazyDialogueTreeModal
           isOpen={isBranchOpen}
           onClose={() => setIsBranchOpen(false)}
           characterId={characterId}

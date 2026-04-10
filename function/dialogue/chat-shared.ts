@@ -7,6 +7,7 @@
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { ParsedResponse } from "@/lib/models/parsed-response";
 import { getCurrentSystemPresetType } from "@/function/preset/download";
+import { syncDialogueSummaryState } from "@/function/dialogue/dialogue-summary";
 import { getVectorMemoryManager } from "@/lib/vector-memory/manager";
 import { DialogueWorkflowParams } from "@/lib/workflow/examples/DialogueWorkflow";
 import type { ModelAdvancedSettings } from "@/lib/model-runtime";
@@ -173,6 +174,10 @@ export async function processPostResponseAsync(input: PostResponseInput): Promis
         },
       );
     }
+
+    await syncDialogueSummaryState(dialogueId).catch((summaryError) => {
+      console.warn("[DialogueSummary] refresh failed:", summaryError);
+    });
   } catch (error) {
     console.error("Error in processPostResponseAsync:", error);
   }

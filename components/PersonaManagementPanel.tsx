@@ -224,7 +224,7 @@ export const PersonaManagementPanel: React.FC<PersonaManagementPanelProps> = ({
                           className={cn(
                             "w-4 h-4",
                             defaultPersona?.id === persona.id
-                              ? "fill-yellow-500 text-yellow-500"
+                              ? "fill-primary-500 text-primary-500"
                               : "text-muted-foreground",
                           )}
                         />

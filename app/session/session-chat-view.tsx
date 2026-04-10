@@ -14,18 +14,19 @@
 "use client";
 
 import React from "react";
+import dynamic from "next/dynamic";
 import CharacterChatPanel from "@/components/CharacterChatPanel";
-import QuickReplyPanel from "@/components/quick-reply/QuickReplyPanel";
-import GroupMemberPanel from "@/components/group-chat/GroupMemberPanel";
-import CheckpointPanel from "@/components/checkpoint/CheckpointPanel";
-import SessionGalleryDialog from "@/components/session-gallery/SessionGalleryDialog";
-import type { DialogueMessage } from "@/types/character-dialogue";
 import type { SessionGalleryItem } from "@/app/session/session-gallery";
 
+const LazySessionGalleryDialog = dynamic(
+  () => import("@/components/session-gallery/SessionGalleryDialog"),
+  {
+    ssr: false,
+    loading: () => null,
+  },
+);
+
 interface Props {
-  sessionId?: string;
-  messages: DialogueMessage[];
-  onExecuteQuickReply: (index: number) => Promise<void>;
   galleryState: {
     open: boolean;
     items: SessionGalleryItem[];
@@ -36,32 +37,14 @@ interface Props {
 }
 
 export default function SessionChatView({
-  sessionId,
-  messages,
-  onExecuteQuickReply,
   galleryState,
   onCloseGallery,
   chatPanelProps,
 }: Props) {
   return (
     <>
-      <CharacterChatPanel
-        {...chatPanelProps}
-        footerSlot={(
-          <>
-            <QuickReplyPanel
-              dialogueId={sessionId}
-              onExecuteQuickReply={onExecuteQuickReply}
-            />
-            <GroupMemberPanel dialogueId={sessionId} />
-            <CheckpointPanel
-              dialogueId={sessionId}
-              messages={messages}
-            />
-          </>
-        )}
-      />
-      <SessionGalleryDialog
+      <CharacterChatPanel {...chatPanelProps} />
+      <LazySessionGalleryDialog
         open={galleryState.open}
         items={galleryState.items}
         target={galleryState.target}

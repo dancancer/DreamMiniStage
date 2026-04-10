@@ -19,6 +19,7 @@ const PANEL_IDS = [
   "worldbook",
   "regex",
   "presets",
+  "sessionTools",
   "modelSettings",
   "plugins",
   "tagColors",

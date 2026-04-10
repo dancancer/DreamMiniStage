@@ -1,17 +1,137 @@
 import { type TokenUsage } from "@/lib/adapters/token-usage";
 import { getTextContent, postProcessMessages } from "@/lib/core/prompt/post-processor";
-import type { ExtendedChatMessage } from "@/lib/core/st-preset-types";
+import { PostProcessingMode, type ExtendedChatMessage } from "@/lib/core/st-preset-types";
 import type { LLMConfig } from "./llm-config";
 
-export type ChatMessage = { role: string; content: string };
+export type ChatMessage = {
+  role: string;
+  content: string;
+  tool_calls?: ExtendedChatMessage["tool_calls"];
+  tool_call_id?: string;
+  reasoning_content?: string;
+};
+
+const DEEPSEEK_USER_PLACEHOLDER = "Let's get started.";
 
 function toSimpleMessages(messages: ExtendedChatMessage[]): ChatMessage[] {
-  return messages.map((message) => ({
-    role: message.role,
-    content: typeof message.content === "string"
-      ? message.content
-      : getTextContent(message.content),
-  }));
+  return messages.map((message) => {
+    const transportMessage: ChatMessage = {
+      role: message.role,
+      content: typeof message.content === "string"
+        ? message.content
+        : getTextContent(message.content),
+    };
+    const rawMessage = message as ExtendedChatMessage & Record<string, unknown>;
+
+    if (message.tool_calls?.length) {
+      transportMessage.tool_calls = message.tool_calls;
+    }
+
+    if (message.tool_call_id) {
+      transportMessage.tool_call_id = message.tool_call_id;
+    }
+
+    if (typeof rawMessage.reasoning_content === "string") {
+      transportMessage.reasoning_content = rawMessage.reasoning_content;
+    }
+
+    return transportMessage;
+  });
+}
+
+function isDeepSeekReasonerConfig(config: LLMConfig): boolean {
+  if (config.llmType !== "openai") {
+    return false;
+  }
+
+  return /\bdeepseek-reasoner\b/i.test(config.modelName) || /\bdeepseek[-_/ ]r1\b/i.test(config.modelName);
+}
+
+function stripReasoningMetadata(messages: ExtendedChatMessage[]): {
+  messages: ExtendedChatMessage[];
+  strippedCount: number;
+} {
+  const reasoningKeys = ["reasoning_content", "thinkingContent", "signature"] as const;
+  let strippedCount = 0;
+
+  const sanitizedMessages = messages.map((message) => {
+    const nextMessage = { ...message } as ExtendedChatMessage & Record<string, unknown>;
+
+    for (const key of reasoningKeys) {
+      if (key in nextMessage) {
+        delete nextMessage[key];
+        strippedCount += 1;
+      }
+    }
+
+    return nextMessage;
+  });
+
+  return {
+    messages: sanitizedMessages,
+    strippedCount,
+  };
+}
+
+function summarizeRoles(messages: ExtendedChatMessage[]): string {
+  return messages.map((message) => message.role).join(" > ");
+}
+
+function addDeepSeekReasonerToolCallCompatibility(messages: ExtendedChatMessage[]): {
+  messages: ExtendedChatMessage[];
+  injectedCount: number;
+} {
+  let injectedCount = 0;
+
+  const compatibleMessages = messages.map((message) => {
+    if (!Array.isArray(message.tool_calls) || message.tool_calls.length === 0) {
+      return message;
+    }
+
+    const rawMessage = message as ExtendedChatMessage & Record<string, unknown>;
+    if (typeof rawMessage.reasoning_content === "string") {
+      return rawMessage;
+    }
+
+    injectedCount += 1;
+    return {
+      ...rawMessage,
+      reasoning_content: "",
+    } as ExtendedChatMessage;
+  });
+
+  return {
+    messages: compatibleMessages,
+    injectedCount,
+  };
+}
+
+function ensureDeepSeekReasonerUserTail(messages: ExtendedChatMessage[]): {
+  messages: ExtendedChatMessage[];
+  appendedUserPlaceholderCount: number;
+} {
+  if (messages.length === 0) {
+    return {
+      messages,
+      appendedUserPlaceholderCount: 0,
+    };
+  }
+
+  const lastMessage = messages[messages.length - 1];
+  if (lastMessage.role !== "assistant") {
+    return {
+      messages,
+      appendedUserPlaceholderCount: 0,
+    };
+  }
+
+  return {
+    messages: [
+      ...messages,
+      { role: "user", content: DEEPSEEK_USER_PLACEHOLDER },
+    ],
+    appendedUserPlaceholderCount: 1,
+  };
 }
 
 export function normalizeMessages(config: LLMConfig): ChatMessage[] {
@@ -19,21 +139,58 @@ export function normalizeMessages(config: LLMConfig): ChatMessage[] {
     throw new Error("messages[] is required");
   }
 
-  const rawMessages = [...config.messages];
+  const rawMessages = [...config.messages] as ExtendedChatMessage[];
+  const usesDeepSeekReasoner = isDeepSeekReasonerConfig(config);
+  const { messages: sanitizedMessages, strippedCount } = usesDeepSeekReasoner
+    ? stripReasoningMetadata(rawMessages)
+    : { messages: rawMessages, strippedCount: 0 };
 
   if (!config.promptNames || !config.postProcessingMode) {
-    return rawMessages;
+    return toSimpleMessages(sanitizedMessages);
   }
 
-  const processed = postProcessMessages(rawMessages as ExtendedChatMessage[], {
-    mode: config.postProcessingMode,
+  const effectiveMode = usesDeepSeekReasoner
+    ? PostProcessingMode.STRICT
+    : config.postProcessingMode;
+
+  const processed = postProcessMessages(sanitizedMessages, {
+    mode: effectiveMode,
     names: config.promptNames,
     tools: config.tools,
     prefill: config.prefill,
     placeholder: config.placeholder,
   });
+  const {
+    messages: deepSeekTailNormalizedMessages,
+    appendedUserPlaceholderCount,
+  } = usesDeepSeekReasoner
+    ? ensureDeepSeekReasonerUserTail(processed)
+    : { messages: processed, appendedUserPlaceholderCount: 0 };
+  const {
+    messages: deepSeekCompatibleMessages,
+    injectedCount,
+  } = usesDeepSeekReasoner
+    ? addDeepSeekReasonerToolCallCompatibility(deepSeekTailNormalizedMessages)
+    : { messages: deepSeekTailNormalizedMessages, injectedCount: 0 };
 
-  return toSimpleMessages(processed);
+  if (usesDeepSeekReasoner) {
+    const roleSummaryBefore = summarizeRoles(sanitizedMessages);
+    const roleSummaryAfter = summarizeRoles(deepSeekCompatibleMessages);
+    const modeChanged = config.postProcessingMode !== effectiveMode;
+
+    if (modeChanged || strippedCount > 0 || appendedUserPlaceholderCount > 0 || injectedCount > 0 || roleSummaryBefore !== roleSummaryAfter) {
+      console.info("[DeepSeekReasoner] Prompt normalized", {
+        mode: effectiveMode,
+        strippedMetadataCount: strippedCount,
+        appendedUserPlaceholderCount,
+        injectedReasoningContentCount: injectedCount,
+        roleSummaryBefore,
+        roleSummaryAfter,
+      });
+    }
+  }
+
+  return toSimpleMessages(deepSeekCompatibleMessages);
 }
 
 export function emitPromptCapturedEvent(

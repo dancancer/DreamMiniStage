@@ -73,7 +73,7 @@ export function PresetHeader({
             {filterBy !== "all" && (
               <>
                 <span>•</span>
-                <span className="text-blue-400 whitespace-nowrap">
+                <span className="text-sky whitespace-nowrap">
                   {t("preset.filtered")}: {filteredCount}
                 </span>
               </>

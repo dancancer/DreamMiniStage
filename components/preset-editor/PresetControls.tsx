@@ -112,7 +112,7 @@ export function PresetControls({
               className={`flex items-center justify-center w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-all duration-300 ${
                 sortOrder === "asc"
                   ? "bg-primary/20 text-primary-400"
-                  : "bg-blue-500/20 text-blue-400"
+                  : "bg-accent/30 text-sky"
               }`}
             >
               <span className="text-3xs sm:text-xs font-bold">{sortOrder === "asc" ? "↑" : "↓"}</span>
@@ -122,13 +122,13 @@ export function PresetControls({
 
           {/* 筛选 */}
           <div className="flex items-center gap-1 sm:gap-1.5">
-            <Filter size={10} className="text-blue-400/80" />
+            <Filter size={10} className="text-sky/80" />
             <label className="text-2xs sm:text-xs text-ink-soft font-medium">{t("preset.filterBy")}</label>
             <div className="relative">
               <select
                 value={filterBy}
                 onChange={(e) => onFilterChange(e.target.value)}
-                className="appearance-none bg-muted-surface text-cream-soft px-2 sm:px-3 py-1 sm:py-1.5 pr-5 sm:pr-7 rounded-md border border-border/60 focus:border-blue-500/60 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 hover:border-border backdrop-blur-sm text-2xs sm:text-xs font-medium"
+                className="appearance-none bg-muted-surface text-cream-soft px-2 sm:px-3 py-1 sm:py-1.5 pr-5 sm:pr-7 rounded-md border border-border/60 focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all duration-300 hover:border-border backdrop-blur-sm text-2xs sm:text-xs font-medium"
               >
                 <option value="all" className=" text-cream-soft">{t("preset.all")}</option>
                 <option value="active" className=" text-cream-soft">{t("preset.active")}</option>

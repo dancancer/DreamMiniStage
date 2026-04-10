@@ -49,22 +49,22 @@ interface PluginCardProps {
 
 function getPluginStatusIcon(plugin: PluginEntry) {
   if (plugin.error) {
-    return <AlertTriangle className="w-4 h-4 text-red-400" />;
+    return <AlertTriangle className="w-4 h-4 text-danger" />;
   }
   if (plugin.enabled) {
-    return <CheckCircle className="w-4 h-4 text-green-400" />;
+    return <CheckCircle className="w-4 h-4 text-success" />;
   }
-  return <AlertCircle className="w-4 h-4 text-gray-400" />;
+  return <AlertCircle className="w-4 h-4 text-ink-soft" />;
 }
 
 function getPluginStatusText(plugin: PluginEntry) {
   if (plugin.error) {
-    return { text: "错误", color: "text-red-400" };
+    return { text: "错误", color: "text-danger" };
   }
   if (plugin.enabled) {
-    return { text: "已启用", color: "text-green-400" };
+    return { text: "已启用", color: "text-success" };
   }
-  return { text: "已禁用", color: "text-gray-400" };
+  return { text: "已禁用", color: "text-ink-soft" };
 }
 
 // ============================================================================
@@ -138,7 +138,7 @@ export function PluginCard({ plugin, onToggle }: PluginCardProps) {
             </div>
 
             {plugin.error && (
-              <div className="mt-3 p-3 bg-red-900/20 border border-red-500/30 rounded-md text-red-400 text-xs">
+              <div className="mt-3 rounded-md border border-danger/30 bg-danger/10 p-3 text-xs text-danger">
                 <strong>{t("plugins.error")}</strong> {plugin.error}
               </div>
             )}
@@ -153,8 +153,8 @@ export function PluginCard({ plugin, onToggle }: PluginCardProps) {
             onClick={() => onToggle(plugin.manifest.id, !plugin.enabled)}
             className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 active:scale-95 ${
               plugin.enabled
-                ? "bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30"
-                : "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
+                ? "border border-danger/30 bg-danger/15 text-danger hover:bg-danger/20"
+                : "border border-success/30 bg-success/15 text-success hover:bg-success/20"
             }`}
           >
             {plugin.enabled ? (

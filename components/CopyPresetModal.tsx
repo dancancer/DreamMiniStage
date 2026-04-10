@@ -155,7 +155,7 @@ export default function CopyPresetModal({
               disabled={isCopying}
               className={`w-full px-3 py-2 bg-muted-surface 
                 text-cream-soft rounded-md border border-border 
-                focus:border-blue-500/60 focus:outline-none focus:ring-2 focus:ring-blue-500/20 
+                focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20 
                 transition-all duration-300 hover:border-border backdrop-blur-sm
                  ${fontClass}
                 disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -179,13 +179,13 @@ export default function CopyPresetModal({
               type="submit"
               disabled={isCopying || !presetName.trim()}
               className={`px-4 py-2 text-sm font-medium 
-                bg-info/20 hover:bg-info/30
-                text-sky hover:text-sky/80 
-                border border-info ${fontClass}
+                bg-primary/15 hover:bg-primary/20
+                text-primary-300 hover:text-primary-200 
+                border border-primary/40 ${fontClass}
                 flex items-center`}
             >
               {isCopying && (
-                <div className="w-4 h-4 mr-2 border-2 border-sky border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-4 h-4 mr-2 border-2 border-primary-300 border-t-transparent rounded-full animate-spin"></div>
               )}
               {isCopying ? t("preset.copying") : t("preset.copy")}
             </Button>
