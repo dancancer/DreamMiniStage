@@ -1,364 +1,82 @@
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════╗
- * ║                         Slash Command 类型定义                             ║
+ * ║                  Slash Command 执行上下文 / 命令处理器类型                   ║
  * ║                                                                            ║
- * ║  定义命令解析、执行的核心数据结构                                            ║
+ * ║  ExecutionContext 定义所有命令可调用的宿主能力                               ║
+ * ║  注: ExecutionContext 是单一接口，体量由宿主 API 面积决定                    ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
 import type { DialogueMessage } from "@/types/character-dialogue";
+import type { CommandInvocationMeta, CommandScope } from "./parsing";
 
-export interface SendOptions {
-  at?: number;
-  name?: string;
-  compact?: boolean;
-  returnType?: string;
-}
+import type {
+  SendOptions,
+  AuthorNoteState,
+  ConnectionProfileState,
+  ReasoningParseOptions,
+  ReasoningParseResult,
+  QuickReplyLookup,
+  QuickReplyCreateOptions,
+  QuickReplyUpdateOptions,
+  QuickReplyContextOptions,
+  QuickReplySetOptions,
+  QuickReplySetVisibilityOptions,
+  QuickReplySetScope,
+  ImageGenerationOptions,
+  ImageGenerationConfig,
+  InstructModeState,
+  InstructModePatch,
+  SetModelOptions,
+  NarrateOptions,
+  TranslateTextOptions,
+  YouTubeTranscriptOptions,
+  WorldInfoTimedEffectName,
+  WorldInfoTimedEffectFormat,
+  WorldInfoTimedEffectState,
+  GenerateOptions,
+  GenerateRawOptions,
+  InjectOptions,
+  ListGalleryOptions,
+  ActivateLoreOptions,
+  AudioOptions,
+  PersonaSetMode,
+  PersonaLockType,
+  PersonaLockState,
+  DataBankSource,
+  ExpressionSetOptions,
+  ExpressionFolderOverrideOptions,
+  ExpressionListOptions,
+  ExpressionClassifyOptions,
+  ExpressionUploadOptions,
+  CaptionCommandOptions,
+  ButtonsCommandOptions,
+  PopupCommandOptions,
+  CharacterTagCommandOptions,
+  ImportVariableMapping,
+} from "./options";
 
-export interface CharacterSummary {
-  id: string;
-  name: string;
-  tags?: string[];
-}
-
-export interface CharacterSwitchResult {
-  target: string;
-  characterId: string;
-  characterName: string;
-  sessionId: string;
-  sessionName: string;
-}
-
-export interface LorebookBindings {
-  primary: string | null;
-  additional: string[];
-}
-
-export interface PromptEntryState {
-  identifier: string;
-  name: string;
-  enabled: boolean;
-}
-
-export interface PromptEntryStateUpdate {
-  identifier: string;
-  enabled: boolean;
-}
-
-export interface PromptInjectionState {
-  id: string;
-  content: string;
-  role: "system" | "assistant" | "user";
-  position: "before" | "after" | "in_chat" | "none";
-  depth: number;
-  should_scan: boolean;
-  createdAt: string;
-}
-
-export type DataBankSource = "global" | "character" | "chat";
-export type PersonaLockType = "chat" | "character" | "default";
-export type PersonaLockState = "on" | "off" | "toggle";
-export type PersonaSetMode = "lookup" | "temp" | "all";
-export type ExpressionSetType = "expression" | "sprite";
-export type AuthorNotePosition = "before" | "after" | "chat";
-export type AuthorNoteRole = "system" | "user" | "assistant";
-
-export interface AuthorNoteState {
-  text: string;
-  depth: number;
-  frequency: number;
-  position: AuthorNotePosition;
-  role: AuthorNoteRole;
-}
-
-export interface ConnectionProfileState {
-  id: string;
-  name: string;
-  [key: string]: unknown;
-}
-
-export interface DataBankEntrySnapshot {
-  name: string;
-  url: string;
-  source?: DataBankSource;
-  enabled?: boolean;
-}
-
-export interface ExpressionSetOptions {
-  type?: ExpressionSetType;
-}
-
-export interface ExpressionFolderOverrideOptions {
-  name?: string;
-}
-
-export interface ExpressionListOptions {
-  filterAvailable?: boolean;
-}
-
-export interface ExpressionClassifyOptions {
-  api?: string;
-  filterAvailable?: boolean;
-  prompt?: string;
-}
-
-export interface ExpressionUploadOptions {
-  name?: string;
-  label: string;
-  folder?: string;
-  spriteName?: string;
-}
-
-export interface CaptionCommandOptions {
-  prompt?: string;
-  quiet?: boolean;
-  mesId?: number;
-  index?: number;
-}
-
-export interface ButtonsCommandOptions {
-  multiple?: boolean;
-}
-
-export interface PopupCommandOptions {
-  header?: string;
-  scroll?: boolean;
-  large?: boolean;
-  wide?: boolean;
-  wider?: boolean;
-  transparent?: boolean;
-  okButton?: string;
-  cancelButton?: string;
-  result?: boolean;
-}
-
-export interface SlashToolDefinition {
-  name: string;
-  description: string;
-  parameters: {
-    type: "object";
-    properties?: Record<string, {
-      type: string;
-      description?: string;
-      enum?: string[];
-    }>;
-    required?: string[];
-  };
-}
-
-export interface SlashToolRegistration {
-  name: string;
-  description: string;
-  parameters: SlashToolDefinition["parameters"];
-  action: string;
-  displayName?: string;
-  formatMessage?: string;
-  shouldRegister?: boolean;
-  stealth?: boolean;
-}
-
-export interface CharacterTagCommandOptions {
-  name?: string;
-}
-
-export interface ImportVariableMapping {
-  source: string;
-  target: string;
-}
-
-export interface ReasoningParseResult {
-  reasoning: string;
-  content: string;
-}
-
-export interface ReasoningParseOptions {
-  strict?: boolean;
-}
-
-export interface QuickReplyLookup {
-  label?: string;
-  id?: number;
-}
-
-export interface QuickReplyCreateOptions {
-  icon?: string;
-  showLabel?: boolean;
-  title?: string;
-  hidden?: boolean;
-  startup?: boolean;
-  user?: boolean;
-  bot?: boolean;
-  load?: boolean;
-  new?: boolean;
-  group?: boolean;
-  generation?: boolean;
-  automationId?: string;
-}
-
-export interface QuickReplyUpdateOptions extends QuickReplyCreateOptions {
-  newLabel?: string;
-  message?: string;
-}
-
-export interface QuickReplyContextOptions {
-  chain?: boolean;
-}
-
-export interface QuickReplySetOptions {
-  nosend?: boolean;
-  before?: boolean;
-  inject?: boolean;
-}
-
-export interface QuickReplySetVisibilityOptions {
-  visible?: boolean;
-}
-
-export type QuickReplySetScope = "all" | "global" | "chat";
-
-export interface QuickReplySnapshot {
-  label: string;
-  [key: string]: unknown;
-}
-
-export interface QuickReplySetSnapshot {
-  name: string;
-  [key: string]: unknown;
-}
-
-export type ImageGenerationProcessingMode = "standard" | "minimal";
-
-export interface ImageGenerationConfig {
-  source: string;
-  style: string;
-  comfyWorkflow: string;
-}
-
-export interface ImageGenerationOptions {
-  quiet?: boolean;
-  negative?: string;
-  extend?: boolean;
-  edit?: boolean;
-  multimodal?: boolean;
-  snap?: boolean;
-  processing?: ImageGenerationProcessingMode;
-  seed?: number;
-  width?: number;
-  height?: number;
-  steps?: number;
-  cfg?: number;
-  skip?: number;
-  model?: string;
-  sampler?: string;
-  scheduler?: string;
-  vae?: string;
-  upscaler?: string;
-  hires?: boolean;
-  scale?: number;
-  denoise?: number;
-  secondPassSteps?: number;
-  faces?: boolean;
-}
-
-export interface InstructModeState {
-  enabled: boolean;
-  preset: string | null;
-}
-
-export interface InstructModePatch {
-  enabled?: boolean;
-  preset?: string;
-  quiet?: boolean;
-}
-
-export interface SetModelOptions {
-  quiet?: boolean;
-}
-
-export interface NarrateOptions {
-  voice?: string;
-}
-
-export interface TranslateTextOptions {
-  target?: string;
-  provider?: string;
-}
-
-export interface YouTubeTranscriptOptions {
-  lang?: string;
-}
-
-export type WorldInfoTimedEffectName = "sticky" | "cooldown" | "delay";
-export type WorldInfoTimedEffectFormat = "boolean" | "number";
-export type WorldInfoTimedEffectState = "on" | "off" | "toggle";
-
-// ============================================================================
-//                              解析结果类型
-// ============================================================================
-
-/** 单个 Slash 命令的解析结果 */
-export interface SlashCommand {
-  name: string;                           // 命令名，如 "send"
-  args: string[];                         // 位置参数
-  namedArgs: Record<string, string>;      // 命名参数 key=value
-  namedArgumentList?: ParsedNamedArgument[]; // 命名参数赋值列表（保序，包含重复）
-  unnamedArgumentList?: ParsedUnnamedArgument[]; // 位置参数赋值列表（保序）
-  parserFlags?: ParserFlags;              // 解析期 parser flag 快照
-  scopeDepth?: number;                    // 解析期作用域深度（root=0）
-  raw: string;                            // 原始命令字符串，用于错误报告
-}
-
-/** 命名参数赋值（解析期元数据） */
-export interface ParsedNamedArgument {
-  name: string;
-  value: string;
-  rawValue: string;
-  wasQuoted: boolean;
-}
-
-/** 位置参数赋值（解析期元数据） */
-export interface ParsedUnnamedArgument {
-  value: string;
-  rawValue: string;
-  wasQuoted: boolean;
-}
-
-/** 单次命令调用元数据（执行期透传） */
-export interface CommandInvocationMeta {
-  raw: string;
-  namedArgumentList: ParsedNamedArgument[];
-  unnamedArgumentList: ParsedUnnamedArgument[];
-  blocks?: Array<{ raw: string }>;
-  parserFlags?: ParserFlags;
-  scopeDepth?: number;
-}
-
-/** parser flags（对齐 ST Parser 的最小子集） */
-export interface ParserFlags {
-  STRICT_ESCAPING: boolean;
-  REPLACE_GETVAR: boolean;
-}
-
-export type ParserFlagName = keyof ParserFlags;
-
-/** 解析器返回结果 */
-export interface ParseResult {
-  commands: SlashCommand[];
-  isError: boolean;
-  errorMessage?: string;
-}
-
-// ============================================================================
-//                              执行结果类型
-// ============================================================================
-
-/** 命令执行结果 */
-export interface ExecutionResult {
-  pipe: string;                           // 管道输出值
-  isError: boolean;
-  errorMessage?: string;
-  aborted?: boolean;
-}
+import type {
+  CharacterSummary,
+  CharacterSwitchResult,
+  LorebookBindings,
+  PromptEntryState,
+  PromptEntryStateUpdate,
+  PromptInjectionState,
+  DataBankEntrySnapshot,
+  SlashToolDefinition,
+  SlashToolRegistration,
+  QuickReplySnapshot,
+  QuickReplySetSnapshot,
+  PresetInfo,
+  RegexScriptInfo,
+  AudioChannelType,
+  AudioChannelSnapshot,
+  VariableScope,
+  WorldBookEntryData,
+  GroupMemberField,
+  GroupMemberMoveDirection,
+} from "./entities";
 
 // ============================================================================
 //                              执行上下文类型
@@ -877,102 +595,9 @@ export interface ExecutionContext {
   ) => void | Promise<void>;
 }
 
-/** Preset 信息 */
-export interface PresetInfo {
-  name: string;
-  type?: "openai" | "context" | "sysprompt";
-}
-
-/** Regex 脚本信息 */
-export interface RegexScriptInfo {
-  name: string;
-  enabled: boolean;
-  pattern?: string;
-  replacement?: string;
-}
-
-/** 音频播放选项 */
-export interface AudioOptions {
-  volume?: number;
-  loop?: boolean;
-}
-
-/** 音频通道类型 */
-export type AudioChannelType = "bgm" | "ambient";
-
-/** 音频通道运行时快照 */
-export interface AudioChannelSnapshot {
-  enabled: boolean;
-  mode: "repeat" | "random" | "single" | "stop";
-  currentUrl: string | null;
-  playlist: Array<{ url: string; title?: string }>;
-  isPlaying: boolean;
-}
-
-/** 变量作用域 */
-export type VariableScope = "local" | "global";
-
-/** World Book 条目数据 */
-export interface WorldBookEntryData {
-  id: string;
-  keys: string[];
-  content: string;
-  enabled: boolean;
-  comment?: string;
-  priority?: number;
-  depth?: number;
-}
-
-/** 生成选项 */
-export interface GenerateOptions {
-  maxTokens?: number;
-  temperature?: number;
-  stopSequences?: string[];
-}
-
-/** 原始生成选项（对应 /genraw） */
-export interface GenerateRawOptions {
-  lock?: boolean;
-  instruct?: boolean;
-  as?: "system" | "char";
-  systemPrompt?: string;
-  prefillPrompt?: string;
-  responseLength?: number;
-  trimNames?: boolean;
-  stopSequences?: string[];
-}
-
-/** 注入选项 */
-export interface InjectOptions {
-  position?: "before" | "after" | "chat" | "in_chat" | "none";
-  depth?: number;
-  role?: "system" | "user" | "assistant";
-  ephemeral?: boolean;
-}
-
-export interface ListGalleryOptions {
-  character?: string;
-  group?: string;
-}
-
-export type GroupMemberField = "name" | "index" | "id" | "avatar";
-export type GroupMemberMoveDirection = "up" | "down";
-
-/** 激活 Lore 选项 */
-export interface ActivateLoreOptions {
-  duration?: number;
-}
-
 // ============================================================================
 //                              命令处理器类型
 // ============================================================================
-
-export interface CommandScope {
-  get(key: string): unknown;
-  set(key: string, value: unknown): void;
-  setLocal(key: string, value: unknown): void;
-  delete(key: string): boolean;
-}
 
 /** 单个命令的处理函数签名 */
 export type CommandHandler = (

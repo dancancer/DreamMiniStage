@@ -1,15 +1,9 @@
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════╗
- * ║                    World Book 高级功能管理器                                ║
+ * ║  World Book 高级功能管理器 — 编排层                                         ║
  * ║                                                                            ║
- * ║  实现 SillyTavern 兼容的高级 World Info 功能：                               ║
- * ║  1. 全词匹配 + 大小写敏感                                                    ║
- * ║  2. 递归激活（带性能控制）                                                   ║
- * ║  3. Token 预算管理                                                          ║
- * ║  4. 包含组评分系统                                                          ║
- * ║  5. 可配置扫描深度                                                          ║
- * ║  6. 最小激活数保证                                                          ║
- * ║  7. 缓存机制                                                                ║
+ * ║  类型/缓存/常量  → world-book-advanced-types.ts                             ║
+ * ║  匹配/评分引擎   → world-book-match-engine.ts                               ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -17,132 +11,23 @@ import type {
   WorldBookEntry,
   WorldBookEntryWithSource,
   WorldBookSource,
-  SecondaryKeyLogic,
 } from "@/lib/models/world-book-model";
 import type { DialogueMessage } from "@/lib/models/character-dialogue-model";
 import { WorldBookManager } from "./world-book";
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   类型定义
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* ─────────────────────────────────────────────────────────────────────────
+   Re-export：保持所有外部导入兼容
+   ───────────────────────────────────────────────────────────────────────── */
 
-export interface WorldBookMatchOptions {
-  /** 上下文窗口大小 (最近 N 条消息) */
-  contextWindow?: number;
-  /** 当前轮次 */
-  currentTurn?: number;
-  /** 是否启用概率激活 */
-  enableProbability?: boolean;
-  /** 是否启用时间效果 */
-  enableTimeEffects?: boolean;
-  /** 是否启用包含组 */
-  enableInclusionGroups?: boolean;
-  /** 是否启用递归激活 */
-  enableRecursion?: boolean;
-  /** 最大递归深度 (性能控制) */
-  maxRecursionDepth?: number;
-  /** Token 预算 (0 = 无限制) */
-  tokenBudget?: number;
-  /** 最小激活数 */
-  minActivations?: number;
-  /** 全局大小写敏感设置 */
-  caseSensitive?: boolean;
-  /** 全局全词匹配设置 */
-  matchWholeWords?: boolean;
-}
+export type { WorldBookMatchOptions, MatchedEntry, DepthInjection } from "./world-book-advanced-types";
+export { WorldBookCache, SOURCE_PRIORITY, estimateTokens } from "./world-book-advanced-types";
 
-export interface MatchedEntry {
-  entry: WorldBookEntry;
-  matchReason: "constant" | "keyword" | "sticky" | "delay" | "recursive";
-  depth?: number;
-  /** 递归激活深度 */
-  recursionLevel?: number;
-  /** 匹配到的关键词 */
-  matchedKeyword?: string;
-}
-
-export interface DepthInjection {
-  content: string;
-  depth: number;
-  order: number;
-}
-
-type ExtensionFields = Record<string, unknown>;
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   缓存管理器（好品味：LRU 自动淘汰，无 if-else）
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-}
-
-class WorldBookCache {
-  private cache = new Map<string, CacheEntry<WorldBookEntry[]>>();
-  private maxAge: number;
-  private maxSize: number;
-
-  constructor(maxAge = 60_000, maxSize = 100) {
-    this.maxAge = maxAge;
-    this.maxSize = maxSize;
-  }
-
-  get(key: string): WorldBookEntry[] | null {
-    const entry = this.cache.get(key);
-    if (!entry) return null;
-
-    // 过期自动淘汰
-    if (Date.now() - entry.timestamp > this.maxAge) {
-      this.cache.delete(key);
-      return null;
-    }
-
-    return entry.data;
-  }
-
-  set(key: string, data: WorldBookEntry[]): void {
-    // LRU: 超过容量时删除最旧的
-    if (this.cache.size >= this.maxSize) {
-      const oldestKey = this.cache.keys().next().value;
-      if (oldestKey) this.cache.delete(oldestKey);
-    }
-
-    this.cache.set(key, { data, timestamp: Date.now() });
-  }
-
-  clear(): void {
-    this.cache.clear();
-  }
-
-  /** 使特定 key 的缓存失效 */
-  invalidate(key: string): void {
-    this.cache.delete(key);
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   来源优先级常量
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-const SOURCE_PRIORITY: Record<WorldBookSource, number> = {
-  chat: 4,
-  persona: 3,
-  character: 2,
-  global: 1,
-};
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   Token 计数器（简化版，用于预算管理）
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function estimateTokens(text: string): number {
-  // 简化估算：平均 4 字符 = 1 token (英文)
-  // 中文：平均 1.5 字符 = 1 token
-  const cjkCount = (text.match(/[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]/g) || []).length;
-  const otherCount = text.length - cjkCount;
-  return Math.ceil(cjkCount / 1.5 + otherCount / 4);
-}
+import type { WorldBookMatchOptions, MatchedEntry, DepthInjection } from "./world-book-advanced-types";
+import { WorldBookCache, SOURCE_PRIORITY } from "./world-book-advanced-types";
+import {
+  matchKeys, evaluateSecondaryKeys, resolveDepth,
+  applyProbability, applyInclusionGroups, applyTokenBudget, ensureMinActivations,
+} from "./world-book-match-engine";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    WorldBookAdvancedManager 类
@@ -216,9 +101,7 @@ export class WorldBookAdvancedManager {
     // 过滤启用的条目
     const enabledEntries = this.entries.filter((e) => e.enabled !== false);
 
-    // ════════════════════════════════════════════════════════════════════════
-    // Phase 1: 迭代式递归激活（好品味：用循环替代递归，避免栈溢出）
-    // ════════════════════════════════════════════════════════════════════════
+    // Phase 1: 迭代式递归激活（用循环替代递归，避免栈溢出）
     const activated = new Map<string, MatchedEntry>();
     let scanBuffer = initialText;
     let recursionLevel = 0;
@@ -263,37 +146,27 @@ export class WorldBookAdvancedManager {
 
     let matched = Array.from(activated.values());
 
-    // ════════════════════════════════════════════════════════════════════════
     // Phase 2: 概率过滤
-    // ════════════════════════════════════════════════════════════════════════
     if (enableProbability) {
-      matched = this.applyProbability(matched);
+      matched = applyProbability(matched);
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // Phase 3: 包含组评分（好品味：按权重评分，选择最佳）
-    // ════════════════════════════════════════════════════════════════════════
+    // Phase 3: 包含组评分（按权重评分，选择最佳）
     if (enableInclusionGroups) {
-      matched = this.applyInclusionGroups(matched);
+      matched = applyInclusionGroups(matched);
     }
 
-    // ════════════════════════════════════════════════════════════════════════
     // Phase 4: Token 预算管理
-    // ════════════════════════════════════════════════════════════════════════
     if (tokenBudget > 0) {
-      matched = this.applyTokenBudget(matched, tokenBudget, minActivations);
+      matched = applyTokenBudget(matched, tokenBudget, minActivations);
     }
 
-    // ════════════════════════════════════════════════════════════════════════
     // Phase 5: 最小激活数保证
-    // ════════════════════════════════════════════════════════════════════════
     if (minActivations > 0 && matched.length < minActivations) {
-      matched = this.ensureMinActivations(matched, enabledEntries, minActivations);
+      matched = ensureMinActivations(matched, enabledEntries, minActivations);
     }
 
-    // ════════════════════════════════════════════════════════════════════════
     // Phase 6: 排序（来源优先级 > 插入顺序）
-    // ════════════════════════════════════════════════════════════════════════
     matched.sort((a, b) => {
       const sourceDiff =
         (b.entry as WorldBookEntryWithSource).sourcePriority -
@@ -305,10 +178,7 @@ export class WorldBookAdvancedManager {
     return matched;
   }
 
-  /* ─────────────────────────────────────────────────────────────────────────
-     单条目评估（支持全词匹配 + 大小写敏感）
-     ───────────────────────────────────────────────────────────────────────── */
-
+  /** 单条目评估（委托关键词匹配到引擎层） */
   private evaluateEntry(
     entry: WorldBookEntry,
     fullText: string,
@@ -328,7 +198,7 @@ export class WorldBookAdvancedManager {
     // 时间效果检查
     if (enableTimeEffects) {
       if (entry._stickyRemaining && entry._stickyRemaining > 0) {
-        return { entry, matchReason: "sticky", depth: this.resolveDepth(entry) };
+        return { entry, matchReason: "sticky", depth: resolveDepth(entry) };
       }
       if (entry._cooldownRemaining && entry._cooldownRemaining > 0) {
         return null;
@@ -338,7 +208,7 @@ export class WorldBookAdvancedManager {
       }
       if (entry._delayUntilTurn && this.currentTurn >= entry._delayUntilTurn) {
         entry._delayUntilTurn = undefined;
-        return { entry, matchReason: "delay", depth: this.resolveDepth(entry) };
+        return { entry, matchReason: "delay", depth: resolveDepth(entry) };
       }
     }
 
@@ -351,7 +221,7 @@ export class WorldBookAdvancedManager {
     const useCaseSensitive = entry.caseSensitive ?? caseSensitive;
 
     // 主关键词匹配
-    const matchedKeyword = this.matchKeys(
+    const matchedKeyword = matchKeys(
       entry.keys,
       fullText,
       entry.use_regex,
@@ -365,7 +235,7 @@ export class WorldBookAdvancedManager {
 
     // 次关键词匹配
     if (entry.selective && entry.secondary_keys && entry.secondary_keys.length > 0) {
-      const secondaryMatch = this.evaluateSecondaryKeys(
+      const secondaryMatch = evaluateSecondaryKeys(
         entry.secondary_keys,
         fullText,
         entry.selectiveLogic || "AND",
@@ -389,124 +259,12 @@ export class WorldBookAdvancedManager {
     return {
       entry,
       matchReason: "keyword",
-      depth: this.resolveDepth(entry),
+      depth: resolveDepth(entry),
       matchedKeyword,
     };
   }
 
-  /* ─────────────────────────────────────────────────────────────────────────
-     关键词匹配（支持全词匹配 + 大小写敏感）
-     ───────────────────────────────────────────────────────────────────────── */
-
-  private matchKeys(
-    keys: string[],
-    text: string,
-    useRegex?: boolean,
-    wholeWords?: boolean,
-    caseSensitive?: boolean,
-  ): string | null {
-    const processedText = caseSensitive ? text : text.toLowerCase();
-
-    for (const key of keys) {
-      const processedKey = caseSensitive ? key : key.toLowerCase();
-
-      if (useRegex) {
-        try {
-          const flags = caseSensitive ? "" : "i";
-          const regex = new RegExp(processedKey, flags);
-          if (regex.test(text)) return key;
-        } catch {
-          // 正则无效时降级为普通匹配
-          if (this.matchSingleKey(processedText, processedKey, wholeWords)) {
-            return key;
-          }
-        }
-      } else {
-        if (this.matchSingleKey(processedText, processedKey, wholeWords)) {
-          return key;
-        }
-      }
-    }
-    return null;
-  }
-
-  /**
-   * 单个关键词匹配（好品味：全词匹配用正则边界）
-   */
-  private matchSingleKey(text: string, key: string, wholeWords?: boolean): boolean {
-    if (!wholeWords) {
-      return text.includes(key);
-    }
-
-    if (this.hasCjk(key)) {
-      return this.matchCjkWholeWord(text, key);
-    }
-
-    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`\\b${escaped}\\b`, "u");
-    return regex.test(text);
-  }
-
-  /* ─────────────────────────────────────────────────────────────────────────
-     CJK 全词匹配：使用 Intl.Segmenter 近似中文/日文/韩文的词界
-     ───────────────────────────────────────────────────────────────────────── */
-  private matchCjkWholeWord(text: string, key: string): boolean {
-    const segmenter = typeof Intl !== "undefined" && "Segmenter" in Intl
-      ? new Intl.Segmenter("zh-CN", { granularity: "word" })
-      : null;
-
-    if (!segmenter) return text.includes(key);
-
-    for (const { segment, isWordLike } of segmenter.segment(text)) {
-      if (!isWordLike) continue;
-      if (segment === key || segment.startsWith(key)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private hasCjk(text: string): boolean {
-    return /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(
-      text,
-    );
-  }
-
-  /* ─────────────────────────────────────────────────────────────────────────
-     次关键词评估（支持 SillyTavern 4 种逻辑）
-     ───────────────────────────────────────────────────────────────────────── */
-
-  private evaluateSecondaryKeys(
-    keys: string[],
-    text: string,
-    logic: SecondaryKeyLogic,
-    useRegex?: boolean,
-    wholeWords?: boolean,
-    caseSensitive?: boolean,
-  ): boolean {
-    const matches = keys.map((key) =>
-      this.matchKeys([key], text, useRegex, wholeWords, caseSensitive) !== null,
-    );
-
-    // 好品味：用对象映射替代 switch（消除分支）
-    const logicHandlers: Record<SecondaryKeyLogic, () => boolean> = {
-      AND: () => matches.every((m) => m),
-      AND_ALL: () => matches.every((m) => m),
-      OR: () => matches.some((m) => m),
-      AND_ANY: () => matches.some((m) => m),
-      NOT: () => !matches.some((m) => m),
-      NOT_ANY: () => !matches.some((m) => m),
-      NOT_ALL: () => !matches.every((m) => m),
-    };
-
-    return logicHandlers[logic]?.() ?? matches.every((m) => m);
-  }
-
-  /* ─────────────────────────────────────────────────────────────────────────
-     时间效果
-     ───────────────────────────────────────────────────────────────────────── */
-
+  /** 时间效果 — 激活条目 */
   private activateEntry(entry: WorldBookEntry): void {
     entry._lastActivatedTurn = this.currentTurn;
 
@@ -514,7 +272,7 @@ export class WorldBookAdvancedManager {
       entry._stickyRemaining = entry.sticky;
     }
     if (entry.cooldown && entry.cooldown > 0) {
-      // ── cooldown 按轮次计数：+1 确保“冷却 2”代表跳过后续两轮
+      // ── cooldown 按轮次计数：+1 确保"冷却 2"代表跳过后续两轮
       entry._cooldownRemaining = entry.cooldown + 1;
     }
   }
@@ -531,190 +289,6 @@ export class WorldBookAdvancedManager {
         }
       }
     }
-  }
-
-  private getExtension(entry: WorldBookEntry): ExtensionFields | undefined {
-    if (!entry.extensions || typeof entry.extensions !== "object") {
-      return undefined;
-    }
-    return entry.extensions as ExtensionFields;
-  }
-
-  private resolveDepth(entry: WorldBookEntry): number | undefined {
-    if (typeof entry.depth === "number") return entry.depth;
-    const ext = this.getExtension(entry);
-    const extDepth = ext?.depth;
-    return typeof extDepth === "number" ? extDepth : undefined;
-  }
-
-  private resolveUseProbability(entry: WorldBookEntry): boolean | undefined {
-    if (typeof entry.useProbability === "boolean") return entry.useProbability;
-    const ext = this.getExtension(entry);
-    const extValue = ext?.useProbability ?? ext?.use_probability;
-    return typeof extValue === "boolean" ? extValue : undefined;
-  }
-
-  private resolveProbability(entry: WorldBookEntry): number | undefined {
-    if (typeof entry.probability === "number") return entry.probability;
-    const ext = this.getExtension(entry);
-    const extValue = ext?.probability;
-    return typeof extValue === "number" ? extValue : undefined;
-  }
-
-  private resolveGroupName(entry: WorldBookEntry): string {
-    if (typeof entry.group === "string") return entry.group;
-    const ext = this.getExtension(entry);
-    const extGroup = ext?.group;
-    return typeof extGroup === "string" ? extGroup : "";
-  }
-
-  private resolveGroupPriority(entry: WorldBookEntry): number {
-    if (typeof entry.group_priority === "number") return entry.group_priority;
-    if (typeof entry.groupPriority === "number") return entry.groupPriority;
-
-    const ext = this.getExtension(entry);
-    const extValue = ext?.group_priority ?? ext?.groupPriority;
-    return typeof extValue === "number" ? extValue : 0;
-  }
-
-  private resolveGroupWeight(entry: WorldBookEntry): number {
-    if (typeof entry.group_weight === "number") return entry.group_weight;
-    if (typeof entry.groupWeight === "number") return entry.groupWeight;
-
-    const ext = this.getExtension(entry);
-    const extValue = ext?.group_weight ?? ext?.groupWeight;
-    return typeof extValue === "number" ? extValue : 0;
-  }
-
-  /* ─────────────────────────────────────────────────────────────────────────
-     概率激活
-     ───────────────────────────────────────────────────────────────────────── */
-
-  private applyProbability(matched: MatchedEntry[]): MatchedEntry[] {
-    return matched.filter((m) => {
-      const useProbability = this.resolveUseProbability(m.entry) ?? true;
-      if (!useProbability) return true;
-
-      const prob = this.resolveProbability(m.entry);
-      if (prob === undefined || prob >= 100) return true;
-      if (prob <= 0) return false;
-      return Math.random() * 100 < prob;
-    });
-  }
-
-  /* ─────────────────────────────────────────────────────────────────────────
-     包含组评分系统（好品味：按权重 + 优先级评分）
-     ───────────────────────────────────────────────────────────────────────── */
-
-  private applyInclusionGroups(matched: MatchedEntry[]): MatchedEntry[] {
-    const groups = new Map<string, MatchedEntry[]>();
-
-    // 按组分类
-    for (const m of matched) {
-      const groupName = this.resolveGroupName(m.entry);
-      if (groupName) {
-        const existing = groups.get(groupName) || [];
-        existing.push(m);
-        groups.set(groupName, existing);
-      }
-    }
-
-    const excluded = new Set<WorldBookEntry>();
-
-    // 处理每个组：选择得分最高的条目
-    for (const [, groupEntries] of groups) {
-      if (groupEntries.length <= 1) continue;
-
-      // 计算每个条目的得分
-      const scored = groupEntries.map((m) => ({
-        entry: m,
-        score: this.calculateGroupScore(m.entry),
-      }));
-
-      // 按得分降序排序
-      scored.sort((a, b) => b.score - a.score);
-
-      // 排除得分较低的条目
-      for (let i = 1; i < scored.length; i++) {
-        excluded.add(scored[i].entry.entry);
-      }
-    }
-
-    return matched.filter((m) => !excluded.has(m.entry));
-  }
-
-  /**
-   * 计算组内得分
-   * 公式：(group_priority * 1000) + (group_weight || 0)
-   */
-  private calculateGroupScore(entry: WorldBookEntry): number {
-    const priority = this.resolveGroupPriority(entry);
-    const weight = this.resolveGroupWeight(entry);
-    return priority * 1000 + weight;
-  }
-
-  /* ─────────────────────────────────────────────────────────────────────────
-     Token 预算管理（好品味：按优先级填充，无硬截断）
-     ───────────────────────────────────────────────────────────────────────── */
-
-  private applyTokenBudget(
-    matched: MatchedEntry[],
-    budget: number,
-    minActivations: number,
-  ): MatchedEntry[] {
-    // 先按优先级排序
-    const sorted = [...matched].sort((a, b) => {
-      const sourceDiff =
-        (b.entry as WorldBookEntryWithSource).sourcePriority -
-        (a.entry as WorldBookEntryWithSource).sourcePriority;
-      if (sourceDiff !== 0) return sourceDiff;
-      return (b.entry.insertion_order || 0) - (a.entry.insertion_order || 0);
-    });
-
-    const result: MatchedEntry[] = [];
-    let usedTokens = 0;
-
-    for (const m of sorted) {
-      const tokens = m.entry.tokens || estimateTokens(m.entry.content);
-
-      // 保证最小激活数
-      if (result.length < minActivations) {
-        result.push(m);
-        usedTokens += tokens;
-        continue;
-      }
-
-      // 检查预算
-      if (usedTokens + tokens <= budget) {
-        result.push(m);
-        usedTokens += tokens;
-      }
-    }
-
-    return result;
-  }
-
-  /* ─────────────────────────────────────────────────────────────────────────
-     最小激活数保证
-     ───────────────────────────────────────────────────────────────────────── */
-
-  private ensureMinActivations(
-    current: MatchedEntry[],
-    allEntries: WorldBookEntryWithSource[],
-    minActivations: number,
-  ): MatchedEntry[] {
-    if (current.length >= minActivations) return current;
-
-    const needed = minActivations - current.length;
-    const currentIds = new Set(current.map((m) => m.entry.entry_id || m.entry.content));
-
-    // 从恒定激活条目中补充
-    const constantEntries = allEntries
-      .filter((e) => e.constant && !currentIds.has(e.entry_id || e.content))
-      .slice(0, needed)
-      .map((entry) => ({ entry, matchReason: "constant" as const }));
-
-    return [...current, ...constantEntries];
   }
 
   /* ─────────────────────────────────────────────────────────────────────────
