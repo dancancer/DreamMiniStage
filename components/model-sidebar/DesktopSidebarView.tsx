@@ -6,12 +6,15 @@
  */
 
 import React from "react";
-import { ChevronRight, Plus, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supportsModelAdvancedBooleanSetting, supportsModelAdvancedNumberSetting } from "@/lib/model-runtime-support";
 import type { LLMType, SidebarViewProps } from "./types";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import {
+  NewConfigFormSection,
+  ActiveConfigSection,
+} from "./DesktopSidebarSections";
 
 // ╔════════════════════════════════════════╗
 // ║ 桌面端模型侧边栏视图（纯展示层）            ║
@@ -38,20 +41,12 @@ export function DesktopSidebarView(props: SidebarViewProps) {
     isConfigHovered,
     editingConfigId,
     editingName,
-    newConfigName,
     llmType,
     baseUrl,
     model,
     apiKey,
     availableModels,
     modelListEmpty,
-    advancedSettings,
-    saveSuccess,
-    getModelListSuccess,
-    getModelListError,
-    isTesting,
-    testModelSuccess,
-    testModelError,
   } = state;
 
   const {
@@ -64,32 +59,15 @@ export function DesktopSidebarView(props: SidebarViewProps) {
     handleKeyDown,
     handleDeleteConfig,
     setIsConfigHovered,
-    handleGetModelList,
-    handleSave,
-    handleCancelCreate,
-    setLlmType,
-    setBaseUrl,
-    setApiKey,
-    setNewConfigName,
-    setModel,
     handleInlineModelChange,
-    handleTestModel,
-    setAdvancedNumberSetting,
-    setAdvancedBooleanSetting,
   } = actions;
 
   const { describeLlmType, getBaseUrlPlaceholder, getModelPlaceholder } = helpers;
   const isPanel = variant === "panel";
-  const containerClassName = cn(
-    "h-full text-text transition-all duration-300 overflow-hidden",
-    isPanel ? "w-full bg-background" : "magic-border border-l border-border ",
-    !isPanel && (isOpen ? "w-64" : "w-0"),
-  );
-  const scrollAreaClassName = cn(
-    "h-full transition-opacity duration-300 overflow-y-auto fantasy-scrollbar",
-    isPanel ? "w-full bg-background" : "w-64",
-    isOpen ? "opacity-100" : "opacity-0",
-  );
+
+  /* ─────────────────────────────────────────────────────────────────────
+     高级参数字段定义
+     ───────────────────────────────────────────────────────────────────── */
 
   const advancedNumberFields = [
     { key: "contextWindow", label: t("llmSettings.contextWindow") || "Context Window", description: t("llmSettings.contextWindowDescription") || "Upper bound for prompt context tokens.", step: "1", inputMode: "numeric" as const },
@@ -116,9 +94,29 @@ export function DesktopSidebarView(props: SidebarViewProps) {
     supportsModelAdvancedBooleanSetting(llmType, field.key),
   );
 
+  /* ─────────────────────────────────────────────────────────────────────
+     布局样式
+     ───────────────────────────────────────────────────────────────────── */
+
+  const containerClassName = cn(
+    "h-full text-text transition-all duration-300 overflow-hidden",
+    isPanel ? "w-full bg-background" : "magic-border border-l border-border ",
+    !isPanel && (isOpen ? "w-64" : "w-0"),
+  );
+  const scrollAreaClassName = cn(
+    "h-full transition-opacity duration-300 overflow-y-auto fantasy-scrollbar",
+    isPanel ? "w-full bg-background" : "w-64",
+    isOpen ? "opacity-100" : "opacity-0",
+  );
+
+  /* ─────────────────────────────────────────────────────────────────────
+     渲染
+     ───────────────────────────────────────────────────────────────────── */
+
   return (
     <div className={containerClassName}>
       <div className={scrollAreaClassName}>
+        {/* 标题栏（仅侧边栏模式） */}
         {!isPanel && (
           <div className="flex justify-between items-center p-3 border-b border-border bg-input">
             <h1 className={"text-base magical-text "}>{t("modelSettings.title")}</h1>
@@ -126,30 +124,32 @@ export function DesktopSidebarView(props: SidebarViewProps) {
               variant="ghost"
               size="icon"
               onClick={() => {trackButtonClick("ModelSidebar", "关闭模型设置"); toggleSidebar();}}
-              className="h-6 w-6 border border-stroke bg-surface text-foreground hover:border-stroke-strong hover:bg-muted-surface hover:text-primary-400"
+              className="w-6 h-6 text-cream bg-surface border border-stroke hover:bg-muted-surface hover:border-stroke-strong hover:text-primary-400 hover:shadow-[0_0_8px_rgba(251,146,60,0.4)]"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </Button>
           </div>
         )}
+
         <div className="p-3 sm:p-3 p-2">
+          {/* 配置列表头部 */}
           <div className="mb-3 sm:mb-3 mb-2">
             <div className="flex justify-between items-center mb-2 sm:mb-2 mb-1">
-              <label className={`text-foreground text-xs sm:text-xs text-2xs font-medium ${fontClass}`}>
+              <label className={`text-cream text-xs sm:text-xs text-2xs font-medium ${fontClass}`}>
                 {t("modelSettings.configurations") || "API Configurations"}
               </label>
-              <Button 
+              <Button
                 variant="outline"
                 size="sm"
                 onClick={(e) => {trackButtonClick("ModelSidebar", "创建新配置"); handleCreateConfig();}}
-                className="flex h-auto items-center gap-1 border border-border px-2 py-1 text-xs text-primary hover:border-primary hover:text-foreground sm:px-2 sm:py-1 sm:text-xs text-2xs px-1.5 py-0.5"
+                className="text-xs sm:text-xs text-2xs text-primary hover:text-cream px-2 py-1 sm:px-2 sm:py-1 px-1.5 py-0.5 h-auto border border-border hover:border-primary hover:shadow-[0_0_6px_rgba(209,163,92,0.2)] flex items-center gap-1"
               >
                 <Plus className="sm:w-2.5 sm:h-2.5 w-2 h-2" />
                 <span className="sm:block hidden">{t("modelSettings.newConfig") || "New Config"}</span>
                 <span className="sm:hidden block">+</span>
               </Button>
             </div>
-            
+
             {!showNewConfigForm && configs.length > 0 && (
               <div className="mb-1.5 sm:mb-1.5 mb-1">
                 <p className={`text-xs sm:text-xs text-2xs italic transition-colors duration-200 ${isConfigHovered ? "text-primary" : "text-text-muted"}`}>
@@ -157,15 +157,16 @@ export function DesktopSidebarView(props: SidebarViewProps) {
                 </p>
               </div>
             )}
-            
+
+            {/* 配置项列表 */}
             {configs.length > 0 && (
               <div className="mb-3 sm:mb-3 mb-2 flex flex-col gap-1.5 sm:gap-1.5 gap-1 max-h-50 overflow-y-auto fantasy-scrollbar pr-1">
                 {configs.map((config, idx) => (
-                  <div 
-                    key={config.id} 
+                  <div
+                    key={config.id}
                     className={`flex items-center justify-between p-1.5 sm:p-1.5 p-1 rounded-md cursor-pointer text-sm sm:text-sm text-xs transition-all duration-200 group ${
-                      activeConfigId === config.id 
-                        ? "border border-primary bg-muted-surface" 
+                      activeConfigId === config.id
+                        ? "bg-muted-surface border border-primary shadow-[0_0_8px_rgba(209,163,92,0.2)]"
                         : "bg-card hover:bg-stroke border border-transparent hover:border-border"
                     }`}
                     onClick={() => handleSwitchConfig(config.id)}
@@ -180,14 +181,14 @@ export function DesktopSidebarView(props: SidebarViewProps) {
                           onChange={(e) => setEditingName(e.target.value)}
                           onBlur={handleSaveName}
                           onKeyDown={handleKeyDown}
-                          className="w-full rounded border border-border bg-surface py-0.5 px-1 text-xs text-foreground focus:border-primary focus:outline-none sm:px-1 sm:py-0.5 sm:text-xs text-2xs px-0.5 py-0"
+                          className="bg-surface border border-border rounded py-0.5 px-1 sm:py-0.5 sm:px-1 py-0 px-0.5 text-xs sm:text-xs text-2xs text-cream w-full focus:border-primary focus:outline-none"
                           onClick={e => e.stopPropagation()}
                           autoFocus
                         />
                       ) : (
                         <>
-                          <span 
-                            className="cursor-text truncate text-xs text-foreground transition-colors hover:text-foreground sm:text-xs text-2xs" 
+                          <span
+                            className="text-xs sm:text-xs text-2xs truncate cursor-text hover:text-cream transition-colors"
                             onDoubleClick={(e) => handleStartEditName(config, e)}
                           >
                             {config.name}
@@ -203,7 +204,7 @@ export function DesktopSidebarView(props: SidebarViewProps) {
                         </>
                       )}
                     </div>
-                    <Button 
+                    <Button
                       variant="ghost"
                       size="icon"
                       onClick={(e) => { trackButtonClick("ModelSidebar", "删除配置"); e.stopPropagation(); handleDeleteConfig(config.id); }}
@@ -215,19 +216,19 @@ export function DesktopSidebarView(props: SidebarViewProps) {
                 ))}
               </div>
             )}
-
           </div>
 
+          {/* 活跃配置概览 */}
           {!showNewConfigForm && activeConfigId && (
-            <div className="mb-3 rounded-md border border-border bg-surface/50 p-2.5 backdrop-blur-sm sm:mb-3 sm:p-2.5">
+            <div className="border border-border rounded-md p-2.5 sm:p-2.5 p-2 mb-3 sm:mb-3 mb-2 bg-surface bg-opacity-50 backdrop-blur-sm">
               <div className="mb-1.5 sm:mb-1.5 mb-1">
                 <span className="text-xs sm:text-xs text-2xs text-text-muted">{t("modelSettings.llmType") || "API Type"}:</span>
-                <span className="ml-2 text-xs sm:text-xs text-2xs text-foreground">{describeLlmType(llmType)}</span>
+                <span className="ml-2 text-xs sm:text-xs text-2xs text-cream">{describeLlmType(llmType)}</span>
               </div>
               {llmType !== "gemini" && (
                 <div className="mb-1.5 sm:mb-1.5 mb-1">
                   <span className="text-xs sm:text-xs text-2xs text-text-muted">{t("modelSettings.baseUrl") || "Base URL"}:</span>
-                  <span className="ml-2 break-all text-xs sm:text-xs text-2xs text-foreground">
+                  <span className="ml-2 text-xs sm:text-xs text-2xs text-cream break-all">
                     {baseUrl.trim() || getBaseUrlPlaceholder(llmType)}
                   </span>
                 </div>
@@ -235,7 +236,7 @@ export function DesktopSidebarView(props: SidebarViewProps) {
               {llmType !== "ollama" && (
                 <div className="mb-1.5 sm:mb-1.5 mb-1">
                   <span className="text-xs sm:text-xs text-2xs text-text-muted">{t("modelSettings.apiKey") || "API Key"}:</span>
-                  <span className="ml-2 text-xs sm:text-xs text-2xs text-foreground">{"•".repeat(Math.min(10, apiKey.length))}</span>
+                  <span className="ml-2 text-xs sm:text-xs text-2xs text-cream">{"•".repeat(Math.min(10, apiKey.length))}</span>
                 </div>
               )}
               <div className="mb-1.5 sm:mb-1.5 mb-1">
@@ -244,7 +245,7 @@ export function DesktopSidebarView(props: SidebarViewProps) {
                   <select
                     value={model}
                     onChange={(e) => handleInlineModelChange(e.target.value)}
-                    className="max-w-[200px] truncate rounded border border-border bg-card py-0.5 px-1.5 text-xs text-foreground transition-colors focus:border-primary focus:outline-none sm:max-w-[200px] sm:px-1.5 sm:py-0.5 sm:text-xs max-w-[150px] px-1 py-0 text-2xs"
+                    className="bg-card border border-border rounded py-0.5 px-1.5 sm:py-0.5 sm:px-1.5 py-0 px-1 text-cream text-xs sm:text-xs text-2xs max-w-[200px] sm:max-w-[200px] max-w-[150px] truncate focus:border-primary focus:outline-none transition-colors"
                   >
                     <option value="" disabled className="truncate">{t("modelSettings.selectModel") || "Select a model..."}</option>
                     {availableModels.map((option) => (
@@ -256,7 +257,7 @@ export function DesktopSidebarView(props: SidebarViewProps) {
                     type="text"
                     value={model}
                     onChange={(e) => handleInlineModelChange(e.target.value)}
-                    className="max-w-[200px] rounded border border-border bg-card py-0.5 px-1.5 text-xs text-foreground transition-colors focus:border-primary focus:outline-none sm:max-w-[200px] sm:px-1.5 sm:py-0.5 sm:text-xs max-w-[150px] px-1 py-0 text-2xs"
+                    className="bg-card border border-border rounded py-0.5 px-1.5 sm:py-0.5 sm:px-1.5 py-0 px-1 text-cream text-xs sm:text-xs text-2xs max-w-[200px] sm:max-w-[200px] max-w-[150px] focus:border-primary focus:outline-none transition-colors"
                     placeholder={getModelPlaceholder(llmType)}
                   />
                 )}
@@ -264,313 +265,34 @@ export function DesktopSidebarView(props: SidebarViewProps) {
             </div>
           )}
 
+          {/* 新建配置表单 */}
           {showNewConfigForm && (
-            <div className="mb-4 sm:mb-4 mb-3">
-              <div className="mb-4 sm:mb-4 mb-3">
-                <label className={`block text-foreground text-xs sm:text-xs text-2xs font-medium mb-2 sm:mb-2 mb-1 ${fontClass}`}>
-                  {t("modelSettings.configName")}
-                </label>
-                <input
-                  type="text"
-                  className="bg-card border border-border rounded w-full py-1.5 px-2 sm:py-1.5 sm:px-2 py-1 px-1.5 text-xs sm:text-xs text-2xs text-text leading-tight focus:outline-none focus:border-primary transition-colors"
-                  placeholder={t("modelSettings.configNamePlaceholder")}
-                  value={newConfigName}
-                  onChange={(e) => setNewConfigName(e.target.value)}
-                />
-              </div>
-
-              <div className="mb-4 sm:mb-4 mb-3">
-                <label className={`block text-foreground text-xs sm:text-xs text-2xs font-medium mb-2 sm:mb-2 mb-1 ${fontClass}`}>
-                  {t("modelSettings.llmType") || "API Type"}
-                </label>
-                <select
-                  value={llmType}
-                  onChange={(e) => {
-                    setLlmType(e.target.value as LLMType);
-                  }}
-                  className="w-full bg-card border border-border rounded py-1.5 px-2 sm:py-1.5 sm:px-2 py-1 px-1.5 text-xs sm:text-xs text-2xs text-text leading-tight focus:outline-none focus:border-primary transition-colors"
-                >
-                  <option value="openai">OpenAI API</option>
-                  <option value="ollama">Ollama API</option>
-                  <option value="gemini">Gemini API</option>
-                </select>
-              </div>
-
-              {llmType !== "gemini" && (
-                <div className="mb-4 sm:mb-4 mb-3">
-                  <label htmlFor="baseUrl" className={`block text-foreground text-xs sm:text-xs text-2xs font-medium mb-2 sm:mb-2 mb-1 ${fontClass}`}>
-                    {t("modelSettings.baseUrl")}
-                  </label>
-                  <input
-                    type="text"
-                    id="baseUrl"
-                    className="bg-card border border-border rounded w-full py-1.5 px-2 sm:py-1.5 sm:px-2 py-1 px-1.5 text-xs sm:text-xs text-2xs text-text leading-tight focus:outline-none focus:border-primary transition-colors"
-                    placeholder={getBaseUrlPlaceholder(llmType)}
-                    value={baseUrl}
-                    onChange={(e) => setBaseUrl(e.target.value)}
-                  />
-                </div>
-              )}
-
-              {llmType !== "ollama" && (
-                <div className="mb-4 sm:mb-4 mb-3">
-                  <label htmlFor="apiKey" className={`block text-foreground text-xs sm:text-xs text-2xs font-medium mb-2 sm:mb-2 mb-1 ${fontClass}`}>
-                    {t("modelSettings.apiKey") || "API Key"}
-                  </label>
-                  <input
-                    type="text"
-                    id="apiKey"
-                    className="bg-card border border-border rounded w-full py-1.5 px-2 sm:py-1.5 sm:px-2 py-1 px-1.5 text-xs sm:text-xs text-2xs text-text leading-tight focus:outline-none focus:border-primary transition-colors"
-                    placeholder="sk-..."
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                  />
-                </div>
-              )}
-
-              <div className="mb-4 sm:mb-4 mb-3">
-                <div className="relative">
-                  {llmType !== "ollama" && (
-                    <Button 
-                      className={`bg-muted-surface hover:bg-ink text-foreground font-normal py-1.5 px-2 sm:py-1.5 sm:px-2 py-1 px-1.5 h-auto text-xs sm:text-xs text-2xs border border-primary w-full magical-text ${fontClass}`} 
-                      onClick={() => handleGetModelList(llmType, baseUrl, apiKey)}
-                    >{t("modelSettings.getModelList") || "Get Model List"}</Button>
-                  )}
-                  
-                  {getModelListSuccess && (
-                    <div className="absolute top-0 left-0 flex h-full w-full items-center justify-center rounded border border-border/70 bg-background/85 transition-opacity">
-                      <div className="flex items-center">
-                        <CheckCircle2 className="mr-2 h-4 w-4 animate-pulse text-success sm:mr-2 sm:h-4 sm:w-4" />
-                        <span className={`text-foreground text-xs sm:text-xs text-2xs ${fontClass}`}>
-                          {t("modelSettings.getModelListSuccess") || "Get Model List Success"}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {getModelListError && (
-                    <div className="absolute top-0 left-0 flex h-full w-full items-center justify-center rounded border border-border/70 bg-background/85 transition-opacity">
-                      <div className="flex items-center">
-                        <XCircle className="mr-2 h-4 w-4 animate-pulse text-danger sm:mr-2 sm:h-4 sm:w-4" />
-                        <span className={`text-foreground text-xs sm:text-xs text-2xs ${fontClass}`}>
-                          {t("modelSettings.getModelListError") || "Get Model List Error"}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="mb-4 sm:mb-4 mb-3">
-                <label htmlFor="model" className={`block text-foreground text-xs sm:text-xs text-2xs font-medium mb-2 sm:mb-2 mb-1 ${fontClass}`}>
-                  {t("modelSettings.model")}
-                </label>
-                <input
-                  type="text"
-                  id="model"
-                  className="bg-card border border-border rounded w-full py-1.5 px-2 sm:py-1.5 sm:px-2 py-1 px-1.5 text-xs sm:text-xs text-2xs text-text leading-tight focus:outline-none focus:border-primary transition-colors"
-                  placeholder={getModelPlaceholder(llmType)}
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                />
-                {llmType !== "ollama" && availableModels.length > 0 && (
-                  <div className="mt-2 text-xs sm:text-xs text-2xs text-text-muted">
-                    <p className={`mb-1 sm:mb-1 mb-0.5 ${fontClass}`}>{t("modelSettings.modelList") || "Model List"}</p>
-                    <select
-                      value={model}
-                      onChange={(e) => {
-                        trackButtonClick("ModelSidebar", t("modelSettings.selectModel") || "Select a model...");
-                        setModel(e.target.value);
-                      }}
-                      className="w-full bg-card border border-border rounded py-2 px-3 sm:py-2 sm:px-3 py-1.5 px-2 text-text text-sm sm:text-sm text-xs leading-tight focus:outline-none focus:border-primary transition-colors"
-                    >
-                      <option value="" disabled className="text-text-muted">
-                        {t("modelSettings.selectModel") || "Select a model..."}
-                      </option>
-                      {availableModels.map((option) => (
-                        <option
-                          key={option}
-                          value={option}
-                          className="bg-card text-text"
-                        >
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              <div className="mb-4 sm:mb-4 mb-3 rounded-md border border-border bg-card/40 p-2.5 sm:p-2.5 p-2">
-                <div className="mb-2 flex items-center justify-between">
-                  <div>
-                    <div className={`text-foreground text-xs sm:text-xs text-2xs font-medium ${fontClass}`}>
-                      {t("llmSettings.advancedParams") || "Advanced Parameters"}
-                    </div>
-                    <p className={`mt-0.5 text-[10px] sm:text-[10px] text-[9px] text-text-muted ${fontClass}`}>
-                      {t("llmSettings.optional") || "Optional; leave empty to use defaults"}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 gap-2 sm:gap-2">
-                  {visibleAdvancedNumberFields.map((field) => (
-                    <label key={field.key} className="block rounded-md border border-border/60 bg-background/60 p-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className={`text-xs sm:text-xs text-2xs text-foreground ${fontClass}`}>{field.label}</span>
-                        <input
-                          type="number"
-                          inputMode={field.inputMode}
-                          step={field.step}
-                          value={advancedSettings[field.key] ?? ""}
-                          onChange={(e) => setAdvancedNumberSetting(field.key, e.target.value)}
-                          className="w-28 rounded border border-border bg-card px-2 py-1 text-right text-xs sm:text-xs text-2xs text-text focus:border-primary focus:outline-none"
-                          placeholder={t("llmSettings.optional") || "Optional"}
-                        />
-                      </div>
-                      <p className={`mt-1 text-[10px] sm:text-[10px] text-[9px] text-text-muted ${fontClass}`}>
-                        {field.description}
-                      </p>
-                    </label>
-                  ))}
-                </div>
-                <div className="mt-2 space-y-2">
-                  {visibleAdvancedToggleFields.map((field) => (
-                    <div key={field.key} className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/60 p-2">
-                      <div>
-                        <div className={`text-xs sm:text-xs text-2xs text-foreground ${fontClass}`}>{field.label}</div>
-                        <p className={`mt-1 text-[10px] sm:text-[10px] text-[9px] text-text-muted ${fontClass}`}>
-                          {field.description}
-                        </p>
-                      </div>
-                      <Switch
-                        checked={advancedSettings[field.key] ?? true}
-                        onCheckedChange={(checked) => setAdvancedBooleanSetting(field.key, checked)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-2 sm:gap-2 gap-1">
-                <Button
-                  onClick={(e) => {trackButtonClick("ModelSidebar", "创建配置"); e.stopPropagation(); handleSave();}}
-                  className={`flex-1 bg-muted-surface hover:bg-ink text-foreground font-medium py-1.5 px-2 sm:py-1.5 sm:px-2 py-1 px-1.5 h-auto text-xs sm:text-xs text-2xs border border-primary magical-text ${fontClass}`}
-                >
-                  <span className="sm:block hidden">{t("modelSettings.createConfig") || "Create Configuration"}</span>
-                  <span className="sm:hidden block">Create</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {trackButtonClick("cancel_create_config_btn", "取消创建配置"); handleCancelCreate();}}
-                  className={`px-2 py-1.5 sm:px-2 sm:py-1.5 px-1.5 py-1 h-auto bg-card text-xs sm:text-xs text-2xs text-text border border-border hover:bg-stroke ${fontClass}`}
-                >
-                  {t("common.cancel") || "Cancel"}
-                </Button>
-              </div>
-            </div>
+            <NewConfigFormSection
+              fontClass={fontClass}
+              t={t}
+              trackButtonClick={trackButtonClick}
+              state={state}
+              actions={actions}
+              helpers={helpers}
+              visibleAdvancedNumberFields={visibleAdvancedNumberFields}
+              visibleAdvancedToggleFields={visibleAdvancedToggleFields}
+            />
           )}
 
+          {/* 活跃配置高级设置 */}
           {!showNewConfigForm && activeConfigId && (
-            <div className="space-y-3 sm:space-y-3 space-y-2">
-              <div className="rounded-md border border-border bg-card/40 p-2.5 sm:p-2.5 p-2">
-                <div className={`text-foreground text-xs sm:text-xs text-2xs font-medium ${fontClass}`}>
-                  {t("llmSettings.advancedParams") || "Advanced Parameters"}
-                </div>
-                <p className={`mt-0.5 text-[10px] sm:text-[10px] text-[9px] text-text-muted ${fontClass}`}>
-                  {t("llmSettings.optional") || "Optional; leave empty to use defaults"}
-                </p>
-                <div className="mt-2 grid grid-cols-1 gap-2">
-                  {visibleAdvancedNumberFields.map((field) => (
-                    <label key={field.key} className="block rounded-md border border-border/60 bg-background/60 p-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className={`text-xs sm:text-xs text-2xs text-foreground ${fontClass}`}>{field.label}</span>
-                        <input
-                          type="number"
-                          inputMode={field.inputMode}
-                          step={field.step}
-                          value={advancedSettings[field.key] ?? ""}
-                          onChange={(e) => setAdvancedNumberSetting(field.key, e.target.value)}
-                          className="w-28 rounded border border-border bg-card px-2 py-1 text-right text-xs sm:text-xs text-2xs text-text focus:border-primary focus:outline-none"
-                          placeholder={t("llmSettings.optional") || "Optional"}
-                        />
-                      </div>
-                    </label>
-                  ))}
-                </div>
-                <div className="mt-2 space-y-2">
-                  {visibleAdvancedToggleFields.map((field) => (
-                    <div key={field.key} className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/60 p-2">
-                      <span className={`text-xs sm:text-xs text-2xs text-foreground ${fontClass}`}>{field.label}</span>
-                      <Switch
-                        checked={advancedSettings[field.key] ?? true}
-                        onCheckedChange={(checked) => setAdvancedBooleanSetting(field.key, checked)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="relative">
-                <Button
-                  onClick={(e) => {trackButtonClick("ModelSidebar", "保存配置"); e.stopPropagation(); handleSave();}}
-                  className={`bg-muted-surface hover:bg-ink text-foreground font-normal py-1.5 px-2 sm:py-1.5 sm:px-2 py-1 px-1.5 h-auto text-xs sm:text-xs text-2xs border border-primary w-full ${fontClass}`}
-                >
-                  {t("modelSettings.saveSettings") || "Save Settings"}
-                </Button>
-
-                {saveSuccess && (
-                  <div className="absolute top-0 left-0 flex h-full w-full items-center justify-center rounded border border-border/70 bg-background/85 transition-opacity backdrop-blur-sm">
-                    <div className="flex items-center">
-                      <CheckCircle2 className="mr-1.5 h-4 w-4 text-success sm:mr-1.5 sm:h-4 sm:w-4" />
-                      <span className={`text-foreground text-xs sm:text-xs text-2xs ${fontClass}`}>
-                        {t("modelSettings.settingsSaved") || "Settings Saved"}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="relative">
-                <Button
-                  onClick={(e) => {trackButtonClick("ModelSidebar", "测试模型"); e.stopPropagation(); handleTestModel();}}
-                  disabled={isTesting || (!baseUrl && llmType !== "gemini") || !model}
-                  className={`bg-muted-surface hover:bg-ink text-foreground font-normal py-1.5 px-2 sm:py-1.5 sm:px-2 py-1 px-1.5 h-auto text-xs sm:text-xs text-2xs border border-primary w-full ${fontClass}`}
-                >
-                  {isTesting ? (
-                    <span className="flex items-center justify-center">
-                      <Loader2 className="animate-spin -ml-1 mr-2 h-3 w-3 text-foreground sm:h-3 sm:w-3 h-2.5 w-2.5" />
-                      <span className="sm:block hidden">{t("modelSettings.testing") || "Testing..."}</span>
-                      <span className="sm:hidden block">Test...</span>
-                    </span>
-                  ) : (
-                    <><span className="sm:block hidden">{t("modelSettings.testModel") || "Test Model"}</span><span className="sm:hidden block">Test</span></>
-                  )}
-                </Button>
-
-                {testModelSuccess && (
-                  <div className="absolute top-0 left-0 flex h-full w-full items-center justify-center rounded border border-border/70 bg-background/85 transition-opacity backdrop-blur-sm">
-                    <div className="flex items-center">
-                      <CheckCircle2 className="mr-1.5 h-4 w-4 text-success sm:mr-1.5 sm:h-4 sm:w-4" />
-                      <span className={`text-foreground text-xs sm:text-xs text-2xs ${fontClass}`}>
-                        {t("modelSettings.testSuccess") || "Model test successful"}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {testModelError && (
-                  <div className="absolute top-0 left-0 flex h-full w-full items-center justify-center rounded border border-border/70 bg-background/85 transition-opacity backdrop-blur-sm">
-                    <div className="flex items-center">
-                      <XCircle className="mr-1.5 h-4 w-4 text-danger sm:mr-1.5 sm:h-4 sm:w-4" />
-                      <span className={`text-foreground text-xs sm:text-xs text-2xs ${fontClass}`}>
-                        {t("modelSettings.testError") || "Model test failed"}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <ActiveConfigSection
+              fontClass={fontClass}
+              t={t}
+              trackButtonClick={trackButtonClick}
+              state={state}
+              actions={actions}
+              visibleAdvancedNumberFields={visibleAdvancedNumberFields}
+              visibleAdvancedToggleFields={visibleAdvancedToggleFields}
+            />
           )}
 
+          {/* 空配置提示 */}
           {configs.length === 0 && !showNewConfigForm && (
             <div className="flex flex-col items-center justify-center py-3 sm:py-3 py-2">
               <p className="text-xs sm:text-xs text-2xs text-text-muted mb-2 sm:mb-2 mb-1">
@@ -578,7 +300,7 @@ export function DesktopSidebarView(props: SidebarViewProps) {
               </p>
               <Button
                 onClick={(e) => { trackButtonClick("ModelSidebar", "创建第一个配置"); e.stopPropagation(); handleCreateConfig(); }}
-                className={`bg-muted-surface hover:bg-ink text-foreground font-normal py-1.5 px-2 sm:py-1.5 sm:px-2 py-1 px-1.5 h-auto text-xs sm:text-xs text-2xs border border-primary ${fontClass} flex items-center justify-center gap-1 w-full max-w-[200px] sm:max-w-[200px] max-w-[150px]`}
+                className={`bg-muted-surface hover:bg-ink text-cream font-normal py-1.5 px-2 sm:py-1.5 sm:px-2 py-1 px-1.5 h-auto text-xs sm:text-xs text-2xs border border-primary hover:shadow-[0_0_8px_rgba(209,163,92,0.2)] ${fontClass} flex items-center justify-center gap-1 w-full max-w-[200px] sm:max-w-[200px] max-w-[150px]`}
               >
                 <Plus className="sm:w-2.5 sm:h-2.5 w-2 h-2" />
                 <span className="sm:block hidden">{t("modelSettings.createFirstConfig") || "Create Your First Configuration"}</span>
