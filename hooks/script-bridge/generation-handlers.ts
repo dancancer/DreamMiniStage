@@ -14,6 +14,7 @@ import { resolveModelAdvancedSettings } from "@/lib/model-runtime";
 import { useModelStore } from "@/lib/store/model-store";
 import { handleCharacterChatRequest } from "@/function/dialogue/chat";
 import type { ApiCallContext, ApiHandlerMap } from "./types";
+import { logger } from "@/lib/logger";
 
 // ============================================================================
 //                              生成控制器管理
@@ -99,7 +100,7 @@ async function generate(args: unknown[], ctx: ApiCallContext) {
     ]);
 
     if (!response.ok) {
-      console.error("error:", response);
+      logger.error("error:", response);
       throw new Error("Failed to generate response");
     }
 

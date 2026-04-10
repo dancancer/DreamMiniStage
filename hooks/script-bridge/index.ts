@@ -96,9 +96,7 @@ export async function handleApiCall(
     })
     : undefined;
   const handler: ApiHandler | undefined = API_HANDLERS[method];
-  console.log("[handleApiCall] method:", method, "handler存在:", !!handler, "已注册的方法:", Object.keys(API_HANDLERS));
   if (!handler) {
-    console.warn("[handleApiCall] 未找到 handler:", method);
     return undefined;
   }
 
@@ -126,7 +124,6 @@ export async function handleApiCall(
       getRegisteredFunctionToolNames(context.iframeId).length,
     );
     context.hostDebugState?.setEventListenerCount(getTotalListenerCount());
-    console.log("[handleApiCall] 执行完成:", method, "result:", result);
     return result;
   } catch (error) {
     if (matchedCapability) {

@@ -12,6 +12,7 @@
  */
 
 import { dispatchToIframe } from "./iframe-dispatcher-registry";
+import { logger } from "@/lib/logger";
 
 export interface FunctionToolDefinition {
   name: string;
@@ -55,7 +56,7 @@ export function registerFunctionTool(
   handler?: (args: Record<string, unknown>) => unknown | Promise<unknown>,
 ): boolean {
   if (!name || typeof name !== "string") {
-    console.warn("[registerFunctionTool] Invalid name:", name);
+    logger.warn("[registerFunctionTool] Invalid name:", name);
     return false;
   }
 
@@ -68,13 +69,13 @@ export function registerFunctionTool(
   functionToolRegistry.set(name, {
     definition,
     handler: handler ?? (async (toolArgs) => {
-      console.log(`[registerFunctionTool] Tool called: ${name}`, toolArgs);
+      logger.debug(`[registerFunctionTool] Tool called: ${name}`, toolArgs);
       return { success: true, args: toolArgs };
     }),
     sourceIframe: iframeId,
   });
 
-  console.log("[registerFunctionTool] Registered:", name, "iframeId:", iframeId);
+  logger.debug("[registerFunctionTool] Registered:", name, "iframeId:", iframeId);
   return true;
 }
 
@@ -138,7 +139,7 @@ export async function invokeFunctionTool(
 export function handleFunctionToolResult(callbackId: string, result: unknown, error?: string): void {
   const pending = pendingToolCalls.get(callbackId);
   if (!pending) {
-    console.warn("[handleFunctionToolResult] Unknown callbackId:", callbackId);
+    logger.warn("[handleFunctionToolResult] Unknown callbackId:", callbackId);
     return;
   }
 

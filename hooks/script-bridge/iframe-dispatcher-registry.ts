@@ -11,6 +11,8 @@
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
+import { logger } from "@/lib/logger";
+
 export type IframeDispatcher = (type: string, payload: unknown) => void;
 
 const iframeDispatchers = new Map<string, IframeDispatcher>();
@@ -26,7 +28,7 @@ export function unregisterIframeDispatcher(iframeId: string): void {
 export function dispatchToIframe(iframeId: string, type: string, payload: unknown): void {
   const dispatcher = iframeDispatchers.get(iframeId);
   if (!dispatcher) {
-    console.warn("[dispatchToIframe] No dispatcher for iframe:", iframeId);
+    logger.warn("[dispatchToIframe] No dispatcher for iframe:", iframeId);
     return;
   }
   dispatcher(type, payload);

@@ -24,15 +24,9 @@ export const slashHandlers: ApiHandlerMap = {
    * @returns ExecutionResult
    */
   triggerSlash: async (args, ctx): Promise<ExecutionResult> => {
-    console.log("[slashHandlers.triggerSlash] 收到调用, args:", args);
     const [command] = args as [string];
-
     const execCtx = adaptSlashExecutionContext(ctx);
-    console.log("[slashHandlers.triggerSlash] 执行上下文已构建, onSend:", !!ctx.messageCallbacks?.onSend, "onTrigger:", !!ctx.messageCallbacks?.onTrigger);
-
-    const result = await executeSlashCommandScript(command, execCtx);
-    console.log("[slashHandlers.triggerSlash] 执行完成, result:", result);
-    return result;
+    return executeSlashCommandScript(command, execCtx);
   },
 
   /**

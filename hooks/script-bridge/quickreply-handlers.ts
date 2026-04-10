@@ -15,6 +15,7 @@
 import type { ApiHandlerMap, ApiCallContext } from "./types";
 import { getRegisteredCommands, registerCommand } from "@/lib/slash-command/registry/index";
 import type { CommandHandler } from "@/lib/slash-command/types";
+import { logger } from "@/lib/logger";
 
 // ============================================================================
 //                              Quick Reply 类型
@@ -91,7 +92,7 @@ export const quickReplyHandlers: ApiHandlerMap = {
     }
 
     quickReplySets.set(setName, set);
-    console.log("[createQuickReplySet] Created:", setName, "entries:", set.entries.length);
+    logger.debug("[createQuickReplySet] Created:", setName, "entries:", set.entries.length);
     return set;
   },
 
@@ -102,7 +103,7 @@ export const quickReplyHandlers: ApiHandlerMap = {
     const [setName] = args as [string];
     const deleted = quickReplySets.delete(setName);
     if (deleted) {
-      console.log("[deleteQuickReplySet] Deleted:", setName);
+      logger.debug("[deleteQuickReplySet] Deleted:", setName);
     }
     return deleted;
   },

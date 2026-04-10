@@ -126,12 +126,8 @@ export function adaptSlashExecutionContext(ctx: ApiCallContext): ExecutionContex
   const _wi = ctx.worldInfoCallbacks ?? {};
   const _ui = ctx.uiCallbacks ?? {};
   const _nav = ctx.navigationCallbacks ?? {};
-  const onSend = _msg.onSend ?? (async (_text?: string, _options?: SendOptions) => {
-    console.warn("[adaptContext] onSend 未提供");
-  });
-  const onTrigger = _msg.onTrigger ?? (async (_member?: string) => {
-    console.warn("[adaptContext] onTrigger 未提供");
-  });
+  const onSend = _msg.onSend ?? (async () => { /* no-op */ });
+  const onTrigger = _msg.onTrigger ?? (async () => { /* no-op */ });
   const onCloseChat = _chat.onCloseChat ?? (typeof document !== "undefined" ? defaultCloseCurrentChat : undefined);
   const storageDefaults = createStorageDefaults(ctx);
   const onGetInstructMode = ctx.onGetInstructMode ?? (() => getPromptInstructState());

@@ -13,6 +13,7 @@
 
 import { dispatchToIframe } from "./iframe-dispatcher-registry";
 import { registerCommand } from "@/lib/slash-command/registry/index";
+import { logger } from "@/lib/logger";
 import type {
   CommandHandler,
   CommandInvocationMeta,
@@ -415,7 +416,7 @@ function uniqueValues(values: string[]): string[] {
 export function handleSlashCommandResult(callbackId: string, result: unknown, error?: string): void {
   const pending = pendingSlashCommandCalls.get(callbackId);
   if (!pending) {
-    console.warn("[handleSlashCommandResult] Unknown callbackId:", callbackId);
+    logger.warn("[handleSlashCommandResult] Unknown callbackId:", callbackId);
     return;
   }
 
@@ -453,7 +454,7 @@ export function registerSlashCommandDefinition(
   ctxIframeId?: string,
 ): boolean {
   if (!definition || !definition.name) {
-    console.warn("[registerSlashCommand] Invalid definition:", definition);
+    logger.warn("[registerSlashCommand] Invalid definition:", definition);
     return false;
   }
 
@@ -463,12 +464,12 @@ export function registerSlashCommandDefinition(
   const shouldBridgeToIframe = hasCallback === true;
 
   if (!hasLocalCallback && !shouldBridgeToIframe) {
-    console.warn(`[registerSlashCommand] Missing callback for /${name}`);
+    logger.warn(`[registerSlashCommand] Missing callback for /${name}`);
     return false;
   }
 
   if (shouldBridgeToIframe && sourceIframeId === "unknown") {
-    console.warn(`[registerSlashCommand] Missing iframeId for bridged command /${name}`);
+    logger.warn(`[registerSlashCommand] Missing iframeId for bridged command /${name}`);
     return false;
   }
 
@@ -517,6 +518,6 @@ export function registerSlashCommandDefinition(
     }
   }
 
-  console.log("[registerSlashCommand] Registered:", name, aliases ? `(aliases: ${aliases.join(", ")})` : "");
+  logger.debug("[registerSlashCommand] Registered:", name, aliases ? `(aliases: ${aliases.join(", ")})` : "");
   return true;
 }

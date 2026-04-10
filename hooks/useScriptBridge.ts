@@ -237,16 +237,15 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
       const { type, payload = {} } = data;
       const getVariablesSnapshot = () => useScriptVariables.getState().variables;
 
-      // 控制台日志
       if (type === "CONSOLE_LOG") {
-        console.log("[Script]", ...((payload.args as unknown[]) || []));
+        if (process.env.NODE_ENV === "development") {
+          console.log("[Script]", ...((payload.args as unknown[]) || []));
+        }
         return undefined;
       }
 
-      // API 调用 - 委托给 handler registry
       if (type === "API_CALL") {
         const { method = "", args = [] } = payload;
-        console.log("[useScriptBridge] 处理 API_CALL:", method, "args:", args);
         // ─── 构建 ApiCallContext：域对象直接透传，角色切换走包装函数 ───
         const switchNav = onSwitchCharacter
           ? { ...navigationCallbacks, onSwitchCharacter: handleCharacterSwitch }
@@ -274,7 +273,6 @@ export function useScriptBridge(options: UseScriptBridgeOptions): UseScriptBridg
           navigationCallbacks: switchNav,
         });
         syncScriptHostDebug();
-        console.log("[useScriptBridge] API_CALL 返回:", method, "result:", result);
         return result;
       }
 
