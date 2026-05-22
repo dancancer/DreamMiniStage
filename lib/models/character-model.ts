@@ -58,6 +58,10 @@ export interface CharacterData {
   creatorcomment: string;
   avatar: string;
   creator_notes?: string;
+  /** 角色卡自定义系统提示词（覆盖预设 main prompt） */
+  system_prompt?: string;
+  /** 角色卡历史后指令（覆盖预设 jailbreak prompt） */
+  post_history_instructions?: string;
   imagePath?: string;
   alternate_greetings:string[];
   extensions?: {

@@ -32,6 +32,8 @@ export interface APIConfig {
   apiKey?: string;
   availableModels?: string[];
   advanced?: ModelAdvancedSettings;
+  /** Instruction mode 模板 ID（用于本地模型 chat format 包裹） */
+  instructTemplateId?: string;
 }
 
 export const MODEL_STORAGE_KEYS: Record<LLMType, {

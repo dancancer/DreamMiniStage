@@ -38,6 +38,7 @@ export function buildDialogueLlmConfig(activeConfig: APIConfig | undefined): LLM
     baseUrl: activeConfig.baseUrl,
     apiKey: activeConfig.apiKey || "",
     advanced: resolveModelAdvancedSettings({ session: activeConfig.advanced }),
+    instructTemplateId: activeConfig.instructTemplateId,
   };
 }
 

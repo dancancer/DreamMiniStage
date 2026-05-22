@@ -32,4 +32,6 @@ export interface LLMConfig {
   placeholder?: string;
   mvuToolEnabled?: boolean;
   scriptTools?: OpenAITool[];
+  /** Instruction mode 模板 ID（启用后消息会用对应模板格式包裹） */
+  instructTemplateId?: string;
 }

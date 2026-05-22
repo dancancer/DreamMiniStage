@@ -104,6 +104,30 @@ export class PresetNodeTools extends NodeTool {
         ? undefined
         : sysprompt || presetSysprompt;
 
+      /* ═══════════════════════════════════════════════════════════════════════
+         2.1 角色卡覆盖（对齐 SillyTavern 行为）
+
+         ST 规则：角色卡的 system_prompt 覆盖预设的 "main" prompt 内容，
+         角色卡的 post_history_instructions 覆盖预设的 "jailbreak" prompt 内容，
+         除非对应 prompt 设置了 forbid_overrides。
+         ═══════════════════════════════════════════════════════════════════════ */
+
+      const cardSystemPrompt = character.characterData.system_prompt?.trim() || "";
+      const cardPostHistory = character.characterData.post_history_instructions?.trim() || "";
+
+      if (cardSystemPrompt || cardPostHistory) {
+        for (const prompt of openaiPreset.prompts) {
+          if (prompt.forbid_overrides) continue;
+
+          if (cardSystemPrompt && prompt.identifier === "main") {
+            prompt.content = cardSystemPrompt;
+          }
+          if (cardPostHistory && prompt.identifier === "jailbreak") {
+            prompt.content = cardPostHistory;
+          }
+        }
+      }
+
       const combinedPreset: STCombinedPreset = {
         openai: openaiPreset,
         context: effectiveContext,

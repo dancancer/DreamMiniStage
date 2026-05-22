@@ -32,6 +32,7 @@ export function buildLLMConfigFromNodeInput(input: NodeInput): LLMConfig {
   const dialogueKey = input.dialogueKey as string | undefined;
   const characterId = input.characterId as string | undefined;
   const stopStrings = input.stopStrings as string[] | undefined;
+  const instructTemplateId = input.instructTemplateId as string | undefined;
   const effectivePromptConfig = input.effectivePromptConfig as LLMConfig["effectivePromptConfig"];
 
   const promptNames = input.promptNames as LLMConfig["promptNames"];
@@ -72,6 +73,7 @@ export function buildLLMConfigFromNodeInput(input: NodeInput): LLMConfig {
     characterId,
     messages: finalMessages,
     stopStrings,
+    instructTemplateId,
     effectivePromptConfig,
     promptNames,
     postProcessingMode,

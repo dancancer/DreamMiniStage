@@ -1,6 +1,8 @@
 import { type TokenUsage } from "@/lib/adapters/token-usage";
 import { getTextContent, postProcessMessages } from "@/lib/core/prompt/post-processor";
 import { PostProcessingMode, type ExtendedChatMessage } from "@/lib/core/st-preset-types";
+import { getTemplateById } from "@/lib/core/instruct";
+import { applyTemplateToMessages } from "@/lib/core/instruct/apply";
 import type { LLMConfig } from "./llm-config";
 
 export type ChatMessage = {
@@ -190,7 +192,30 @@ export function normalizeMessages(config: LLMConfig): ChatMessage[] {
     }
   }
 
-  return toSimpleMessages(deepSeekCompatibleMessages);
+  const simpleMessages = toSimpleMessages(deepSeekCompatibleMessages);
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Instruction Mode 模板应用
+  //
+  // 仅对 openai/ollama 后端生效（Claude/Gemini 有专用格式转换器）
+  // 将消息内容用模板标记包裹，使不自动应用 chat template 的推理后端
+  // 能正确理解消息结构。同时注入模板的停止序列。
+  // ═══════════════════════════════════════════════════════════════════════
+  if (config.instructTemplateId && (config.llmType === "openai" || config.llmType === "ollama")) {
+    const template = getTemplateById(config.instructTemplateId);
+    if (template) {
+      const wrapped = applyTemplateToMessages(simpleMessages, template);
+      // 追加模板停止序列到 config（如果尚未包含）
+      const existingStops = new Set(config.stopStrings || []);
+      const newStops = template.stopSequences.filter((s) => !existingStops.has(s));
+      if (newStops.length > 0) {
+        config.stopStrings = [...(config.stopStrings || []), ...newStops];
+      }
+      return wrapped;
+    }
+  }
+
+  return simpleMessages;
 }
 
 export function emitPromptCapturedEvent(

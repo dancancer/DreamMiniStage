@@ -51,6 +51,8 @@ export interface LLMConfig {
   baseUrl: string;
   apiKey: string;
   advanced?: ModelAdvancedSettings;
+  /** Instruction mode 模板 ID */
+  instructTemplateId?: string;
 }
 
 export interface UseCharacterDialogueOptions {

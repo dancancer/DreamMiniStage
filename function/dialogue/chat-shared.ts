@@ -37,6 +37,8 @@ export interface DialogueWorkflowParamInput {
   promptRuntime: ResolvedPromptRuntimeConfig;
   number: number;
   fastModel: boolean;
+  /** Instruction mode 模板 ID */
+  instructTemplateId?: string;
 }
 
 export interface PostResponseInput {
@@ -107,6 +109,7 @@ export function buildDialogueWorkflowParams(
     contextPreset: promptRuntime.contextPreset,
     sysprompt: promptRuntime.sysprompt,
     stopStrings: promptRuntime.stopStrings,
+    instructTemplateId: input.instructTemplateId,
     promptNames: promptRuntime.promptNames,
     postProcessingMode: promptRuntime.postProcessingMode,
     effectivePromptConfig: promptRuntime.effectiveConfig,
