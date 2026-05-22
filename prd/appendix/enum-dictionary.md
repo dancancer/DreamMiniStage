@@ -1,153 +1,159 @@
-# 枚举字典
+# Enum Dictionary
 
-## LLM 类型 (LLMType)
-
-| 值 | 显示名 | 说明 |
-|----|--------|------|
-| `openai` | OpenAI | OpenAI 兼容 API（包括第三方代理） |
-| `ollama` | Ollama | 本地 Ollama 模型服务 |
-| `gemini` | Gemini | Google Gemini API |
-
-## 视图模式 (CharacterView)
-
-| 值 | 显示名 | 说明 |
-|----|--------|------|
-| `chat` | 聊天 | 对话消息视图 |
-| `worldbook` | 世界书 | 世界书编辑器视图 |
-| `preset` | 预设 | 预设编辑器视图 |
-| `regex` | 正则 | 正则脚本编辑器视图 |
-
-## 消息角色 (Message Role)
+## 1. LLMType
 
 | 值 | 说明 |
 |----|------|
-| `system` | 系统消息（不对用户显示） |
-| `user` | 用户发送的消息 |
-| `assistant` | AI 角色回复的消息 |
+| `openai` | OpenAI-compatible API，包括第三方兼容服务 |
+| `ollama` | 本地 Ollama |
+| `gemini` | Google Gemini |
 
-## 工具类型 (ToolType)
-
-| 值 | 显示名 | 说明 |
-|----|--------|------|
-| `SEARCH` | 搜索 | 通过 Tavily API 搜索真实世界信息 |
-| `CHARACTER` | 角色 | 生成或更新角色卡字段 |
-| `STATUS` | 状态 | 创建世界状态条目 |
-| `USER_SETTING` | 用户设定 | 创建玩家设定条目 |
-| `WORLD_VIEW` | 世界观 | 创建世界结构条目 |
-| `SUPPLEMENT` | 补充 | 创建补充性世界书条目 |
-| `REFLECT` | 反思 | 反思进展，更新任务 |
-| `COMPLETE` | 完成 | 最终完成标记，清除任务 |
-| `ASK_USER` | 询问用户 | 暂停生成，向用户提问 |
-
-## 事件类型 (EventType)
-
-| 值 | 触发时机 |
-|----|---------|
-| `GENERATION_STARTED` | LLM 生成开始 |
-| `GENERATION_ENDED` | LLM 生成完成或失败 |
-| `MESSAGE_RECEIVED` | 收到 AI 回复 |
-| `MESSAGE_SENT` | 用户发送消息 |
-| `MESSAGE_DELETED` | 消息被删除 |
-| `MESSAGE_EDITED` | 消息被编辑 |
-| `CHAT_CHANGED` | 切换到不同对话 |
-| `WORLDINFO_ENTRIES_LOADED` | 世界书条目加载完成 |
-| `STREAM_CHUNK` | 收到 SSE 流数据块 |
-| `VARIABLE_UPDATED` | MVU 变量被更新 |
-| `SCRIPT_EXECUTED` | 脚本执行完成 |
-| `ERROR_OCCURRED` | 发生错误 |
-
-## MVU 命令 (MvuCommand)
-
-| 命令 | 说明 |
-|------|------|
-| `set` | 设置变量值 |
-| `insert` | 向数组/对象插入数据 |
-| `assign` | 赋值（同 set） |
-| `remove` | 从数组/对象移除元素 |
-| `unset` | 删除变量 |
-| `delete` | 删除变量（同 unset） |
-| `add` | 数值加法操作 |
-
-## 脚本消息类型 (ScriptMessageType)
+## 2. ApiBackendType
 
 | 值 | 说明 |
 |----|------|
-| `CONSOLE_LOG` | 脚本控制台输出 |
-| `API_CALL` | 脚本发起 API 调用 |
-| `EVENT_EMIT` | 脚本发出事件 |
-| `SCRIPT_STATUS` | 脚本执行状态变更 |
+| `openai` | OpenAI-compatible client |
+| `azure` | Azure OpenAI compatible |
+| `anthropic` | Anthropic client |
+| `gemini` | Gemini URL 检测值，部分路径用专用 Gemini client |
+| `ollama` | Ollama client |
+| `openrouter` | OpenRouter compatible |
+| `custom` | 自定义后端 |
 
-## 脚本执行状态
-
-| 值 | 说明 |
-|----|------|
-| `running` | 脚本正在执行 |
-| `completed` | 脚本执行完成 |
-| `error` | 脚本执行出错 |
-
-## 插件类别 (PluginCategory)
+## 3. Session View
 
 | 值 | 说明 |
 |----|------|
-| `TOOL` | 工具类插件 |
-| `UI` | UI 扩展插件 |
-| `WORKFLOW` | 工作流插件 |
-| `INTEGRATION` | 集成类插件 |
+| `chat` | 聊天主舞台 |
+| `worldbook` | 世界书编辑 |
+| `preset` | 预设编辑 |
+| `regex` | 正则脚本编辑 |
 
-## 插件权限 (PluginPermission)
-
-| 值 | 说明 |
-|----|------|
-| `READ_MESSAGES` | 读取消息 |
-| `WRITE_MESSAGES` | 写入消息 |
-| `MODIFY_UI` | 修改 UI |
-
-## 右侧面板 ID (PanelId)
-
-| 值 | 显示名 | 说明 |
-|----|--------|------|
-| `characters` | 角色 | 角色管理面板 |
-| `worldbook` | 世界书 | 世界书编辑面板 |
-| `regex` | 正则 | 正则脚本面板 |
-| `presets` | 预设 | 预设管理面板 |
-| `sessionTools` | 会话工具 | 快捷回复/群聊/分支 |
-| `modelSettings` | 模型设置 | LLM 配置面板 |
-| `plugins` | 插件 | 插件管理面板 |
-| `tagColors` | 标签颜色 | 符号着色面板 |
-| `advancedSettings` | 高级设置 | LLM 高级参数面板 |
-| `data` | 数据 | 导入/导出面板 |
-| `settingsHub` | 设置中心 | 设置入口面板 |
-
-## 主题模式 (ThemeMode)
+## 4. PanelId
 
 | 值 | 说明 |
 |----|------|
-| `light` | 明亮主题 |
-| `dark` | 暗色主题 |
+| `characters` | 角色卡入口 |
+| `worldbook` | 世界书 |
+| `regex` | 正则脚本 |
+| `presets` | 预设 |
+| `sessionTools` | 会话工具 |
+| `modelSettings` | 模型设置 |
+| `plugins` | 插件管理 |
+| `tagColors` | 标签颜色 |
+| `advancedSettings` | 高级设置 |
+| `data` | 数据管理 |
+| `settingsHub` | 设置菜单 |
 
-## 语言 (Language)
+## 5. PersonaDescriptionPosition
 
-| 值 | 显示名 |
+| 值 | 数字 | 说明 |
+|----|------|------|
+| `IN_PROMPT` | `0` | 通过 `{{persona}}` 注入 |
+| `TOP_AN` | `2` | Author's Note 上方 |
+| `BOTTOM_AN` | `3` | Author's Note 下方 |
+| `AT_DEPTH` | `4` | 指定深度注入 |
+| `NONE` | `9` | 不注入 |
+
+## 6. RegexPlacement
+
+| 值 | 数字 | 说明 |
+|----|------|------|
+| `USER_INPUT` | `1` | 用户输入 |
+| `AI_OUTPUT` | `2` | AI 输出 |
+| `SLASH_COMMAND` | `3` | Slash command |
+| `WORLD_INFO` | `5` | 世界书内容 |
+| `REASONING` | `6` | reasoning 块 |
+
+## 7. SubstituteRegexMode
+
+| 值 | 数字 | 说明 |
+|----|------|------|
+| `NONE` | `0` | 不替换 |
+| `RAW` | `1` | 原始宏替换 |
+| `ESCAPED` | `2` | 转义后宏替换 |
+
+## 8. ScriptSource
+
+| 值 | 说明 |
+|----|------|
+| `global` | 全局脚本 |
+| `character` | 角色脚本 |
+| `preset` | 预设脚本 |
+
+## 9. WorldBookSource
+
+| 值 | 说明 |
+|----|------|
+| `global` | 全局世界书 |
+| `character` | 角色世界书 |
+| `persona` | Persona 世界书 |
+| `chat` | 会话世界书 |
+
+## 10. SecondaryKeyLogic
+
+| 值 | 说明 |
+|----|------|
+| `AND` | 所有次关键词必须匹配 |
+| `OR` | 任一次关键词匹配 |
+| `NOT` | 次关键词都不匹配 |
+| `AND_ANY` | 主关键词 + 任一次关键词 |
+| `AND_ALL` | 主关键词 + 全部次关键词 |
+| `NOT_ANY` | 主关键词 + 没有任何次关键词 |
+| `NOT_ALL` | 主关键词 + 不满足全部次关键词 |
+
+## 11. PostProcessingMode
+
+| 值 | 说明 |
+|----|------|
+| `none` | 不做 instruct 后处理 |
+| `merge` | 合并/规整消息 |
+| `semi` | 半严格规整 |
+| `strict` | 严格规整 prompt |
+| `single` | 折叠为单条 user 消息 |
+
+## 12. Built-in Instruct Templates
+
+| ID | 显示名 |
 |----|--------|
-| `zh` | 中文 |
-| `en` | English |
+| `chatml` | ChatML |
+| `llama3` | Llama 3 / 3.1 / 3.2 |
+| `llama2` | Llama 2 |
+| `mistral` | Mistral / Mixtral |
+| `alpaca` | Alpaca |
+| `vicuna` | Vicuna 1.1 |
+| `gemma` | Gemma / Gemma 2 |
+| `phi` | Phi-3 / Phi-4 |
+| `command-r` | Command-R |
 
-## 人格注入角色 (Persona Injection Role)
+## 13. ToolType
 
 | 值 | 说明 |
 |----|------|
-| `system` | 作为系统消息注入 |
-| `user` | 作为用户消息注入 |
-| `assistant` | 作为助手消息注入 |
+| `SEARCH` | 搜索信息 |
+| `ASK_USER` | 向用户提问 |
+| `CHARACTER` | 生成/更新角色 |
+| `STATUS` | 生成世界状态条目 |
+| `USER_SETTING` | 生成玩家设定条目 |
+| `WORLD_VIEW` | 生成世界观条目 |
+| `SUPPLEMENT` | 生成补充条目 |
+| `REFLECT` | 反思与更新任务 |
+| `COMPLETE` | 完成 |
 
-## Markdown 符号着色类型
+## 14. SessionStatus
 
-| 符号模式 | 匹配内容 | 默认用途 |
-|---------|---------|---------|
-| `"..."` | 双引号包裹文本 | 对话/语音 |
-| `*...*` | 单星号包裹文本 | 动作/心理描写 |
-| `**...**` | 双星号包裹文本 | 强调重点 |
-| `[...]` | 方括号包裹文本 | 系统信息/旁白 |
-| `` `...` `` | 反引号包裹文本 | 代码/术语 |
-| `>...` | 大于号开头 | 引用/内心独白 |
-| `[...](...)`| 链接格式 | 超链接 |
+| 值 | 说明 |
+|----|------|
+| `idle` | 空闲 |
+| `thinking` | 思考中 |
+| `executing` | 工具执行中 |
+| `waiting_user` | 等待用户 |
+| `completed` | 完成 |
+| `failed` | 失败 |
+
+## 15. P4 Scenario Category
+
+| 值 | 说明 |
+|----|------|
+| `happy-path` | 主链路 |
+| `failure-injection` | 故障注入 |

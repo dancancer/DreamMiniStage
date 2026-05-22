@@ -16,7 +16,7 @@ import type { DialogueMessage } from "@/lib/models/character-dialogue-model";
 import { WorldBookManager } from "./world-book";
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Re-export：保持所有外部导入兼容
+   匹配基础设施集中导出
    ───────────────────────────────────────────────────────────────────────── */
 
 export type { WorldBookMatchOptions, MatchedEntry, DepthInjection } from "./world-book-advanced-types";

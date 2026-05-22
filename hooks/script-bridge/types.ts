@@ -42,7 +42,7 @@ import type {
   NavigationCallbacks,
 } from "@/types/slash-callback-domains";
 
-// ─── re-export 域接口，方便消费端直接从本文件引入 ───
+// ─── 域接口集中导出，调用侧只依赖脚本桥类型入口 ───
 export type {
   MessageCallbacks,
   ChatManagementCallbacks,

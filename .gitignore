@@ -30,6 +30,7 @@ pwa-dist/
 # misc
 .DS_Store
 *.pem
+*.backup
 action.txt
 
 # debug

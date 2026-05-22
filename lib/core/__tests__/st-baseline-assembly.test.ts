@@ -237,7 +237,7 @@ describe("SillyTavern 基线拼装对比", () => {
       userInput: USER_INPUT,
     });
 
-    /* 本项目当前逻辑：复用 loadWorldBookContent 的 Number(position) 语义 */
+    /* 本项目当前逻辑：复用级联世界书加载的 Number(position) 语义 */
     const projectWorldInfo = buildWorldInfoProject(worldBookEntries, USER_INPUT, chatHistory);
     const projectEnv = buildEnv(characterCard, projectWorldInfo);
     const projectManager = new STPromptManager({ openai: openaiPreset }, new STMacroEvaluator());

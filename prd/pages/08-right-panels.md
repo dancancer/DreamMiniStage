@@ -1,185 +1,67 @@
-# 右侧面板系统
+# 08. Right Panels
 
-> **路由：** 全局（任意页面可触发）
-> **模块：** 设置 / 配置
-> **组件：** `RightPanel` → 各面板组件
+> 入口：全局布局右侧抽屉
+> 主组件：`components/layout/RightPanel.tsx`
 
-## 概述
+## 1. 用户目标
 
-右侧面板是一个全局的抽屉式容器，通过左导航栏的入口触发。同一时间只能打开一个面板。面板承载了模型设置、插件管理、数据导入导出等系统级配置功能。
+右侧面板承载低频但关键的控制面，避免聊天主舞台被管理工具挤满。
 
-## 面板清单
+## 2. PanelId 清单
 
-### 1. 设置中心（SettingsHubPanel）
+| PanelId | 标题 | 当前组件 | 业务职责 |
+|---------|------|----------|----------|
+| `characters` | 角色卡 | `CharactersPanel` | 跳转角色卡列表/首页会话 |
+| `worldbook` | 世界书 | `WorldbookPanel` | 当前会话世界书、全局世界书库 |
+| `regex` | 正则脚本 | `RegexPanel` | 全局规则工作区 |
+| `presets` | 预设 | `PresetsPanel` | 全局预设工作区 |
+| `sessionTools` | 会话工具 | `SessionToolsPanel` | 低频会话工具 |
+| `modelSettings` | 模型设置 | `ModelSettingsPanel` | 多模型配置 |
+| `plugins` | 插件管理 | `PluginsPanel` | 插件列表、启用、刷新 |
+| `tagColors` | 标签颜色 | `TagColorsPanel` | 标签色彩配置 |
+| `advancedSettings` | 高级设置 | `AdvancedSettingsPanel` | 高级偏好 |
+| `data` | 数据管理 | `DataPanel` | 导入导出与 Google Drive |
+| `settingsHub` | 设置菜单 | `SettingsHubPanel` | 设置入口与向量检索开关 |
 
-系统设置的入口面板，以磁贴网格形式展示各设置子项。
+## 3. SessionToolsPanel
 
-| 磁贴 | 目标面板 | 说明 |
-|------|---------|------|
-| 模型设置 | ModelSettingsPanel | LLM API 配置 |
-| 插件 | PluginsPanel | 插件管理 |
-| 标签颜色 | TagColorsPanel | Markdown 符号着色 |
-| 数据管理 | DataPanel | 导入/导出 |
-
----
-
-### 2. 模型设置面板（ModelSettingsPanel）
-
-配置 LLM API 连接和模型参数。
-
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| API 配置列表 | 列表 | — | 已创建的 API 配置，支持多个 |
-| 配置名称 | 文本输入 | 是 | 配置的显示名称 |
-| LLM 类型 | 下拉选择 | 是 | openai / ollama / gemini |
-| Base URL | 文本输入 | 是 | API 服务地址 |
-| API Key | 密码输入 | 否 | API 密钥（Ollama 不需要） |
-| 模型 | 下拉选择 | 是 | 可用模型列表（支持自动获取） |
-| 输出语言 | 下拉选择 | 否 | 中文 / 英文 |
-
-**交互：**
-- 支持创建多个 API 配置（如"Claude API"、"本地 Ollama"）
-- 切换配置后立即生效
-- 无法删除最后一个配置
-- 点击"模型列表"自动从 API 拉取可用模型
-
----
-
-### 3. 高级设置面板（AdvancedSettingsPanel）
-
-LLM 高级参数调节。
-
-| 参数 | 类型 | 范围 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| Temperature | 滑块 | 0-2 | 1.0 | 输出随机性 |
-| Context Window | 数字 | — | 模型默认 | 上下文窗口大小 |
-| Max Tokens | 数字 | — | 模型默认 | 最大输出 token 数 |
-| Top P | 滑块 | 0-1 | 1.0 | 核心采样阈值 |
-| Frequency Penalty | 滑块 | -2~2 | 0 | 频率惩罚 |
-| Presence Penalty | 滑块 | -2~2 | 0 | 存在惩罚 |
-| Top K | 数字 | — | — | Top-K 采样（Ollama/Gemini） |
-| Repeat Penalty | 滑块 | — | — | 重复惩罚（Ollama） |
-| Streaming | 开关 | — | 开启 | 流式输出 |
-| Timeout | 数字 | — | 默认 | 请求超时（毫秒） |
-| Max Retries | 数字 | — | 默认 | 最大重试次数 |
-
----
-
-### 4. 角色面板（CharactersPanel）
-
-快捷链接到角色卡库和当前会话角色。
-
-**功能：**
-- 链接到 `/character-cards`
-- 显示当前会话的角色信息
-- 快速编辑当前角色
-
----
-
-### 5. 世界书面板（WorldbookPanel）
-
-在右侧面板中管理世界书，支持角色级/全局级切换。
-
-**功能：**
-- 上下文切换：当前角色 / 全局
-- 条目列表和编辑（同世界书编辑器视图）
-
----
-
-### 6. 正则面板（RegexPanel）
-
-在右侧面板中管理正则脚本。
-
-**功能：**
-- 全局正则脚本管理
-- 同正则编辑器视图的核心功能
-
----
-
-### 7. 预设面板（PresetsPanel）
-
-在右侧面板中管理预设。
-
-**功能：**
-- 预设切换和编辑
-- 同预设编辑器视图的核心功能
-
----
-
-### 8. 插件面板（PluginsPanel）
-
-插件发现和管理。
-
-| 区域 | 说明 |
+| 区块 | 能力 |
 |------|------|
-| 统计栏 | 总数、已启用、已禁用 |
-| 筛选器 | 全部 / 已启用 / 已禁用 |
-| 插件列表 | 每个插件卡片显示名称、描述、版本、启用开关 |
+| 叙事模式 | 剧情推进、视角设计、场景过渡 |
+| Checkpoint / Branch | 触发分支树弹窗 |
+| 会话辅助 | 用户名、Script Debug、JSONL 导入导出 |
+| 提示词查看 | 打开 Prompt Viewer |
+| Quick Reply | 管理/执行快捷回复 |
+| Group Member | 群聊成员管理 |
+| CheckpointPanel | checkpoint 列表与操作 |
 
-**交互：**
-- 启用/禁用插件（即时生效）
-- 查看插件详情
-- 刷新插件列表
+低频动作通过 `session-ui-events.ts` 分发到主聊天面板，避免 `CharacterChatPanel` 重新变成巨石。
 
----
+## 4. SettingsHubPanel
 
-### 9. 标签颜色面板（TagColorsPanel）
+- 模型设置。
+- 插件管理。
+- 标签颜色。
+- 数据管理。
+- 向量检索开关：读取/写入 `lib/vector-memory/manager`。
 
-自定义 Markdown 符号的渲染颜色。
+## 5. DataPanel
 
-| 符号 | 示例 | 说明 |
-|------|------|------|
-| `"..."` | 引号文本 | 对话文本着色 |
-| `*...*` | 斜体文本 | 动作/心理描写着色 |
-| `**...**` | 粗体文本 | 强调文本着色 |
-| `[...]` | 方括号文本 | 系统提示着色 |
-| `` `...` `` | 代码文本 | 代码着色 |
-| `>...` | 引用文本 | 引用着色 |
+- 本地 JSON 导出。
+- 本地 JSON 导入后 reload。
+- Google Drive OAuth token 读取。
+- 导出到 Google Drive。
+- 从 Google Drive 导入。
 
-**交互：**
-- 每种符号可选择预定义颜色
-- 支持自定义标签颜色
-- 实时预览效果
+## 6. PluginsPanel
 
----
+- 读取 `window.pluginRegistry`。
+- 支持 filter：all/enabled/disabled。
+- 刷新插件发现：`window.pluginDiscovery.discoverPlugins()`。
+- 启用/禁用插件后重新加载 registry。
 
-### 10. 数据面板（DataPanel）
+## 7. 业务规则
 
-数据导入/导出管理。
-
-| 操作 | 说明 |
-|------|------|
-| 导出数据 | 将全部本地数据导出为文件 |
-| 导入数据 | 从文件恢复数据 |
-| 导出到 Google | 备份到 Google Drive（需登录） |
-| 从 Google 导入 | 从 Google Drive 恢复（需登录） |
-
----
-
-### 11. 会话工具面板（SessionToolsPanel）
-
-对话中的辅助工具集合。
-
-| 子功能 | 说明 |
-|--------|------|
-| 快捷回复 | 管理和使用预设回复模板 |
-| 群聊成员 | 管理多角色群聊的参与者 |
-| 对话分支 | 查看和切换对话分支 |
-
-## 通用交互模式
-
-- **打开：** 通过左导航栏图标按钮触发
-- **关闭：** 点击面板外区域、点击关闭按钮、或点击同一导航按钮
-- **互斥：** 同一时间只能打开一个面板
-- **动画：** 从右侧滑入/滑出
-- **移动端：** 面板覆盖全屏
-
-## 页面关系
-
-- **入口：** 左导航栏的各入口按钮
-- **出口：** 关闭面板回到当前页面
-- **数据耦合：**
-  - 模型设置变更通过 `useModelStore` 全局生效
-  - 插件启用/禁用通过插件注册表全局生效
-  - 标签颜色通过 `SymbolColorStore` 影响消息渲染
-  - 数据导入/导出影响全部本地存储
+- 抽屉是非 modal dialog，关闭时只清空 activePanel。
+- 所有面板入口由 `PANEL_COMPONENTS` 显式映射，不允许魔法字符串散落。
+- 当前 session 缺失时，依赖 sessionId 的面板必须降级为全局工作区或隐藏会话专属操作。

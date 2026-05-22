@@ -1,207 +1,86 @@
-# 对话工作台 - 聊天界面
+# 04. Session Chat
 
-> **路由：** `/session?id={sessionId}`
-> **模块：** 对话
-> **组件：** `SessionPage` → `SessionPageContent` → `SessionPageLayout` → `CharacterChatPanel`
+> 路由：`/session?id={sessionId}`
+> 主组件：`SessionPageContent` -> `SessionPageLayout` -> `SessionChatView` -> `CharacterChatPanel`
 
-## 概述
+## 1. 用户目标
 
-系统核心页面 — 用户与 AI 角色进行实时对话的工作台。支持流式响应、消息编辑、对话分支、开场白选择、变量追踪等高级叙事功能。页面包含四个视图（聊天、世界书、预设、正则），本文档描述聊天视图。
+用户在一个具体会话中与角色持续叙事，并能控制生成、分支、上下文、脚本和调试工具。
 
-## 布局
+## 2. 页面状态
 
-```
-┌──────────────────────────────────────────────────────────┐
-│ 顶部栏: [角色名称] [API选择器] [设置] [提示词查看器]        │
-├──────────────────────────────────────────────────────────┤
-│                                                          │
-│  ┌─ 开场白选择 (多个开场白时) ──────────────────────┐      │
-│  │  ← 开场白 1/3 →                                │      │
-│  └──────────────────────────────────────────────────┘      │
-│                                                          │
-│  ┌─ 消息列表 ────────────────────────────────────┐      │
-│  │  [角色消息气泡]                                │      │
-│  │     角色头像 | 消息内容 (Markdown)             │      │
-│  │     [编辑] [复制] [删除] [重新生成] [← 切换 →] │      │
-│  │                                              │      │
-│  │  [用户消息气泡]                                │      │
-│  │     消息内容                                  │      │
-│  │     [编辑] [复制] [删除]                      │      │
-│  │                                              │      │
-│  │  [角色消息气泡] (流式生成中...)                 │      │
-│  │     实时显示生成内容 + 思考过程                 │      │
-│  └──────────────────────────────────────────────┘      │
-│                                                          │
-│  ┌─ 输入区域 ────────────────────────────────────┐      │
-│  │  [人格快捷切换] [输入框...] [发送]             │      │
-│  │  [快捷回复面板] [脚本按钮面板]                  │      │
-│  └──────────────────────────────────────────────┘      │
-│                                                          │
-│  [Agent 进度面板] (工具调用时显示)                        │
-│  [检查点面板] (展开时显示)                               │
-└──────────────────────────────────────────────────────────┘
-```
-
-## 字段
-
-### 消息气泡（MessageBubble）
-
-| 字段 | 类型 | 说明 |
+| 状态 | 条件 | 表现 |
 |------|------|------|
-| 角色标识 | 文本/头像 | 消息发送者（角色名或用户名） |
-| 消息内容 | Markdown 富文本 | 支持 Markdown 渲染、代码高亮、符号着色 |
-| 思考内容 | 可折叠区域 | LLM 的推理过程（`<thinking>` 标签提取） |
-| 切换指示器 | `n/m` 计数器 | 消息的替代版本（swipe）数量和当前位置 |
-| 时间戳 | 文本 | 消息发送时间 |
+| 空会话 | URL 缺少 `id` | `EmptySessionScreen`，提供返回首页与创建会话 |
+| 路由错误 | session 无法解析角色 | `ErrorScreen` |
+| 加载中 | 角色或 dialogue tree 加载中 | `LoadingScreen` |
+| 可聊天 | 角色和 dialogue 加载完成 | 渲染 chat/worldbook/preset/regex 主视图 |
 
-### 消息操作按钮
+## 3. 聊天字段
 
-| 按钮 | 可见条件 | 行为 |
-|------|---------|------|
-| 编辑 | 所有消息 | 进入内联编辑模式 |
-| 复制 | 所有消息 | 复制消息文本到剪贴板 |
-| 删除 | 所有消息 | 删除该消息（确认后） |
-| 重新生成 | 角色消息 | 重新调用 LLM 生成回复 |
-| ← 上一条 | 有多个 swipe 时 | 切换到前一个替代回复 |
-| → 下一条 | 有多个 swipe 时 | 切换到后一个替代回复（或生成新的） |
-
-### 顶部工具栏（SessionToolbar）
-
-| 元素 | 类型 | 说明 |
+| 字段 | 来源 | 说明 |
 |------|------|------|
-| 角色名称 | 文本 | 当前对话的角色名称 |
-| API 选择器 | 下拉菜单 | 切换 LLM 配置和模型 |
-| 设置按钮 | 图标按钮 | 打开右侧设置面板 |
-| 提示词查看器 | 图标按钮 | 打开提示词调试弹窗 |
-| 视图切换 | 图标按钮组 | 切换聊天/世界书/预设/正则视图 |
+| `messages` | `useDialogueStore` | 当前 dialogue tree 的可见消息 |
+| `openingMessages` | dialogue root children | 多开场白候选 |
+| `openingIndex` | dialogue state | 当前开场白索引 |
+| `openingLocked` | 是否已有 user 消息 | 锁定后不再切开场白 |
+| `suggestedInputs` | assistant parsed content | 建议输入按钮 |
+| `isSending` | dialogue state | 生成中锁 |
+| `activeModes` | `useSessionToolModesStore` | 剧情推进、视角、场景过渡 |
 
-### 输入区域（ChatInput）
+## 4. 核心交互
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| 消息输入框 | 文本区域 | 支持多行输入；支持斜杠命令自动补全 |
-| 发送按钮 | 按钮 | 发送消息或执行斜杠命令 |
-| 人格切换 | 快捷入口 | 切换当前对话使用的人格 |
-| 快捷回复 | 面板 | 预设消息模板一键发送 |
-| 脚本按钮 | 面板 | 角色卡自带的脚本操作按钮 |
+| 操作 | 行为 |
+|------|------|
+| 发送普通文本 | 先写用户节点，再组装 prompt，调用 LLM，回填 assistant |
+| 输入 slash command | 走 `createSessionSlashExecutor`，不发送给 LLM |
+| 继续生成 | 调用 `triggerGeneration` |
+| 再生消息 | 以当前上下文重新生成指定 assistant 节点 |
+| Swipe | 切换或生成同位置替代回复 |
+| 截断 | 删除指定节点之后的分支内容 |
+| 隐藏/恢复 | 更新消息 hidden 状态 |
+| JSONL 导入导出 | 通过右侧 SessionTools 触发 UI 事件 |
+| 分支树 | 打开 `DialogueTreeModal` |
+| Prompt Viewer | 查看 prompt 构成和图片素材 |
 
-## 交互
+## 5. 生成链路
 
-### 页面加载
-- 从 URL 参数读取 `sessionId`
-- 加载会话关联的角色数据（`useCharacterLoader`）
-- 加载对话历史消息（`useCharacterDialogue`）
-- 如果角色有开场白且对话为空，显示开场白
-- 初始化 MVU 变量（如角色卡定义了状态追踪）
-- 初始化脚本桥接层（如角色卡包含脚本）
+1. `useCharacterDialogue` 读取模型配置、语言、回复长度、fast model 和 advanced settings。
+2. `handleCharacterChatRequest` 校验会话、角色、消息。
+3. 读取 active prompt preset 和 prompt runtime config。
+4. 确保 dialogue tree 和 opening 节点存在。
+5. 先写入 pending user turn。
+6. `prepareDialogueExecution` 组装 prompt、世界书、正则、MVU、向量记忆。
+7. 根据 `streaming` 选择 SSE 或 buffered JSON。
+8. `processPostResponseAsync` 回填 assistant，触发向量记忆、MVU 和 summary refresh。
 
-### 错误处理
-- **缺少 sessionId：** 显示 `EmptySessionScreen`（无效会话）
-- **会话加载失败：** 显示 `ErrorScreen`（加载错误）
-- **角色未找到：** 显示 `ErrorScreen`（角色数据丢失）
-- **加载中：** 显示 `LoadingScreen`（带动画）
+## 6. Slash/Script Host 能力
 
-### 发送消息
-- **触发：** 输入消息后点击发送，或按 Enter
-- **行为：**
-  1. 用户消息立即显示在消息列表
-  2. 消息通过 NodeFlow 管道处理（宏替换 → 上下文注入 → 世界书匹配 → 记忆检索）
-  3. 构建完整 messages 数组发送给 LLM
-  4. 流式接收并实时显示 LLM 回复
-  5. 后处理（正则脚本 → 脚本执行 → 变量更新）
-  6. 最终消息写入存储
-- **加载态：** 发送按钮禁用，显示生成中指示器
-- **流式显示：** 逐字/逐块显示 LLM 回复内容
-- **思考过程：** 如果 LLM 支持 extended thinking，在气泡上方显示可折叠的思考内容
+`/session` 把默认宿主和 `window.__DREAMMINISTAGE_SESSION_HOST__` 注入宿主合并。默认宿主提供：
 
-### 发送斜杠命令
-- **触发：** 输入以 `/` 开头的消息
-- **行为：** 解析并执行命令（不发送给 LLM）
-- **示例：** `/set hp=100` → 设置 MVU 变量；`/swipe` → 重新生成最后一条回复
+- `/translate`
+- `/yt-script`
+- clipboard read/write
+- extension installed/enabled state read
+- gallery list/show
+- checkpoint/group/timed world info store callbacks
+- UI host commands，如 popup/bubble/theme/panels/background 等
 
-### 编辑消息
-- **触发：** 点击消息的编辑按钮
-- **行为：** 消息内容变为可编辑文本区域
-- **保存：** 更新消息内容，可选择是否重新生成后续回复
-- **取消：** 恢复原始内容
+不支持的宿主写能力必须 fail-fast，不伪装成功。
 
-### 重新生成（Regenerate）
-- **触发：** 点击角色消息的重新生成按钮
-- **行为：** 以当前上下文重新调用 LLM，生成新的替代回复
-- **结果：** 新回复作为 swipe 添加，可通过左右切换浏览
+## 7. 数据依赖
 
-### 消息切换（Swipe）
-- **触发：** 点击消息的左右箭头
-- **行为：** 在同一消息位置的多个替代版本间切换
-- **边界：** 右箭头超出已有版本时自动触发重新生成
+- `app/session/use-session-page-actions.ts`
+- `hooks/useCharacterDialogue.ts`
+- `hooks/useCharacterLoader.ts`
+- `function/dialogue/chat.ts`
+- `function/dialogue/chat-shared.ts`
+- `function/dialogue/chat-streaming.ts`
+- `lib/prompt-config/service.ts`
+- `lib/generation-runtime/*`
+- `lib/data/roleplay/character-dialogue-operation.ts`
 
-### 开场白导航
-- **触发：** 角色有多个开场白时，显示左右切换箭头
-- **行为：** 切换不同的开场白版本
-- **影响：** 切换开场白会重置对话历史
+## 8. 非目标
 
-### 对话树/分支
-- **触发：** 点击工具栏中的对话树按钮
-- **弹窗：** 打开 ReactFlow 可视化对话分支结构
-- **功能：** 查看对话历史的树形结构，编辑节点内容，切换到不同分支
-
-### 检查点操作
-- **创建：** 在当前对话位置创建存档点
-- **恢复：** 回到指定检查点的对话状态（回滚后续消息）
-- **列表：** 查看所有已创建的检查点
-
-### 提示词查看器
-- **触发：** 点击工具栏中的提示词查看器按钮
-- **弹窗：** 显示上一次 LLM 调用的完整提示词构成
-- **功能：** 搜索提示词内容、查看各部分组成、检查附带图片
-
-### Gallery 会话画廊
-- **触发：** 点击画廊按钮
-- **弹窗：** 显示会话中的图片和视觉内容
-
-### 工具调用（Agent 模式）
-- **触发：** LLM 返回 tool_call 时自动触发
-- **显示：** 在 AgentProgressPanel 中显示工具执行进度
-- **工具类型：** search（搜索）、character（角色生成）、status（状态更新）、ask-user（向用户提问）等 9 种
-- **用户介入：** ask-user 工具会暂停生成，等待用户输入
-
-## API 依赖
-
-| 操作 | 类型 | 来源 | 触发时机 | 说明 |
-|------|------|------|---------|------|
-| 加载对话历史 | IndexedDB | `useDialogueStore` | 页面加载 | 获取会话全部消息 |
-| 加载角色数据 | IndexedDB | `useCharacterLoader` | 页面加载 | 获取角色卡完整数据 |
-| LLM 对话生成 | HTTP (SSE) | `generation-runtime` | 发送消息 | 流式调用配置的 LLM API |
-| 保存消息 | IndexedDB | `useDialogueStore` | 生成完成 | 持久化新消息 |
-| 更新消息 | IndexedDB | `useDialogueStore` | 编辑消息 | 更新消息内容 |
-| 删除消息 | IndexedDB | `useDialogueStore` | 删除操作 | 移除指定消息 |
-| MVU 变量操作 | Zustand | `useMvu` | 命令/工具执行 | 读写角色状态变量 |
-| 检查点操作 | IndexedDB | 检查点回调 | 用户操作 | 创建/恢复/列表 |
-
-## 页面关系
-
-- **入口：**
-  - 首页点击会话卡片（携带 `sessionId`）
-  - 角色卡库创建会话模式（携带新 `sessionId`）
-- **出口：**
-  - 左导航切换到其他页面
-  - 视图切换按钮 → 世界书/预设/正则编辑器视图
-- **数据耦合：**
-  - 消息状态通过 `useDialogueStore` 全局共享
-  - 变量状态通过 `useMvuStore` 全局共享
-  - API 配置通过 `useModelStore` 全局共享
-  - 人格通过 `useCurrentPersona` 解析
-  - 事件通过 Events 系统广播（GENERATION_STARTED、MESSAGE_SENT 等）
-
-## 业务规则
-
-- 消息生成期间禁止发送新消息（isSending 锁）
-- 流式生成支持手动中断（AbortController）
-- 消息支持多个 swipe（替代版本），通过箭头切换
-- 正则脚本在 LLM 回复后自动执行后处理
-- 世界书条目按关键词自动匹配注入上下文
-- 宏变量（如 `{{char}}`、`{{user}}`）在发送前自动替换
-- 脚本在 iframe 沙箱中执行，通过 PostMessage 与宿主通信
-- 对话数据存储在 IndexedDB，全部在本地处理（除 LLM API 调用外）
-- 支持的 LLM 提供商：OpenAI 兼容 API、Ollama 本地模型、Google Gemini
-- 流式响应支持 `<thinking>` 标签提取（用于 Claude extended thinking 等）
+- 聊天页不负责猜测缺失 session；必须让用户回首页或创建会话。
+- 聊天页不直接承载所有低频工具；这些工具收口到右侧 `SessionToolsPanel`。

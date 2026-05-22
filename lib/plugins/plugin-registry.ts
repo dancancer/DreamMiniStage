@@ -307,24 +307,6 @@ export class PluginRegistry {
   }
 
   /* ─────────────────────────────────────────────────────────────────────────
-     工具执行（向后兼容）
-     ───────────────────────────────────────────────────────────────────────── */
-
-  async executeTool(toolName: string, params: Record<string, unknown>): Promise<unknown> {
-    try {
-      const tool = ToolRegistry.getTool(toolName);
-      if (!tool) {
-        return { success: false, error: `Tool ${toolName} not found` };
-      }
-
-      const mockContext = this.createMockExecutionContext();
-      return await tool.execute(mockContext, params);
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  }
-
-  /* ─────────────────────────────────────────────────────────────────────────
      私有方法
      ───────────────────────────────────────────────────────────────────────── */
 
@@ -348,15 +330,6 @@ export class PluginRegistry {
     pluginConfigStorage.set(config);
   }
 
-  private createMockExecutionContext() {
-    const emptyCharacter = { name: "", description: "", personality: "", scenario: "", first_mes: "", mes_example: "", creator_notes: "" };
-    return {
-      session_id: "plugin-test",
-      generation_output: { character_data: emptyCharacter, status_data: undefined, user_setting_data: undefined, world_view_data: undefined, supplement_data: [] },
-      research_state: { id: "test-research", session_id: "plugin-test", main_objective: "Plugin tool testing", task_queue: [], completed_tasks: [], knowledge_base: [] },
-      message_history: [],
-    };
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

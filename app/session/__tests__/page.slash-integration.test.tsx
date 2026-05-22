@@ -296,7 +296,7 @@ vi.mock("@/components/LoginModal", () => ({ default: () => null }));
 vi.mock("@/components/DialogueTreeModal", () => ({ default: () => null }));
 vi.mock("@/components/WorldBookEditor", () => ({ default: () => null }));
 vi.mock("@/components/PresetEditor", () => ({ default: () => null }));
-vi.mock("@/components/RegexScriptEditor", () => ({ default: () => null }));
+vi.mock("@/components/regex-editor/RegexScriptEditor", () => ({ default: () => null }));
 
 vi.mock("@/hooks/useApiConfig", () => ({
   useApiConfig: () => ({

@@ -1,167 +1,97 @@
-# Agent 工具清单
+# Tools Inventory
 
-## 概述
+## 1. Agent Tool Registry
 
-DreamMiniStage 内置 9 个 SimpleTool，供 LLM 在对话过程中以 function call 方式调用。工具采用纯执行模式 — 不发起 LLM 调用，直接执行具体操作并返回结果。
+路径：`lib/tools/tool-registry.ts`
 
----
+静态工具共 9 个：
 
-## 工具列表
+| ToolType | 实现 | 说明 |
+|----------|------|------|
+| `SEARCH` | `SearchTool` | 搜索与信息收集 |
+| `ASK_USER` | `AskUserTool` | 向用户询问 |
+| `CHARACTER` | `CharacterTool` | 角色生成/更新 |
+| `STATUS` | `StatusTool` | 世界状态条目 |
+| `USER_SETTING` | `UserSettingTool` | 玩家设定条目 |
+| `WORLD_VIEW` | `WorldViewTool` | 世界结构条目 |
+| `SUPPLEMENT` | `SupplementTool` | 补充世界书条目 |
+| `REFLECT` | `ReflectTool` | 反思并更新任务 |
+| `COMPLETE` | `CompleteTool` | 完成会话 |
 
-### 1. Search (搜索)
+Registry 还支持动态工具：
 
-| 属性 | 值 |
-|------|------|
-| 类型 | `SEARCH` |
-| 用途 | 通过 Tavily API 搜索真实世界信息 |
-| 触发 | LLM 判断需要外部知识时自动调用 |
-| 输入 | 搜索关键词 |
-| 输出 | 搜索结果摘要 |
+- `registerDynamicTool`
+- `unregisterDynamicTool`
+- `getDynamicTool`
+- `getDynamicTools`
 
-**场景：** 角色需要引用真实世界的历史事件、科学知识、新闻等信息。
+## 2. Function Tool Bridge
 
----
+路径：`hooks/script-bridge/function-tool-bridge.ts`
 
-### 2. Character (角色)
+能力：
 
-| 属性 | 值 |
-|------|------|
-| 类型 | `CHARACTER` |
-| 用途 | 生成或更新角色卡字段 |
-| 触发 | 用户或 AI 请求创建/修改角色属性时 |
-| 输入 | 角色字段名和内容 |
-| 输出 | 更新确认 |
+- iframe/script 注册 function tool。
+- host 侧调用工具。
+- iframe 通过 callbackId 回传结果。
+- 超时未回调时 fail-fast。
 
-**场景：** 在对话中动态丰富角色的背景设定、性格描写等。
+相关 script API：
 
----
+- `registerFunctionTool`
+- `unregisterFunctionTool`
+- `invokeFunctionTool`
+- `handleFunctionToolResult`
 
-### 3. Status (状态)
+## 3. Slash Tooling Commands
 
-| 属性 | 值 |
-|------|------|
-| 类型 | `STATUS` |
-| 用途 | 创建世界状态条目 |
-| 触发 | 对话中世界状态发生变化时 |
-| 输入 | 状态名称、描述 |
-| 输出 | 新创建的世界书条目 |
+路径：`lib/slash-command/registry/handlers/tooling.ts`
 
-**场景：** 记录故事中的重要状态变化（如"王国进入战争状态"）。
+命令：
 
----
+- `/tools-list`
+- `/tool-list`
+- `/tools-invoke`
+- `/tool-invoke`
+- `/tools-register`
+- `/tool-register`
+- `/tools-unregister`
+- `/tool-unregister`
+- `/tag-add`
+- `/tag-remove`
+- `/tag-exists`
+- `/tag-list`
 
-### 4. User Setting (用户设定)
+## 4. Script Host Capability Matrix
 
-| 属性 | 值 |
-|------|------|
-| 类型 | `USER_SETTING` |
-| 用途 | 创建玩家设定条目 |
-| 触发 | 用户的角色属性需要记录时 |
-| 输入 | 设定名称、描述 |
-| 输出 | 新创建的世界书条目 |
+路径：`hooks/script-bridge/host-capability-matrix.ts`
 
-**场景：** 记录玩家角色的特殊能力、物品、状态等。
+覆盖能力：
 
----
+- generation
+- clipboard
+- audio
+- gallery
+- navigation
+- checkpoint
+- group member
+- timed world info
+- UI style
+- popup
+- panels
+- background
+- function tool registry
 
-### 5. World View (世界观)
+## 5. P4 Test Runner Coverage
 
-| 属性 | 值 |
-|------|------|
-| 类型 | `WORLD_VIEW` |
-| 用途 | 创建世界结构条目 |
-| 触发 | 对话中提到新的世界设定时 |
-| 输入 | 世界观名称、描述 |
-| 输出 | 新创建的世界书条目 |
+`/test-script-runner` 当前覆盖：
 
-**场景：** 记录世界的地理、政治、文化等结构性设定。
-
----
-
-### 6. Supplement (补充)
-
-| 属性 | 值 |
-|------|------|
-| 类型 | `SUPPLEMENT` |
-| 用途 | 创建补充性世界书条目 |
-| 触发 | 需要补充额外上下文信息时 |
-| 输入 | 补充内容名称、描述 |
-| 输出 | 新创建的世界书条目 |
-
-**场景：** 补充不属于核心世界观但对叙事有用的背景信息。
-
----
-
-### 7. Reflect (反思)
-
-| 属性 | 值 |
-|------|------|
-| 类型 | `REFLECT` |
-| 用途 | 反思当前进展，更新任务状态 |
-| 触发 | Agent 需要审视当前叙事进展时 |
-| 输入 | 反思内容 |
-| 输出 | 进展评估 |
-
-**场景：** Agent 在多步骤任务中自我审视，调整叙事方向。
-
----
-
-### 8. Complete (完成)
-
-| 属性 | 值 |
-|------|------|
-| 类型 | `COMPLETE` |
-| 用途 | 标记任务完成，清除进行中的任务 |
-| 触发 | Agent 完成当前任务时 |
-| 输入 | 完成摘要 |
-| 输出 | 完成确认 |
-
-**场景：** 结束多步骤 Agent 工作流，输出最终结果。
-
----
-
-### 9. Ask User (询问用户)
-
-| 属性 | 值 |
-|------|------|
-| 类型 | `ASK_USER` |
-| 用途 | 暂停生成，向用户提问 |
-| 触发 | AI 需要用户决策或补充信息时 |
-| 输入 | 问题内容 |
-| 输出 | 用户回答 |
-
-**场景：** AI 在叙事关键决策点询问用户意向（如"你要走左边还是右边的路？"）。
-
----
-
-## 工具调度机制
-
-```
-LLM 回复包含 tool_call
-    ↓
-ToolRegistry.executeToolDecision(decision, context)
-    ↓
-匹配对应的 SimpleTool
-    ↓
-执行工具操作
-    ↓
-返回 ExecutionResult
-    ↓
-结果注入下一轮对话上下文
-```
-
-## 工具模式 (Tool Mode)
-
-工具系统支持不同的"工具模式"，通过 `useSessionToolModesStore` 管理：
-
-| 模式 | 说明 |
-|------|------|
-| `story-progress` | 故事推进模式（默认） |
-| `perspective` | 视角切换模式 |
-| `scene-setting` | 场景设定模式 |
-
-不同模式影响 LLM 可用的工具集和行为倾向。
-
-## 插件工具
-
-插件可以通过 `ToolRegistry` 动态注册自定义工具，扩展 Agent 的能力集。插件工具遵循相同的调度机制。
+- function tool 注册/调用闭环。
+- slash control flow。
+- MVU variable chain。
+- audio command/event chain。
+- function tool timeout fail-fast。
+- unknown macro fail-fast。
+- reload-page host missing fail-fast。
+- audio callback missing fail-fast。
+- command chain fail-fast consistency。

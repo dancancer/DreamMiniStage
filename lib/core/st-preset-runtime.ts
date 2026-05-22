@@ -275,7 +275,7 @@ export interface ChatMessage {
  * - 新增 tool_calls 支持发起工具调用
  * - 新增 prefix 支持 assistant prefill
  *
- * 设计原则：向后兼容，现有 ChatMessage 代码无需修改
+ * 设计原则：单一消息结构承载多模态、工具调用和 prefill 语义
  */
 export interface ExtendedChatMessage {
   /** 消息角色，新增 tool 角色用于工具调用响应 */

@@ -6,4 +6,7 @@
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
+import type { CommandHandler } from "../types";
+
 export type { CommandHandler, ExecutionContext } from "../types";
+export type CommandEntry = [name: string, handler: CommandHandler];

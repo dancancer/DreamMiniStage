@@ -11,7 +11,11 @@
 | `index.ts` | 模块入口 | 导出桥接功能 |
 | `types.ts` | 类型定义 | 桥接类型定义 |
 | `audio-handlers.ts` | 处理器 | 音频事件处理 |
-| `capability-matrix.ts` | 能力矩阵 | shim/handler/slash 单一能力声明 |
+| `capability-matrix.ts` | 能力矩阵 | shim/handler/slash 能力矩阵聚合入口 |
+| `capability-matrix-api.ts` | 能力矩阵 | shim/handler API 暴露面声明 |
+| `capability-matrix-slash.ts` | 能力矩阵 | slash 能力矩阵聚合入口 |
+| `capability-matrix-slash-core.ts` | 能力矩阵 | 核心 slash 命令能力声明 |
+| `capability-matrix-slash-extended.ts` | 能力矩阵 | 扩展 slash 命令能力声明 |
 | `host-capability-matrix.ts` | 能力矩阵 | JS-Slash-Runner 宿主支持/ fail-fast 单一能力声明 |
 | `character-handlers.ts` | 处理器 | 角色事件处理 |
 | `compat-handlers.ts` | 处理器 | JS-Slash-Runner 高频兼容 API（import_raw / extension / script buttons / version） |
@@ -44,7 +48,7 @@
 - `public/iframe-libs/slash-runner-shim.js` 不再导出 `window.getVariables`/`window.triggerSlash` 等顶层别名；脚本统一通过 `window.TavernHelper` / `window.SillyTavern` 访问 API。
 - `variable-handlers.ts` 的集合操作默认作用域为 `chat`，并支持上游常用参数形态 `{ type, message_id }`（含 `latest` 与负索引）。
 - `mvu-handlers.ts` 的 `mvu.getVariable/mvu.getVariables` 已支持 `{ type, message_id }` 与 `messageId`，并统一 `chatId > dialogueId > characterId` 的会话键优先级。
-- `capability-matrix.ts` 已作为能力单源，`api-surface-contract.test.ts` 会同步校验 shim 暴露面、handler 注册面与 slash 注册面；高价值宿主注入位还会继续校验 `CharacterChatPanel -> useScriptBridge -> ApiCallContext -> ExecutionContext` 的透传完整性。
+- `capability-matrix.ts` 已作为能力单源聚合入口，API 与 slash 清单分别维护在 `capability-matrix-api.ts` 和 `capability-matrix-slash*.ts`；`api-surface-contract.test.ts` 会同步校验 shim 暴露面、handler 注册面与 slash 注册面。
 - `host-capability-matrix.ts` 是 Phase 5 新增的宿主语义单源：专门描述哪些 `JS-Slash-Runner` 能力是默认支持、条件支持、显式 fail-fast 或未支持；它不替代 `capability-matrix.ts`，而是补齐“API 存在”和“产品宿主支持”之间的语义缺口。
 - `host-capability-matrix.ts` / `host-debug-resolver.ts` / `index.ts` 现已支持按调用路径解析宿主来源：`triggerSlash("/clipboard-*")`、`triggerSlash("/extension-*")` 与 `triggerSlash("/show-gallery|/list-gallery")` 都会基于 `ApiCallContext.hostCapabilitySources` 记录 `session-default / api-context / fail-fast`，不再把这类命令都粗暴归到同一种宿主结果。
 - `host-capability-matrix.ts` 现已不再只覆盖 Batch 1 切片；当前 `/session` 已真实落地的 `navigation / proxy / quick-reply / checkpoint / group-member / translate / yt-script / timed-world-info` 也都进入同一矩阵，作为 Script Debugger 与后续 Phase 5 收尾判断的单一事实源。

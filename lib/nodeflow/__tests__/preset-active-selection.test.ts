@@ -7,7 +7,7 @@ const retrieve = vi.fn();
 const isEnabled = vi.fn();
 const getEvaluatorForDialogue = vi.fn();
 const persistVariables = vi.fn();
-const loadWorldBookContent = vi.fn();
+const loadWorldBooksFromSources = vi.fn();
 
 vi.mock("@/lib/data/roleplay/character-record-operation", () => ({
   LocalCharacterRecordOperations: {
@@ -34,8 +34,8 @@ vi.mock("@/lib/core/macro-evaluator-manager", () => ({
   persistVariables: (...args: unknown[]) => persistVariables(...args),
 }));
 
-vi.mock("@/lib/core/world-book-loader", () => ({
-  loadWorldBookContent: (...args: unknown[]) => loadWorldBookContent(...args),
+vi.mock("@/lib/core/world-book-cascade-loader", () => ({
+  loadWorldBooksFromSources: (...args: unknown[]) => loadWorldBooksFromSources(...args),
 }));
 
 import { PresetNodeTools } from "@/lib/nodeflow/PresetNode/PresetNodeTools";
@@ -49,7 +49,7 @@ describe("PresetNodeTools runtime preset selection", () => {
     isEnabled.mockReset();
     getEvaluatorForDialogue.mockReset();
     persistVariables.mockReset();
-    loadWorldBookContent.mockReset();
+    loadWorldBooksFromSources.mockReset();
 
     getCharacterById.mockResolvedValue({
       data: {
@@ -66,7 +66,7 @@ describe("PresetNodeTools runtime preset selection", () => {
       evaluate: (text: string) => text,
     });
     persistVariables.mockResolvedValue(undefined);
-    loadWorldBookContent.mockResolvedValue({ wiBefore: "", wiAfter: "" });
+    loadWorldBooksFromSources.mockResolvedValue({ wiBefore: "", wiAfter: "" });
   });
 
   it("uses the runtime selected preset instead of silently falling back to another enabled preset", async () => {

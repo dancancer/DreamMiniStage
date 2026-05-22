@@ -33,7 +33,7 @@ vi.mock("@/components/PresetEditor", () => ({
   },
 }));
 
-vi.mock("@/components/RegexScriptEditor", () => ({
+vi.mock("@/components/regex-editor/RegexScriptEditor", () => ({
   default: () => {
     registry.rendered.push("regex");
     return <div data-testid="regex-view" />;

@@ -13,8 +13,7 @@
  */
 
 import { NodeTool } from "@/lib/nodeflow/NodeTool";
-import { Character } from "@/lib/core/character";
-import { loadWorldBookContent } from "@/lib/core/world-book-loader";
+import { loadWorldBooksFromSources } from "@/lib/core/world-book-cascade-loader";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import type { ChatMessage } from "@/lib/core/st-preset-types";
 
@@ -191,8 +190,7 @@ export class WorldBookNodeTools extends NodeTool {
         return { wiBefore: "", wiAfter: "" };
       }
 
-      const character = new Character(characterRecord);
-      return await loadWorldBookContent(character, dialogueKey, currentUserInput);
+      return await loadWorldBooksFromSources(characterId, dialogueKey, currentUserInput);
     } catch (error) {
       console.error("[WorldBookNodeTools] loadWorldBookPlaceholders error:", error);
       return { wiBefore: "", wiAfter: "" };

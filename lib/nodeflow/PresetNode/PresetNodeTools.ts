@@ -14,7 +14,7 @@ import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-re
 import { Character } from "@/lib/core/character";
 import { STPromptManager } from "@/lib/core/prompt";
 import { PresetOperations } from "@/lib/data/roleplay/preset-operation";
-import { loadWorldBookContent } from "@/lib/core/world-book-loader";
+import { loadWorldBooksFromSources } from "@/lib/core/world-book-cascade-loader";
 import {
   getEvaluatorForDialogue,
   persistVariables,
@@ -146,8 +146,8 @@ export class PresetNodeTools extends NodeTool {
          4. 加载世界书内容
          ═══════════════════════════════════════════════════════════════════════ */
 
-      const { wiBefore, wiAfter } = await loadWorldBookContent(
-        character,
+      const { wiBefore, wiAfter } = await loadWorldBooksFromSources(
+        characterId,
         effectiveDialogueKey,
         currentUserInput || "",
       );

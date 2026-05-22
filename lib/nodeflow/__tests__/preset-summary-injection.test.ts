@@ -7,7 +7,7 @@ const retrieve = vi.fn();
 const isEnabled = vi.fn();
 const getEvaluatorForDialogue = vi.fn();
 const persistVariables = vi.fn();
-const loadWorldBookContent = vi.fn();
+const loadWorldBooksFromSources = vi.fn();
 const getDialogueSummaryInjectionContent = vi.fn();
 
 vi.mock("@/lib/data/roleplay/character-record-operation", () => ({
@@ -35,8 +35,8 @@ vi.mock("@/lib/core/macro-evaluator-manager", () => ({
   persistVariables: (...args: unknown[]) => persistVariables(...args),
 }));
 
-vi.mock("@/lib/core/world-book-loader", () => ({
-  loadWorldBookContent: (...args: unknown[]) => loadWorldBookContent(...args),
+vi.mock("@/lib/core/world-book-cascade-loader", () => ({
+  loadWorldBooksFromSources: (...args: unknown[]) => loadWorldBooksFromSources(...args),
 }));
 
 vi.mock("@/function/dialogue/dialogue-summary", () => ({
@@ -54,7 +54,7 @@ describe("PresetNodeTools summary injection", () => {
     isEnabled.mockReset();
     getEvaluatorForDialogue.mockReset();
     persistVariables.mockReset();
-    loadWorldBookContent.mockReset();
+    loadWorldBooksFromSources.mockReset();
     getDialogueSummaryInjectionContent.mockReset();
 
     getCharacterById.mockResolvedValue({
@@ -72,7 +72,7 @@ describe("PresetNodeTools summary injection", () => {
       evaluate: (text: string) => text,
     });
     persistVariables.mockResolvedValue(undefined);
-    loadWorldBookContent.mockResolvedValue({ wiBefore: "", wiAfter: "" });
+    loadWorldBooksFromSources.mockResolvedValue({ wiBefore: "", wiAfter: "" });
     getDialogueSummaryInjectionContent.mockResolvedValue("[Story Summary]\n- 旧剧情摘要");
   });
 

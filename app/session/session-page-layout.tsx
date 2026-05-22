@@ -32,7 +32,7 @@ const LazyWorldBookEditor = dynamic(() => import("@/components/WorldBookEditor")
   loading: () => <SessionDeferredState label="正在载入世界书…" />,
 });
 
-const LazyRegexScriptEditor = dynamic(() => import("@/components/RegexScriptEditor"), {
+const LazyRegexScriptEditor = dynamic(() => import("@/components/regex-editor/RegexScriptEditor"), {
   ssr: false,
   loading: () => <SessionDeferredState label="正在载入正则脚本…" />,
 });

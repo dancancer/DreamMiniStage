@@ -1,48 +1,43 @@
-# 文档导航（2026-03）
+# DreamMiniStage Documentation
 
-本目录已完成一次面向 SillyTavern 对齐工作的文档清理，目标是：
+> 更新时间：2026-05-22
 
-- 保留当前仍有效、可执行的文档；
-- 将历史阶段性报告集中归档；
-- 建立单一入口，避免“多个版本结论互相冲突”。
+本目录按“当前代码事实”重新整理。历史计划和阶段报告仍保留，但产品、架构和 PRD 判断优先看下列文档。
 
-## 当前优先阅读
+## 主要文档
 
-1. 对齐现状与缺口（最新）
-   - `docs/analysis/sillytavern-integration-gap-2026-03.md`
-   - `docs/analysis/ai-session-handoff-2026-03-02.md`（会话交接与下一步执行清单）
-2. 项目入门与运行
-   - `docs/GETTING_STARTED.md`
-3. 架构与核心机制
-   - `docs/ARCHITECTURE.md`
-   - `docs/EVENT_SYSTEM.md`
-   - `lib/script-runner/README.md`（脚本执行器实现说明）
-   - `hooks/script-bridge/README.md`（脚本桥接能力说明）
-4. 关键能力参考
-   - `docs/API_PROMPT_MANAGER.md`
-   - `docs/API_MACRO_EVALUATOR.md`
-   - `docs/MACRO_REFERENCE.md`
-   - `docs/PRESET_FORMAT.md`
-   - `docs/MIGRATION_GUIDE.md`（仅保留 SillyTavern 导入流程，不再包含历史本地数据迁移）
+| 文档 | 用途 |
+|------|------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | 当前系统架构、路由、状态、存储、生成链路、slash/script bridge 边界 |
+| [BUSINESS_REQUIREMENTS.md](BUSINESS_REQUIREMENTS.md) | 业务目标、用户角色、核心能力、非目标、验收规则 |
+| [../prd/README.md](../prd/README.md) | 使用 `code-to-prd` 生成并人工校准的 PRD 总入口 |
+| [reports/2026-05-22-code-to-prd-issues.md](reports/2026-05-22-code-to-prd-issues.md) | 本轮代码阅读和文档生成发现的问题清单 |
 
-## 已归档（历史版本）
+## 能力专题
 
-以下文档已归档到 `docs/archive/2026-03-integration-refresh/`，原因是内容阶段性较强、且与最新结论重复或冲突：
+| 文档 | 用途 |
+|------|------|
+| [API_MACRO_EVALUATOR.md](API_MACRO_EVALUATOR.md) | 宏求值 API 与运行规则 |
+| [API_PROMPT_MANAGER.md](API_PROMPT_MANAGER.md) | Prompt 管理能力 |
+| [CHAT_JSONL_IMPORT_EXPORT.md](CHAT_JSONL_IMPORT_EXPORT.md) | 会话 JSONL 导入导出 |
+| [EVENT_SYSTEM.md](EVENT_SYSTEM.md) | 事件系统 |
+| [MACRO_REFERENCE.md](MACRO_REFERENCE.md) | 宏语法参考 |
+| [PRESET_FORMAT.md](PRESET_FORMAT.md) | SillyTavern 预设格式 |
+| [VECTOR_MEMORY.md](VECTOR_MEMORY.md) | 向量记忆能力 |
 
-- `SILLYTAVERN_INTEGRATION_REPORT.md`
-- `sillytavern-gap-analysis.md`
-- `sillytavern-integration-gap-latest.md`
-- `INTEGRATION_TASKS.md`
-- `MASTER_MIGRATION_PLAN.md`
-- `baseline-gap-report.md`
-- `slash-command-comparison.md`
-- `slash-command-behavior-diff.md`
-- `message-assembly-analysis.md`
-- `COMPATIBILITY_DEBT_REPORT.md`
-- `ANY_TYPES_FIX_REPORT.md`
-- `legacy-docs/SCRIPT_API_REFERENCE.md`
-- `legacy-docs/SCRIPT_RUNNER_ARCHITECTURE.md`
-- `legacy-docs/WORLDBOOK_INJECTION_COMPARISON.md`
-- `legacy-docs/PROBLEM.md`
+## 工程与部署
 
-归档文档保留原始内容，不作为当前实施依据。
+| 文档 | 用途 |
+|------|------|
+| [GETTING_STARTED.md](GETTING_STARTED.md) | 本地开发启动 |
+| [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) | 迁移说明 |
+| [BASELINE_TEST_PLAN.md](BASELINE_TEST_PLAN.md) | 基线测试计划 |
+| [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) | Vercel 部署 |
+
+## 历史资料
+
+- `docs/analysis/`：专项分析与历史技术判断。
+- `docs/plan/`、`docs/plans/`：阶段计划。
+- `docs/reports/`：审查报告、问题记录、阶段输出。
+
+历史文档可能包含已过期的文件名、路线或能力假设。更新业务/架构/PRD 时必须回到当前源码复核。

@@ -14,7 +14,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { Regex, MessageSquare } from "lucide-react";
-import RegexScriptEditor from "@/components/RegexScriptEditor";
+import RegexScriptEditor from "@/components/regex-editor/RegexScriptEditor";
 import { useSessionStore } from "@/lib/store/session-store";
 
 export function RegexPanel() {
