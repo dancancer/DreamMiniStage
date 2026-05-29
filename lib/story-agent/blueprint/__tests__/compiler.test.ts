@@ -88,7 +88,7 @@ describe("compileSessionBlueprint", () => {
     }).toMatchInlineSnapshot(`
       {
         "contentRules": {
-          "html-ui-unsupported": 39,
+          "html-ui-unsupported": 38,
           "markdown-only": 40,
         },
         "inputTransforms": 39,
@@ -101,12 +101,20 @@ describe("compileSessionBlueprint", () => {
         "profileName": "【Sgw】又看一集",
         "promptMessages": 125,
         "promptTransforms": 8,
-        "renderRules": {
-          "phase": "SAC-Phase 5",
-          "reason": "RenderIntent schema is defined in SAC-Phase 5.",
-          "status": "deferred",
-        },
-        "schemaVersion": 1,
+        "renderRules": [
+          {
+            "bodyTemplate": "$1",
+            "collapsedLabel": "点击查看 ▶︎",
+            "confidence": 0.82,
+            "expandedLabel": "点击隐藏 ▼",
+            "id": "1f8cfad6-c1e4-4691-8b76-4a70d940bd6e:collapsible-panel",
+            "kind": "collapsible-panel",
+            "schemaVersion": 1,
+            "sourceScriptId": "1f8cfad6-c1e4-4691-8b76-4a70d940bd6e",
+            "title": "[美化]完整变量更新",
+          },
+        ],
+        "schemaVersion": 2,
         "worldModules": [
           {
             "entries": 140,

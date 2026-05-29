@@ -83,15 +83,15 @@
 
 ## 7. SAC-Phase 5：正则、内容过滤与 UI Render Intent
 
-- [ ] 建立 regex 分类器。
-- [ ] 定义 `RenderIntent` schema。
-- [ ] 定义 UI 白名单组件集合。
-- [ ] 扩充 UI regex 语料，现有 `test-baseline-assets` 不足以证明 HTML-widget regex 覆盖率。
-- [ ] 定义 unsupported UI regex 的产品兜底：显式报告语义损失、展示原始规则摘要、允许用户选择禁用或降级为纯文本。
-- [ ] 不安全或无法判断的 regex 必须禁用或降级为受限 transform，并报告原因。
-- [ ] POC-5.1：对扩充后的真实 regex scripts 做分类，输出分类置信度、UI 类占比、可转 RenderIntent 占比和 unsupported 原因。
-- [ ] POC-5.2：选择 2-3 条 UI 类 regex，转换为 `RenderIntent` 并用 React 白名单组件渲染。
-- [ ] POC-5.3：验证恶意或复杂 regex 不会进入 UI 执行路径。
+- [x] 建立 regex 分类器。
+- [x] 定义 `RenderIntent` schema。
+- [x] 定义 UI 白名单组件集合。
+- [x] 扩充 UI regex 语料，现有 `test-baseline-assets` 不足以证明 HTML-widget regex 覆盖率。
+- [x] 定义 unsupported UI regex 的产品兜底：显式报告语义损失、展示原始规则摘要、允许用户选择禁用或降级为纯文本。
+- [x] 不安全或无法判断的 regex 必须禁用或降级为受限 transform，并报告原因。
+- [x] POC-5.1：对扩充后的真实 regex scripts 做分类，输出分类置信度、UI 类占比、可转 RenderIntent 占比和 unsupported 原因。
+- [x] POC-5.2：选择 2-3 条 UI 类 regex，转换为 `RenderIntent` 并用 React 白名单组件渲染。
+- [x] POC-5.3：验证恶意或复杂 regex 不会进入 UI 执行路径。
 
 ## 8. SAC-Phase 6a：最小 StorySession Runtime 硬替换
 

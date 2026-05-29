@@ -27,8 +27,17 @@ When either deferred contract graduates:
 
 | Deferred field | Owning phase | Required proof before graduation |
 | --- | --- | --- |
-| `renderRules` | `SAC-Phase 5` | `RenderIntent` schema, whitelist renderer and unsupported UI fallback POCs pass. |
+| `renderRules` | `SAC-Phase 5` | Graduated in schema version `2` after `RenderIntent` schema, whitelist renderer and unsupported UI fallback POCs passed. |
 | `memoryPolicy` | `SAC-Phase 6b` | Long-session memory extraction/consolidation POCs pass. |
+
+## SAC-Phase 5 Graduation
+
+`renderRules` is now a stable `RenderIntent[]` in `SessionBlueprint`. The graduation changed the Phase 3 rules as follows:
+
+1. `SESSION_BLUEPRINT_SCHEMA_VERSION` is now `2`.
+2. `renderRules` replaces its deferred marker with compiled `RenderIntent` objects.
+3. `renderRules` is included in the stable `sourceHash` input.
+4. `memoryPolicy` remains the only deferred field.
 
 ## Non-Goals
 

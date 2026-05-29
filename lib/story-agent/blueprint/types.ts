@@ -3,8 +3,9 @@ import type {
   ImportDiagnostic,
 } from "@/lib/adapters/import";
 import type { SecondaryKeyLogic } from "@/lib/models/world-book-model";
+import type { RenderIntent } from "@/lib/story-agent/render-intent";
 
-export const SESSION_BLUEPRINT_SCHEMA_VERSION = 1;
+export const SESSION_BLUEPRINT_SCHEMA_VERSION = 2;
 
 export type DeferredPhase = "SAC-Phase 5" | "SAC-Phase 6b";
 export type PromptRole = "system" | "user" | "assistant" | "unknown";
@@ -128,7 +129,7 @@ export interface SessionBlueprint {
   outputTransforms: TextTransform[];
   promptTransforms: TextTransform[];
   contentRules: ContentRule[];
-  renderRules: DeferredContract;
+  renderRules: RenderIntent[];
   memoryPolicy: DeferredContract;
   diagnostics: ImportDiagnostic[];
   repairReport: RepairReport;

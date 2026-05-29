@@ -8,6 +8,10 @@ import {
 } from "@/lib/adapters/import";
 import { RegexPlacement } from "@/lib/models/regex-script-model";
 import {
+  convertRegexScriptsToRenderIntents,
+  convertRegexToRenderIntent,
+} from "@/lib/story-agent/render-intent";
+import {
   SESSION_BLUEPRINT_SCHEMA_VERSION,
   type AgentProfile,
   type ContentRule,
@@ -42,6 +46,7 @@ export function compileSessionBlueprint(
     outputTransforms: compileTransforms(bundle.regexScripts, "output"),
     promptTransforms: compileTransforms(bundle.regexScripts, "prompt"),
     contentRules: compileContentRules(bundle.regexScripts),
+    renderRules: compileRenderRules(bundle.regexScripts),
     diagnostics: diagnoseImportedAssetBundle(bundle),
     repairReport: emptyRepairReport(),
     provenance: collectProvenance(bundle),
@@ -52,7 +57,6 @@ export function compileSessionBlueprint(
     id: options.id ?? `blueprint:${sourceHash.slice(0, 12)}`,
     sourceHash,
     createdAt: options.createdAt ?? bundle.createdAt,
-    renderRules: deferred("SAC-Phase 5", "RenderIntent schema is defined in SAC-Phase 5."),
     memoryPolicy: deferred("SAC-Phase 6b", "Long-term memory policy is defined in SAC-Phase 6b."),
     ...core,
   };
@@ -166,11 +170,17 @@ function compileContentRules(scripts: ImportedRegexScript[]): ContentRule[] {
     if (script.raw.markdownOnly) {
       rules.push(contentRule(script, "markdown-only", "Apply only after markdown rendering."));
     }
-    if (containsHtmlDocument(script.raw.replaceString)) {
-      rules.push(contentRule(script, "html-ui-unsupported", "HTML UI output is deferred to RenderIntent."));
+    const conversion = convertRegexToRenderIntent(script.raw);
+    if (conversion.fallback && isHtmlUiConversion(conversion)) {
+      rules.push(contentRule(script, "html-ui-unsupported", conversion.fallback.reason));
     }
     return rules;
   });
+}
+
+function compileRenderRules(scripts: ImportedRegexScript[]) {
+  return convertRegexScriptsToRenderIntents(scripts.map((script) => script.raw))
+    .flatMap((conversion) => conversion.intent ? [conversion.intent] : []);
 }
 
 function transformDirections(script: ImportedRegexScript): TransformDirection[] {
@@ -235,9 +245,8 @@ function contentRule(
   };
 }
 
-function containsHtmlDocument(value: string | null | undefined): boolean {
-  if (!value) return false;
-  return /<!doctype html|<html[\s>]|<style[\s>]|<script[\s>]/i.test(value);
+function isHtmlUiConversion(conversion: ReturnType<typeof convertRegexToRenderIntent>): boolean {
+  return conversion.classification.reasons.includes("html replacement");
 }
 
 function emptyRepairReport(): RepairReport {
