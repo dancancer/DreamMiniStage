@@ -1,6 +1,13 @@
 import type { FinalizedDialogueResult } from "@/lib/generation-runtime/types";
 import type { LLMConfig } from "@/lib/nodeflow/LLMNode/llm-config";
 import type { SessionBlueprint } from "@/lib/story-agent/blueprint";
+import {
+  consolidateStoryMemory,
+  createEmptyStoryMemoryState,
+  formatStoryMemoryMessages,
+  type StoryMemoryExtractor,
+  type StoryMemoryState,
+} from "@/lib/story-agent/memory";
 import type { RenderIntent } from "@/lib/story-agent/render-intent";
 import { assemblePromptContext, type PromptContextMessage } from "./prompt-context";
 import { applyTextTransforms } from "./text-transform";
@@ -29,6 +36,7 @@ export interface StorySessionState {
   recentTranscript: StoryTranscriptMessage[];
   worldbookActivationState: WorldActivationState;
   renderState: StoryRenderState;
+  memory: StoryMemoryState;
   updatedAt: string;
 }
 
@@ -65,6 +73,7 @@ export interface StoryPreparedTurn {
   renderIntents: RenderIntent[];
   llmConfig: LLMConfig;
   commitSession?: (session: StorySessionState) => Promise<void>;
+  memoryExtractor?: StoryMemoryExtractor;
 }
 
 export function createStorySession(params: {
@@ -83,6 +92,7 @@ export function createStorySession(params: {
       activeIntentIds: [],
       updatedAt: now,
     },
+    memory: createEmptyStoryMemoryState(now),
     updatedAt: now,
   };
 }
@@ -93,6 +103,7 @@ export function prepareStoryTurn(params: {
   userInput: string;
   model: StoryModelInput;
   commitSession?: StoryPreparedTurn["commitSession"];
+  memoryExtractor?: StoryMemoryExtractor;
 }): StoryPreparedTurn {
   const input = applyTextTransforms(params.userInput, params.blueprint.inputTransforms);
   const world = matchWorldModules(
@@ -103,6 +114,7 @@ export function prepareStoryTurn(params: {
   const context = assemblePromptContext({
     blueprint: params.blueprint,
     worldHits: world.hits,
+    memoryMessages: formatStoryMemoryMessages(params.session.memory),
     history: [...toHistory(params.session), { role: "user", content: input.text }],
     maxTokens: params.model.contextWindow,
   });
@@ -121,6 +133,7 @@ export function prepareStoryTurn(params: {
     renderIntents: params.blueprint.renderRules,
     llmConfig,
     commitSession: params.commitSession,
+    memoryExtractor: params.memoryExtractor,
   };
 }
 
@@ -135,6 +148,8 @@ export async function finalizeStoryTurn(
     assistantResponse: output.text,
     worldbookActivationState: turn.worldbookActivationState,
     renderIntents: turn.renderIntents,
+    memoryExtractor: turn.memoryExtractor,
+    memoryPolicy: turn.blueprint.memoryPolicy,
   });
 
   await turn.commitSession?.(nextSession);
@@ -159,8 +174,18 @@ function advanceStorySession(params: {
   assistantResponse: string;
   worldbookActivationState: WorldActivationState;
   renderIntents: RenderIntent[];
+  memoryExtractor?: StoryMemoryExtractor;
+  memoryPolicy: SessionBlueprint["memoryPolicy"];
 }): StorySessionState {
   const now = new Date().toISOString();
+  const memory = consolidateStoryMemory({
+    memory: params.session.memory,
+    policy: params.memoryPolicy,
+    userInput: params.userInput,
+    assistantResponse: params.assistantResponse,
+    now,
+    extractor: params.memoryExtractor,
+  });
   return {
     ...params.session,
     recentTranscript: trimTranscript([
@@ -173,6 +198,7 @@ function advanceStorySession(params: {
       activeIntentIds: params.renderIntents.map((intent) => intent.id),
       updatedAt: now,
     },
+    memory,
     updatedAt: now,
   };
 }

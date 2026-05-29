@@ -37,7 +37,7 @@ The hash covers Phase 3 core fields:
 - `repairReport`
 - `provenance`
 
-The hash intentionally excludes future `RenderIntent` and long-term memory implementation details because those contracts are deferred.
+Phase 3 hash intentionally excluded future `RenderIntent` and long-term memory details because those contracts were deferred then. Current schema v3 includes both `renderRules` and `memoryPolicy` in the stable hash input.
 
 ## Result
 

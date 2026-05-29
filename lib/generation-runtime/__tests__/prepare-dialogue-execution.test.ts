@@ -6,7 +6,7 @@ const mockStore = vi.hoisted(() => ({
   saveStorySession: vi.fn(),
   blueprint: {
     id: "blueprint:test",
-    schemaVersion: 2,
+    schemaVersion: 3,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
@@ -53,9 +53,12 @@ const mockStore = vi.hoisted(() => ({
       }],
     }],
     memoryPolicy: {
-      status: "deferred",
-      phase: "SAC-Phase 6b",
-      reason: "Long-term memory policy is defined in SAC-Phase 6b.",
+      status: "active",
+      summary: { maxChars: 1200, preserveRecentEpisodes: 8 },
+      episodic: { maxEntries: 24 },
+      facts: { maxEntries: 32 },
+      relationships: { maxEntries: 16 },
+      failureMode: "degrade",
     },
     diagnostics: [],
     repairReport: {

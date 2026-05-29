@@ -7,6 +7,7 @@ import {
   type ImportedWorldBookEntry,
 } from "@/lib/adapters/import";
 import { RegexPlacement } from "@/lib/models/regex-script-model";
+import { defaultMemoryPolicy } from "@/lib/story-agent/memory";
 import {
   convertRegexScriptsToRenderIntents,
   convertRegexToRenderIntent,
@@ -15,7 +16,6 @@ import {
   SESSION_BLUEPRINT_SCHEMA_VERSION,
   type AgentProfile,
   type ContentRule,
-  type DeferredContract,
   type PromptRole,
   type PromptStack,
   type PromptStackMessage,
@@ -47,6 +47,7 @@ export function compileSessionBlueprint(
     promptTransforms: compileTransforms(bundle.regexScripts, "prompt"),
     contentRules: compileContentRules(bundle.regexScripts),
     renderRules: compileRenderRules(bundle.regexScripts),
+    memoryPolicy: defaultMemoryPolicy(),
     diagnostics: diagnoseImportedAssetBundle(bundle),
     repairReport: emptyRepairReport(),
     provenance: collectProvenance(bundle),
@@ -57,7 +58,6 @@ export function compileSessionBlueprint(
     id: options.id ?? `blueprint:${sourceHash.slice(0, 12)}`,
     sourceHash,
     createdAt: options.createdAt ?? bundle.createdAt,
-    memoryPolicy: deferred("SAC-Phase 6b", "Long-term memory policy is defined in SAC-Phase 6b."),
     ...core,
   };
 }
@@ -255,10 +255,6 @@ function emptyRepairReport(): RepairReport {
     manualPatches: [],
     rejectedPatches: [],
   };
-}
-
-function deferred(phase: DeferredContract["phase"], reason: string): DeferredContract {
-  return { status: "deferred", phase, reason };
 }
 
 function stableHash(value: unknown): string {

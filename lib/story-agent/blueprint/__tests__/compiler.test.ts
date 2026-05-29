@@ -93,9 +93,21 @@ describe("compileSessionBlueprint", () => {
         },
         "inputTransforms": 39,
         "memoryPolicy": {
-          "phase": "SAC-Phase 6b",
-          "reason": "Long-term memory policy is defined in SAC-Phase 6b.",
-          "status": "deferred",
+          "episodic": {
+            "maxEntries": 24,
+          },
+          "facts": {
+            "maxEntries": 32,
+          },
+          "failureMode": "degrade",
+          "relationships": {
+            "maxEntries": 16,
+          },
+          "status": "active",
+          "summary": {
+            "maxChars": 1200,
+            "preserveRecentEpisodes": 8,
+          },
         },
         "outputTransforms": 47,
         "profileName": "【Sgw】又看一集",
@@ -114,7 +126,7 @@ describe("compileSessionBlueprint", () => {
             "title": "[美化]完整变量更新",
           },
         ],
-        "schemaVersion": 2,
+        "schemaVersion": 3,
         "worldModules": [
           {
             "entries": 140,

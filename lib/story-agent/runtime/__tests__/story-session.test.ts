@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { SessionBlueprint, WorldModuleEntry } from "@/lib/story-agent/blueprint";
+import { defaultMemoryPolicy } from "@/lib/story-agent/memory";
 import {
   createStorySession,
   finalizeStoryTurn,
@@ -93,6 +94,64 @@ describe("SAC-Phase 6a StorySession runtime", () => {
     expect(JSON.stringify(turn.llmConfig)).not.toMatch(/"(prompt_order|placement)":/);
     expect(JSON.stringify(turn.promptMessages)).not.toMatch(/"(prompt_order|placement)":/);
   });
+
+  it("uses summary, facts and relationship memory when recent transcript is trimmed", async () => {
+    const blueprint = createBlueprint();
+    let session = createStorySession({ dialogueId: "dialogue-4", blueprint });
+    const commitSession = async (next: StorySessionState) => {
+      session = next;
+    };
+
+    for (let index = 0; index < 12; index += 1) {
+      await finalizeStoryTurn(prepareStoryTurn({
+        blueprint,
+        session,
+        userInput: `turn ${index} [fact:Alice keeps a silver key] [relationship:trust=warm]`,
+        model: modelInput(),
+        commitSession,
+      }), `reply ${index}`);
+    }
+
+    const turn = prepareStoryTurn({
+      blueprint,
+      session,
+      userInput: "what do you remember about Alice?",
+      model: { ...modelInput(), maxTokens: 80 },
+    });
+    const memoryText = turn.promptMessages
+      .filter((message) => message.source === "memory")
+      .map((message) => message.content)
+      .join("\n");
+
+    expect(session.memory.runningSummary.content).toContain("turn 0");
+    expect(memoryText).toContain("Alice keeps a silver key");
+    expect(memoryText).toContain("trust: warm");
+  });
+
+  it("degrades when memory extraction fails without blocking the turn commit", async () => {
+    const blueprint = createBlueprint();
+    let session = createStorySession({ dialogueId: "dialogue-5", blueprint });
+    const commitSession = async (next: StorySessionState) => {
+      session = next;
+    };
+
+    const turn = prepareStoryTurn({
+      blueprint,
+      session,
+      userInput: "remember this",
+      model: modelInput(),
+      commitSession,
+      memoryExtractor: () => {
+        throw new Error("extractor unavailable");
+      },
+    });
+
+    await expect(finalizeStoryTurn(turn, "reply")).resolves.toMatchObject({
+      screenContent: "reply",
+    });
+    expect(session.recentTranscript).toHaveLength(2);
+    expect(session.memory.lastError).toBe("extractor unavailable");
+  });
 });
 
 function modelInput() {
@@ -108,7 +167,7 @@ function modelInput() {
 function createBlueprint(): SessionBlueprint {
   return {
     id: "blueprint:test",
-    schemaVersion: 2,
+    schemaVersion: 3,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
@@ -163,11 +222,7 @@ function createBlueprint(): SessionBlueprint {
         action: { type: "append-input", valueTemplate: "$1" },
       }],
     }],
-    memoryPolicy: {
-      status: "deferred",
-      phase: "SAC-Phase 6b",
-      reason: "Long-term memory policy is defined in SAC-Phase 6b.",
-    },
+    memoryPolicy: defaultMemoryPolicy(),
     diagnostics: [],
     repairReport: {
       appliedPatches: [],

@@ -25,7 +25,7 @@ Runtime state lives in `StorySessionState`:
 | `worldbookActivationState` | Sticky/cooldown/delay counters keyed by `moduleId:entryId` |
 | `renderState.activeIntentIds` | UI intents active after the latest turn |
 
-Long-term memory, summaries and consolidation policy remain deferred to `SAC-Phase 6b`.
+In Phase 6a this field was empty runtime state. `SAC-Phase 6b` extends it with running summary, episodic memory, facts and relationship state.
 
 ## Runtime Flow
 

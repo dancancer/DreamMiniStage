@@ -12,7 +12,7 @@ Implementation:
 - `components/story-agent/render-intent/RenderIntentView.tsx`
 - `lib/story-agent/blueprint/compiler.ts`
 
-`SESSION_BLUEPRINT_SCHEMA_VERSION` is bumped to `2`. `memoryPolicy` remains deferred until `SAC-Phase 6b`.
+`SESSION_BLUEPRINT_SCHEMA_VERSION` was bumped to `2` in Phase 5. `memoryPolicy` graduated later in `SAC-Phase 6b` with schema version `3`.
 
 ## Schema
 
@@ -39,4 +39,3 @@ The renderer accepts only structured `RenderIntent` objects. It does not accept 
 ```bash
 pnpm vitest run lib/story-agent/render-intent/__tests__/regex-classifier.test.ts components/story-agent/render-intent/__tests__/RenderIntentView.test.tsx lib/story-agent/blueprint/__tests__/compiler.test.ts
 ```
-

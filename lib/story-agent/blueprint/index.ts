@@ -14,8 +14,6 @@ export {
   type CompiledPromptMessage,
   type ContentRule,
   type ContentRuleKind,
-  type DeferredContract,
-  type DeferredPhase,
   type PromptRole,
   type PromptSourceKind,
   type PromptStack,

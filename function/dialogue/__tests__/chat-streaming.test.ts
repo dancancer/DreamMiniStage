@@ -3,6 +3,7 @@ import { handleStreamingResponse } from "../chat-streaming";
 import { LLMNodeTools } from "@/lib/nodeflow/LLMNode/LLMNodeTools";
 import * as chatShared from "@/function/dialogue/chat-shared";
 import type { PreparedDialogueExecution } from "@/lib/generation-runtime/types";
+import { defaultMemoryPolicy } from "@/lib/story-agent/memory";
 import type { SessionBlueprint } from "@/lib/story-agent/blueprint";
 import {
   createStorySession,
@@ -166,7 +167,7 @@ function createPreparedExecution(userInput: string): PreparedDialogueExecution {
 function createBlueprint(): SessionBlueprint {
   return {
     id: "blueprint:test",
-    schemaVersion: 2,
+    schemaVersion: 3,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
@@ -200,11 +201,7 @@ function createBlueprint(): SessionBlueprint {
     promptTransforms: [],
     contentRules: [],
     renderRules: [],
-    memoryPolicy: {
-      status: "deferred",
-      phase: "SAC-Phase 6b",
-      reason: "Long-term memory policy is defined in SAC-Phase 6b.",
-    },
+    memoryPolicy: defaultMemoryPolicy(),
     diagnostics: [],
     repairReport: {
       appliedPatches: [],

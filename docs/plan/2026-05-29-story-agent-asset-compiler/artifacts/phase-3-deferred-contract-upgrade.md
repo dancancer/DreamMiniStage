@@ -2,7 +2,7 @@
 
 ## Decision
 
-`renderRules` and `memoryPolicy` stay as explicit deferred contracts in Phase 3.
+`renderRules` and `memoryPolicy` started as explicit deferred contracts in Phase 3.
 
 ```ts
 type DeferredContract = {
@@ -37,7 +37,17 @@ When either deferred contract graduates:
 1. `SESSION_BLUEPRINT_SCHEMA_VERSION` is now `2`.
 2. `renderRules` replaces its deferred marker with compiled `RenderIntent` objects.
 3. `renderRules` is included in the stable `sourceHash` input.
-4. `memoryPolicy` remains the only deferred field.
+4. `memoryPolicy` remains deferred after Phase 5.
+
+## SAC-Phase 6b Graduation
+
+`memoryPolicy` is now a stable `MemoryPolicy` in `SessionBlueprint`. The graduation changed the Phase 5 rules as follows:
+
+1. `SESSION_BLUEPRINT_SCHEMA_VERSION` is now `3`.
+2. `memoryPolicy` replaces its deferred marker with an active policy.
+3. `memoryPolicy` is included in the stable `sourceHash` input.
+4. `StorySession.memory` owns running summary, episodic memory, facts and relationship state.
+5. There are no deferred fields left in the current `SessionBlueprint` contract.
 
 ## Non-Goals
 

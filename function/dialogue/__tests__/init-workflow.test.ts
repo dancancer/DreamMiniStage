@@ -6,6 +6,7 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { initCharacterDialogue } from "../init";
+import { defaultMemoryPolicy } from "@/lib/story-agent/memory";
 import type { SessionBlueprint } from "@/lib/story-agent/blueprint";
 
 const loadStoryRuntimeBinding = vi.fn();
@@ -55,7 +56,7 @@ describe("initCharacterDialogue", () => {
 function createBlueprint(): SessionBlueprint {
   return {
     id: "blueprint:init",
-    schemaVersion: 2,
+    schemaVersion: 3,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
@@ -71,11 +72,7 @@ function createBlueprint(): SessionBlueprint {
     promptTransforms: [],
     contentRules: [],
     renderRules: [],
-    memoryPolicy: {
-      status: "deferred",
-      phase: "SAC-Phase 6b",
-      reason: "Long-term memory policy is defined in SAC-Phase 6b.",
-    },
+    memoryPolicy: defaultMemoryPolicy(),
     diagnostics: [],
     repairReport: {
       appliedPatches: [],

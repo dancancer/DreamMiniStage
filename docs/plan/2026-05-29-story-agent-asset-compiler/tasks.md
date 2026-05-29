@@ -108,12 +108,12 @@
 
 ## 9. SAC-Phase 6b：长期记忆与会话稳定性
 
-- [ ] 扩展 `StorySession` 状态：running summary、episodic memory、facts memory、relationship/state memory。
-- [ ] 定义 memory extraction 与 consolidation 策略。
-- [ ] 实现每轮生成后的摘要、事实、事件和关系状态更新 pipeline。
-- [ ] POC-6b.1：超过上下文窗口后，验证 summary/facts/world hits 能替代丢弃历史。
-- [ ] POC-6b.2：记忆抽取失败时，运行时必须降级但不破坏会话。
-- [ ] POC-6b.3：长会话 replay 中角色身份、关键事实和关系状态保持稳定。
+- [x] 扩展 `StorySession` 状态：running summary、episodic memory、facts memory、relationship/state memory。
+- [x] 定义 memory extraction 与 consolidation 策略。
+- [x] 实现每轮生成后的摘要、事实、事件和关系状态更新 pipeline。
+- [x] POC-6b.1：超过上下文窗口后，验证 summary/facts/world hits 能替代丢弃历史。
+- [x] POC-6b.2：记忆抽取失败时，运行时必须降级但不破坏会话。
+- [x] POC-6b.3：长会话 replay 中角色身份、关键事实和关系状态保持稳定。
 
 ## 10. SAC-Phase 7：产品化导入向导与用户确认流
 

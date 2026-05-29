@@ -3,21 +3,15 @@ import type {
   ImportDiagnostic,
 } from "@/lib/adapters/import";
 import type { SecondaryKeyLogic } from "@/lib/models/world-book-model";
+import type { MemoryPolicy } from "@/lib/story-agent/memory";
 import type { RenderIntent } from "@/lib/story-agent/render-intent";
 
-export const SESSION_BLUEPRINT_SCHEMA_VERSION = 2;
+export const SESSION_BLUEPRINT_SCHEMA_VERSION = 3;
 
-export type DeferredPhase = "SAC-Phase 5" | "SAC-Phase 6b";
 export type PromptRole = "system" | "user" | "assistant" | "unknown";
 export type PromptSourceKind = "character" | "preset";
 export type TransformDirection = "input" | "output" | "prompt";
 export type ContentRuleKind = "markdown-only" | "html-ui-unsupported";
-
-export interface DeferredContract {
-  status: "deferred";
-  phase: DeferredPhase;
-  reason: string;
-}
 
 export interface AgentProfile {
   id: string;
@@ -130,7 +124,7 @@ export interface SessionBlueprint {
   promptTransforms: TextTransform[];
   contentRules: ContentRule[];
   renderRules: RenderIntent[];
-  memoryPolicy: DeferredContract;
+  memoryPolicy: MemoryPolicy;
   diagnostics: ImportDiagnostic[];
   repairReport: RepairReport;
   provenance: FieldProvenance[];
