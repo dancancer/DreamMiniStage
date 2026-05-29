@@ -10,6 +10,7 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
+import { DEFAULT_RESPONSE_LENGTH } from "@/lib/model-capabilities";
 import { resolveModelAdvancedSettings } from "@/lib/model-runtime";
 import { useModelStore } from "@/lib/store/model-store";
 import { handleCharacterChatRequest } from "@/function/dialogue/chat";
@@ -91,7 +92,7 @@ async function generate(args: unknown[], ctx: ApiCallContext) {
         llmType: effectiveConfig.type,
         streaming: Boolean(config?.should_stream ?? config?.stream),
         language: "zh",
-        number: customApi?.max_tokens || effectiveConfig.advanced?.maxTokens || 200,
+        number: customApi?.max_tokens ?? DEFAULT_RESPONSE_LENGTH,
         nodeId: generationId,
         fastModel: false,
         advanced: effectiveConfig.advanced,

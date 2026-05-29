@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   mockState,
@@ -81,6 +81,10 @@ describe("LLMNodeTools.invokeLLMStream", () => {
     };
     mockState.streamChunks = [];
     delete window.lastTokenUsage;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("does not depend on Claude conversion for OpenAI streaming", async () => {
@@ -315,5 +319,46 @@ describe("LLMNodeTools.invokeLLMStream", () => {
     } finally {
       window.removeEventListener("llm-token-usage", eventHandler);
     }
+  });
+
+  it("streams deepseek-v4-pro without unsupported thinking-mode sampling params", async () => {
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => new Response([
+      "data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"reason\"}}]}",
+      "",
+      "data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}],\"usage\":{\"prompt_tokens\":7,\"completion_tokens\":3,\"total_tokens\":10}}",
+      "",
+      "data: [DONE]",
+      "",
+    ].join("\n"), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const onReasoning = vi.fn();
+
+    await expect(
+      LLMNodeTools.invokeLLMStream(
+        {
+          modelName: "deepseek-v4-pro",
+          apiKey: "mock-key",
+          baseUrl: "https://api.deepseek.com",
+          llmType: "openai",
+          maxTokens: 8192,
+          streamUsage: true,
+          messages: [{ role: "user", content: "hello" }],
+        },
+        { onReasoning },
+      ),
+    ).resolves.toBe("Hello");
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(body).toMatchObject({
+      model: "deepseek-v4-pro",
+      max_tokens: 8192,
+      stream: true,
+      stream_options: { include_usage: true },
+    });
+    expect(body).not.toHaveProperty("temperature");
+    expect(body).not.toHaveProperty("top_p");
+    expect(body).not.toHaveProperty("presence_penalty");
+    expect(body).not.toHaveProperty("frequency_penalty");
+    expect(onReasoning).toHaveBeenCalledWith("reason");
   });
 });

@@ -6,6 +6,7 @@ import {
   type ImportedWorldBook,
   type ImportedWorldBookEntry,
 } from "@/lib/adapters/import";
+import { normalizeModelAdvancedSettings, type ModelAdvancedSettings } from "@/lib/model-runtime";
 import { RegexPlacement } from "@/lib/models/regex-script-model";
 import { defaultMemoryPolicy } from "@/lib/story-agent/memory";
 import {
@@ -42,6 +43,7 @@ export function compileSessionBlueprint(
     schemaVersion: SESSION_BLUEPRINT_SCHEMA_VERSION as typeof SESSION_BLUEPRINT_SCHEMA_VERSION,
     profile: compileProfile(bundle),
     promptStack: compilePromptStack(bundle),
+    modelPolicy: compileModelPolicy(bundle),
     worldModules: bundle.worldBooks.map(compileWorldModule),
     inputTransforms: compileTransforms(bundle.regexScripts, "input"),
     outputTransforms: compileTransforms(bundle.regexScripts, "output"),
@@ -61,6 +63,10 @@ export function compileSessionBlueprint(
     createdAt: options.createdAt ?? bundle.createdAt,
     ...core,
   };
+}
+
+function compileModelPolicy(bundle: ImportedAssetBundle): ModelAdvancedSettings {
+  return normalizeModelAdvancedSettings(bundle.preset?.normalized.sampling);
 }
 
 function compileProfile(bundle: ImportedAssetBundle): AgentProfile {

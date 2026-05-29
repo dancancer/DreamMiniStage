@@ -56,7 +56,7 @@ describe("initCharacterDialogue", () => {
 function createBlueprint(): SessionBlueprint {
   return {
     id: "blueprint:init",
-    schemaVersion: 4,
+    schemaVersion: 5,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
@@ -67,6 +67,7 @@ function createBlueprint(): SessionBlueprint {
       promptFragments: [],
     },
     promptStack: { messages: [] },
+    modelPolicy: {},
     worldModules: [],
     inputTransforms: [],
     outputTransforms: [],

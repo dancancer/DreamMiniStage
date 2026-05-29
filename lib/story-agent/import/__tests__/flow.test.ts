@@ -47,7 +47,7 @@ describe("story agent import flow", () => {
     const preview = compileStoryAgentImport(createInput());
 
     expect(preview.blueprint.profile.name).toBe("【Sgw】又看一集");
-    expect(preview.blueprint.schemaVersion).toBe(4);
+    expect(preview.blueprint.schemaVersion).toBe(5);
     expect(preview.summary.openingCount).toBe(11);
     expect(preview.summary.worldBookCount).toBeGreaterThan(0);
     expect(preview.summary.worldBookEntryCount).toBeGreaterThan(0);

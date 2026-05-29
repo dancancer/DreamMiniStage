@@ -6,6 +6,7 @@
  */
 
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
+import { DEFAULT_RESPONSE_LENGTH } from "@/lib/model-capabilities";
 import { ParsedResponse } from "@/lib/models/parsed-response";
 import { prepareOpeningGreeting, type OpeningPayload } from "@/function/dialogue/opening";
 import { resolveModelAdvancedSettings } from "@/lib/model-runtime";
@@ -52,7 +53,7 @@ export async function handleCharacterChatRequest(payload: {
       apiKey,
       llmType = "openai",
       language = "zh",
-      number = 200,
+      number = DEFAULT_RESPONSE_LENGTH,
       nodeId,
       fastModel = false,
       streaming = false,

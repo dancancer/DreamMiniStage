@@ -94,7 +94,7 @@ describe("StoryBlueprint 开场白基线", () => {
 function createBlueprint(firstMessage: string): SessionBlueprint {
   return {
     id: "blueprint:baseline",
-    schemaVersion: 4,
+    schemaVersion: 5,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
@@ -105,6 +105,7 @@ function createBlueprint(firstMessage: string): SessionBlueprint {
       promptFragments: [],
     },
     promptStack: { messages: [] },
+    modelPolicy: {},
     worldModules: [],
     inputTransforms: [],
     outputTransforms: [],

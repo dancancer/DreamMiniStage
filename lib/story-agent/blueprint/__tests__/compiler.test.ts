@@ -85,6 +85,7 @@ describe("compileSessionBlueprint", () => {
       promptTransforms: blueprint.promptTransforms.length,
       contentRules: countContentRules(blueprint.contentRules),
       renderRules: blueprint.renderRules,
+      modelPolicy: blueprint.modelPolicy,
       memoryPolicy: blueprint.memoryPolicy,
     }).toMatchInlineSnapshot(`
       {
@@ -109,6 +110,17 @@ describe("compileSessionBlueprint", () => {
             "maxChars": 1200,
             "preserveRecentEpisodes": 8,
           },
+        },
+        "modelPolicy": {
+          "contextWindow": 2000000,
+          "frequencyPenalty": 0,
+          "maxTokens": 8192,
+          "presencePenalty": 0,
+          "repeatPenalty": 1,
+          "streaming": true,
+          "temperature": 1.01,
+          "topK": 0,
+          "topP": 1,
         },
         "openingCount": 11,
         "outputTransforms": 0,
@@ -152,7 +164,7 @@ describe("compileSessionBlueprint", () => {
             "title": "[美化]完整变量更新",
           },
         ],
-        "schemaVersion": 4,
+        "schemaVersion": 5,
         "worldModules": [
           {
             "entries": 140,

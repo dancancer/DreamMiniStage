@@ -43,6 +43,7 @@
 
 ## 近期约束
 
+- `generation-handlers.ts` 默认生成长度统一使用 `DEFAULT_RESPONSE_LENGTH`，只有脚本显式传入 `custom_api.max_tokens` 时才覆盖每轮输出上限。
 - `slash-handlers.ts` 的 `triggerSlash` 仅接收命令字符串参数，回调统一从 `ApiCallContext` 注入，不再支持额外 options 覆盖。
 - `slash-handlers.ts` 已补齐 JS-Slash-Runner 音频通道能力（`bgm|ambient` 的 mode/enable/playlist 状态控制）。
 - `public/iframe-libs/slash-runner-shim.js` 不再导出 `window.getVariables`/`window.triggerSlash` 等顶层别名；脚本统一通过 `window.TavernHelper` / `window.SillyTavern` 访问 API。

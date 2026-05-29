@@ -95,6 +95,35 @@ describe("SAC-Phase 6a StorySession runtime", () => {
     expect(JSON.stringify(turn.promptMessages)).not.toMatch(/"(prompt_order|placement)":/);
   });
 
+  it("uses responseLength as the per-turn output cap", () => {
+    const blueprint = {
+      ...createBlueprint(),
+      modelPolicy: {
+        contextWindow: 841_394,
+        maxTokens: 65_535,
+        temperature: 1.5,
+        topP: 0.92,
+      },
+    };
+    const session = createStorySession({ dialogueId: "dialogue-policy", blueprint });
+    const turn = prepareStoryTurn({
+      blueprint,
+      session,
+      userInput: "alpha",
+      model: {
+        modelName: "deepseek-v4-pro",
+        apiKey: "key",
+        llmType: "openai",
+        responseLength: 200,
+      },
+    });
+
+    expect(turn.llmConfig.contextWindow).toBe(1_000_000);
+    expect(turn.llmConfig.maxTokens).toBe(200);
+    expect(turn.llmConfig.temperature).toBeUndefined();
+    expect(turn.llmConfig.topP).toBeUndefined();
+  });
+
   it("keeps the current user input in the final request and resolves prompt macros", () => {
     const blueprint = createBlueprint();
     const session = createStorySession({ dialogueId: "dialogue-macros", blueprint });
@@ -251,7 +280,7 @@ function modelInput() {
 function createBlueprint(): SessionBlueprint {
   return {
     id: "blueprint:test",
-    schemaVersion: 4,
+    schemaVersion: 5,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
@@ -272,6 +301,7 @@ function createBlueprint(): SessionBlueprint {
         sourceField: "prompt",
       }],
     },
+    modelPolicy: {},
     worldModules: [{
       id: "world",
       name: "World",

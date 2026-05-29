@@ -2,11 +2,12 @@ import type {
   FieldProvenance,
   ImportDiagnostic,
 } from "@/lib/adapters/import";
+import type { ModelAdvancedSettings } from "@/lib/model-runtime";
 import type { SecondaryKeyLogic } from "@/lib/models/world-book-model";
 import type { MemoryPolicy } from "@/lib/story-agent/memory";
 import type { RenderIntent } from "@/lib/story-agent/render-intent";
 
-export const SESSION_BLUEPRINT_SCHEMA_VERSION = 4;
+export const SESSION_BLUEPRINT_SCHEMA_VERSION = 5;
 
 export type PromptRole = "system" | "user" | "assistant" | "unknown";
 export type PromptSourceKind = "character" | "preset";
@@ -125,6 +126,7 @@ export interface SessionBlueprint {
   createdAt: string;
   profile: AgentProfile;
   promptStack: PromptStack;
+  modelPolicy: ModelAdvancedSettings;
   worldModules: WorldModule[];
   inputTransforms: TextTransform[];
   outputTransforms: TextTransform[];

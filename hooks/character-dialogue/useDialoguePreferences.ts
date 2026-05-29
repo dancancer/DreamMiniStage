@@ -11,6 +11,10 @@
  */
 
 import { useCallback, useMemo } from "react";
+import {
+  DEFAULT_RESPONSE_LENGTH,
+  RESPONSE_LENGTH_STORAGE_KEY,
+} from "@/lib/model-capabilities";
 import type { APIConfig } from "@/lib/model-runtime";
 import { resolveModelAdvancedSettings } from "@/lib/model-runtime";
 import { LLMConfig } from "@/types/character-dialogue";
@@ -44,7 +48,7 @@ export function buildDialogueLlmConfig(activeConfig: APIConfig | undefined): LLM
 
 export const useDialoguePreferences = () => {
   const { value: storedLanguage } = useLocalStorageString("language", "zh");
-  const { value: responseLength } = useLocalStorageNumber("responseLength", 200);
+  const { value: responseLength } = useLocalStorageNumber(RESPONSE_LENGTH_STORAGE_KEY, DEFAULT_RESPONSE_LENGTH);
   const { value: fastModelEnabled } = useLocalStorageBoolean("fastModelEnabled", false);
   const configs = useModelStore((state) => state.configs);
   const activeConfigId = useModelStore((state) => state.activeConfigId);

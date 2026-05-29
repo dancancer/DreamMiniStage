@@ -11,9 +11,10 @@
 | `message-utils.ts` | 工具函数 | 消息处理工具 |
 | `useDialoguePreferences.ts` | Hook | 对话偏好设置 |
 
-## 最新变更（2026-03-09）
+## 最新变更（2026-05-30）
 
 - `useDialoguePreferences.ts` 不再用聊天页全局 `streamingEnabled` 覆盖激活模型配置，流式开关改回以当前模型配置为唯一事实源。
+- 默认响应长度提升到 8192，并改用 `storyResponseLength` 存储键；story runtime 以该值作为每轮输出上限，避免旧的 4096 本地值继续截断叙事回复。
 
 ## 之前变更（2026-03-08）
 

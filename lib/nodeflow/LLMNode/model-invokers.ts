@@ -26,6 +26,11 @@ import {
 } from "@/lib/mvu/function-call";
 import { applyOpenAIToolCalls } from "./tool-call-runtime";
 import { buildFunctionCallingTools, hasFunctionCalling } from "./function-calling";
+import {
+  invokeDirectOpenAICompatibleModel,
+  shouldUseDirectOpenAICompatible,
+  streamDirectOpenAICompatibleModel,
+} from "./openai-compatible-direct";
 
 type ChatMessage = { role: string; content: string };
 
@@ -55,22 +60,26 @@ function createOpenAICompatibleModel(
     streamUsage: boolean;
   }> = {},
 ): ChatOpenAI {
+  const sampling = {
+    temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
+    topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
+    frequencyPenalty: config.frequencyPenalty,
+    presencePenalty: config.presencePenalty,
+  };
+
   return new ChatOpenAI({
     modelName: config.modelName,
     openAIApiKey: config.apiKey,
     configuration: {
       baseURL: config.baseUrl?.trim() || undefined,
     },
-    temperature: config.temperature ?? DEFAULT_LLM_SETTINGS.temperature,
     maxTokens: config.maxTokens ?? DEFAULT_LLM_SETTINGS.maxTokens,
     timeout: config.timeout,
     maxRetries: config.maxRetries ?? DEFAULT_LLM_SETTINGS.maxRetries,
-    topP: config.topP ?? DEFAULT_LLM_SETTINGS.topP,
-    frequencyPenalty: config.frequencyPenalty,
-    presencePenalty: config.presencePenalty,
     stop: config.stopStrings,
     streaming: overrides.streaming ?? config.streaming ?? DEFAULT_LLM_SETTINGS.streaming,
     streamUsage: overrides.streamUsage ?? config.streamUsage ?? DEFAULT_LLM_SETTINGS.streamUsage,
+    ...sampling,
   });
 }
 
@@ -131,6 +140,10 @@ export async function invokeOpenAIModel(
   config: LLMConfig,
   callbacks?: Pick<StreamingCallbacks, "onUsage">,
 ): Promise<string> {
+  if (shouldUseDirectOpenAICompatible(config)) {
+    return invokeDirectOpenAICompatibleModel(messages, config, callbacks);
+  }
+
   const openaiLlm = createOpenAICompatibleModel(config);
   const aiMessage = await openaiLlm.invoke(messages);
   const usage = extractTokenUsage(aiMessage);
@@ -217,6 +230,10 @@ export async function invokeOpenAIModelStream(
   config: LLMConfig,
   callbacks: StreamingCallbacks,
 ): Promise<string> {
+  if (shouldUseDirectOpenAICompatible(config)) {
+    return streamDirectOpenAICompatibleModel(messages, config, callbacks);
+  }
+
   const openaiLlm = createOpenAICompatibleModel(config, {
     streaming: true,
     streamUsage: true,

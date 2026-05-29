@@ -1,4 +1,6 @@
 import type { FinalizedDialogueResult } from "@/lib/generation-runtime/types";
+import { resolveStoryModelPolicy } from "@/lib/model-capabilities";
+import type { ModelAdvancedSettings } from "@/lib/model-runtime";
 import type { LLMConfig } from "@/lib/nodeflow/LLMNode/llm-config";
 import type { SessionBlueprint } from "@/lib/story-agent/blueprint";
 import {
@@ -57,6 +59,7 @@ export interface StoryModelInput {
   repeatPenalty?: number;
   streaming?: boolean;
   streamUsage?: boolean;
+  responseLength?: number;
   language?: "zh" | "en";
   username?: string;
 }
@@ -116,6 +119,13 @@ export function prepareStoryTurn(params: {
 }): StoryPreparedTurn {
   const input = applyTextTransforms(params.userInput, params.blueprint.inputTransforms);
   const seededOpening = openingHistory(params.session, params.openingMessage);
+  const modelPolicy = resolveStoryModelPolicy({
+    modelName: params.model.modelName,
+    baseUrl: params.model.baseUrl,
+    request: params.model,
+    blueprint: params.blueprint.modelPolicy,
+    responseLength: params.model.responseLength,
+  });
   const world = matchWorldModules(
     params.blueprint,
     input.text,
@@ -136,9 +146,15 @@ export function prepareStoryTurn(params: {
       userName: params.model.username,
       lastUserMessage: input.text,
     },
-    maxTokens: params.model.contextWindow,
+    maxTokens: modelPolicy.contextWindow,
   });
-  const llmConfig = buildStoryLlmConfig(params.model, context.messages, params.session, params.blueprint);
+  const llmConfig = buildStoryLlmConfig(
+    params.model,
+    modelPolicy,
+    context.messages,
+    params.session,
+    params.blueprint,
+  );
 
   return {
     runtime: "story",
@@ -229,6 +245,7 @@ function advanceStorySession(params: {
 
 function buildStoryLlmConfig(
   model: StoryModelInput,
+  modelPolicy: ModelAdvancedSettings,
   messages: PromptContextMessage[],
   session: StorySessionState,
   blueprint: SessionBlueprint,
@@ -238,18 +255,18 @@ function buildStoryLlmConfig(
     apiKey: model.apiKey,
     baseUrl: model.baseUrl,
     llmType: model.llmType ?? "openai",
-    temperature: model.temperature,
-    contextWindow: model.contextWindow,
-    maxTokens: model.maxTokens,
-    timeout: model.timeout,
-    maxRetries: model.maxRetries,
-    topP: model.topP,
-    frequencyPenalty: model.frequencyPenalty,
-    presencePenalty: model.presencePenalty,
-    topK: model.topK,
-    repeatPenalty: model.repeatPenalty,
-    streaming: model.streaming ?? false,
-    streamUsage: model.streamUsage ?? true,
+    temperature: modelPolicy.temperature,
+    contextWindow: modelPolicy.contextWindow,
+    maxTokens: modelPolicy.maxTokens,
+    timeout: modelPolicy.timeout,
+    maxRetries: modelPolicy.maxRetries,
+    topP: modelPolicy.topP,
+    frequencyPenalty: modelPolicy.frequencyPenalty,
+    presencePenalty: modelPolicy.presencePenalty,
+    topK: modelPolicy.topK,
+    repeatPenalty: modelPolicy.repeatPenalty,
+    streaming: modelPolicy.streaming ?? model.streaming ?? false,
+    streamUsage: modelPolicy.streamUsage ?? model.streamUsage ?? true,
     language: model.language ?? "zh",
     dialogueKey: session.dialogueId,
     characterId: blueprint.profile.id,

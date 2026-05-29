@@ -8,7 +8,7 @@
  * ║                       useResponseLength Hook                              ║
  * ║                                                                           ║
  * ║  响应长度管理 - 基于 useLocalStorage 的简化实现                                ║
- * ║  配置项：min=100, max=5000, step=50, default=200                           ║
+ * ║  配置项：min=100, max=12000, step=50, default=8192                         ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -16,15 +16,21 @@
 
 import { useCallback, useMemo } from "react";
 import { useLocalStorageNumber } from "@/hooks/useLocalStorage";
+import {
+  DEFAULT_RESPONSE_LENGTH,
+  MAX_RESPONSE_LENGTH,
+  MIN_RESPONSE_LENGTH,
+  RESPONSE_LENGTH_STORAGE_KEY,
+} from "@/lib/model-capabilities";
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * 常量配置
  * ───────────────────────────────────────────────────────────────────────────── */
 
-const STORAGE_KEY = "responseLength";
-const DEFAULT_LENGTH = 200;
-const MIN_LENGTH = 100;
-const MAX_LENGTH = 5000;
+const STORAGE_KEY = RESPONSE_LENGTH_STORAGE_KEY;
+const DEFAULT_LENGTH = DEFAULT_RESPONSE_LENGTH;
+const MIN_LENGTH = MIN_RESPONSE_LENGTH;
+const MAX_LENGTH = MAX_RESPONSE_LENGTH;
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * 类型定义

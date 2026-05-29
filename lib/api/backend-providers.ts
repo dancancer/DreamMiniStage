@@ -1,5 +1,6 @@
 /** API 后端提供者实现 — OpenAI / Anthropic / Ollama 客户端 */
 
+import { DEFAULT_RESPONSE_LENGTH } from "@/lib/model-capabilities";
 import type {
   ApiBackendType,
   UnifiedMessage,
@@ -116,7 +117,7 @@ export class OpenAIClient implements ApiClient {
       messages: params.messages,
       temperature: params.temperature,
       top_p: params.top_p,
-      max_tokens: params.max_tokens,
+      max_tokens: params.max_tokens ?? DEFAULT_RESPONSE_LENGTH,
       stop: params.stop,
       stream: params.stream,
       tools: params.tools,
@@ -165,7 +166,7 @@ export class AnthropicClient implements ApiClient {
       headers: this.getHeaders(),
       body: JSON.stringify({
         model: params.model,
-        max_tokens: params.max_tokens || 4096,
+        max_tokens: params.max_tokens ?? DEFAULT_RESPONSE_LENGTH,
         system: systemPrompt,
         messages: this.transformMessages(messages),
         temperature: params.temperature,
@@ -190,7 +191,7 @@ export class AnthropicClient implements ApiClient {
       headers: this.getHeaders(),
       body: JSON.stringify({
         model: params.model,
-        max_tokens: params.max_tokens || 4096,
+        max_tokens: params.max_tokens ?? DEFAULT_RESPONSE_LENGTH,
         system: systemPrompt,
         messages: this.transformMessages(messages),
         temperature: params.temperature,

@@ -58,7 +58,7 @@ export function buildDialogueRuntimeParams(
     baseUrl,
     llmType,
     temperature: advanced?.temperature,
-    maxTokens: advanced?.maxTokens ?? number,
+    maxTokens: advanced?.maxTokens,
     timeout: advanced?.timeout,
     maxRetries: advanced?.maxRetries,
     topP: advanced?.topP,
