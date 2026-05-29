@@ -7,6 +7,7 @@
 
 export function createSessionChatActions(input: {
   executeSessionSlashInput: (script: string) => Promise<string>;
+  executeQuickReplyByIndex: (index: number) => Promise<string>;
   handleSendMessage: (message: string) => Promise<void>;
   setUserInput: (text: string) => void;
   t: (key: string) => string;
@@ -17,7 +18,7 @@ export function createSessionChatActions(input: {
   return {
     handleExecuteQuickReplyPanel: async (index: number): Promise<void> => {
       try {
-        await input.executeSessionSlashInput(`/qr ${index}`);
+        await input.executeQuickReplyByIndex(index);
       } catch (error) {
         input.onError?.(error instanceof Error ? error.message : String(error));
       }

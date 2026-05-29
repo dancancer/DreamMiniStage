@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const DB_NAME = "CharacterAppDB";
-const DB_VERSION = 12;
+const DB_VERSION = 13;
 
 export const CHARACTERS_RECORD_FILE = "characters_record";
 export const CHARACTER_DIALOGUES_FILE = "character_dialogues";
@@ -13,6 +13,8 @@ export const SESSIONS_RECORD_FILE = "sessions_record";
 
 // Agent-related storage constants  
 export const AGENT_CONVERSATIONS_FILE = "agent_conversations";
+export const STORY_BLUEPRINTS_FILE = "story_blueprints";
+export const STORY_SESSIONS_FILE = "story_sessions";
 
 // Memory/RAG storage constants
 export const MEMORY_ENTRIES_FILE = "memory_entries";
@@ -35,6 +37,8 @@ const STORE_NAMES = [
   PRESET_FILE,
   SESSIONS_RECORD_FILE,
   AGENT_CONVERSATIONS_FILE,
+  STORY_BLUEPRINTS_FILE,
+  STORY_SESSIONS_FILE,
   MEMORY_ENTRIES_FILE,
   MEMORY_EMBEDDINGS_FILE,
   REGEX_ALLOW_LIST_FILE,
@@ -50,6 +54,8 @@ const RECORD_STORES: Array<string> = [
   CHARACTER_DIALOGUES_FILE,
   SESSIONS_RECORD_FILE,
   AGENT_CONVERSATIONS_FILE,
+  STORY_BLUEPRINTS_FILE,
+  STORY_SESSIONS_FILE,
   MEMORY_ENTRIES_FILE,
   MEMORY_EMBEDDINGS_FILE,
   WORLD_BOOK_FILE,
@@ -70,6 +76,8 @@ const BackupSchema = z.object({
   [CHARACTER_DIALOGUES_FILE]: z.array(z.unknown()).optional(),
   [SESSIONS_RECORD_FILE]: z.array(z.unknown()).optional(),
   [AGENT_CONVERSATIONS_FILE]: z.array(z.unknown()).optional(),
+  [STORY_BLUEPRINTS_FILE]: z.array(z.unknown()).optional(),
+  [STORY_SESSIONS_FILE]: z.array(z.unknown()).optional(),
   [MEMORY_ENTRIES_FILE]: z.array(z.unknown()).optional(),
   [MEMORY_EMBEDDINGS_FILE]: z.array(z.unknown()).optional(),
   [REGEX_ALLOW_LIST_FILE]: z.array(z.unknown()).optional(),

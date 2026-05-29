@@ -26,7 +26,7 @@ function createBufferedJsonResponse(
   result: ReturnType<ReturnType<typeof createBufferedSink>["getResult"]>,
 ): Response {
   if (!result) {
-    throw new Error("No response returned from workflow");
+    throw new Error("No response returned from story runtime");
   }
 
   return new Response(JSON.stringify(result), {

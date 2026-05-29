@@ -13,16 +13,6 @@ vi.mock("@/function/dialogue/dialogue-summary", () => ({
   syncDialogueSummaryState: (...args: unknown[]) => syncDialogueSummaryState(...args),
 }));
 
-vi.mock("@/lib/vector-memory/manager", () => ({
-  getVectorMemoryManager: () => ({
-    ingest: vi.fn().mockResolvedValue(undefined),
-  }),
-}));
-
-vi.mock("@/lib/mvu", () => ({
-  processMessageVariables: vi.fn().mockResolvedValue(undefined),
-}));
-
 import { processPostResponseAsync } from "@/function/dialogue/chat-shared";
 
 describe("processPostResponseAsync", () => {

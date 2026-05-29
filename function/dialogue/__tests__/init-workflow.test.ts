@@ -6,55 +6,31 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { initCharacterDialogue } from "../init";
+import type { SessionBlueprint } from "@/lib/story-agent/blueprint";
 
-const getCharacterById = vi.fn();
-const processFullContext = vi.fn();
+const loadStoryRuntimeBinding = vi.fn();
 
-vi.mock("@/lib/data/roleplay/character-record-operation", () => ({
-  LocalCharacterRecordOperations: {
-    getCharacterById: (...args: unknown[]) => getCharacterById(...args),
-  },
+vi.mock("@/lib/story-agent/session", () => ({
+  loadStoryRuntimeBinding: (...args: unknown[]) => loadStoryRuntimeBinding(...args),
 }));
-
-vi.mock("@/lib/core/regex-processor", () => ({
-  RegexProcessor: {
-    processFullContext: (...args: unknown[]) => processFullContext(...args),
-  },
-}));
-vi.mock("@/function/preset/download", () => ({
-  getCurrentSystemPresetType: () => "default-preset",
-}));
-
-const characterRecord = {
-  id: "char-1",
-  imagePath: "",
-  data: {
-    name: "Tester",
-    description: "",
-    personality: "",
-    first_mes: "你好",
-    scenario: "",
-    creatorcomment: "",
-    creator_notes: "",
-    data: {
-      name: "Tester",
-      description: "",
-      personality: "",
-      first_mes: "你好",
-      scenario: "",
-      creator_notes: "",
-      alternate_greetings: [],
-    },
-  },
-};
 
 describe("initCharacterDialogue", () => {
   beforeEach(() => {
-    getCharacterById.mockReset();
-    processFullContext.mockReset();
-
-    getCharacterById.mockResolvedValue(characterRecord);
-    processFullContext.mockResolvedValue({ replacedText: "screen" });
+    loadStoryRuntimeBinding.mockReset();
+    loadStoryRuntimeBinding.mockResolvedValue({
+      blueprint: createBlueprint(),
+      session: {
+        id: "session-1",
+        blueprintId: "blueprint:init",
+        dialogueId: "session-1",
+        recentTranscript: [],
+        worldbookActivationState: {},
+        renderState: { activeIntentIds: [] },
+        turnCount: 0,
+        createdAt: "2026-05-29T00:00:00.000Z",
+        updatedAt: "2026-05-29T00:00:00.000Z",
+      },
+    });
   });
 
   it("仅生成展示用开场白，不创建对话树且不调用 LLM", async () => {
@@ -69,9 +45,43 @@ describe("initCharacterDialogue", () => {
       llmType: "openai",
     });
 
-    expect(processFullContext).toHaveBeenCalledTimes(1);
+    expect(loadStoryRuntimeBinding).toHaveBeenCalledWith("session-1");
     expect(result.openingMessage?.id).toBe("session-1-opening");
-    expect(result.firstMessage).toBe("screen");
-    expect(result.openingMessages[0].content).toBe("screen");
+    expect(result.firstMessage).toBe("你好 user。");
+    expect(result.openingMessages[0].content).toBe("你好 user。");
   });
 });
+
+function createBlueprint(): SessionBlueprint {
+  return {
+    id: "blueprint:init",
+    schemaVersion: 2,
+    sourceHash: "hash",
+    createdAt: "2026-05-29T00:00:00.000Z",
+    profile: {
+      id: "char-1",
+      name: "Tester",
+      firstMessage: "你好 {{user}}。",
+      promptFragments: [],
+    },
+    promptStack: { messages: [] },
+    worldModules: [],
+    inputTransforms: [],
+    outputTransforms: [],
+    promptTransforms: [],
+    contentRules: [],
+    renderRules: [],
+    memoryPolicy: {
+      status: "deferred",
+      phase: "SAC-Phase 6b",
+      reason: "Long-term memory policy is defined in SAC-Phase 6b.",
+    },
+    diagnostics: [],
+    repairReport: {
+      appliedPatches: [],
+      manualPatches: [],
+      rejectedPatches: [],
+    },
+    provenance: [],
+  };
+}

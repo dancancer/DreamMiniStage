@@ -1,6 +1,7 @@
 import type { LLMConfig } from "@/lib/nodeflow/LLMNode/llm-config";
 
 export interface PreparedDialogueExecution {
+  runtime?: "story";
   context: unknown;
   llmConfig: LLMConfig;
   postprocessNodeId?: string;

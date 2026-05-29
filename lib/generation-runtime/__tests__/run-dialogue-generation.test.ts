@@ -75,7 +75,7 @@ describe("runDialogueGeneration", () => {
     vi.spyOn(
       await import("@/lib/generation-runtime/postprocess/finalize-dialogue-result"),
       "finalizeDialogueResult",
-    ).mockRejectedValue(new Error("regex crashed"));
+    ).mockRejectedValue(new Error("story finalization crashed"));
 
     const sink = createBufferedSink();
     await runDialogueGeneration({

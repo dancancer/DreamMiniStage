@@ -95,16 +95,16 @@
 
 ## 8. SAC-Phase 6a：最小 StorySession Runtime 硬替换
 
-- [ ] 定义最小 `StorySession` 状态模型：recent transcript、worldbook activation state、render state。
-- [ ] `worldbook activation state` 必须承载 sticky、cooldown、delay 计数器和递归命中状态。
-- [ ] 实现每轮生成后的 recent transcript、世界书激活状态、UI 状态更新 POC。
-- [ ] blueprint session 生成链路硬替换旧链路，不再调用 `STPromptManager`、`PresetNodeTools.convertToSTOpenAIPreset` 和 runtime `placement` 分支。
-- [ ] 统一删除或改造旧 regex/render 链、world-book-advanced 实时匹配、SimpleTool 字面 `keysecondary`、`BaseWorldbookEntry.keysecondary`、script-bridge 在 `/session` 的旧接入方式。
-- [ ] 明确 hard-replace 失败时的回滚预案：回到上一 commit 或整批 revert 当前阶段变更，不在代码中保留双轨 fallback。
-- [ ] 输出 story runtime replacement report。
-- [ ] POC-6a.1：用同一 `SessionBlueprint` 连续推进多轮模拟会话，检查角色身份、recent transcript、world hits、render state 和世界书激活状态是否稳定。
-- [ ] POC-6a.2：验证 sticky、cooldown、delay 跨轮次计数器在 `StorySession` 中更新，而不是写回 worldbook 静态定义。
-- [ ] POC-6a.3：验证 blueprint session 生成链路没有 ST-shaped `prompt_order` / runtime `placement` 分支。
+- [x] 定义最小 `StorySession` 状态模型：recent transcript、worldbook activation state、render state。
+- [x] `worldbook activation state` 必须承载 sticky、cooldown、delay 计数器和递归命中状态。
+- [x] 实现每轮生成后的 recent transcript、世界书激活状态、UI 状态更新 POC。
+- [x] blueprint session 生成链路硬替换旧链路，不再调用 `STPromptManager`、`PresetNodeTools.convertToSTOpenAIPreset` 和 runtime `placement` 分支。
+- [x] 统一删除或改造旧 regex/render 链、world-book-advanced 实时匹配、SimpleTool 字面 `keysecondary`、`BaseWorldbookEntry.keysecondary`、script-bridge 在 `/session` 的旧接入方式。
+- [x] 明确 hard-replace 失败时的回滚预案：回到上一 commit 或整批 revert 当前阶段变更，不在代码中保留双轨 fallback。
+- [x] 输出 story runtime replacement report。
+- [x] POC-6a.1：用同一 `SessionBlueprint` 连续推进多轮模拟会话，检查角色身份、recent transcript、world hits、render state 和世界书激活状态是否稳定。
+- [x] POC-6a.2：验证 sticky、cooldown、delay 跨轮次计数器在 `StorySession` 中更新，而不是写回 worldbook 静态定义。
+- [x] POC-6a.3：验证 blueprint session 生成链路没有 ST-shaped `prompt_order` / runtime `placement` 分支。
 
 ## 9. SAC-Phase 6b：长期记忆与会话稳定性
 

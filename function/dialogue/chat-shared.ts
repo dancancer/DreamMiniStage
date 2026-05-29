@@ -1,45 +1,21 @@
 /**
- * @input  lib/data/roleplay/character-dialogue-operation, lib/workflow/examples/DialogueWorkflow, lib/vector-memory/manager, lib/mvu
- * @output buildDialogueWorkflowParams, isDialogueWorkflowResult, processPostResponseAsync
- * @pos    对话生成共享逻辑 - workflow 参数构建与响应后处理
+ * @input  lib/data/roleplay/character-dialogue-operation, function/dialogue/dialogue-summary
+ * @output buildDialogueRuntimeParams, processPostResponseAsync
+ * @pos    对话生成共享逻辑 - story runtime 参数构建与响应后处理
  */
 
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { ParsedResponse } from "@/lib/models/parsed-response";
-import { getCurrentSystemPresetType } from "@/function/preset/download";
 import { syncDialogueSummaryState } from "@/function/dialogue/dialogue-summary";
-import { getVectorMemoryManager } from "@/lib/vector-memory/manager";
-import { DialogueWorkflowParams } from "@/lib/workflow/examples/DialogueWorkflow";
-import type { ModelAdvancedSettings } from "@/lib/model-runtime";
-import type { ResolvedPromptRuntimeConfig } from "@/lib/prompt-config/state";
+import type {
+  DialogueRuntimeParams,
+  DialogueRuntimeParamInput,
+} from "@/lib/generation-runtime/prepare/dialogue-runtime-params";
 
-export interface DialogueWorkflowResult {
-  outputData: {
-    thinkingContent?: string;
-    screenContent: string;
-    fullResponse: string;
-    nextPrompts?: string[];
-    event?: unknown;
-  };
-}
-
-export interface DialogueWorkflowParamInput {
-  dialogueId: string;
-  characterId: string;
-  userInput: string;
-  language: "zh" | "en";
-  username?: string;
-  modelName: string;
-  apiKey: string;
-  baseUrl: string;
-  llmType: "openai" | "ollama" | "gemini";
-  advanced?: ModelAdvancedSettings;
-  promptRuntime: ResolvedPromptRuntimeConfig;
-  number: number;
-  fastModel: boolean;
-  /** Instruction mode 模板 ID */
-  instructTemplateId?: string;
-}
+export type {
+  DialogueRuntimeParams,
+  DialogueRuntimeParamInput,
+} from "@/lib/generation-runtime/prepare/dialogue-runtime-params";
 
 export interface PostResponseInput {
   dialogueId: string;
@@ -52,19 +28,9 @@ export interface PostResponseInput {
   nodeId: string;
 }
 
-export function isDialogueWorkflowResult(result: unknown): result is DialogueWorkflowResult {
-  return (
-    typeof result === "object" &&
-    result !== null &&
-    "outputData" in result &&
-    typeof (result as DialogueWorkflowResult).outputData === "object" &&
-    (result as DialogueWorkflowResult).outputData !== null
-  );
-}
-
-export function buildDialogueWorkflowParams(
-  input: DialogueWorkflowParamInput,
-): DialogueWorkflowParams {
+export function buildDialogueRuntimeParams(
+  input: DialogueRuntimeParamInput,
+): DialogueRuntimeParams {
   const {
     dialogueId,
     characterId,
@@ -76,7 +42,6 @@ export function buildDialogueWorkflowParams(
     baseUrl,
     llmType,
     advanced,
-    promptRuntime,
     number,
     fastModel,
   } = input;
@@ -105,19 +70,11 @@ export function buildDialogueWorkflowParams(
     streamUsage: advanced?.streamUsage ?? true,
     number,
     fastModel,
-    systemPresetType: getCurrentSystemPresetType(),
-    contextPreset: promptRuntime.contextPreset,
-    sysprompt: promptRuntime.sysprompt,
-    stopStrings: promptRuntime.stopStrings,
-    instructTemplateId: input.instructTemplateId,
-    promptNames: promptRuntime.promptNames,
-    postProcessingMode: promptRuntime.postProcessingMode,
-    effectivePromptConfig: promptRuntime.effectiveConfig,
   };
 }
 
 export async function processPostResponseAsync(input: PostResponseInput): Promise<void> {
-  const { dialogueId, message, thinkingContent, fullResponse, screenContent, event, nextPrompts, nodeId } = input;
+  const { dialogueId, thinkingContent, fullResponse, screenContent, event, nextPrompts, nodeId } = input;
 
   try {
     const parsed: ParsedResponse = {
@@ -138,32 +95,6 @@ export async function processPostResponseAsync(input: PostResponseInput): Promis
     if (!updated) {
       throw new Error(`Pending dialogue node not found: ${nodeId}`);
     }
-
-    const vectorManager = getVectorMemoryManager();
-    const now = Date.now();
-    vectorManager.ingest(dialogueId, [
-      {
-        id: `user_${nodeId}`,
-        role: "user",
-        source: "user_message",
-        content: message,
-        createdAt: now,
-      },
-      {
-        id: `assistant_${nodeId}`,
-        role: "assistant",
-        source: "assistant_response",
-        content: screenContent || fullResponse,
-        createdAt: now,
-      },
-    ]).catch((error) => console.warn("[VectorMemory] ingest failed:", error));
-
-    const { processMessageVariables } = await import("@/lib/mvu");
-    await processMessageVariables({
-      dialogueKey: dialogueId,
-      nodeId,
-      messageContent: fullResponse,
-    });
 
     if (event) {
       await LocalCharacterDialogueOperations.updateNodeInDialogueTree(

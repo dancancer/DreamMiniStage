@@ -1,7 +1,6 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useScriptVariables } from "@/lib/store/script-variables";
 import {
   createHostDebugState,
   readHostDebugSnapshot,
@@ -57,9 +56,7 @@ vi.mock("@/components/character-chat", async () => {
 
   return {
     ApiSelector: () => null,
-    ChatInput: ({ children }: { children?: React.ReactNode }) => (
-      <div data-testid="chat-input">{children}</div>
-    ),
+    ChatInput: () => <div data-testid="chat-input" />,
     ControlPanel: () => null,
     MessageHeaderControls: () => null,
     MessageList: ({
@@ -79,21 +76,22 @@ vi.mock("@/components/character-chat", async () => {
 interface RenderedPanel {
   container: HTMLDivElement;
   root: Root;
+  onHostDebugUpdate: ReturnType<typeof vi.fn>;
 }
 
-function renderPanel(overrides: Record<string, unknown> = {}): RenderedPanel {
+function renderPanel(): RenderedPanel {
   const container = document.createElement("div");
   document.body.appendChild(container);
 
   const root = createRoot(container);
   const hostDebugState = createHostDebugState();
+  const onHostDebugUpdate = vi.fn();
   act(() => {
     root.render(
       <CharacterChatPanel
         character={{ id: "char-1", name: "Alice", extensions: {} }}
         messages={[
           { id: "m0", role: "assistant", content: "hello" },
-          { id: "m1", role: "assistant", content: "world" },
         ]}
         openingMessages={[]}
         openingIndex={0}
@@ -117,31 +115,12 @@ function renderPanel(overrides: Record<string, unknown> = {}): RenderedPanel {
         chatName="Session One"
         hostDebug={readHostDebugSnapshot(hostDebugState)}
         hostDebugState={hostDebugState}
-        onHostDebugUpdate={vi.fn()}
-        {...overrides}
+        onHostDebugUpdate={onHostDebugUpdate}
       />,
     );
   });
 
-  return { container, root };
-}
-
-async function runSlash(script: string): Promise<unknown> {
-  if (!harness.lastOnScriptMessage) {
-    throw new Error("MessageList onScriptMessage is not ready");
-  }
-
-  let result: unknown;
-  await act(async () => {
-    result = await harness.lastOnScriptMessage?.({
-      type: "API_CALL",
-      payload: {
-        method: "triggerSlash",
-        args: [script],
-      },
-    });
-  });
-  return result;
+  return { container, root, onHostDebugUpdate };
 }
 
 function unmountPanel(rendered: RenderedPanel): void {
@@ -151,89 +130,35 @@ function unmountPanel(rendered: RenderedPanel): void {
   rendered.container.remove();
 }
 
-describe("CharacterChatPanel slash bridge harness", () => {
+describe("CharacterChatPanel story script boundary", () => {
   beforeEach(() => {
     harness.lastOnScriptMessage = undefined;
-    useScriptVariables.getState().clearAll();
-    window.localStorage.clear();
   });
 
-  it("routes high-value slash commands from triggerSlash to host callbacks", async () => {
-    const onOpenTemporaryChat = vi.fn().mockResolvedValue(undefined);
-    const onTranslateText = vi.fn().mockResolvedValue("bonjour");
-    const onGetYouTubeTranscript = vi.fn().mockResolvedValue("line-1\nline-2");
-    const onSelectProxyPreset = vi.fn().mockResolvedValue("Claude Reverse");
-    const onGetWorldInfoTimedEffect = vi.fn().mockResolvedValue(true);
-    const onSetWorldInfoTimedEffect = vi.fn().mockResolvedValue(undefined);
-    const onJumpToMessage = vi.fn().mockResolvedValue(undefined);
-
-    const rendered = renderPanel({
-      chatManagementCallbacks: { onOpenTemporaryChat },
-      hostCapabilityCallbacks: { onTranslateText, onGetYouTubeTranscript, onSelectProxyPreset },
-      worldInfoCallbacks: { onGetWorldInfoTimedEffect, onSetWorldInfoTimedEffect },
-      navigationCallbacks: { onJumpToMessage },
-    });
-
-    const tempchat = await runSlash("/tempchat") as { isError?: boolean; pipe?: string };
-    const translate = await runSlash("/translate target=fr provider=deepl hello world") as { isError?: boolean; pipe?: string };
-    const proxy = await runSlash("/proxy Claude Reverse") as { isError?: boolean; pipe?: string };
-    const transcript = await runSlash("/yt-script lang=ja https://youtu.be/dQw4w9WgXcQ") as { isError?: boolean; pipe?: string };
-    const timedEffect = await runSlash("/wi-get-timed-effect file=book-1 effect=sticky uid-1") as { isError?: boolean; pipe?: string };
-    const setTimedEffect = await runSlash("/wi-set-timed-effect file=book-1 uid=uid-1 effect=delay toggle") as { isError?: boolean; pipe?: string };
-    const teleport = await runSlash("/floor-teleport 1") as { isError?: boolean; pipe?: string };
-
-    expect(tempchat).toMatchObject({ isError: false, pipe: "" });
-    expect(translate).toMatchObject({ isError: false, pipe: "bonjour" });
-    expect(proxy).toMatchObject({ isError: false, pipe: "Claude Reverse" });
-    expect(transcript).toMatchObject({ isError: false, pipe: "line-1\nline-2" });
-    expect(timedEffect).toMatchObject({ isError: false, pipe: "true" });
-    expect(setTimedEffect).toMatchObject({ isError: false, pipe: "" });
-    expect(teleport).toMatchObject({ isError: false, pipe: "" });
-
-    expect(onOpenTemporaryChat).toHaveBeenCalledTimes(1);
-    expect(onTranslateText).toHaveBeenCalledWith("hello world", {
-      target: "fr",
-      provider: "deepl",
-    });
-    expect(onSelectProxyPreset).toHaveBeenCalledWith("Claude Reverse");
-    expect(onGetYouTubeTranscript).toHaveBeenCalledWith("https://youtu.be/dQw4w9WgXcQ", {
-      lang: "ja",
-    });
-    expect(onGetWorldInfoTimedEffect).toHaveBeenCalledWith("book-1", "uid-1", "sticky", {
-      format: "boolean",
-    });
-    expect(onSetWorldInfoTimedEffect).toHaveBeenCalledWith("book-1", "uid-1", "delay", "toggle");
-    expect(onJumpToMessage).toHaveBeenCalledWith(1);
-
-    unmountPanel(rendered);
-  });
-
-  it("routes gallery slash commands from triggerSlash to host callbacks", async () => {
-    const onListGallery = vi.fn().mockResolvedValue(["/alice.png", "/alice-2.png"]);
-    const onShowGallery = vi.fn().mockResolvedValue(undefined);
-
-    const rendered = renderPanel({
-      navigationCallbacks: { onListGallery, onShowGallery },
-    });
-
-    const list = await runSlash("/list-gallery char=Alice") as { isError?: boolean; pipe?: string };
-    const show = await runSlash("/show-gallery char=Alice") as { isError?: boolean; pipe?: string };
-
-    expect(list).toMatchObject({ isError: false, pipe: "[\"/alice.png\",\"/alice-2.png\"]" });
-    expect(show).toMatchObject({ isError: false, pipe: "" });
-    expect(onListGallery).toHaveBeenCalledWith({ character: "Alice", group: undefined });
-    expect(onShowGallery).toHaveBeenCalledWith({ character: "Alice" });
-
-    unmountPanel(rendered);
-  });
-
-  it("fails fast when high-value host callback is missing", async () => {
+  it("fails fast for script bridge messages and records host debug state", async () => {
     const rendered = renderPanel();
 
-    const result = await runSlash("/proxy") as { isError?: boolean; errorMessage?: string };
+    await expect(async () => {
+      await act(async () => {
+        await harness.lastOnScriptMessage?.({
+          type: "API_CALL",
+          payload: {
+            method: "triggerSlash",
+            args: ["/proxy Claude Reverse"],
+          },
+        });
+      });
+    }).rejects.toThrow("Script bridge execution is not supported in story runtime");
 
-    expect(result.isError).toBe(true);
-    expect(result.errorMessage).toContain("not available");
+    expect(rendered.onHostDebugUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      recentApiCalls: [
+        expect.objectContaining({
+          capability: "story-runtime-script-execution",
+          outcome: "fail-fast",
+          resolvedPath: "fail-fast",
+        }),
+      ],
+    }));
 
     unmountPanel(rendered);
   });

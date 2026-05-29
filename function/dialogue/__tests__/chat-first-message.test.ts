@@ -12,60 +12,8 @@ const createDialogueTree = vi.fn();
 const addNodeToDialogueTree = vi.fn();
 const switchBranch = vi.fn();
 const updateNodeInDialogueTree = vi.fn();
-const ingestMock = vi.fn();
-const processMessageVariables = vi.fn();
-const getActivePromptPreset = vi.fn();
-const resolvePromptRuntimeConfig = vi.fn();
 const prepareDialogueExecutionMock = vi.fn();
 const runDialogueGenerationMock = vi.fn();
-
-const DEFAULT_PROMPT_RUNTIME = {
-  contextPreset: {
-    name: "Default",
-    story_string: "",
-    example_separator: "***",
-    chat_start: "***",
-  },
-  sysprompt: { enabled: false, name: "Default", content: "", post_history: "" },
-  stopStrings: [],
-  promptNames: {
-    charName: "char-1",
-    userName: "user",
-    groupNames: [],
-    startsWithGroupName: () => false,
-  },
-  postProcessingMode: "none",
-  effectiveConfig: {
-    presetName: null,
-    instructEnabled: false,
-    instructPreset: null,
-    promptPostProcessing: "none",
-    contextName: "Default",
-    syspromptEnabled: false,
-    syspromptName: "Default",
-    stopStrings: [],
-  },
-};
-
-vi.mock("@/lib/workflow/examples/DialogueWorkflow", () => ({
-  DialogueWorkflow: vi.fn().mockImplementation(() => ({})),
-}));
-
-vi.mock("@/lib/prompt-config/service", () => ({
-  getActivePromptPreset: (...args: unknown[]) => getActivePromptPreset(...args),
-  resolvePromptRuntimeConfig: (...args: unknown[]) => resolvePromptRuntimeConfig(...args),
-}));
-
-vi.mock("@/lib/vector-memory/manager", () => ({
-  getVectorMemoryManager: () => ({
-    ingest: ingestMock,
-  }),
-}));
-
-vi.mock("@/lib/mvu", () => ({
-  processMessageVariables: (...args: unknown[]) => processMessageVariables(...args),
-  initMvuVariablesFromWorldBooks: vi.fn().mockResolvedValue(undefined),
-}));
 
 vi.mock("@/lib/generation-runtime/prepare/prepare-dialogue-execution", () => ({
   prepareDialogueExecution: (...args: unknown[]) => prepareDialogueExecutionMock(...args),
@@ -92,10 +40,6 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
     addNodeToDialogueTree.mockReset();
     switchBranch.mockReset();
     updateNodeInDialogueTree.mockReset();
-    ingestMock.mockReset();
-    processMessageVariables.mockReset();
-    getActivePromptPreset.mockReset();
-    resolvePromptRuntimeConfig.mockReset();
     prepareDialogueExecutionMock.mockReset();
     runDialogueGenerationMock.mockReset();
 
@@ -123,12 +67,10 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
       current_nodeId: "assistant-1",
     });
 
-    getActivePromptPreset.mockResolvedValue(null);
-    resolvePromptRuntimeConfig.mockResolvedValue(DEFAULT_PROMPT_RUNTIME);
     prepareDialogueExecutionMock.mockImplementation(async (params) => ({
       context: { id: "ctx-1" },
       llmConfig: params,
-      postprocessNodeId: "regex-1",
+      postprocessNodeId: "story-runtime",
     }));
     runDialogueGenerationMock.mockImplementation(async (_input, sink) => {
       await sink.emit({
@@ -143,12 +85,9 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
         },
       });
     });
-
-    ingestMock.mockResolvedValue(undefined);
-    processMessageVariables.mockResolvedValue(undefined);
   });
 
-  it("创建对话树并写入开场节点后，仅执行一次 DialogueWorkflow", async () => {
+  it("创建对话树并写入开场节点后，仅执行一次 story runtime", async () => {
     const response = await handleCharacterChatRequest({
       username: "user",
       dialogueId: "session-1",
@@ -200,16 +139,13 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
     }), expect.any(Object));
   });
 
-  it("workflow 失败时仍先持久化用户输入节点", async () => {
+  it("story runtime 失败时仍先持久化用户输入节点", async () => {
     getDialogueTreeById.mockReset();
     createDialogueTree.mockReset();
     addNodeToDialogueTree.mockReset();
     updateNodeInDialogueTree.mockReset();
     prepareDialogueExecutionMock.mockReset();
     runDialogueGenerationMock.mockReset();
-    getActivePromptPreset.mockReset();
-    resolvePromptRuntimeConfig.mockReset();
-
     getDialogueTreeById.mockResolvedValue({
       id: "session-fail",
       character_id: "char-1",
@@ -218,12 +154,10 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
     });
 
     addNodeToDialogueTree.mockResolvedValue("pending-node");
-    getActivePromptPreset.mockResolvedValue(null);
-    resolvePromptRuntimeConfig.mockResolvedValue(DEFAULT_PROMPT_RUNTIME);
     prepareDialogueExecutionMock.mockImplementation(async (params) => ({
       context: { id: "ctx-fail" },
       llmConfig: params,
-      postprocessNodeId: "regex-1",
+      postprocessNodeId: "story-runtime",
     }));
     runDialogueGenerationMock.mockResolvedValue(undefined);
 
@@ -244,7 +178,7 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
 
     const body = await response.json();
     expect(response.status).toBe(500);
-    expect(body).toMatchObject({ success: false, message: "No response returned from workflow" });
+    expect(body).toMatchObject({ success: false, message: "No response returned from story runtime" });
     expect(addNodeToDialogueTree).toHaveBeenCalledWith(
       "session-fail",
       "root",
@@ -266,8 +200,6 @@ describe("handleCharacterChatRequest 模型参数透传", () => {
     createDialogueTree.mockReset();
     addNodeToDialogueTree.mockReset();
     updateNodeInDialogueTree.mockReset();
-    getActivePromptPreset.mockReset();
-    resolvePromptRuntimeConfig.mockReset();
     prepareDialogueExecutionMock.mockReset();
     runDialogueGenerationMock.mockReset();
 
@@ -279,12 +211,10 @@ describe("handleCharacterChatRequest 模型参数透传", () => {
     });
     addNodeToDialogueTree.mockResolvedValue("assistant-advanced");
     updateNodeInDialogueTree.mockResolvedValue(true);
-    getActivePromptPreset.mockResolvedValue(null);
-    resolvePromptRuntimeConfig.mockResolvedValue(DEFAULT_PROMPT_RUNTIME);
     prepareDialogueExecutionMock.mockImplementation(async (params) => ({
       context: { id: "ctx-advanced" },
       llmConfig: params,
-      postprocessNodeId: "regex-1",
+      postprocessNodeId: "story-runtime",
     }));
     runDialogueGenerationMock.mockImplementation(async (_input, sink) => {
       await sink.emit({
@@ -301,7 +231,7 @@ describe("handleCharacterChatRequest 模型参数透传", () => {
     });
   });
 
-  it("将高级设置从请求透传到 DialogueWorkflow", async () => {
+  it("将高级设置从请求透传到 story runtime", async () => {
     await handleCharacterChatRequest({
       username: "user",
       dialogueId: "session-advanced",
@@ -347,9 +277,7 @@ describe("handleCharacterChatRequest 模型参数透传", () => {
     }));
   });
 
-  it("显式非流式请求不应被 preset 的 streaming 默认值升级为 SSE", async () => {
-    getActivePromptPreset.mockResolvedValue({ sampling: { streaming: true } });
-
+  it("显式非流式请求不应被旧 preset 的 streaming 默认值升级为 SSE", async () => {
     const response = await handleCharacterChatRequest({
       username: "user",
       dialogueId: "session-advanced",
@@ -368,7 +296,7 @@ describe("handleCharacterChatRequest 模型参数透传", () => {
 
     expect(response.headers.get("Content-Type")).toContain("application/json");
     expect(prepareDialogueExecutionMock).toHaveBeenCalledWith(expect.objectContaining({
-      streaming: true,
+      streaming: false,
     }));
   });
 });

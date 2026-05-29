@@ -5,11 +5,13 @@ describe("session-chat-actions", () => {
     const { createSessionChatActions } = await import("../session-chat-actions");
 
     const executeSessionSlashInput = vi.fn().mockResolvedValue("");
+    const executeQuickReplyByIndex = vi.fn().mockResolvedValue("");
     const handleSendMessage = vi.fn().mockResolvedValue(undefined);
     const setUserInput = vi.fn();
 
     const actions = createSessionChatActions({
       executeSessionSlashInput,
+      executeQuickReplyByIndex,
       handleSendMessage,
       setUserInput,
       t: (key) => key,

@@ -1,5 +1,5 @@
 /**
- * @input  function/dialogue/chat-shared, function/dialogue/chat-streaming, lib/data/roleplay/character-dialogue-operation, lib/workflow/examples/DialogueWorkflow
+ * @input  function/dialogue/chat-shared, function/dialogue/chat-streaming, lib/data/roleplay/character-dialogue-operation, lib/generation-runtime
  * @output handleCharacterChatRequest
  * @pos    对话核心处理 - 用户消息处理与 LLM 响应生成
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
@@ -10,9 +10,8 @@ import { ParsedResponse } from "@/lib/models/parsed-response";
 import { prepareOpeningGreeting, type OpeningPayload } from "@/function/dialogue/opening";
 import { resolveModelAdvancedSettings } from "@/lib/model-runtime";
 import type { ModelAdvancedSettings } from "@/lib/model-runtime";
-import { getActivePromptPreset, resolvePromptRuntimeConfig } from "@/lib/prompt-config/service";
 import {
-  buildDialogueWorkflowParams,
+  buildDialogueRuntimeParams,
 } from "@/function/dialogue/chat-shared";
 import { handlePreparedDialogueResponse } from "@/function/dialogue/chat-streaming";
 import { prepareDialogueExecution } from "@/lib/generation-runtime/prepare/prepare-dialogue-execution";
@@ -67,14 +66,8 @@ export async function handleCharacterChatRequest(payload: {
     }
 
     try {
-      const activePromptPreset = await getActivePromptPreset();
-      const promptRuntime = await resolvePromptRuntimeConfig({
-        characterId,
-        username,
-      });
       const resolvedAdvanced = resolveModelAdvancedSettings({
         request: advanced,
-        preset: activePromptPreset?.sampling,
       });
       const responseStreaming = streaming;
       const modelStreaming = resolvedAdvanced.streaming ?? responseStreaming;
@@ -90,7 +83,7 @@ export async function handleCharacterChatRequest(payload: {
       });
       await appendPendingUserTurn({ dialogueId, message, nodeId, parentNodeId });
 
-      const preparedExecution = await prepareDialogueExecution(buildDialogueWorkflowParams({
+      const preparedExecution = await prepareDialogueExecution(buildDialogueRuntimeParams({
         dialogueId,
         characterId,
         userInput: sanitizedMessage,
@@ -105,7 +98,6 @@ export async function handleCharacterChatRequest(payload: {
           streaming: modelStreaming,
           streamUsage: effectiveStreamUsage,
         },
-        promptRuntime,
         number,
         fastModel,
       }));
@@ -178,13 +170,6 @@ async function ensureDialogueTreeWithOpening(params: {
     opening.id,
   );
 
-  const { initMvuVariablesFromWorldBooks } = await import("@/lib/mvu");
-  initMvuVariablesFromWorldBooks({
-    dialogueKey: dialogueId,
-    characterId,
-    openingNodeId: opening.id,
-    greeting: opening.fullContent,
-  }).catch((error) => console.warn("[MVU] 变量初始化失败:", error));
 }
 
 async function appendPendingUserTurn(params: {

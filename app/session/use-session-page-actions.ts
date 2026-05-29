@@ -331,15 +331,17 @@ export function useSessionPageActions({
   ]);
 
   const executeSessionSlashInput = slashExecutor.executeSessionSlashInput;
+  const executeQuickReplyByIndex = slashExecutor.executeQuickReplyByIndex;
   const chatActions = useMemo(() => createSessionChatActions({
     executeSessionSlashInput,
+    executeQuickReplyByIndex,
     handleSendMessage: dialogue.handleSendMessage,
     setUserInput,
     t,
     isSending: dialogue.isSending,
     activeModes,
     onError: (message) => toast.error(message),
-  }), [executeSessionSlashInput, dialogue.handleSendMessage, setUserInput, t, dialogue.isSending, activeModes]);
+  }), [executeSessionSlashInput, executeQuickReplyByIndex, dialogue.handleSendMessage, setUserInput, t, dialogue.isSending, activeModes]);
 
   return {
     resolveSessionHostBridge,
