@@ -13,6 +13,25 @@ export {
 } from "./types";
 
 export {
+  IMPORTED_ASSET_BUNDLE_SCHEMA_VERSION,
+  type AssetSource,
+  type AssetSourceKind,
+  type ExtensionArtifactKind,
+  type FieldProvenance,
+  type ImportedAssetBundle,
+  type ImportedCharacterProfile,
+  type ImportedExtensionArtifact,
+  type ImportedPreset,
+  type ImportedPromptFragment,
+  type ImportedRegexScript,
+  type ImportedWorldBook,
+  type ImportedWorldBookEntry,
+  type ImportDiagnostic,
+  type ImportDiagnosticSeverity,
+  type UnsupportedArtifact,
+} from "./bundle-types";
+
+export {
   regexImportPipeline,
   importRegexScripts,
   canImportRegexScripts,

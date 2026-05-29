@@ -25,9 +25,9 @@
 
 ## 3. SAC-Phase 1：统一导入 Bundle
 
-- [ ] 定义 `ImportedAssetBundle` schema。
-- [ ] 明确 `ImportedAssetBundle` 复用或扩展 `lib/adapters/import` 的 `NormalizedPreset`、`NormalizedPresetPrompt`、`NormalizedWorldBookEntry`。
-- [ ] 明确 `ImportedCharacterProfile` 是净新契约，`regexScripts` 当前复用现有 `RegexScript[]`；如果要引入 `NormalizedRegexScript`，必须在本阶段定义。
+- [x] 定义 `ImportedAssetBundle` schema。
+- [x] 明确 `ImportedAssetBundle` 复用或扩展 `lib/adapters/import` 的 `NormalizedPreset`、`NormalizedPresetPrompt`、`NormalizedWorldBookEntry`。
+- [x] 明确 `ImportedCharacterProfile` 是净新契约，`regexScripts` 当前复用现有 `RegexScript[]`；如果要引入 `NormalizedRegexScript`，必须在本阶段定义。
 - [x] 定义世界书 `selectiveLogic` 的 canonical enum，并把 ST 数字值（如真实 fixture 中的 `0`）确定性映射进去。
 - [ ] 决定 `SessionBlueprint` 持久化位置，以及既有 `PRESET_FILE`、`WORLD_BOOK_FILE`、`REGEX_SCRIPTS_FILE`、`MEMORY_ENTRIES_FILE`、vector-memory store 与 blueprint store 的关系。
 - [ ] 盘点并标注 `function/character/import.ts` 中 `character_book` 直写 IndexedDB（未归一化）vs regex 走 adapter 的不一致，定义统一入口。

@@ -1,6 +1,6 @@
 # SAC-Phase 1 Data Contract Candidates
 
-> 本文件是 Phase 1 的输入，不是最终 schema。目标是收敛到单一导入 bundle，再编译为 `SessionBlueprint`。
+> 本文件是 Phase 1 的输入。当前权威 TypeScript contract 位于 `lib/adapters/import/bundle-types.ts`，并由 `lib/adapters/import/__tests__/bundle-types.test.ts` 用真实 fixture 组合验证。
 
 ## 1. Contract Principles
 
@@ -12,8 +12,11 @@
 
 ## 2. ImportedAssetBundle Candidate
 
+Implemented in `ImportedAssetBundle`:
+
 ```ts
 export interface ImportedAssetBundle {
+  schemaVersion: 1;
   bundleId: string;
   sourceHash: string;
   createdAt: string;
@@ -49,7 +52,7 @@ export interface ImportedCharacterProfile {
 
 ## 4. World Books
 
-Existing `NormalizedWorldBookEntry` is the starting point, but Phase 1 should preserve book-level grouping. A flat entry array is not enough for diagnostics like “worldbook A has three over-broad keys”.
+Existing `NormalizedWorldBookEntry` is the starting point, but Phase 1 preserves book-level grouping through `ImportedWorldBook`. A flat entry array is not enough for diagnostics like “worldbook A has three over-broad keys”.
 
 ```ts
 export interface ImportedWorldBook {
@@ -69,7 +72,7 @@ export interface ImportedWorldBookEntry {
 }
 ```
 
-Phase 1 must decide whether `sourceBookId` is embedded in the normalized entry or carried only by the wrapper. The invariant is entry-to-book provenance must be mechanically recoverable.
+Decision: `sourceBookId` is carried by `ImportedWorldBookEntry`, not embedded into `NormalizedWorldBookEntry`. The normalized entry stays focused on worldbook semantics; the wrapper owns source grouping and provenance.
 
 The ST numeric mapping for `selectiveLogic` is already defined at the import boundary:
 
@@ -165,7 +168,7 @@ export interface UnsupportedArtifact {
 
 ## 9. Store Decision Candidates
 
-Phase 1 must choose one storage boundary before implementation:
+Phase 1 still must choose one storage boundary before implementation:
 
 | Candidate | Meaning | Consequence |
 | --- | --- | --- |
