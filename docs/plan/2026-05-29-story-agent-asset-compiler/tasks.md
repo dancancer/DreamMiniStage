@@ -31,7 +31,7 @@
 - [x] 定义世界书 `selectiveLogic` 的 canonical enum，并把 ST 数字值（如真实 fixture 中的 `0`）确定性映射进去。
 - [x] 决定 `SessionBlueprint` 持久化位置，以及既有 `PRESET_FILE`、`WORLD_BOOK_FILE`、`REGEX_SCRIPTS_FILE`、`MEMORY_ENTRIES_FILE`、vector-memory store 与 blueprint store 的关系。
 - [x] 盘点并标注 `function/character/import.ts` 中 `character_book` 直写 IndexedDB（未归一化）vs regex 走 adapter 的不一致，定义统一入口。
-- [ ] 收敛角色卡、世界书、预设、正则 import adapter 入口：所有 ST 资产导入必须先进入 adapter/bundle，再由调用方决定存储。
+- [x] 收敛角色卡、世界书、预设、正则 import adapter 入口：所有 ST 资产导入必须先进入 adapter/bundle，再由调用方决定存储。
 - [x] 角色卡内嵌 `character_book` 改为走世界书 adapter。
 - [x] 角色卡内嵌 `regex_scripts` 继续走正则 adapter，并纳入 bundle provenance。
 - [x] 不支持执行的扩展进入 `extensionArtifacts`，并生成 diagnostics。

@@ -8,6 +8,7 @@
 | `function/worldbook/import.ts` | Uses `importWorldBookEntries` adapter before writing worldbook store | Adapter-backed |
 | `components/ImportWorldBookModal.tsx` | Calls `importWorldBookFromJson` | Adapter-backed through function layer |
 | `components/ImportRegexScriptModal.tsx` | Calls regex import function | Adapter-backed through function layer |
+| `function/preset/import.ts` | Calls `PresetOperations.importPreset`, which normalizes through `lib/adapters/import/preset-import` | Adapter-backed |
 
 ## Closed Gap
 
@@ -26,6 +27,8 @@
 
 Standalone worldbook and regex imports are adapter-backed but not yet bundle-backed. Phase 1 can either route them through `ImportedAssetBundle` wrappers or leave them as asset-library import paths that are later compiled into blueprint.
 
+Current decision: standalone asset-library imports may remain adapter-backed. Character-card imports use bundle because they combine character, embedded worldbook, embedded regex and unsupported extensions.
+
 ## Verification
 
 Direct character-card worldbook bypass check:
@@ -36,3 +39,12 @@ rg -n "updateWorldBook\([^\n]*characterJson|characterJson\.data\?\.character_boo
 ```
 
 Expected result: no matches.
+
+Adapter-backed import check:
+
+```bash
+rg -n "updateWorldBook\(|updateRegexScripts\(|importWorldBookEntries|importRegexScripts|importPreset\(" \
+  function lib/adapters/import components
+```
+
+Expected result: every import write path is preceded by adapter or bundle construction. Non-import edit/global-management operations are not part of this check.
