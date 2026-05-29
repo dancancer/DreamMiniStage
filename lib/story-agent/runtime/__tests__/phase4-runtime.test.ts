@@ -126,6 +126,17 @@ describe("SAC-Phase 4 blueprint runtime harness", () => {
     expect(second.hits.map((hit) => hit.reason)).toEqual(["sticky", "delayed"]);
     expect(third.hits.some((hit) => hit.entryId === "cooldown")).toBe(false);
   });
+
+  it("POC-4.4 follows recursive worldbook hits without mutating definitions", () => {
+    const blueprint = recursionBlueprint();
+    const result = matchWorldModules(blueprint, "alpha", {}, { maxRecursionDepth: 1 });
+
+    expect(result.hits.map((hit) => [hit.entryId, hit.reason])).toEqual([
+      ["alpha", "keyword"],
+      ["beta", "recursive"],
+    ]);
+    expect(blueprint.worldModules[0].entries[0].content).toBe("beta appears in injected content");
+  });
 });
 
 function shortPromptBlueprint(): SessionBlueprint {
@@ -185,6 +196,29 @@ function worldEntry(
     matchWholeWords: false,
     insertionOrder: id === "sticky" ? 1 : id === "cooldown" ? 2 : 3,
     activation,
+    recursion: {
+      preventRecursion: false,
+      excludeRecursion: false,
+    },
     sourceField: id,
+  };
+}
+
+function recursionBlueprint(): SessionBlueprint {
+  const blueprint = statefulBlueprint();
+  return {
+    ...blueprint,
+    worldModules: [{
+      id: "recursive",
+      name: "recursive",
+      sourcePath: "recursive-worldbook.json",
+      entries: [
+        {
+          ...worldEntry("alpha", "alpha", { sticky: 0, cooldown: 0, delay: 0 }),
+          content: "beta appears in injected content",
+        },
+        worldEntry("beta", "beta", { sticky: 0, cooldown: 0, delay: 0 }),
+      ],
+    }],
   };
 }

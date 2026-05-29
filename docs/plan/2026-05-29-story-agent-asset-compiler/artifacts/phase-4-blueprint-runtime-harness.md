@@ -24,6 +24,7 @@ This harness is not wired into `/session`. It exists to prove the clean runtime 
 | `sticky` activation state | Implemented |
 | `cooldown` activation state | Implemented |
 | `delay` activation state | Implemented |
+| Recursive scan with bounded `maxRecursionDepth` | Implemented |
 | Stable hit ordering by `insertionOrder` | Implemented |
 | Prompt provenance | Implemented as `source` and `sourcePath` on assembled messages |
 | Budget trimming | Implemented as prompt stack > world > memory > history retention |

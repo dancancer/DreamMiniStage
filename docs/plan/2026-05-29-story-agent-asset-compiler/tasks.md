@@ -73,12 +73,12 @@
 - [x] 实现 `PromptStack` assembler POC。
 - [x] 注入结果带 `WorldHit` 和 prompt provenance。
 - [ ] 对比当前 ST baseline assembly 测试，区分 bug 与有意差异。
-- [ ] 盘点 MVU、slash script、TavernHelper 中影响“模型产出结构化标签/变量”的 prompt 约定，决定是否编译进 `PromptStack`。
+- [x] 盘点 MVU、slash script、TavernHelper 中影响“模型产出结构化标签/变量”的 prompt 约定，决定是否编译进 `PromptStack`。
 - [ ] 建立离线 prompt/worldbook diff harness，仅用于一次性 POC 差异解释，不接入产品运行时。
 - [x] POC-4.1：用真实角色卡和外部世界书，在几组用户输入下输出 world hits。
 - [ ] POC-4.2：用两个真实 preset 输出最终 prompt message list，并记录与 baseline 差异。
 - [x] POC-4.3：长上下文预算不足时，验证世界书、记忆、历史消息的裁剪顺序。
-- [ ] POC-4.4：验证 `WorldModule` 对 sticky、cooldown、delay、recursion、depth、insertion order 的行为，明确有状态字段将写入 `StorySession` 的世界书激活状态。
+- [x] POC-4.4：验证 `WorldModule` 对 sticky、cooldown、delay、recursion、depth、insertion order 的行为，明确有状态字段将写入 `StorySession` 的世界书激活状态。
 - [ ] Phase 4 diff 不得存在未关闭的 `bug` 类差异，否则不得进入 `SAC-Phase 6a`。
 
 ## 7. SAC-Phase 5：正则、内容过滤与 UI Render Intent

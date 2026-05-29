@@ -77,6 +77,7 @@ export interface WorldModuleEntry {
   probability?: number;
   group?: string;
   activation: WorldActivation;
+  recursion: WorldRecursionPolicy;
   sourceField: string;
 }
 
@@ -84,6 +85,11 @@ export interface WorldActivation {
   sticky: number;
   cooldown: number;
   delay: number;
+}
+
+export interface WorldRecursionPolicy {
+  preventRecursion: boolean;
+  excludeRecursion: boolean;
 }
 
 export interface TextTransform {

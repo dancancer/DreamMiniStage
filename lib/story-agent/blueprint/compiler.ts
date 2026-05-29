@@ -135,6 +135,10 @@ function compileWorldEntry(entry: ImportedWorldBookEntry): WorldModuleEntry {
     probability: item.probability,
     group: item.group,
     activation: compileActivation(item),
+    recursion: {
+      preventRecursion: Boolean(item.preventRecursion),
+      excludeRecursion: Boolean(item.extensions?.excludeRecursion),
+    },
     sourceField: entry.provenance[0]?.sourceField ?? "entries",
   };
 }

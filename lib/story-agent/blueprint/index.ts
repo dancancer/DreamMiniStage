@@ -27,4 +27,5 @@ export {
   type WorldActivation,
   type WorldModule,
   type WorldModuleEntry,
+  type WorldRecursionPolicy,
 } from "./types";

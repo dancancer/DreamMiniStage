@@ -1,8 +1,8 @@
-# POC-4.4 WorldModule Activation State Slice
+# POC-4.4 WorldModule Activation State
 
 ## Purpose
 
-Verify that `sticky`, `cooldown` and `delay` are carried in session activation state instead of mutating static `WorldModule` entries.
+Verify that `sticky`, `cooldown`, `delay` and bounded recursion are carried by runtime state and scan context instead of mutating static `WorldModule` entries.
 
 ## Command
 
@@ -24,17 +24,15 @@ Required assertions:
 - activation state contains `stateful:sticky`, `stateful:cooldown`, `stateful:delayed`
 - second turn hits `sticky` and `delayed`
 - third turn does not re-hit `cooldown` while cooldown state is still active
+- recursive scan can hit `beta` from `alpha` injected content when `maxRecursionDepth = 1`
+- static `WorldModule` entry content remains unchanged after recursion
 
 ## Result
 
-- Status: `partial pass`
+- Status: `pass`
 - Date: `2026-05-29`
 - Evidence: `matchWorldModules()` and `phase4-runtime.test.ts`
 
 ## Decision
 
 Keep static world definitions immutable. Activation counters belong to `StorySession.worldbookActivationState` in `SAC-Phase 6a`.
-
-## Remaining For Full POC-4.4
-
-The full task also requires recursion behavior coverage. That remains open in `tasks.md`.

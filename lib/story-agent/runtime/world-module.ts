@@ -19,7 +19,7 @@ export interface WorldHit {
   insertionOrder: number;
   position: string | number;
   sourcePath: string;
-  reason: "constant" | "keyword" | "sticky" | "delayed";
+  reason: "constant" | "keyword" | "sticky" | "delayed" | "recursive";
 }
 
 export interface WorldMatchResult {
@@ -27,21 +27,57 @@ export interface WorldMatchResult {
   activationState: WorldActivationState;
 }
 
+export interface WorldMatchOptions {
+  maxRecursionDepth?: number;
+}
+
 export function matchWorldModules(
   blueprint: Pick<SessionBlueprint, "worldModules">,
   text: string,
   state: WorldActivationState = {},
+  options: WorldMatchOptions = {},
+): WorldMatchResult {
+  const seen = new Set<string>();
+  const first = matchOnce(blueprint, text, state, seen, false);
+  const allHits = [...first.hits];
+  let activationState = first.activationState;
+  let recursiveText = first.hits.map((hit) => hit.content).join("\n");
+
+  for (let depth = 0; depth < (options.maxRecursionDepth ?? 0) && recursiveText.length > 0; depth++) {
+    const next = matchOnce(blueprint, recursiveText, activationState, seen, true);
+    allHits.push(...next.hits);
+    activationState = next.activationState;
+    recursiveText = next.hits.map((hit) => hit.content).join("\n");
+  }
+
+  return {
+    hits: allHits.sort(compareHits),
+    activationState,
+  };
+}
+
+function matchOnce(
+  blueprint: Pick<SessionBlueprint, "worldModules">,
+  text: string,
+  state: WorldActivationState,
+  seen: Set<string>,
+  recursive: boolean,
 ): WorldMatchResult {
   const nextState: WorldActivationState = {};
   const hits = blueprint.worldModules.flatMap((module) =>
     module.entries.flatMap((entry) => {
       const key = stateKey(module.id, entry.id);
+      if (seen.has(key) || (recursive && entry.recursion.preventRecursion)) {
+        nextState[key] = tickState(state[key]);
+        return [];
+      }
       const previous = state[key];
       const current = tickState(previous);
       const delayedReady = Boolean(previous?.delayRemaining && current.delayRemaining === 0);
       const matched = matchesEntry(entry, text);
-      const hit = resolveHit(entry, module.id, module.sourcePath, current, matched, delayedReady);
+      const hit = resolveHit(entry, module.id, module.sourcePath, current, matched, delayedReady, recursive);
       nextState[key] = nextEntryState(entry, current, hit?.reason, matched);
+      if (hit) seen.add(key);
       return hit ? [hit] : [];
     }),
   );
@@ -59,6 +95,7 @@ function resolveHit(
   state: WorldActivationEntryState,
   matched: boolean,
   delayedReady: boolean,
+  recursive: boolean,
 ): WorldHit | undefined {
   if (!entry.enabled) return undefined;
   if (state.stickyRemaining > 0) return worldHit(entry, moduleId, sourcePath, "sticky");
@@ -66,6 +103,8 @@ function resolveHit(
   if (state.cooldownRemaining > 0 || state.delayRemaining > 0) return undefined;
   if (!matched) return undefined;
   if (entry.activation.delay > 0) return undefined;
+  if (recursive && entry.recursion.excludeRecursion) return undefined;
+  if (recursive) return worldHit(entry, moduleId, sourcePath, "recursive");
   return worldHit(entry, moduleId, sourcePath, entry.constant ? "constant" : "keyword");
 }
 
