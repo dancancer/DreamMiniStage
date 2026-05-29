@@ -4,12 +4,19 @@
    设计理念：
    - 边界转换：在导入时一次性完成所有字段名规范化
    - 旧字段名转换：key → keys, keysecondary → secondary_keys, disable → enabled
+   - ST selectiveLogic 数字枚举 → 本地 SecondaryKeyLogic 字符串枚举
    - 支持多种输入格式：entries 对象、数组、worldBook 数组
    ═══════════════════════════════════════════════════════════════════════════ */
 
 import type { ImportAdapter } from "./types";
 import { createImportPipeline, isNonNullObject, hasArrayProperty } from "./types";
-import type { WorldBookEntry } from "@/lib/models/world-book-model";
+import type {
+  SecondaryKeyLogic,
+  WorldBookEntry,
+} from "@/lib/models/world-book-model";
+import { normalizeSelectiveLogic } from "./worldbook-logic";
+
+export { normalizeSelectiveLogic } from "./worldbook-logic";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    类型定义
@@ -58,8 +65,12 @@ interface RawWorldBookEntry {
   constant?: boolean;
   use_regex?: boolean;
   comment?: string;
-  selectiveLogic?: "AND" | "OR" | "NOT";
+  selectiveLogic?: SecondaryKeyLogic | number;
   tokens?: number;
+  matchWholeWords?: boolean | null;
+  caseSensitive?: boolean | null;
+  scanDepth?: number | null;
+  preventRecursion?: boolean;
 
   // 高级功能
   sticky?: number;
@@ -72,6 +83,15 @@ interface RawWorldBookEntry {
   groupPriority?: number;
   group_weight?: number;
   groupWeight?: number;
+  groupOverride?: boolean;
+  useGroupScoring?: boolean | null;
+  addMemo?: boolean;
+  vectorized?: boolean;
+  excludeRecursion?: boolean;
+  delayUntilRecursion?: boolean | number;
+  automationId?: string;
+  role?: number;
+  displayIndex?: number;
 
   [key: string]: unknown;
 }
@@ -104,6 +124,12 @@ function cleanStringArray(arr: unknown): string[] {
   );
 }
 
+function definedFields(fields: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(fields).filter(([, value]) => value !== undefined),
+  );
+}
+
 /**
  * 规范化单个 WorldBook 条目
  *
@@ -112,6 +138,7 @@ function cleanStringArray(arr: unknown): string[] {
  * - keysecondary → secondary_keys
  * - disable → enabled (取反)
  * - order → insertion_order
+ * - selectiveLogic 数字枚举 → 字符串枚举
  */
 export function normalizeWorldBookEntry(raw: RawWorldBookEntry): NormalizedWorldBookEntry {
   // 关键词字段：优先使用新格式，如果不存在则使用旧格式
@@ -143,8 +170,12 @@ export function normalizeWorldBookEntry(raw: RawWorldBookEntry): NormalizedWorld
     use_regex: raw.use_regex ?? false,
     depth: raw.depth ?? 1,
     comment: typeof raw.comment === "string" ? raw.comment : "",
-    selectiveLogic: raw.selectiveLogic,
+    selectiveLogic: normalizeSelectiveLogic(raw.selectiveLogic),
     tokens: raw.tokens,
+    matchWholeWords: typeof raw.matchWholeWords === "boolean" ? raw.matchWholeWords : undefined,
+    caseSensitive: typeof raw.caseSensitive === "boolean" ? raw.caseSensitive : undefined,
+    scanDepth: typeof raw.scanDepth === "number" ? raw.scanDepth : undefined,
+    preventRecursion: raw.preventRecursion,
 
     // 高级功能
     sticky: raw.sticky,
@@ -156,6 +187,17 @@ export function normalizeWorldBookEntry(raw: RawWorldBookEntry): NormalizedWorld
     group_priority: raw.group_priority ?? raw.groupPriority,
     groupWeight: raw.groupWeight ?? raw.group_weight,
     group_weight: raw.group_weight ?? raw.groupWeight,
+    extensions: definedFields({
+      addMemo: raw.addMemo,
+      vectorized: raw.vectorized,
+      excludeRecursion: raw.excludeRecursion,
+      delayUntilRecursion: raw.delayUntilRecursion,
+      groupOverride: raw.groupOverride,
+      useGroupScoring: raw.useGroupScoring,
+      automationId: raw.automationId,
+      role: raw.role,
+      displayIndex: raw.displayIndex,
+    }),
   };
 }
 

@@ -13,3 +13,6 @@
 | `preset-import.ts` | 适配器 | 预设导入适配 |
 | `regex-import.ts` | 适配器 | 正则导入适配 |
 | `worldbook-import.ts` | 适配器 | 世界书导入适配 |
+| `worldbook-logic.ts` | 边界映射 | 世界书 selectiveLogic 枚举规范化 |
+| `__tests__/regex-import.test.ts` | 测试 | 正则导入真实 fixture 验证 |
+| `__tests__/worldbook-import.test.ts` | 测试 | 世界书导入边界与真实 fixture 验证 |
