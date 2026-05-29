@@ -32,6 +32,11 @@ export {
 } from "./bundle-types";
 
 export {
+  createImportedAssetBundle,
+  type CreateImportedAssetBundleInput,
+} from "./bundle-builder";
+
+export {
   regexImportPipeline,
   importRegexScripts,
   canImportRegexScripts,

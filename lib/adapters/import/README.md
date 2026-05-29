@@ -8,6 +8,7 @@
 
 | 文件 | 地位 | 功能 |
 |------|------|------|
+| `bundle-builder.ts` | 构建器 | 从规范化导入结果构建统一资产 Bundle |
 | `bundle-types.ts` | 契约 | 统一导入资产 Bundle 类型 |
 | `index.ts` | 模块入口 | 导出导入适配器 |
 | `types.ts` | 类型定义 | 导入类型定义 |

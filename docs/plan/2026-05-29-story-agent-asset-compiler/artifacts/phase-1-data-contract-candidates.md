@@ -85,6 +85,18 @@ The ST numeric mapping for `selectiveLogic` is already defined at the import bou
 
 `ImportedWorldBookEntry.normalized.selectiveLogic` must use the local `SecondaryKeyLogic` enum and never expose ST numeric values.
 
+## 4.1 Bundle Builder
+
+`createImportedAssetBundle()` is the Phase 1 builder entry:
+
+- character identity and prompt fragments are extracted into `ImportedCharacterProfile`,
+- embedded `character_book` is normalized through `importWorldBookEntries`,
+- embedded `regex_scripts` is normalized through `importRegexScripts`,
+- external worldbooks, preset and regex scripts enter the same bundle shape,
+- unsupported extensions become `extensionArtifacts`.
+
+The builder is pure: it does not write IndexedDB, local storage or runtime state.
+
 ## 5. Preset
 
 Existing `NormalizedPreset` and `NormalizedPresetPrompt` are the starting point.
@@ -173,7 +185,7 @@ Phase 1 still must choose one storage boundary before implementation:
 | Candidate | Meaning | Consequence |
 | --- | --- | --- |
 | `blueprint-only-session` | `/session` reads only compiled blueprint and session state | Cleanest hard-replace path |
-| `asset-library-plus-blueprint` | old-like stores remain only as asset library inputs; `/session` still reads blueprint only | Useful if asset management UI needs raw imports |
+| `asset-library-plus-blueprint` | old-like stores remain only as asset library inputs; `/session` still reads blueprint only | Chosen for Phase 1 |
 | `replace-local-storage` | introduce dedicated blueprint/session stores and remove old roleplay stores from product paths | Most aggressive cleanup |
 
 Rejected option: runtime reads both old asset stores and blueprint. That is a dual runtime and violates the route.
