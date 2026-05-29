@@ -6,7 +6,7 @@ const mockStore = vi.hoisted(() => ({
   saveStorySession: vi.fn(),
   blueprint: {
     id: "blueprint:test",
-    schemaVersion: 4,
+    schemaVersion: 5,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
@@ -27,6 +27,7 @@ const mockStore = vi.hoisted(() => ({
         sourceField: "prompt",
       }],
     },
+    modelPolicy: {},
     worldModules: [],
     inputTransforms: [],
     outputTransforms: [{

@@ -8,6 +8,7 @@ import type { WorldHit } from "./world-module";
 export type PromptContextSource =
   | "prompt-stack"
   | "world"
+  | "render"
   | "memory"
   | "history";
 
@@ -23,6 +24,7 @@ export interface PromptContextMessage {
 export interface AssemblePromptContextInput {
   blueprint: Pick<SessionBlueprint, "promptStack">;
   worldHits?: WorldHit[];
+  renderMessages?: string[];
   memoryMessages?: string[];
   history?: Array<{ role: "user" | "assistant"; content: string }>;
   requiredHistoryIndexes?: number[];
@@ -48,6 +50,7 @@ export function assemblePromptContext(
   const messages = renderPromptMacros([
     ...assemblePromptMessages(input.blueprint).map(fromPromptStack),
     ...(input.worldHits ?? []).map(fromWorldHit),
+    ...(input.renderMessages ?? []).map(fromRender),
     ...(input.memoryMessages ?? []).map(fromMemory),
     ...(input.history ?? []).map(fromHistory),
   ], input.macroContext);
@@ -73,6 +76,16 @@ function fromWorldHit(hit: WorldHit): PromptContextMessage {
     source: "world",
     sourcePath: hit.sourcePath,
     estimatedTokens: estimateTokens(hit.content),
+  };
+}
+
+function fromRender(content: string, index: number): PromptContextMessage {
+  return {
+    id: `render:${index}`,
+    role: "system",
+    content,
+    source: "render",
+    estimatedTokens: estimateTokens(content),
   };
 }
 
@@ -212,6 +225,7 @@ function requiredMessageIds(
   input: AssemblePromptContextInput,
 ): string[] {
   return [
+    ...messages.filter((message) => message.source === "render").map((message) => message.id),
     ...historyIds(input.requiredHistoryIndexes ?? []),
     latestUserHistoryId(messages),
   ].filter((id): id is string => Boolean(id));
@@ -241,15 +255,17 @@ function compareOriginalOrder(left: PromptContextMessage, right: PromptContextMe
 function priority(source: PromptContextSource): number {
   if (source === "prompt-stack") return 0;
   if (source === "world") return 1;
-  if (source === "memory") return 2;
-  return 3;
+  if (source === "render") return 2;
+  if (source === "memory") return 3;
+  return 4;
 }
 
 function sourceOrder(source: PromptContextSource): number {
   if (source === "prompt-stack") return 0;
   if (source === "world") return 1;
-  if (source === "memory") return 2;
-  return 3;
+  if (source === "render") return 2;
+  if (source === "memory") return 3;
+  return 4;
 }
 
 function estimateTokens(content: string): number {

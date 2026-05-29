@@ -134,6 +134,7 @@ export function prepareStoryTurn(params: {
   const context = assemblePromptContext({
     blueprint: params.blueprint,
     worldHits: world.hits,
+    renderMessages: renderContractMessages(params.blueprint.renderRules),
     memoryMessages: formatStoryMemoryMessages(params.session.memory),
     history: [
       ...seededOpening,
@@ -282,6 +283,34 @@ function toModelMessage(message: PromptContextMessage): { role: string; content:
     role: message.role,
     content: message.content,
   };
+}
+
+function renderContractMessages(intents: RenderIntent[]): string[] {
+  const tags = new Set(intents.flatMap((intent) =>
+    intent.kind === "status-panel" && intent.sourcePattern
+      ? [statusTag(intent.sourcePattern)]
+      : [],
+  ));
+  return [...tags].map(statusRenderContract);
+}
+
+function statusTag(pattern: string): string {
+  return pattern.match(/<([a-z][a-z0-9_-]*)>/i)?.[1] ?? "SFW";
+}
+
+function statusRenderContract(tag: string): string {
+  const closeTag = `</${tag}>`;
+  return [
+    "Story UI render contract:",
+    `After every assistant story reply, include exactly one ${openTag(tag)}...${closeTag} status block after narrative content.`,
+    "The block is consumed by the UI renderer; do not wrap it in Markdown.",
+    `Use this raw JSON shape: ${openTag(tag)}{"mode":"sfw","date":"...","time":"...","characters":[{"name":"...","status":"...","relation":"...","pose":"...","clothing":"...","location":"...","avatar":null,"portrait":null,"thought":"(...)"}]}${closeTag}`,
+    "Include only active non-user characters. Use null for unknown avatar or portrait file names.",
+  ].join("\n");
+}
+
+function openTag(tag: string): string {
+  return `<${tag}>`;
 }
 
 function toHistory(session: StorySessionState): Array<{ role: "user" | "assistant"; content: string }> {

@@ -170,6 +170,39 @@ describe("SAC-Phase 6a StorySession runtime", () => {
     });
   });
 
+  it("injects a required status render contract for follow-up replies", () => {
+    const blueprint = {
+      ...createBlueprint(),
+      renderRules: [{
+        schemaVersion: 1 as const,
+        id: "status",
+        kind: "status-panel" as const,
+        sourceScriptId: "status-script",
+        title: "状态栏",
+        confidence: 0.8,
+        fields: [],
+        dataTemplate: "$1",
+        sourcePattern: "<SFW>\\s*(\\{[\\s\\S]*?\\})\\s*</SFW>",
+      }],
+    };
+    const session = createStorySession({ dialogueId: "dialogue-status-contract", blueprint });
+    const turn = prepareStoryTurn({
+      blueprint,
+      session,
+      userInput: "continue",
+      model: { ...modelInput(), contextWindow: 1 },
+    });
+    const renderMessages = turn.promptMessages.filter((message) => message.source === "render");
+
+    expect(renderMessages).toHaveLength(1);
+    expect(renderMessages[0]?.content).toContain("<SFW>");
+    expect(renderMessages[0]?.content).toContain("After every assistant story reply");
+    expect(turn.llmConfig.messages?.at(-1)).toMatchObject({
+      role: "user",
+      content: "continue",
+    });
+  });
+
   it("seeds the selected opening into the first story turn", async () => {
     const blueprint = createBlueprint();
     let saved = createStorySession({
