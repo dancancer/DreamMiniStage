@@ -1,4 +1,4 @@
-# POC-4.2 PromptStack Assembly Slice
+# POC-4.2 PromptStack Assembly
 
 ## Purpose
 
@@ -27,10 +27,10 @@ For both presets:
 
 ## Result
 
-- Status: `partial pass`
+- Status: `pass`
 - Date: `2026-05-29`
 - Evidence: `lib/story-agent/runtime/prompt-context.ts`, `phase4-runtime.test.ts`
 
 ## Baseline Difference
 
-This POC proves blueprint-only assembly, not ST byte-for-byte parity. The dedicated baseline diff report remains open in Phase 4.
+This POC proves blueprint-only assembly, not ST byte-for-byte prompt string parity. The current baseline diff report classifies that as an intentional architecture difference because the new runtime consumes prompt units and provenance instead of an ST monolithic prompt string.

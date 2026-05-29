@@ -115,7 +115,7 @@ function matchesEntry(entry: WorldModuleEntry, text: string): boolean {
   if (!entry.selective) return true;
 
   const secondaryMatches = entry.secondaryKeys.map((key) => matchesKey(entry, key, text));
-  if (secondaryMatches.length === 0) return false;
+  if (secondaryMatches.length === 0) return true;
 
   if (entry.secondaryKeyLogic === "AND" || entry.secondaryKeyLogic === "AND_ALL") {
     return secondaryMatches.every(Boolean);

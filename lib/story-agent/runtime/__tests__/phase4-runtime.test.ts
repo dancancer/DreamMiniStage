@@ -6,10 +6,15 @@ import { describe, expect, it } from "vitest";
 import { createImportedAssetBundle } from "@/lib/adapters/import";
 import type { AssetSource, ImportedAssetBundle } from "@/lib/adapters/import";
 import {
+  executeDialogueFlow,
+  type DialogueFlowConfig,
+} from "@/lib/core/__tests__/dialogue-flow-test-helpers";
+import {
   compileSessionBlueprint,
   type SessionBlueprint,
 } from "@/lib/story-agent/blueprint";
 import { assemblePromptContext } from "../prompt-context";
+import { applyTextTransforms } from "../text-transform";
 import { matchWorldModules } from "../world-module";
 
 const CHARACTER_DIR = path.join(process.cwd(), "test-baseline-assets", "character-card");
@@ -63,6 +68,74 @@ function createBundle(presetPath = "test-baseline-assets/preset/夏瑾 Pro - Bet
   });
 }
 
+function createDialogueFlowBundle(config: DialogueFlowConfig): ImportedAssetBundle {
+  const fixturePath = "lib/core/__tests__/fixtures/phase4/regex-flow.json";
+  return createImportedAssetBundle({
+    bundleId: "phase-4-dialogue-flow",
+    sourceHash: "dialogue-flow-hash",
+    createdAt: "2026-05-29T00:00:00.000Z",
+    characterId: "character:dialogue-flow",
+    character: {
+      raw: {
+        data: {
+          name: "Dialogue Flow",
+          description: config.characterCard,
+          first_mes: "hello",
+        },
+      },
+      source: source(fixturePath, "synthetic-character"),
+    },
+    worldBooks: [{
+      id: "phase4-worldbook",
+      name: "phase4-worldbook",
+      raw: config.worldBook,
+      source: source(fixturePath, "synthetic-worldbook"),
+    }],
+    preset: {
+      id: "phase4-preset",
+      name: "phase4-preset",
+      raw: {
+        name: "phase4-preset",
+        prompts: [{
+          identifier: "system",
+          role: "system",
+          content: config.systemPrompt,
+          enabled: true,
+          group_id: 0,
+          position: 0,
+        }],
+      },
+      source: source(fixturePath, "synthetic-preset"),
+    },
+    regexScripts: [{
+      id: "phase4-regex",
+      name: "phase4-regex",
+      raw: config.regexScripts,
+      source: source(fixturePath, "synthetic-regex"),
+    }],
+  });
+}
+
+function createWorldbookBaselineBundle(): ImportedAssetBundle {
+  const fixturePath = "lib/core/__tests__/fixtures/phase4/worldbook-import.json";
+  return createImportedAssetBundle({
+    bundleId: "phase-4-worldbook-baseline",
+    sourceHash: "worldbook-baseline-hash",
+    createdAt: "2026-05-29T00:00:00.000Z",
+    characterId: "character:worldbook-baseline",
+    character: {
+      raw: { data: { name: "Worldbook Baseline", first_mes: "hello" } },
+      source: source(fixturePath, "synthetic-character"),
+    },
+    worldBooks: [{
+      id: "baseline-worldbook",
+      name: "baseline-worldbook",
+      raw: readJson(fixturePath),
+      source: source(fixturePath, "synthetic-worldbook"),
+    }],
+  });
+}
+
 describe("SAC-Phase 4 blueprint runtime harness", () => {
   it("POC-4.1 matches world modules from real assets", () => {
     const blueprint = compileSessionBlueprint(createBundle());
@@ -87,6 +160,27 @@ describe("SAC-Phase 4 blueprint runtime harness", () => {
     expect(assembledB.messages.length).toBeGreaterThan(0);
     expect(assembledA.messages[0].source).toBe("prompt-stack");
     expect(assembledB.messages[0].source).toBe("prompt-stack");
+  });
+
+  it("compares blueprint flow against the current regex and worldbook baseline fixture", () => {
+    const config = readJson("lib/core/__tests__/fixtures/phase4/regex-flow.json") as DialogueFlowConfig;
+    const baseline = executeDialogueFlow(config);
+    const blueprint = compileSessionBlueprint(createDialogueFlowBundle(config));
+    const input = applyTextTransforms(config.userInput, blueprint.inputTransforms);
+    const world = matchWorldModules(blueprint, input.text);
+    const response = applyTextTransforms("[模拟响应] baseline", blueprint.outputTransforms);
+
+    expect(input.text).toBe(baseline.processedInput);
+    expect(world.hits.some((hit) => hit.entryId.includes("phase4"))).toBe(true);
+    expect(response.text).toContain("后处理输出");
+  });
+
+  it("compares blueprint world matching against the current worldbook migration fixture", () => {
+    const blueprint = compileSessionBlueprint(createWorldbookBaselineBundle());
+    const result = matchWorldModules(blueprint, "服装搭配");
+
+    expect(result.hits.length).toBeGreaterThan(0);
+    expect(result.hits.some((hit) => hit.depth === 4)).toBe(true);
   });
 
   it("POC-4.3 drops history before memory, world hits and prompt stack under budget", () => {
