@@ -107,4 +107,19 @@ describe("createImportedAssetBundle", () => {
       json.extensionArtifacts.map((artifact) => artifact.extensionKey),
     );
   });
+
+  it("fails fast when character identity is missing", () => {
+    expect(() =>
+      createImportedAssetBundle({
+        bundleId: "broken",
+        sourceHash: "broken-hash",
+        createdAt: "2026-05-29T00:00:00.000Z",
+        characterId: "broken-character",
+        character: {
+          raw: { data: { description: "missing name" } },
+          source: source("broken.json", "json-character"),
+        },
+      }),
+    ).toThrow("Character card is missing data.name");
+  });
 });

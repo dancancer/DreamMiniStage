@@ -171,17 +171,21 @@ function createEmbeddedRegexScripts(
 }
 
 function createRegexScripts(input: AssetInput): ImportedRegexScript[] {
-  return importRegexScripts(input.raw).map((raw, index) => ({
-    id: raw.id ?? raw.scriptKey ?? `${input.id}.regex.${index}`,
-    source: input.source,
-    raw,
-    provenance: [{
-      targetPath: `regexScripts.${input.id}.${index}.raw`,
-      sourcePath: input.source.sourcePath,
-      sourceField: `scripts.${index}`,
-    }],
-    diagnostics: [],
-  }));
+  return importRegexScripts(input.raw).map((script, index) => {
+    const scriptKey = script.scriptKey || script.id || `${input.id}.regex.${index}`;
+    const raw = { ...script, scriptKey };
+    return {
+      id: raw.id ?? scriptKey,
+      source: input.source,
+      raw,
+      provenance: [{
+        targetPath: `regexScripts.${input.id}.${index}.raw`,
+        sourcePath: input.source.sourcePath,
+        sourceField: `scripts.${index}`,
+      }],
+      diagnostics: [],
+    };
+  });
 }
 
 function createExtensionArtifacts(

@@ -32,13 +32,13 @@
 - [x] 决定 `SessionBlueprint` 持久化位置，以及既有 `PRESET_FILE`、`WORLD_BOOK_FILE`、`REGEX_SCRIPTS_FILE`、`MEMORY_ENTRIES_FILE`、vector-memory store 与 blueprint store 的关系。
 - [x] 盘点并标注 `function/character/import.ts` 中 `character_book` 直写 IndexedDB（未归一化）vs regex 走 adapter 的不一致，定义统一入口。
 - [ ] 收敛角色卡、世界书、预设、正则 import adapter 入口：所有 ST 资产导入必须先进入 adapter/bundle，再由调用方决定存储。
-- [ ] 角色卡内嵌 `character_book` 改为走世界书 adapter。
-- [ ] 角色卡内嵌 `regex_scripts` 继续走正则 adapter，并纳入 bundle provenance。
-- [ ] 不支持执行的扩展进入 `extensionArtifacts`，并生成 diagnostics。
+- [x] 角色卡内嵌 `character_book` 改为走世界书 adapter。
+- [x] 角色卡内嵌 `regex_scripts` 继续走正则 adapter，并纳入 bundle provenance。
+- [x] 不支持执行的扩展进入 `extensionArtifacts`，并生成 diagnostics。
 - [x] POC-1.1：用 `Sgw3.png` + 外部世界书 + 外部 preset + 外部 regex 生成 bundle，断言数量、关键 flags、source provenance 不丢。
 - [x] POC-1.2：同一角色卡的 PNG 与 JSON 版本生成的 bundle 差异必须可解释。
-- [ ] POC-1.3：故意输入损坏字段，验证 fail-fast 与 diagnostics。
-- [ ] 定向测试或 grep 断言证明导入入口没有绕过 adapter 直写 runtime storage。
+- [x] POC-1.3：故意输入损坏字段，验证 fail-fast 与 diagnostics。
+- [x] 定向测试或 grep 断言证明导入入口没有绕过 adapter 直写 runtime storage。
 
 ## 4. SAC-Phase 2：静态诊断与 LLM QA Repair
 

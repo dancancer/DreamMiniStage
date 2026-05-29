@@ -4,23 +4,14 @@
 
 | Entry point | Current behavior | Status |
 | --- | --- | --- |
-| `function/character/import.ts` | Parses PNG, creates character record, writes embedded `character_book` directly with `WorldBookOperations.updateWorldBook`, imports embedded regex via regex adapter | Must be refactored to use `ImportedAssetBundle` |
+| `function/character/import.ts` | Parses PNG, builds `ImportedAssetBundle`, persists normalized embedded worldbook and regex assets from the bundle | Bundle-backed |
 | `function/worldbook/import.ts` | Uses `importWorldBookEntries` adapter before writing worldbook store | Adapter-backed |
 | `components/ImportWorldBookModal.tsx` | Calls `importWorldBookFromJson` | Adapter-backed through function layer |
 | `components/ImportRegexScriptModal.tsx` | Calls regex import function | Adapter-backed through function layer |
 
-## Confirmed Gap
+## Closed Gap
 
-`function/character/import.ts` still contains:
-
-```ts
-await WorldBookOperations.updateWorldBook(
-  `character:${characterId}`,
-  characterJson.data.character_book.entries,
-);
-```
-
-That bypasses `NormalizedWorldBookEntry`, `selectiveLogic` numeric mapping, provenance and diagnostics. It must not survive Phase 1.
+`function/character/import.ts` no longer writes `characterJson.data.character_book.entries` directly. It uses `createImportedAssetBundle()` and persists `bundle.worldBooks[].entries[].normalized`.
 
 ## New Target
 
@@ -31,13 +22,17 @@ That bypasses `NormalizedWorldBookEntry`, `selectiveLogic` numeric mapping, prov
 - external worldbooks, presets and regex scripts enter the same bundle shape,
 - unsupported extensions become `extensionArtifacts`.
 
-## Next Refactor
+## Remaining Gap
 
-Refactor `function/character/import.ts` to:
+Standalone worldbook and regex imports are adapter-backed but not yet bundle-backed. Phase 1 can either route them through `ImportedAssetBundle` wrappers or leave them as asset-library import paths that are later compiled into blueprint.
 
-1. Parse PNG into raw character JSON.
-2. Build `ImportedAssetBundle`.
-3. Persist character record and asset-library outputs from the bundle.
-4. Stop writing raw `character_book.entries` directly.
+## Verification
 
-This is an implementation task, not just documentation.
+Direct character-card worldbook bypass check:
+
+```bash
+rg -n "updateWorldBook\([^\n]*characterJson|characterJson\.data\?\.character_book|character_book\.entries" \
+  function/character lib/adapters/import
+```
+
+Expected result: no matches.
