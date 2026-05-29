@@ -68,7 +68,11 @@ export interface WorldModuleEntry {
   constant: boolean;
   selective: boolean;
   useRegex: boolean;
+  position: string | number;
   depth: number;
+  caseSensitive: boolean;
+  matchWholeWords: boolean;
+  scanDepth?: number;
   insertionOrder: number;
   probability?: number;
   group?: string;
