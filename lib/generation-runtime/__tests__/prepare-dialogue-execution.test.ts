@@ -6,12 +6,13 @@ const mockStore = vi.hoisted(() => ({
   saveStorySession: vi.fn(),
   blueprint: {
     id: "blueprint:test",
-    schemaVersion: 3,
+    schemaVersion: 4,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
       id: "char-1",
       name: "Character",
+      openings: [],
       promptFragments: [],
     },
     promptStack: {

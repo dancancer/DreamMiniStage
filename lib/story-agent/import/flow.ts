@@ -117,6 +117,7 @@ function summarizeBlueprint(blueprint: SessionBlueprint): StoryAgentImportSummar
       blueprint.promptTransforms.length,
     renderRuleCount: blueprint.renderRules.length,
     promptMessageCount: blueprint.promptStack.messages.length,
+    openingCount: blueprint.profile.openings.length,
     diagnosticCount: blueprint.diagnostics.length,
   };
 }

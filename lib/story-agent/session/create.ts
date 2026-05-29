@@ -54,12 +54,13 @@ export function createStoryAgentCharacterData(blueprint: SessionBlueprint): RawC
     tags: ["story-agent"],
     creator: "",
     character_version: `story-blueprint-v${blueprint.schemaVersion}`,
-    alternate_greetings: [],
+    alternate_greetings: profile.openings.slice(1).map((opening) => opening.content),
     character_book: { entries: [] },
     extensions: {
       [STORY_BLUEPRINT_ID_KEY]: blueprint.id,
       storyBlueprintHash: blueprint.sourceHash,
       storyBlueprintSchemaVersion: blueprint.schemaVersion,
+      storyRenderIntents: blueprint.renderRules,
     },
   };
 

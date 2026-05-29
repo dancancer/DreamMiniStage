@@ -108,4 +108,38 @@ describe("RenderIntentView", () => {
 
     cleanup(rendered);
   });
+
+  it("renders a JSON status panel from captured status data", () => {
+    const rendered = renderIntent({
+      schemaVersion: 1,
+      id: "status-json",
+      kind: "status-panel",
+      sourceScriptId: "script",
+      title: "状态栏",
+      confidence: 0.8,
+      fields: [],
+      dataTemplate: "$1",
+      sourcePattern: "<SFW>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/SFW>",
+    }, {
+      1: JSON.stringify({
+        date: "2020年3月28日",
+        time: "14:35",
+        characters: [{
+          name: "若叶睦",
+          status: "观察黄瓜",
+          relation: "未相识",
+          location: "庭院",
+          clothing: "格纹连衣裙",
+          thought: "这片叶子颜色有点淡",
+        }],
+      }),
+    });
+
+    expect(rendered.container.textContent).toContain("Story Status");
+    expect(rendered.container.textContent).toContain("若叶睦");
+    expect(rendered.container.textContent).toContain("观察黄瓜");
+    expect(rendered.container.querySelector("script")).toBeNull();
+
+    cleanup(rendered);
+  });
 });

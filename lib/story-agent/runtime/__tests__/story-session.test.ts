@@ -95,6 +95,90 @@ describe("SAC-Phase 6a StorySession runtime", () => {
     expect(JSON.stringify(turn.promptMessages)).not.toMatch(/"(prompt_order|placement)":/);
   });
 
+  it("keeps the current user input in the final request and resolves prompt macros", () => {
+    const blueprint = createBlueprint();
+    const session = createStorySession({ dialogueId: "dialogue-macros", blueprint });
+    const turn = prepareStoryTurn({
+      blueprint: {
+        ...blueprint,
+        promptStack: {
+          messages: [{
+            id: "macro",
+            role: "user",
+            content: "{{lastUserMessage}} for {{char}} and {{user}} {{trim}}",
+            enabled: true,
+            order: 0,
+            sourceKind: "preset",
+            sourcePath: "fixture",
+            sourceField: "prompt",
+          }],
+        },
+      },
+      session,
+      userInput: "E2E_MARKER",
+      model: { ...modelInput(), contextWindow: 200, username: "Tester" },
+    });
+
+    const contents = turn.llmConfig.messages?.map((message) => message.content) ?? [];
+    expect(contents).toContain("E2E_MARKER");
+    expect(contents.join("\n")).toContain("E2E_MARKER for Character and Tester ");
+    expect(contents.join("\n")).not.toMatch(/\{\{[^}]+\}\}/);
+  });
+
+  it("preserves current user input even when prompt budget is exhausted", () => {
+    const blueprint = createBlueprint();
+    const session = createStorySession({ dialogueId: "dialogue-budget", blueprint });
+    const turn = prepareStoryTurn({
+      blueprint,
+      session,
+      userInput: "E2E_REQUIRED_TAIL",
+      model: { ...modelInput(), contextWindow: 1 },
+    });
+
+    expect(turn.llmConfig.messages?.at(-1)).toMatchObject({
+      role: "user",
+      content: "E2E_REQUIRED_TAIL",
+    });
+  });
+
+  it("seeds the selected opening into the first story turn", async () => {
+    const blueprint = createBlueprint();
+    let saved = createStorySession({
+      dialogueId: "dialogue-opening",
+      blueprint,
+      now: "2026-05-29T00:00:00.000Z",
+    });
+    const commitSession = vi.fn(async (session: StorySessionState) => {
+      saved = session;
+    });
+
+    const turn = prepareStoryTurn({
+      blueprint,
+      session: saved,
+      userInput: "continue from this opening",
+      model: { ...modelInput(), contextWindow: 1 },
+      openingMessage: {
+        id: "opening:alternate:1",
+        content: "Alternate opening chosen by the user.",
+        fullContent: "Alternate opening chosen by the user.",
+      },
+      commitSession,
+    });
+
+    expect(turn.llmConfig.messages?.map((message) => message.content)).toContain(
+      "Alternate opening chosen by the user.",
+    );
+
+    await finalizeStoryTurn(turn, "raw answer");
+
+    expect(saved.recentTranscript.map((message) => message.role)).toEqual([
+      "assistant",
+      "user",
+      "assistant",
+    ]);
+    expect(saved.recentTranscript[0]?.content).toBe("Alternate opening chosen by the user.");
+  });
+
   it("uses summary, facts and relationship memory when recent transcript is trimmed", async () => {
     const blueprint = createBlueprint();
     let session = createStorySession({ dialogueId: "dialogue-4", blueprint });
@@ -167,12 +251,13 @@ function modelInput() {
 function createBlueprint(): SessionBlueprint {
   return {
     id: "blueprint:test",
-    schemaVersion: 3,
+    schemaVersion: 4,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
       id: "char-1",
       name: "Character",
+      openings: [],
       promptFragments: [],
     },
     promptStack: {

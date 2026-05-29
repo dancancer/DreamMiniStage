@@ -47,7 +47,7 @@ describe("initCharacterDialogue", () => {
     });
 
     expect(loadStoryRuntimeBinding).toHaveBeenCalledWith("session-1");
-    expect(result.openingMessage?.id).toBe("session-1-opening");
+    expect(result.openingMessage?.id).toBe("session-1-opening-0");
     expect(result.firstMessage).toBe("你好 user。");
     expect(result.openingMessages[0].content).toBe("你好 user。");
   });
@@ -56,13 +56,14 @@ describe("initCharacterDialogue", () => {
 function createBlueprint(): SessionBlueprint {
   return {
     id: "blueprint:init",
-    schemaVersion: 3,
+    schemaVersion: 4,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
       id: "char-1",
       name: "Tester",
       firstMessage: "你好 {{user}}。",
+      openings: [],
       promptFragments: [],
     },
     promptStack: { messages: [] },

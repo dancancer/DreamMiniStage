@@ -68,6 +68,8 @@ export interface CollapsiblePanelRenderIntent extends RenderIntentBase {
 export interface StatusPanelRenderIntent extends RenderIntentBase {
   kind: "status-panel";
   fields: StatusPanelField[];
+  dataTemplate?: string;
+  sourcePattern?: string;
 }
 
 export interface StatusPanelField {

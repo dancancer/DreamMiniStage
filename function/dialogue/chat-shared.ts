@@ -44,6 +44,7 @@ export function buildDialogueRuntimeParams(
     advanced,
     number,
     fastModel,
+    openingMessage,
   } = input;
 
   return {
@@ -70,6 +71,7 @@ export function buildDialogueRuntimeParams(
     streamUsage: advanced?.streamUsage ?? true,
     number,
     fastModel,
+    openingMessage,
   };
 }
 

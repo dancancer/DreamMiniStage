@@ -12,6 +12,7 @@ import {
   convertRegexScriptsToRenderIntents,
   convertRegexToRenderIntent,
 } from "@/lib/story-agent/render-intent";
+import { containsHtml } from "@/lib/story-agent/render-intent/classifier";
 import {
   SESSION_BLUEPRINT_SCHEMA_VERSION,
   type AgentProfile,
@@ -71,6 +72,7 @@ function compileProfile(bundle: ImportedAssetBundle): AgentProfile {
     personality: character.personality,
     scenario: character.scenario,
     firstMessage: character.firstMessage,
+    openings: compileOpenings(character),
     exampleMessages: character.exampleMessages,
     promptFragments: character.promptFragments.map((fragment) => ({
       id: fragment.id,
@@ -79,6 +81,20 @@ function compileProfile(bundle: ImportedAssetBundle): AgentProfile {
       sourceField: fragment.sourceField,
     })),
   };
+}
+
+function compileOpenings(character: ImportedAssetBundle["character"]) {
+  const first = character.firstMessage ? [{
+    id: "opening:first_mes",
+    content: character.firstMessage,
+    sourceField: "data.first_mes",
+  }] : [];
+  const alternates = character.alternateGreetings.map((content, index) => ({
+    id: `opening:alternate:${index}`,
+    content,
+    sourceField: `data.alternate_greetings.${index}`,
+  }));
+  return [...first, ...alternates];
 }
 
 function compilePromptStack(bundle: ImportedAssetBundle): PromptStack {
@@ -179,18 +195,34 @@ function compileContentRules(scripts: ImportedRegexScript[]): ContentRule[] {
 }
 
 function compileRenderRules(scripts: ImportedRegexScript[]) {
-  return convertRegexScriptsToRenderIntents(scripts.map((script) => script.raw))
+  return convertRegexScriptsToRenderIntents(scripts
+    .filter((script) => script.raw.disabled !== true && script.raw.promptOnly !== true)
+    .map((script) => script.raw))
     .flatMap((conversion) => conversion.intent ? [conversion.intent] : []);
 }
 
 function transformDirections(script: ImportedRegexScript): TransformDirection[] {
   const directions = new Set<TransformDirection>();
-  if (script.raw.promptOnly || script.raw.placement.includes(RegexPlacement.WORLD_INFO)) {
+  if (script.raw.promptOnly) {
+    directions.add("prompt");
+    return [...directions].sort();
+  }
+  if (script.raw.placement.includes(RegexPlacement.WORLD_INFO)) {
     directions.add("prompt");
   }
   if (script.raw.placement.includes(RegexPlacement.USER_INPUT)) directions.add("input");
-  if (script.raw.placement.includes(RegexPlacement.AI_OUTPUT)) directions.add("output");
+  if (
+    script.raw.placement.includes(RegexPlacement.AI_OUTPUT) &&
+    !containsHtml(script.raw.replaceString ?? "") &&
+    !isStatusSourceRegex(script.raw.findRegex)
+  ) {
+    directions.add("output");
+  }
   return [...directions].sort();
+}
+
+function isStatusSourceRegex(pattern: string): boolean {
+  return /<SFW>|<NSFW>/i.test(pattern) && /\\\{/.test(pattern);
 }
 
 function compileActivation(value: {

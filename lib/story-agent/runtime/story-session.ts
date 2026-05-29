@@ -58,6 +58,13 @@ export interface StoryModelInput {
   streaming?: boolean;
   streamUsage?: boolean;
   language?: "zh" | "en";
+  username?: string;
+}
+
+export interface StoryOpeningMessage {
+  id: string;
+  content: string;
+  fullContent?: string;
 }
 
 export interface StoryPreparedTurn {
@@ -66,6 +73,7 @@ export interface StoryPreparedTurn {
   session: StorySessionState;
   userInput: string;
   transformedInput: string;
+  openingMessage?: StoryOpeningMessage;
   appliedInputTransformIds: string[];
   promptMessages: PromptContextMessage[];
   worldHits: WorldHit[];
@@ -102,10 +110,12 @@ export function prepareStoryTurn(params: {
   session: StorySessionState;
   userInput: string;
   model: StoryModelInput;
+  openingMessage?: StoryOpeningMessage;
   commitSession?: StoryPreparedTurn["commitSession"];
   memoryExtractor?: StoryMemoryExtractor;
 }): StoryPreparedTurn {
   const input = applyTextTransforms(params.userInput, params.blueprint.inputTransforms);
+  const seededOpening = openingHistory(params.session, params.openingMessage);
   const world = matchWorldModules(
     params.blueprint,
     input.text,
@@ -115,7 +125,17 @@ export function prepareStoryTurn(params: {
     blueprint: params.blueprint,
     worldHits: world.hits,
     memoryMessages: formatStoryMemoryMessages(params.session.memory),
-    history: [...toHistory(params.session), { role: "user", content: input.text }],
+    history: [
+      ...seededOpening,
+      ...toHistory(params.session),
+      { role: "user", content: input.text },
+    ],
+    requiredHistoryIndexes: seededOpening.length > 0 ? [0] : [],
+    macroContext: {
+      charName: params.blueprint.profile.name,
+      userName: params.model.username,
+      lastUserMessage: input.text,
+    },
     maxTokens: params.model.contextWindow,
   });
   const llmConfig = buildStoryLlmConfig(params.model, context.messages, params.session, params.blueprint);
@@ -126,6 +146,7 @@ export function prepareStoryTurn(params: {
     session: params.session,
     userInput: params.userInput,
     transformedInput: input.text,
+    openingMessage: params.openingMessage,
     appliedInputTransformIds: input.appliedTransformIds,
     promptMessages: context.messages,
     worldHits: world.hits,
@@ -146,6 +167,7 @@ export async function finalizeStoryTurn(
     session: turn.session,
     userInput: turn.transformedInput,
     assistantResponse: output.text,
+    openingMessage: turn.openingMessage,
     worldbookActivationState: turn.worldbookActivationState,
     renderIntents: turn.renderIntents,
     memoryExtractor: turn.memoryExtractor,
@@ -172,6 +194,7 @@ function advanceStorySession(params: {
   session: StorySessionState;
   userInput: string;
   assistantResponse: string;
+  openingMessage?: StoryOpeningMessage;
   worldbookActivationState: WorldActivationState;
   renderIntents: RenderIntent[];
   memoryExtractor?: StoryMemoryExtractor;
@@ -189,6 +212,7 @@ function advanceStorySession(params: {
   return {
     ...params.session,
     recentTranscript: trimTranscript([
+      ...openingTranscript(params.session, params.openingMessage, now),
       ...params.session.recentTranscript,
       transcriptMessage("user", params.userInput, now),
       transcriptMessage("assistant", params.assistantResponse, now),
@@ -248,6 +272,30 @@ function toHistory(session: StorySessionState): Array<{ role: "user" | "assistan
     role: message.role,
     content: message.content,
   }));
+}
+
+function openingHistory(
+  session: StorySessionState,
+  opening?: StoryOpeningMessage,
+): Array<{ role: "assistant"; content: string }> {
+  if (!shouldSeedOpening(session, opening)) return [];
+  return [{ role: "assistant", content: opening.content }];
+}
+
+function openingTranscript(
+  session: StorySessionState,
+  opening: StoryOpeningMessage | undefined,
+  now: string,
+): StoryTranscriptMessage[] {
+  if (!shouldSeedOpening(session, opening)) return [];
+  return [transcriptMessage("assistant", opening.content, now)];
+}
+
+function shouldSeedOpening(
+  session: StorySessionState,
+  opening?: StoryOpeningMessage,
+): opening is StoryOpeningMessage {
+  return Boolean(opening?.content && session.recentTranscript.length === 0);
 }
 
 function transcriptMessage(

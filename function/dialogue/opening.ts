@@ -6,11 +6,36 @@
  */
 
 import { loadStoryRuntimeBinding } from "@/lib/story-agent/session";
+import type { OpeningPayload } from "@/types/character-dialogue";
 
-export interface OpeningPayload {
-  id: string;
-  content: string;
-  fullContent: string;
+export type { OpeningPayload } from "@/types/character-dialogue";
+
+export async function prepareOpeningGreetings(params: {
+  dialogueId: string;
+  characterId: string;
+  language?: "zh" | "en";
+  username?: string;
+}): Promise<OpeningPayload[]> {
+  const { dialogueId, username } = params;
+  const { blueprint } = await loadStoryRuntimeBinding(dialogueId);
+  const openings = blueprint.profile.openings.length > 0
+    ? blueprint.profile.openings
+    : [{
+      id: "opening:fallback",
+      content: blueprint.profile.firstMessage || `你好，我是${blueprint.profile.name}。`,
+    }];
+
+  return openings.map((opening, index) => {
+    const content = renderOpeningMacros(opening.content, {
+      charName: blueprint.profile.name,
+      username: username || "user",
+    });
+    return {
+      id: `${dialogueId}-opening-${index}`,
+      content,
+      fullContent: content,
+    };
+  });
 }
 
 export async function prepareOpeningGreeting(params: {
@@ -19,19 +44,11 @@ export async function prepareOpeningGreeting(params: {
   language?: "zh" | "en";
   username?: string;
 }): Promise<OpeningPayload> {
-  const { dialogueId, username } = params;
-  const { blueprint } = await loadStoryRuntimeBinding(dialogueId);
-  const seedGreeting = blueprint.profile.firstMessage || `你好，我是${blueprint.profile.name}。`;
-  const content = renderOpeningMacros(seedGreeting, {
-    charName: blueprint.profile.name,
-    username: username || "user",
-  });
-
-  return {
-    id: `${dialogueId}-opening`,
-    content,
-    fullContent: content,
-  };
+  const [opening] = await prepareOpeningGreetings(params);
+  if (!opening) {
+    throw new Error("SessionBlueprint did not produce an opening message");
+  }
+  return opening;
 }
 
 function renderOpeningMacros(

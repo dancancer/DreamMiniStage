@@ -81,6 +81,7 @@ function createCharacter(
     personality: readOptionalString(data.personality),
     scenario: readOptionalString(data.scenario),
     firstMessage: readOptionalString(data.first_mes),
+    alternateGreetings: readStringArray(data.alternate_greetings),
     exampleMessages: readOptionalString(data.mes_example),
     creator: readOptionalString(data.creator),
     version: readOptionalString(data.character_version ?? data.version),
@@ -95,7 +96,6 @@ function createPromptFragments(data: Record<string, unknown>) {
     promptFragment("description", "system", data.description),
     promptFragment("personality", "system", data.personality),
     promptFragment("scenario", "system", data.scenario),
-    promptFragment("first_mes", "assistant", data.first_mes),
     promptFragment("mes_example", "unknown", data.mes_example),
   ].filter((fragment) => fragment.content.length > 0);
 }
@@ -242,6 +242,11 @@ function readString(value: unknown): string {
 
 function readOptionalString(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
+}
+
+function readStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
 }
 
 function compact<T>(values: Array<T | undefined>): T[] {

@@ -5,7 +5,7 @@
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
  */
 
-import { prepareOpeningGreeting } from "@/function/dialogue/opening";
+import { prepareOpeningGreetings } from "@/function/dialogue/opening";
 
 interface InitCharacterDialogueOptions {
   username?: string;
@@ -26,25 +26,23 @@ export async function initCharacterDialogue(options: InitCharacterDialogueOption
   }
 
   try {
-    const opening = await prepareOpeningGreeting({
+    const openings = await prepareOpeningGreetings({
       dialogueId,
       characterId,
       language,
       username,
     });
+    const opening = openings[0];
+    if (!opening) {
+      throw new Error("SessionBlueprint did not produce an opening message");
+    }
 
     return {
       success: true,
       characterId,
       firstMessage: opening.content,
       openingMessage: opening,
-      openingMessages: [
-        {
-          id: opening.id,
-          content: opening.content,
-          fullContent: opening.fullContent,
-        },
-      ],
+      openingMessages: openings,
     };
   } catch (error) {
     console.error("Failed to initialize character dialogue:", error);

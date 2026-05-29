@@ -19,6 +19,12 @@ export {
 } from "./report";
 
 export {
+  extractRenderIntentMatches,
+  stripRenderIntentSources,
+  type RenderIntentMatch,
+} from "./runtime";
+
+export {
   RENDER_INTENT_SCHEMA_VERSION,
   type ChoiceListRenderIntent,
   type ChoiceOption,

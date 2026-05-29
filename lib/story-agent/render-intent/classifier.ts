@@ -4,6 +4,16 @@ import type { RegexClassification } from "./types";
 export function classifyRegexScript(script: RegexScript): RegexClassification {
   const html = stripCodeFence(script.replaceString ?? "");
   const scriptId = script.scriptKey || script.id || script.scriptName;
+  if (isStatusSourcePattern(script, html)) {
+    return {
+      scriptId,
+      scriptName: script.scriptName,
+      kind: "render_intent_extractor",
+      confidence: 0.8,
+      canExtractRenderIntent: true,
+      reasons: ["status source pattern", "compiled to whitelist status panel"],
+    };
+  }
   const ui = classifyUi(script, html);
   if (ui) return { scriptId, scriptName: script.scriptName, ...ui };
 
@@ -21,6 +31,13 @@ export function classifyRegexScript(script: RegexScript): RegexClassification {
   }
 
   return classification(script, "unsupported", 0.4, ["no supported placement"], "unclassified regex rule");
+}
+
+function isStatusSourcePattern(script: RegexScript, html: string): boolean {
+  return /状态栏|status/i.test(script.scriptName) &&
+    containsHtml(html) &&
+    /<SFW>|<NSFW>/i.test(script.findRegex) &&
+    /\\\{/.test(script.findRegex);
 }
 
 export function classifyRegexScripts(scripts: RegexScript[]): RegexClassification[] {

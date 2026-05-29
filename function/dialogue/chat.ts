@@ -100,6 +100,7 @@ export async function handleCharacterChatRequest(payload: {
         },
         number,
         fastModel,
+        openingMessage,
       }));
 
       return await handlePreparedDialogueResponse({

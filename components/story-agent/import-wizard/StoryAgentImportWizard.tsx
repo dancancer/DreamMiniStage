@@ -248,6 +248,7 @@ function SummaryPanel({
 }) {
   const rows = [
     [copy.summaryCharacter, preview.summary.characterName],
+    [copy.summaryOpenings, String(preview.summary.openingCount)],
     [copy.summaryPrompt, String(preview.summary.promptMessageCount)],
     [copy.summaryWorldbook, `${preview.summary.worldBookCount} / ${preview.summary.worldBookEntryCount}`],
     [copy.summaryRegex, String(preview.summary.regexScriptCount)],
@@ -316,6 +317,7 @@ function labels(language: string) {
     needsConfirmation: zh ? "需要人工确认" : "Manual confirmation required",
     confirm: zh ? "我已确认这些变更" : "I confirm these changes",
     summaryCharacter: zh ? "角色" : "Character",
+    summaryOpenings: zh ? "开场" : "Openings",
     summaryPrompt: zh ? "Prompt" : "Prompt",
     summaryWorldbook: zh ? "世界书/条目" : "Worldbooks / entries",
     summaryRegex: zh ? "正则规则" : "Regex rules",

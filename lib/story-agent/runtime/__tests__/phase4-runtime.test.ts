@@ -183,7 +183,7 @@ describe("SAC-Phase 4 blueprint runtime harness", () => {
     expect(result.hits.some((hit) => hit.depth === 4)).toBe(true);
   });
 
-  it("POC-4.3 drops history before memory, world hits and prompt stack under budget", () => {
+  it("POC-4.3 preserves the latest user turn before optional memory under budget", () => {
     const blueprint = shortPromptBlueprint();
     const worldHits = matchWorldModules(blueprint, "alpha").hits;
     const result = assemblePromptContext({
@@ -200,9 +200,13 @@ describe("SAC-Phase 4 blueprint runtime harness", () => {
     expect(result.messages.map((message) => message.source)).toEqual([
       "prompt-stack",
       "world",
-      "memory",
+      "history",
     ]);
-    expect(result.omitted.map((message) => message.source)).toEqual(["history", "history"]);
+    expect(result.messages.at(-1)).toMatchObject({
+      role: "user",
+      content: "old user message that should be cut first",
+    });
+    expect(result.omitted.map((message) => message.source)).toEqual(["memory", "history"]);
   });
 
   it("POC-4.4 keeps sticky cooldown and delay in activation state", () => {

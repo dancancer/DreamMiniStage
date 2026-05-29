@@ -36,6 +36,7 @@ export interface StoryAgentImportSummary {
   regexScriptCount: number;
   renderRuleCount: number;
   promptMessageCount: number;
+  openingCount: number;
   diagnosticCount: number;
 }
 

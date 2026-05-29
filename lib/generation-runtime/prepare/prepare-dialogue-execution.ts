@@ -30,7 +30,9 @@ export async function prepareDialogueExecution(
       streaming: params.streaming,
       streamUsage: params.streamUsage,
       language: params.language,
+      username: params.username,
     },
+    openingMessage: params.openingMessage,
     commitSession: saveStorySession,
   });
 

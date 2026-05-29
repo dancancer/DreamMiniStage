@@ -1,4 +1,5 @@
 import type { ModelAdvancedSettings } from "@/lib/model-runtime";
+import type { OpeningPayload } from "@/types/character-dialogue";
 
 export interface DialogueRuntimeParamInput {
   dialogueId: string;
@@ -13,6 +14,7 @@ export interface DialogueRuntimeParamInput {
   advanced?: ModelAdvancedSettings;
   number: number;
   fastModel: boolean;
+  openingMessage?: OpeningPayload;
 }
 
 export interface DialogueRuntimeParams {
@@ -39,4 +41,5 @@ export interface DialogueRuntimeParams {
   streaming?: boolean;
   streamUsage?: boolean;
   fastModel?: boolean;
+  openingMessage?: OpeningPayload;
 }

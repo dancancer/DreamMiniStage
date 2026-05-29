@@ -6,7 +6,7 @@ import type { SecondaryKeyLogic } from "@/lib/models/world-book-model";
 import type { MemoryPolicy } from "@/lib/story-agent/memory";
 import type { RenderIntent } from "@/lib/story-agent/render-intent";
 
-export const SESSION_BLUEPRINT_SCHEMA_VERSION = 3;
+export const SESSION_BLUEPRINT_SCHEMA_VERSION = 4;
 
 export type PromptRole = "system" | "user" | "assistant" | "unknown";
 export type PromptSourceKind = "character" | "preset";
@@ -20,8 +20,15 @@ export interface AgentProfile {
   personality?: string;
   scenario?: string;
   firstMessage?: string;
+  openings: AgentOpening[];
   exampleMessages?: string;
   promptFragments: AgentPromptFragment[];
+}
+
+export interface AgentOpening {
+  id: string;
+  content: string;
+  sourceField: string;
 }
 
 export interface AgentPromptFragment {

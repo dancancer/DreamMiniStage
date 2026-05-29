@@ -74,6 +74,7 @@ describe("compileSessionBlueprint", () => {
     expect({
       schemaVersion: blueprint.schemaVersion,
       profileName: blueprint.profile.name,
+      openingCount: blueprint.profile.openings.length,
       promptMessages: blueprint.promptStack.messages.length,
       worldModules: blueprint.worldModules.map((module) => ({
         id: module.id,
@@ -88,10 +89,10 @@ describe("compileSessionBlueprint", () => {
     }).toMatchInlineSnapshot(`
       {
         "contentRules": {
-          "html-ui-unsupported": 38,
+          "html-ui-unsupported": 36,
           "markdown-only": 40,
         },
-        "inputTransforms": 39,
+        "inputTransforms": 34,
         "memoryPolicy": {
           "episodic": {
             "maxEntries": 24,
@@ -109,11 +110,36 @@ describe("compileSessionBlueprint", () => {
             "preserveRecentEpisodes": 8,
           },
         },
-        "outputTransforms": 47,
+        "openingCount": 11,
+        "outputTransforms": 0,
         "profileName": "【Sgw】又看一集",
-        "promptMessages": 125,
+        "promptMessages": 124,
         "promptTransforms": 8,
         "renderRules": [
+          {
+            "confidence": 0.8,
+            "dataTemplate": "$1",
+            "fields": [
+              {
+                "label": "日期",
+                "valueTemplate": "$json.date",
+              },
+              {
+                "label": "时间",
+                "valueTemplate": "$json.time",
+              },
+              {
+                "label": "地点",
+                "valueTemplate": "$json.location",
+              },
+            ],
+            "id": "9da8e3ce-5c72-41f0-befe-e7332d2ab4d2:status-panel",
+            "kind": "status-panel",
+            "schemaVersion": 1,
+            "sourcePattern": "<SFW>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/SFW>",
+            "sourceScriptId": "9da8e3ce-5c72-41f0-befe-e7332d2ab4d2",
+            "title": "状态栏（Mujica版）（二选一）",
+          },
           {
             "bodyTemplate": "$1",
             "collapsedLabel": "点击查看 ▶︎",
@@ -126,7 +152,7 @@ describe("compileSessionBlueprint", () => {
             "title": "[美化]完整变量更新",
           },
         ],
-        "schemaVersion": 3,
+        "schemaVersion": 4,
         "worldModules": [
           {
             "entries": 140,

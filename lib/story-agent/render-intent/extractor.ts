@@ -1,5 +1,5 @@
 import type { RegexScript } from "@/lib/models/regex-script-model";
-import { classifyRegexScript, stripCodeFence } from "./classifier";
+import { classifyRegexScript, containsHtml, stripCodeFence } from "./classifier";
 import {
   RENDER_INTENT_SCHEMA_VERSION,
   type ChoiceOption,
@@ -18,7 +18,8 @@ export function convertRegexToRenderIntent(script: RegexScript): RenderIntentCon
   }
 
   const html = stripCodeFence(script.replaceString ?? "");
-  const intent = extractChoiceList(script, html) ??
+  const intent = extractJsonStatusPanel(script, html) ??
+    extractChoiceList(script, html) ??
     extractCollapsiblePanel(script, html) ??
     extractStatusPanel(script, html);
 
@@ -41,6 +42,32 @@ export function convertRegexScriptsToRenderIntents(
   scripts: RegexScript[],
 ): RenderIntentConversion[] {
   return scripts.map(convertRegexToRenderIntent);
+}
+
+function extractJsonStatusPanel(script: RegexScript, html: string): RenderIntent | undefined {
+  if (
+    !containsHtml(html) ||
+    !isStatusSourcePattern(script.findRegex) ||
+    !/状态栏|status/i.test(script.scriptName)
+  ) {
+    return undefined;
+  }
+
+  return {
+    schemaVersion: RENDER_INTENT_SCHEMA_VERSION,
+    id: intentId(script, "status-panel"),
+    kind: "status-panel",
+    sourceScriptId: scriptId(script),
+    title: script.scriptName || "状态栏",
+    confidence: 0.8,
+    fields: [
+      { label: "日期", valueTemplate: "$json.date" },
+      { label: "时间", valueTemplate: "$json.time" },
+      { label: "地点", valueTemplate: "$json.location" },
+    ],
+    dataTemplate: "$1",
+    sourcePattern: script.findRegex,
+  };
 }
 
 function extractChoiceList(script: RegexScript, html: string): RenderIntent | undefined {
@@ -68,6 +95,10 @@ function extractChoiceList(script: RegexScript, html: string): RenderIntent | un
     confidence: 0.86,
     options,
   };
+}
+
+function isStatusSourcePattern(pattern: string): boolean {
+  return /<SFW>|<NSFW>/i.test(pattern) && /\\\{/.test(pattern);
 }
 
 function extractCollapsiblePanel(script: RegexScript, html: string): RenderIntent | undefined {

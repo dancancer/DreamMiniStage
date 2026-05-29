@@ -51,23 +51,57 @@ describe("StoryBlueprint 开场白基线", () => {
     expect(loadStoryRuntimeBinding).toHaveBeenCalledWith("baseline-session");
     expect(result.firstMessage).toBe("欢迎 测试用户，我是 夏瑾。");
     expect(result.openingMessage).toMatchObject({
-      id: "baseline-session-opening",
+      id: "baseline-session-opening-0",
       content: "欢迎 测试用户，我是 夏瑾。",
       fullContent: "欢迎 测试用户，我是 夏瑾。",
     });
+  });
+
+  it("保留 SessionBlueprint 中的多个开场供会话页切换", async () => {
+    loadStoryRuntimeBinding.mockResolvedValueOnce({
+      blueprint: {
+        ...createBlueprint("默认开场"),
+        profile: {
+          ...createBlueprint("默认开场").profile,
+          openings: [
+            { id: "opening:first_mes", content: "第一幕 {{user}}", sourceField: "data.first_mes" },
+            { id: "opening:alternate:0", content: "第二幕 {{char}}", sourceField: "data.alternate_greetings.0" },
+          ],
+        },
+      },
+      session: {},
+    });
+    const { initCharacterDialogue } = await import("../init");
+
+    const result = await initCharacterDialogue({
+      username: "测试用户",
+      dialogueId: "baseline-session",
+      characterId: "baseline-char",
+      language: "zh",
+      modelName: "gpt",
+      baseUrl: "http://localhost",
+      apiKey: "sk-test",
+      llmType: "openai",
+    });
+
+    expect(result.openingMessages.map((opening) => opening.content)).toEqual([
+      "第一幕 测试用户",
+      "第二幕 夏瑾",
+    ]);
   });
 });
 
 function createBlueprint(firstMessage: string): SessionBlueprint {
   return {
     id: "blueprint:baseline",
-    schemaVersion: 3,
+    schemaVersion: 4,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
       id: "baseline-char",
       name: "夏瑾",
       firstMessage,
+      openings: [],
       promptFragments: [],
     },
     promptStack: { messages: [] },

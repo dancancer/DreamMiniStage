@@ -16,9 +16,15 @@
 
 import { useEffect, memo, useMemo } from "react";
 import { ScriptSandbox } from "./ScriptSandbox";
+import { RenderIntentView } from "@/components/story-agent/render-intent";
 import { clearColorCache } from "@/lib/utils/html-tag-processor";
 import type { ScriptMessageData } from "@/types/script-message";
 import { useMessageRenderPipeline } from "@/components/message-bubble/useMessageRenderPipeline";
+import {
+  extractRenderIntentMatches,
+  stripRenderIntentSources,
+  type RenderIntent,
+} from "@/lib/story-agent/render-intent";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    类型定义
@@ -49,6 +55,7 @@ interface Props {
   onScriptMessage?: (data: ScriptMessageData) => Promise<unknown> | unknown;
   scriptVariables?: Record<string, unknown>;
   scripts?: TavernHelperScript[];
+  renderIntents?: RenderIntent[];
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -65,10 +72,19 @@ function MessageBubbleInner({
   onScriptMessage,
   scriptVariables,
   scripts = [],
+  renderIntents = [],
 }: Props) {
+  const renderMatches = useMemo(
+    () => extractRenderIntentMatches(rawHtml, renderIntents),
+    [rawHtml, renderIntents],
+  );
+  const displayHtml = useMemo(
+    () => stripRenderIntentSources(rawHtml, renderIntents),
+    [rawHtml, renderIntents],
+  );
   const contentWithScripts = useMemo(
-    () => injectScriptsIntoContent(rawHtml, scripts),
-    [rawHtml, scripts],
+    () => injectScriptsIntoContent(displayHtml, scripts),
+    [displayHtml, scripts],
   );
   const pipeline = useMessageRenderPipeline({
     html: contentWithScripts,
@@ -89,7 +105,7 @@ function MessageBubbleInner({
   // ╔══════════════════════════════════════════════════════════════════╗
   // ║  加载状态                                                         ║
   // ╚══════════════════════════════════════════════════════════════════╝
-  if (isLoading || rawHtml.trim() === "") {
+  if (isLoading || (rawHtml.trim() === "" && renderMatches.length === 0)) {
     return null;
   }
 
@@ -102,7 +118,7 @@ function MessageBubbleInner({
   }
 
   return (
-    <div className=" whitespace-pre-wrap prose prose-invert max-w-none">
+    <div className="space-y-3 whitespace-pre-wrap prose prose-invert max-w-none">
       {pipeline.segments.map((segment, index) =>
         segment.type === "html" ? (
           <HtmlSegment key={`html-${index}`} html={segment.content} />
@@ -117,6 +133,13 @@ function MessageBubbleInner({
           />
         ),
       )}
+      {renderMatches.map((match, index) => (
+        <RenderIntentView
+          intent={match.intent}
+          key={`${match.intent.id}-${index}`}
+          values={match.values}
+        />
+      ))}
     </div>
   );
 }
@@ -147,6 +170,7 @@ const MessageBubble = memo(MessageBubbleInner, (prev, next) => {
   
   // scripts 数组长度变化 → 必须重渲染
   if ((prev.scripts?.length ?? 0) !== (next.scripts?.length ?? 0)) return false;
+  if ((prev.renderIntents?.length ?? 0) !== (next.renderIntents?.length ?? 0)) return false;
   
   // 其他情况 → 跳过重渲染
   return true;

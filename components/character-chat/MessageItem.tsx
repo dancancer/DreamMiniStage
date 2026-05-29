@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import type { TavernHelperScript } from "@/lib/models/character-model";
 import type { ScriptMessageData } from "@/types/script-message";
 import type { ChatStreamingIntent } from "./streaming-types";
+import type { RenderIntent } from "@/lib/story-agent/render-intent";
 
 // ============================================================================
 //                              类型定义
@@ -49,6 +50,7 @@ interface Character {
   avatar_path?: string;
   extensions?: {
     TavernHelper_scripts?: TavernHelperScript[];
+    storyRenderIntents?: RenderIntent[];
     [key: string]: unknown;
   };
 }
@@ -313,6 +315,7 @@ function AssistantMessage({
         html={message.content}
         characterId={character.id}
         scripts={character.extensions?.TavernHelper_scripts || []}
+        renderIntents={character.extensions?.storyRenderIntents || []}
         scriptVariables={scriptVariables}
         isLoading={isSending && isLastMessage && message.content.trim() === ""}
         enableStreaming={isActivelyStreaming}

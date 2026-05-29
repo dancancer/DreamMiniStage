@@ -25,7 +25,15 @@ export interface AssemblePromptContextInput {
   worldHits?: WorldHit[];
   memoryMessages?: string[];
   history?: Array<{ role: "user" | "assistant"; content: string }>;
+  requiredHistoryIndexes?: number[];
+  macroContext?: PromptMacroContext;
   maxTokens?: number;
+}
+
+export interface PromptMacroContext {
+  charName?: string;
+  userName?: string;
+  lastUserMessage?: string;
 }
 
 export interface AssemblePromptContextResult {
@@ -37,13 +45,13 @@ export interface AssemblePromptContextResult {
 export function assemblePromptContext(
   input: AssemblePromptContextInput,
 ): AssemblePromptContextResult {
-  const messages = [
+  const messages = renderPromptMacros([
     ...assemblePromptMessages(input.blueprint).map(fromPromptStack),
     ...(input.worldHits ?? []).map(fromWorldHit),
     ...(input.memoryMessages ?? []).map(fromMemory),
     ...(input.history ?? []).map(fromHistory),
-  ];
-  return fitBudget(messages, input.maxTokens ?? Infinity);
+  ], input.macroContext);
+  return fitBudget(messages, input.maxTokens ?? Infinity, requiredMessageIds(messages, input));
 }
 
 function fromPromptStack(message: CompiledPromptMessage): PromptContextMessage {
@@ -94,12 +102,21 @@ function fromHistory(
 function fitBudget(
   messages: PromptContextMessage[],
   maxTokens: number,
+  requiredIds: string[] = [],
 ): AssemblePromptContextResult {
   const selected: PromptContextMessage[] = [];
   const omitted: AssemblePromptContextResult["omitted"] = [];
+  const requiredSet = new Set(requiredIds);
+  const required = messages.filter((message) => requiredSet.has(message.id));
   let totalTokens = 0;
 
-  for (const message of messages.sort(comparePriority)) {
+  for (const message of required) {
+    selected.push(message);
+    totalTokens += message.estimatedTokens;
+  }
+
+  for (const message of [...messages].sort(comparePriority)) {
+    if (requiredSet.has(message.id)) continue;
     if (totalTokens + message.estimatedTokens <= maxTokens) {
       selected.push(message);
       totalTokens += message.estimatedTokens;
@@ -117,6 +134,98 @@ function fitBudget(
     omitted,
     totalTokens,
   };
+}
+
+function renderPromptMacros(
+  messages: PromptContextMessage[],
+  context: PromptMacroContext = {},
+): PromptContextMessage[] {
+  const variables = collectPromptVariables(messages, context);
+  return messages.map((message) => {
+    const content = renderMacros(message.content, context, variables);
+    return {
+      ...message,
+      content,
+      estimatedTokens: estimateTokens(content),
+    };
+  });
+}
+
+function collectPromptVariables(
+  messages: PromptContextMessage[],
+  context: PromptMacroContext,
+): Record<string, string> {
+  const variables: Record<string, string> = {};
+  for (const message of messages) {
+    message.content.replace(/\{\{([\s\S]*?)\}\}/g, (_match, body: string) => {
+      const set = body.match(/^setvar::([^:}]+)::([\s\S]*)$/i);
+      if (set?.[1]) {
+        variables[set[1]] = renderScalarMacros(set[2] ?? "", context, variables);
+        return "";
+      }
+      const add = body.match(/^addvar::([^:}]+)::([\s\S]*)$/i);
+      if (add?.[1]) {
+        variables[add[1]] = `${variables[add[1]] ?? ""}${renderScalarMacros(add[2] ?? "", context, variables)}`;
+      }
+      return "";
+    });
+  }
+  return variables;
+}
+
+function renderMacros(
+  content: string,
+  context: PromptMacroContext,
+  variables: Record<string, string>,
+): string {
+  return content.replace(/\{\{([\s\S]*?)\}\}/g, (_match, body: string) => {
+    const scalar = renderKnownMacro(body, context, variables);
+    return scalar ?? (body.trim().startsWith("//") ? "" : "");
+  });
+}
+
+function renderScalarMacros(
+  content: string,
+  context: PromptMacroContext,
+  variables: Record<string, string>,
+): string {
+  return renderMacros(content, context, variables);
+}
+
+function renderKnownMacro(
+  body: string,
+  context: PromptMacroContext,
+  variables: Record<string, string>,
+): string | undefined {
+  const key = body.trim();
+  if (/^setvar::/i.test(key) || /^addvar::/i.test(key)) return "";
+  if (/^getvar::/i.test(key)) return variables[key.replace(/^getvar::/i, "")] ?? "";
+  if (/^trim$/i.test(key)) return "";
+  if (/^char$/i.test(key) || /^charIfNotGroup$/i.test(key)) return context.charName ?? "";
+  if (/^user$/i.test(key)) return context.userName ?? "user";
+  if (/^lastUserMessage$/i.test(key)) return context.lastUserMessage ?? "";
+  return undefined;
+}
+
+function requiredMessageIds(
+  messages: PromptContextMessage[],
+  input: AssemblePromptContextInput,
+): string[] {
+  return [
+    ...historyIds(input.requiredHistoryIndexes ?? []),
+    latestUserHistoryId(messages),
+  ].filter((id): id is string => Boolean(id));
+}
+
+function historyIds(indexes: number[]): string[] {
+  return indexes.map((index) => `history:${index}`);
+}
+
+function latestUserHistoryId(messages: PromptContextMessage[]): string | undefined {
+  return [...messages]
+    .reverse()
+    .find((message) => message.source === "history" && message.role === "user")
+    ?.id;
 }
 
 function comparePriority(left: PromptContextMessage, right: PromptContextMessage): number {

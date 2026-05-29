@@ -62,6 +62,7 @@ export interface ImportedCharacterProfile {
   personality?: string;
   scenario?: string;
   firstMessage?: string;
+  alternateGreetings: string[];
   exampleMessages?: string;
   creator?: string;
   version?: string;
