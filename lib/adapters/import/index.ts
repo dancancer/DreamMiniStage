@@ -37,6 +37,36 @@ export {
 } from "./bundle-builder";
 
 export {
+  diagnoseImportedAssetBundle,
+  summarizeDiagnostics,
+  type DiagnosticSummary,
+  type ImportDiagnosticCode,
+} from "./bundle-diagnostics";
+
+export {
+  HIGH_RISK_PATHS,
+  REPAIR_RISK_RULES,
+  RepairPatchValidationError,
+  applyAutoRepairPatch,
+  computeRepairRisk,
+  importDiagnosticSchema,
+  llmQaInputSchema,
+  llmQaOutputSchema,
+  repairOperationSchema,
+  repairPatchSchema,
+  repairRiskSchema,
+  validateRepairOutput,
+  validateRepairPatch,
+  type LlmQaInput,
+  type LlmQaOutput,
+  type RepairOperation,
+  type RepairPatch,
+  type RepairRisk,
+  type RepairRiskRule,
+  type ValidatedRepairPatch,
+} from "./repair-patch";
+
+export {
   regexImportPipeline,
   importRegexScripts,
   canImportRegexScripts,

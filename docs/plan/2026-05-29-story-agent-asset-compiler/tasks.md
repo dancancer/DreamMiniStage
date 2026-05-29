@@ -42,16 +42,16 @@
 
 ## 4. SAC-Phase 2：静态诊断与 LLM QA Repair
 
-- [ ] 建立 deterministic diagnostics 分类。
-- [ ] 定义 LLM QA 输入输出 schema。
-- [ ] 定义 typed repair patch schema。
-- [ ] 实现 repair patch validator。
-- [ ] 定义 Low / Medium / High repair 风险等级，risk level 必须由 patch target path 和 operation 确定性计算，禁止 LLM 自评。
-- [ ] 输出 High-risk path map，覆盖角色人格、描述、核心开场白、关系设定、内容边界、系统 prompt、关键世界书条目。
-- [ ] POC-2.1：对真实资产生成 diagnostics，人工抽样确认不是噪声报告。
-- [ ] POC-2.2：让 LLM 对一组带缺陷的 synthetic bundle 输出 typed patch，并用 validator 拦截非法 patch。
-- [ ] POC-2.3：对真实资产只启用 Low-risk auto repair，验证修复前后语义指标不丢。
-- [ ] POC-2.4：构造含 prompt-injection 的资产，验证 schema-valid 但 risk-mislabeled 的 patch 不会 auto-apply。
+- [x] 建立 deterministic diagnostics 分类。
+- [x] 定义 LLM QA 输入输出 schema。
+- [x] 定义 typed repair patch schema。
+- [x] 实现 repair patch validator。
+- [x] 定义 Low / Medium / High repair 风险等级，risk level 必须由 patch target path 和 operation 确定性计算，禁止 LLM 自评。
+- [x] 输出 High-risk path map，覆盖角色人格、描述、核心开场白、关系设定、内容边界、系统 prompt、关键世界书条目。
+- [x] POC-2.1：对真实资产生成 diagnostics，人工抽样确认不是噪声报告。
+- [x] POC-2.2：用 LLM QA 输出形状的 synthetic payload 验证 typed patch，并用 validator 拦截非法 patch；外部 Claude CLI 调用失败记录在 POC 工件中。
+- [x] POC-2.3：对真实资产只启用 Low-risk auto repair，验证修复前后语义指标不丢。
+- [x] POC-2.4：构造含 prompt-injection 的资产，验证 schema-valid 但 risk-mislabeled 的 patch 不会 auto-apply。
 
 ## 5. SAC-Phase 3：SessionBlueprint Core 编译器
 
