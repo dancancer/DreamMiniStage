@@ -55,17 +55,17 @@
 
 ## 5. SAC-Phase 3：SessionBlueprint Core 编译器
 
-- [ ] 定义 `SessionBlueprint` core schema。
-- [ ] 编译角色设定为 `AgentProfile`。
-- [ ] 编译 preset 和角色卡 prompt 字段为 `PromptStack`。
-- [ ] 编译世界书为 `WorldModule`。
-- [ ] 编译正则为 input/output/prompt transforms 与 content rules；render rules 仅写 deferred contract，依赖 `SAC-Phase 5`。
-- [ ] 记忆策略仅写 deferred contract，依赖 `SAC-Phase 6b`。
-- [ ] 输出稳定 hash、版本号、provenance、diagnostics。
-- [ ] POC-3.1：用真实资产生成 `SessionBlueprint` JSON，并做 snapshot review。
-- [ ] POC-3.2：相同资产重复编译得到稳定 hash；资产变化时 hash 改变。
-- [ ] POC-3.3：离线 prompt assembly harness 只读 `SessionBlueprint`，不读原始 ST 文件。
-- [ ] 输出 deferred contract 升级策略，明确 render/memory 进入稳定 hash 的触发规则。
+- [x] 定义 `SessionBlueprint` core schema。
+- [x] 编译角色设定为 `AgentProfile`。
+- [x] 编译 preset 和角色卡 prompt 字段为 `PromptStack`。
+- [x] 编译世界书为 `WorldModule`。
+- [x] 编译正则为 input/output/prompt transforms 与 content rules；render rules 仅写 deferred contract，依赖 `SAC-Phase 5`。
+- [x] 记忆策略仅写 deferred contract，依赖 `SAC-Phase 6b`。
+- [x] 输出稳定 hash、版本号、provenance、diagnostics。
+- [x] POC-3.1：用真实资产生成 `SessionBlueprint` JSON，并做 snapshot review。
+- [x] POC-3.2：相同资产重复编译得到稳定 hash；资产变化时 hash 改变。
+- [x] POC-3.3：离线 prompt assembly harness 只读 `SessionBlueprint`，不读原始 ST 文件。
+- [x] 输出 deferred contract 升级策略，明确 render/memory 进入稳定 hash 的触发规则。
 
 ## 6. SAC-Phase 4：世界书与 Prompt 编排运行时 POC
 
