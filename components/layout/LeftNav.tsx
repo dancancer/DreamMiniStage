@@ -21,6 +21,7 @@ import {
   Users,
   UserCircle,
   BookOpen,
+  WandSparkles,
   Regex,
   SlidersHorizontal,
   Settings2,
@@ -54,6 +55,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "创作/世界",
     items: [
       { id: "characters", label: "角色卡", href: "/character-cards", icon: <Users size={16} /> },
+      { id: "storyAgentImport", label: "Agent 导入", href: "/story-agent-import", icon: <WandSparkles size={16} /> },
       { id: "personas", label: "用户角色", href: "/personas", icon: <UserCircle size={16} /> },
       { id: "worldbook", label: "世界书", panel: "worldbook", icon: <BookOpen size={16} /> },
     ],

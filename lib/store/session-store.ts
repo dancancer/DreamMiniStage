@@ -1,5 +1,5 @@
 /**
- * @input  zustand, lib/data/roleplay/session-operation, types/session
+ * @input  zustand, lib/data/roleplay/session-operation, lib/story-agent/session, types/session
  * @output useSessionStore
  * @pos    会话状态管理,负责会话列表的 CRUD 与 IndexedDB 同步
  * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
@@ -16,10 +16,10 @@ import { create } from "zustand";
 import { SessionOperations } from "@/lib/data/roleplay/session-operation";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
+import { createStorySessionForCharacter } from "@/lib/story-agent/session";
 import {
   Session,
   SessionWithCharacter,
-  generateDefaultSessionName,
   isValidSessionName,
 } from "@/types/session";
 
@@ -115,23 +115,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
    */
   createSession: async (characterId: string, options) => {
     try {
-      const character = await LocalCharacterRecordOperations.getCharacterById(
-        characterId,
-      );
-      if (!character) {
-        console.error("Character not found:", characterId);
-        return null;
-      }
-
-      const generatedName = generateDefaultSessionName(
-        character.data?.name ?? "未知角色",
-      );
-      const defaultName = options?.name?.trim() || generatedName;
-      const session = await SessionOperations.createSession(
-        characterId,
-        defaultName,
-      );
-
+      const session = await createStorySessionForCharacter(characterId, options);
       const enriched = await enrichSessionWithCharacter(session);
 
       // 插入到列表头部（最新的在前）

@@ -189,8 +189,8 @@ function SessionPageContent() {
           : "The session page is for continuing the story, not for guessing where you meant to go next."}
         primaryHref="/"
         primaryLabel={language === "zh" ? "返回首页" : "Go to Home"}
-        secondaryHref="/character-cards?mode=create-session"
-        secondaryLabel={language === "zh" ? "创建新会话" : "Create a Session"}
+        secondaryHref="/story-agent-import"
+        secondaryLabel={language === "zh" ? "导入 Agent" : "Import Agent"}
       />
     );
   }

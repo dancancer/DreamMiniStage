@@ -49,8 +49,8 @@ function EmptyState() {
         ? "从角色开始一次新会话，会比直接堆积素材更容易进入叙事节奏。"
         : "Starting from a character keeps the narrative momentum clearer than piling up raw materials first."}
       primaryAction={{
-        label: language === "zh" ? "创建新会话" : "Create Session",
-        href: "/character-cards?mode=create-session",
+        label: language === "zh" ? "导入 Agent" : "Import Agent",
+        href: "/story-agent-import",
       }}
       className="mx-auto w-full max-w-3xl xl:mx-0"
     />

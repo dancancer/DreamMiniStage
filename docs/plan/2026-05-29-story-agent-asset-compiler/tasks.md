@@ -117,19 +117,19 @@
 
 ## 10. SAC-Phase 7：产品化导入向导与用户确认流
 
-- [ ] 设计导入向导状态流。
-- [ ] 展示资产识别、自动修复、高风险确认、最终配置摘要。
-- [ ] 支持从编译后的 agent 创建会话。
-- [ ] 完成 blueprint agent 的导入向导和 `/session` 入口，且不得增加 shadow/legacy migration flag 或双轨开关。
-- [ ] 按 `SAC-Phase 6a` 决策落实 script-bridge 的最终去留，产品路径不得留下孤儿子系统。
-- [ ] POC-7.1：无 UI 的 CLI/dev route 导入流程，先验证状态流。
-- [ ] POC-7.2：最小 UI 导入向导，完成一组真实资产导入。
-- [ ] POC-7.3：导入后从生成的 agent 创建会话并发送首轮消息。
+- [x] 设计导入向导状态流。
+- [x] 展示资产识别、自动修复、高风险确认、最终配置摘要。
+- [x] 支持从编译后的 agent 创建会话。
+- [x] 完成 blueprint agent 的导入向导和 `/session` 入口，且不得增加 shadow/legacy migration flag 或双轨开关。
+- [x] 按 `SAC-Phase 6a` 决策落实 script-bridge 的最终去留，产品路径不得留下孤儿子系统。
+- [x] POC-7.1：无 UI 的 CLI/dev route 导入流程，先验证状态流。
+- [x] POC-7.2：最小 UI 导入向导，完成一组真实资产导入。
+- [x] POC-7.3：导入后从生成的 agent 创建会话并发送首轮消息。
 
 ## 11. 阶段质检门
 
-- [ ] 每个阶段进入实现前，必须先完成对应 POC 并记录结果。
-- [ ] POC 阶段使用定向 `vitest`、schema fixture、snapshot、typecheck 或 dev route 验证，不用完整 build gate 替代可行性验证。
-- [ ] 实现阶段完成后，必须执行 `pnpm verify:stage`。
-- [ ] `pnpm verify:stage` 后清理生成物，再确认 `git status --short`。
-- [ ] 阶段 review 必须记录 POC 结论、未决策项和下一阶段输入。
+- [x] 每个阶段进入实现前，必须先完成对应 POC 并记录结果。
+- [x] POC 阶段使用定向 `vitest`、schema fixture、snapshot、typecheck 或 dev route 验证，不用完整 build gate 替代可行性验证。
+- [x] 实现阶段完成后，必须执行 `pnpm verify:stage`。
+- [x] `pnpm verify:stage` 后清理生成物，再确认 `git status --short`。
+- [x] 阶段 review 必须记录 POC 结论、未决策项和下一阶段输入。
