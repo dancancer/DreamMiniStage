@@ -25,6 +25,8 @@ import { filterString } from "../trim-string-filter";
    生成器定义
    ═══════════════════════════════════════════════════════════════════════════ */
 
+const regexLiteralPattern = /^\/.+\/[gimsuvy]*$/;
+
 /**
  * 生成包含多种字符的文本
  */
@@ -51,7 +53,7 @@ const literalPatternArb = fc.oneof(
   fc.string().filter((s) => (
     s.length > 0 &&
     s.length <= 10 &&
-    !/^\/.+\/[gimsuvy]*$/.test(s)
+    !regexLiteralPattern.test(s)
   )),
 );
 
@@ -122,7 +124,11 @@ describe("Property 6: TrimStrings 过滤幂等性", () => {
   it("*For any* text containing a literal pattern, filter SHALL remove all occurrences", () => {
     fc.assert(
       fc.property(
-        fc.string({ minLength: 1, maxLength: 10 }).filter((s) => s !== "_" && !s.includes("_")),
+        fc.string({ minLength: 1, maxLength: 10 }).filter((s) => (
+          s !== "_" &&
+          !s.includes("_") &&
+          !regexLiteralPattern.test(s)
+        )),
         fc.integer({ min: 2, max: 5 }),
         (pattern, count) => {
           // 构造包含多个相同模式的文本
