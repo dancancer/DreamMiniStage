@@ -120,6 +120,7 @@ describe("handleStreamingResponse", () => {
           apiKey: "key",
           baseUrl: "https://example.com",
           llmType: "openai",
+          streaming: true,
           messages: [{ role: "user", content: "hi" }],
         },
       },
@@ -154,6 +155,7 @@ function createPreparedExecution(userInput: string): PreparedDialogueExecution {
       apiKey: "key",
       baseUrl: "https://example.com",
       llmType: "openai",
+      streaming: true,
     },
   });
   return {

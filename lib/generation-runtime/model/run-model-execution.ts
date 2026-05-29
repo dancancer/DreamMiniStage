@@ -17,6 +17,14 @@ export async function runModelExecution(
   let streamedContent = "";
   let streamedReasoning = "";
 
+  if (!llmConfig.streaming) {
+    return {
+      fullResponse: await LLMNodeTools.invokeLLM(llmConfig),
+      streamedContent,
+      streamedReasoning,
+    };
+  }
+
   const fullResponse = await LLMNodeTools.invokeLLMStream(
     llmConfig,
     {

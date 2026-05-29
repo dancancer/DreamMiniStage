@@ -46,7 +46,7 @@ describe("runDialogueGeneration", () => {
       nodeId: "node-1",
       preparedExecution: {
         context: {} as never,
-        llmConfig: {},
+        llmConfig: { streaming: true },
       },
     }, sink);
 
@@ -84,7 +84,7 @@ describe("runDialogueGeneration", () => {
       nodeId: "node-1",
       preparedExecution: {
         context: {} as never,
-        llmConfig: {},
+        llmConfig: { streaming: true },
       },
     }, sink);
 
@@ -126,7 +126,7 @@ describe("runDialogueGeneration", () => {
       nodeId: "node-1",
       preparedExecution: {
         context: {} as never,
-        llmConfig: {} as never,
+        llmConfig: { streaming: true } as never,
       },
     }, {
       emit: async (event) => {
@@ -171,7 +171,7 @@ describe("runDialogueGeneration", () => {
       nodeId: "node-1",
       preparedExecution: {
         context: {} as never,
-        llmConfig: {} as never,
+        llmConfig: { streaming: true } as never,
       },
     }, {
       emit: async (event) => {

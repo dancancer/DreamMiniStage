@@ -7,7 +7,26 @@ describe("runModelExecution", () => {
     vi.restoreAllMocks();
   });
 
+  it("uses buffered model invocation when streaming is disabled", async () => {
+    vi.spyOn(LLMNodeTools, "invokeLLM").mockResolvedValue("Hello");
+    const streamSpy = vi.spyOn(LLMNodeTools, "invokeLLMStream");
+    const eventTypes: string[] = [];
+
+    const result = await runModelExecution({ streaming: false } as never, async (event) => {
+      eventTypes.push(event.type);
+    });
+
+    expect(result).toEqual({
+      fullResponse: "Hello",
+      streamedContent: "",
+      streamedReasoning: "",
+    });
+    expect(streamSpy).not.toHaveBeenCalled();
+    expect(eventTypes).toEqual([]);
+  });
+
   it("emits reasoning, tool, and content events while returning accumulated outputs", async () => {
+    const bufferedSpy = vi.spyOn(LLMNodeTools, "invokeLLM");
     vi.spyOn(LLMNodeTools, "invokeLLMStream").mockImplementation(
       async (_config, callbacks) => {
         callbacks.onReasoning?.("step-1");
@@ -20,7 +39,7 @@ describe("runModelExecution", () => {
     );
 
     const eventTypes: string[] = [];
-    const result = await runModelExecution({} as never, async (event) => {
+    const result = await runModelExecution({ streaming: true } as never, async (event) => {
       eventTypes.push(event.type);
     });
 
@@ -36,5 +55,6 @@ describe("runModelExecution", () => {
       "content-delta",
       "content-delta",
     ]);
+    expect(bufferedSpy).not.toHaveBeenCalled();
   });
 });
