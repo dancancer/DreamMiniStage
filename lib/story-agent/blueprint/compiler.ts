@@ -12,8 +12,11 @@ import { defaultMemoryPolicy } from "@/lib/story-agent/memory";
 import {
   convertRegexScriptsToRenderIntents,
   convertRegexToRenderIntent,
+  RENDER_INTENT_SCHEMA_VERSION,
+  type RenderIntent,
 } from "@/lib/story-agent/render-intent";
 import { containsHtml } from "@/lib/story-agent/render-intent/classifier";
+import { storyStateSourcePattern } from "@/lib/story-agent/runtime/state/update";
 import {
   SESSION_BLUEPRINT_SCHEMA_VERSION,
   type AgentProfile,
@@ -200,11 +203,15 @@ function compileContentRules(scripts: ImportedRegexScript[]): ContentRule[] {
   });
 }
 
-function compileRenderRules(scripts: ImportedRegexScript[]) {
-  return convertRegexScriptsToRenderIntents(scripts
+function compileRenderRules(scripts: ImportedRegexScript[]): RenderIntent[] {
+  const renderIntents = convertRegexScriptsToRenderIntents(scripts
     .filter((script) => script.raw.disabled !== true && script.raw.promptOnly !== true)
     .map((script) => script.raw))
     .flatMap((conversion) => conversion.intent ? [conversion.intent] : []);
+  return [
+    ...renderIntents,
+    ...compileStatePanelRules(scripts),
+  ];
 }
 
 function transformDirections(script: ImportedRegexScript): TransformDirection[] {
@@ -229,6 +236,32 @@ function transformDirections(script: ImportedRegexScript): TransformDirection[] 
 
 function isStatusSourceRegex(pattern: string): boolean {
   return /<SFW>|<NSFW>/i.test(pattern) && /\\\{/.test(pattern);
+}
+
+function compileStatePanelRules(scripts: ImportedRegexScript[]): RenderIntent[] {
+  const script = scripts.find(isStateUpdateCleanupRule) ?? scripts.find(hasStateUpdateConvention);
+  if (!script) return [];
+  return [{
+    schemaVersion: RENDER_INTENT_SCHEMA_VERSION,
+    id: `${script.id}:state-panel`,
+    kind: "state-panel",
+    sourceScriptId: script.id,
+    title: "Story State",
+    confidence: 0.78,
+    dataTemplate: "$1",
+    sourcePattern: storyStateSourcePattern(),
+  }];
+}
+
+function isStateUpdateCleanupRule(script: ImportedRegexScript): boolean {
+  return /UpdateVariable/i.test(script.raw.findRegex) &&
+    (script.raw.replaceString ?? "").trim().length === 0;
+}
+
+function hasStateUpdateConvention(script: ImportedRegexScript): boolean {
+  return /UpdateVariable/i.test(script.raw.findRegex) ||
+    /UpdateVariable/i.test(script.raw.replaceString ?? "") ||
+    /变量更新/.test(script.raw.scriptName);
 }
 
 function compileActivation(value: {

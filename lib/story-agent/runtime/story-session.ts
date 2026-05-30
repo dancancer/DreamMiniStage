@@ -18,6 +18,12 @@ import {
   type WorldActivationState,
   type WorldHit,
 } from "./world-module";
+import {
+  applyStoryStateUpdate,
+  createEmptyStoryState,
+  formatStoryStateMessages,
+  type StoryStateData,
+} from "./state/update";
 
 export interface StoryTranscriptMessage {
   id: string;
@@ -38,6 +44,7 @@ export interface StorySessionState {
   recentTranscript: StoryTranscriptMessage[];
   worldbookActivationState: WorldActivationState;
   renderState: StoryRenderState;
+  storyState: StoryStateData;
   memory: StoryMemoryState;
   updatedAt: string;
 }
@@ -103,6 +110,7 @@ export function createStorySession(params: {
       activeIntentIds: [],
       updatedAt: now,
     },
+    storyState: createEmptyStoryState(now),
     memory: createEmptyStoryMemoryState(now),
     updatedAt: now,
   };
@@ -135,7 +143,10 @@ export function prepareStoryTurn(params: {
     blueprint: params.blueprint,
     worldHits: world.hits,
     renderMessages: renderContractMessages(params.blueprint.renderRules),
-    memoryMessages: formatStoryMemoryMessages(params.session.memory),
+    memoryMessages: [
+      ...formatStoryMemoryMessages(params.session.memory),
+      ...formatStoryStateMessages(params.session.storyState),
+    ],
     history: [
       ...seededOpening,
       ...toHistory(params.session),
@@ -180,21 +191,28 @@ export async function finalizeStoryTurn(
   llmResponse: string,
 ): Promise<FinalizedDialogueResult> {
   const output = applyTextTransforms(llmResponse, turn.blueprint.outputTransforms);
+  const now = new Date().toISOString();
+  const stateUpdate = applyStoryStateUpdate(output.text, turn.session.storyState, {
+    now,
+    emitSourceTag: hasStatePanelIntent(turn.renderIntents),
+  });
   const nextSession = advanceStorySession({
     session: turn.session,
     userInput: turn.transformedInput,
-    assistantResponse: output.text,
+    assistantResponse: stateUpdate.visibleText,
     openingMessage: turn.openingMessage,
     worldbookActivationState: turn.worldbookActivationState,
     renderIntents: turn.renderIntents,
+    storyState: stateUpdate.state,
     memoryExtractor: turn.memoryExtractor,
     memoryPolicy: turn.blueprint.memoryPolicy,
+    now,
   });
 
   await turn.commitSession?.(nextSession);
 
   return {
-    screenContent: output.text,
+    screenContent: stateUpdate.screenText,
     fullResponse: llmResponse,
     thinkingContent: "",
     parsedContent: { nextPrompts: [] },
@@ -214,33 +232,35 @@ function advanceStorySession(params: {
   openingMessage?: StoryOpeningMessage;
   worldbookActivationState: WorldActivationState;
   renderIntents: RenderIntent[];
+  storyState: StoryStateData;
   memoryExtractor?: StoryMemoryExtractor;
   memoryPolicy: SessionBlueprint["memoryPolicy"];
+  now: string;
 }): StorySessionState {
-  const now = new Date().toISOString();
   const memory = consolidateStoryMemory({
     memory: params.session.memory,
     policy: params.memoryPolicy,
     userInput: params.userInput,
     assistantResponse: params.assistantResponse,
-    now,
+    now: params.now,
     extractor: params.memoryExtractor,
   });
   return {
     ...params.session,
     recentTranscript: trimTranscript([
-      ...openingTranscript(params.session, params.openingMessage, now),
+      ...openingTranscript(params.session, params.openingMessage, params.now),
       ...params.session.recentTranscript,
-      transcriptMessage("user", params.userInput, now),
-      transcriptMessage("assistant", params.assistantResponse, now),
+      transcriptMessage("user", params.userInput, params.now),
+      transcriptMessage("assistant", params.assistantResponse, params.now),
     ]),
     worldbookActivationState: params.worldbookActivationState,
     renderState: {
       activeIntentIds: params.renderIntents.map((intent) => intent.id),
-      updatedAt: now,
+      updatedAt: params.now,
     },
+    storyState: params.storyState,
     memory,
-    updatedAt: now,
+    updatedAt: params.now,
   };
 }
 
@@ -292,6 +312,10 @@ function renderContractMessages(intents: RenderIntent[]): string[] {
       : [],
   ));
   return [...tags].map(statusRenderContract);
+}
+
+function hasStatePanelIntent(intents: RenderIntent[]): boolean {
+  return intents.some((intent) => intent.kind === "state-panel");
 }
 
 function statusTag(pattern: string): string {

@@ -1,16 +1,35 @@
 import fs from "node:fs";
 import path from "node:path";
+import extract from "png-chunks-extract";
+import PNGtext from "png-chunk-text";
 import { describe, expect, it } from "vitest";
 import { importRegexScripts } from "@/lib/adapters/import";
 import type { RegexScript } from "@/lib/models/regex-script-model";
 import {
   buildRegexClassificationReport,
+  classifyRegexScripts,
   convertRegexScriptsToRenderIntents,
   convertRegexToRenderIntent,
 } from "../index";
 
 function readJson(pathname: string): unknown {
   return JSON.parse(fs.readFileSync(path.join(process.cwd(), pathname), "utf8"));
+}
+
+function readPngCard(filename: string): unknown {
+  const chunks = extract(new Uint8Array(fs.readFileSync(path.join(
+    process.cwd(),
+    "test-baseline-assets",
+    "character-card",
+    filename,
+  ))));
+  const metadata = chunks
+    .filter((chunk) => chunk.name === "tEXt")
+    .map((chunk) => PNGtext.decode(chunk.data))
+    .find((chunk) => ["ccv3", "chara"].includes(chunk.keyword.toLowerCase()));
+
+  if (!metadata) throw new Error(`No character metadata in ${filename}`);
+  return JSON.parse(Buffer.from(metadata.text, "base64").toString("utf8"));
 }
 
 function collectRegexObjects(value: unknown, results: unknown[] = []): unknown[] {
@@ -79,5 +98,24 @@ describe("regex RenderIntent classification", () => {
     expect(conversion.classification.kind).toBe("unsupported");
     expect(conversion.fallback?.allowedActions).toEqual(["disable", "plain-text"]);
     expect(conversion.fallback?.plainText).not.toContain("<script>");
+  });
+
+  it("classifies theater UpdateVariable cleanup apart from unsafe HTML widgets", () => {
+    const scripts = importRegexScripts(collectRegexObjects(readPngCard("V2.0Beta.png")));
+    const classifications = classifyRegexScripts(scripts);
+
+    expect(classifications).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          scriptName: "去除变量更新",
+          kind: "state_update",
+        }),
+        expect.objectContaining({
+          scriptName: "正文-诡秘之主",
+          kind: "unsupported",
+          unsupportedReason: "script tag is not allowed",
+        }),
+      ]),
+    );
   });
 });

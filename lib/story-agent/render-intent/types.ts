@@ -5,13 +5,15 @@ export type RegexClassificationKind =
   | "output_filter"
   | "prompt_transform"
   | "display_transform"
+  | "state_update"
   | "render_intent_extractor"
   | "unsupported";
 
 export type RenderIntentKind =
   | "choice-list"
   | "collapsible-panel"
-  | "status-panel";
+  | "status-panel"
+  | "state-panel";
 
 export type UnsupportedFallbackAction = "disable" | "plain-text";
 
@@ -72,6 +74,12 @@ export interface StatusPanelRenderIntent extends RenderIntentBase {
   sourcePattern?: string;
 }
 
+export interface StatePanelRenderIntent extends RenderIntentBase {
+  kind: "state-panel";
+  dataTemplate: string;
+  sourcePattern: string;
+}
+
 export interface StatusPanelField {
   label: string;
   valueTemplate: string;
@@ -80,7 +88,8 @@ export interface StatusPanelField {
 export type RenderIntent =
   | ChoiceListRenderIntent
   | CollapsiblePanelRenderIntent
-  | StatusPanelRenderIntent;
+  | StatusPanelRenderIntent
+  | StatePanelRenderIntent;
 
 export interface RenderIntentConversion {
   classification: RegexClassification;

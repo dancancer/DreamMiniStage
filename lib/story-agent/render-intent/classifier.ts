@@ -14,6 +14,12 @@ export function classifyRegexScript(script: RegexScript): RegexClassification {
       reasons: ["status source pattern", "compiled to whitelist status panel"],
     };
   }
+  if (isStateUpdateCleanup(script, html)) {
+    return classification(script, "state_update", 0.86, [
+      "UpdateVariable block cleanup",
+      "compiled to StoryState update grammar",
+    ]);
+  }
   const ui = classifyUi(script, html);
   if (ui) return { scriptId, scriptName: script.scriptName, ...ui };
 
@@ -38,6 +44,10 @@ function isStatusSourcePattern(script: RegexScript, html: string): boolean {
     containsHtml(html) &&
     /<SFW>|<NSFW>/i.test(script.findRegex) &&
     /\\\{/.test(script.findRegex);
+}
+
+function isStateUpdateCleanup(script: RegexScript, html: string): boolean {
+  return /UpdateVariable/i.test(script.findRegex) && html.trim().length === 0;
 }
 
 export function classifyRegexScripts(scripts: RegexScript[]): RegexClassification[] {

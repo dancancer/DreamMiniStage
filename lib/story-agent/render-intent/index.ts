@@ -35,6 +35,7 @@ export {
   type RenderIntentBase,
   type RenderIntentConversion,
   type RenderIntentKind,
+  type StatePanelRenderIntent,
   type StatusPanelField,
   type StatusPanelRenderIntent,
   type UnsupportedFallbackAction,

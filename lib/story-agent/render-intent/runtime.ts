@@ -18,15 +18,17 @@ export function stripRenderIntentSources(
   intents: RenderIntent[],
 ): string {
   return intents.reduce((result, intent) => {
-    if (intent.kind !== "status-panel" || !intent.sourcePattern) return result;
-    const regex = compileRegex(intent.sourcePattern);
+    const sourcePattern = readSourcePattern(intent);
+    if (!sourcePattern) return result;
+    const regex = compileRegex(sourcePattern);
     return regex ? result.replace(regex, "").trim() : result;
   }, text);
 }
 
 function matchIntent(text: string, intent: RenderIntent): RenderIntentMatch[] {
-  if (intent.kind !== "status-panel" || !intent.sourcePattern) return [];
-  const regex = compileRegex(intent.sourcePattern);
+  const sourcePattern = readSourcePattern(intent);
+  if (!sourcePattern) return [];
+  const regex = compileRegex(sourcePattern);
   if (!regex) return [];
 
   return Array.from(text.matchAll(regex)).map((match) => ({
@@ -40,6 +42,13 @@ function captureValues(match: RegExpMatchArray): Record<string, string> {
   return Object.fromEntries(
     match.slice(1).map((value, index) => [String(index + 1), value ?? ""]),
   );
+}
+
+function readSourcePattern(intent: RenderIntent): string | undefined {
+  if (intent.kind === "status-panel" || intent.kind === "state-panel") {
+    return intent.sourcePattern;
+  }
+  return undefined;
 }
 
 function compileRegex(pattern: string): RegExp | undefined {

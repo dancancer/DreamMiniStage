@@ -142,4 +142,36 @@ describe("RenderIntentView", () => {
 
     cleanup(rendered);
   });
+
+  it("renders a state panel from safe StoryState data", () => {
+    const rendered = renderIntent({
+      schemaVersion: 1,
+      id: "state",
+      kind: "state-panel",
+      sourceScriptId: "script",
+      title: "Story State",
+      confidence: 0.8,
+      dataTemplate: "$1",
+      sourcePattern: "<StoryState>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StoryState>",
+    }, {
+      1: JSON.stringify({
+        updated: [{
+          op: "set",
+          path: "当前地点",
+          value: "后台走廊",
+        }],
+        snapshot: {
+          当前地点: "后台走廊",
+        },
+        errors: [],
+      }),
+    });
+
+    expect(rendered.container.textContent).toContain("Story State");
+    expect(rendered.container.textContent).toContain("当前地点");
+    expect(rendered.container.textContent).toContain("后台走廊");
+    expect(rendered.container.querySelector("script")).toBeNull();
+
+    cleanup(rendered);
+  });
 });

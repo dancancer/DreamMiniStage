@@ -7,6 +7,7 @@ import {
   prepareStoryTurn,
   type StorySessionState,
 } from "../story-session";
+import { storyStateSourcePattern } from "../state/update";
 
 describe("SAC-Phase 6a StorySession runtime", () => {
   it("prepares a blueprint-only model request and commits recent transcript plus render state", async () => {
@@ -201,6 +202,63 @@ describe("SAC-Phase 6a StorySession runtime", () => {
       role: "user",
       content: "continue",
     });
+  });
+
+  it("persists UpdateVariable commands as StoryState and keeps raw blocks out of history", async () => {
+    const blueprint = {
+      ...createBlueprint(),
+      renderRules: [{
+        schemaVersion: 1 as const,
+        id: "state",
+        kind: "state-panel" as const,
+        sourceScriptId: "state-script",
+        title: "Story State",
+        confidence: 0.8,
+        dataTemplate: "$1",
+        sourcePattern: storyStateSourcePattern(),
+      }],
+    };
+    let saved = createStorySession({ dialogueId: "dialogue-state", blueprint });
+    const commitSession = async (session: StorySessionState) => {
+      saved = session;
+    };
+
+    const result = await finalizeStoryTurn(prepareStoryTurn({
+      blueprint,
+      session: saved,
+      userInput: "inspect backstage",
+      model: modelInput(),
+      commitSession,
+    }), [
+      "<thinking>hidden plan</thinking>",
+      "<gametxt>后台门缝里透出冷光。</gametxt>",
+      "<UpdateVariable>",
+      "_.set('当前地点', '后台走廊');",
+      "_.add('线索数量', 1);",
+      "</UpdateVariable>",
+    ].join("\n"));
+
+    expect(result.screenContent).toContain("<StoryState>");
+    expect(result.screenContent).not.toContain("<UpdateVariable>");
+    expect(saved.recentTranscript.at(-1)?.content).toBe("后台门缝里透出冷光。");
+    expect(saved.storyState.variables).toMatchObject({
+      当前地点: "后台走廊",
+      线索数量: 1,
+    });
+
+    const nextTurn = prepareStoryTurn({
+      blueprint,
+      session: saved,
+      userInput: "continue",
+      model: modelInput(),
+    });
+    const stateText = nextTurn.promptMessages
+      .filter((message) => message.content.includes("<status_current_variables>"))
+      .map((message) => message.content)
+      .join("\n");
+
+    expect(stateText).toContain("后台走廊");
+    expect(stateText).toContain("线索数量");
   });
 
   it("seeds the selected opening into the first story turn", async () => {

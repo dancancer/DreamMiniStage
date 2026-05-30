@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { ChevronDown, Clock, MapPin, Users } from "lucide-react";
+import { Activity, ChevronDown, Clock, Database, MapPin, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { RenderIntent } from "@/lib/story-agent/render-intent";
@@ -63,6 +63,12 @@ export function RenderIntentView({
     );
   }
 
+  if (intent.kind === "state-panel") {
+    const stateData = parseStatePanelData(resolveTemplate(intent.dataTemplate, values));
+    if (stateData) return <StoryStatePanel data={stateData} intent={intent} />;
+    return null;
+  }
+
   const statusData = intent.kind === "status-panel" && intent.dataTemplate
     ? parseStatusData(resolveTemplate(intent.dataTemplate, values))
     : null;
@@ -103,6 +109,72 @@ interface StatusData {
   time?: string;
   location?: string;
   characters: StatusCharacter[];
+}
+
+interface StatePanelUpdate {
+  op?: string;
+  path?: string;
+  value?: unknown;
+}
+
+interface StatePanelData {
+  updated: StatePanelUpdate[];
+  snapshot: Record<string, unknown>;
+  errors: string[];
+}
+
+function StoryStatePanel({ intent, data }: { intent: RenderIntent; data: StatePanelData }) {
+  const snapshotEntries = Object.entries(data.snapshot);
+  return (
+    <section className="rounded-md border border-primary/25 bg-card/85 p-4 text-card-foreground shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-3">
+        <div>
+          <div className="text-xs uppercase text-muted-foreground">Story State</div>
+          <h3 className="mt-1 text-sm font-semibold">{intent.title}</h3>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+          <StatusMeta icon={<Activity className="h-3.5 w-3.5" />} value={`${data.updated.length} updates`} />
+          <StatusMeta icon={<Database className="h-3.5 w-3.5" />} value={`${snapshotEntries.length} fields`} />
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3">
+        {data.updated.length > 0 ? (
+          <div className="grid gap-2">
+            {data.updated.map((item, index) => (
+              <div
+                className="grid gap-1 rounded-md border border-border/75 bg-background/45 px-3 py-2 text-sm sm:grid-cols-[5rem_1fr]"
+                key={`${item.op ?? "update"}-${item.path ?? index}`}
+              >
+                <span className="font-medium uppercase text-primary">{item.op ?? "set"}</span>
+                <span className="min-w-0 break-words text-muted-foreground">
+                  {item.path}
+                  {item.value !== undefined ? ` = ${formatPanelValue(item.value)}` : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {snapshotEntries.length > 0 ? (
+          <dl className="grid gap-2 border-t border-border/60 pt-3 text-sm">
+            {snapshotEntries.map(([key, value]) => (
+              <div className="grid gap-1 sm:grid-cols-[8rem_1fr]" key={key}>
+                <dt className="text-muted-foreground">{key}</dt>
+                <dd className="min-w-0 break-words">{formatPanelValue(value)}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+
+        {data.errors.length > 0 ? (
+          <p className="rounded-md border border-destructive/25 px-3 py-2 text-sm text-destructive">
+            {data.errors.slice(0, 3).join(" / ")}
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
 }
 
 function StatusPanel({ intent, data }: { intent: RenderIntent; data: StatusData }) {
@@ -198,6 +270,38 @@ function parseStatusData(value: string): StatusData | null {
   }
 }
 
+function parseStatePanelData(value: string): StatePanelData | null {
+  try {
+    const parsed = JSON.parse(value) as Record<string, unknown>;
+    return {
+      updated: Array.isArray(parsed.updated)
+        ? parsed.updated.map(normalizeStateUpdate)
+        : [],
+      snapshot: normalizeSnapshot(parsed.snapshot),
+      errors: Array.isArray(parsed.errors)
+        ? parsed.errors.filter((item): item is string => typeof item === "string")
+        : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+function normalizeStateUpdate(value: unknown): StatePanelUpdate {
+  const record = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  return {
+    op: readString(record.op),
+    path: readString(record.path),
+    value: record.value,
+  };
+}
+
+function normalizeSnapshot(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
 function normalizeCharacter(value: unknown): StatusCharacter {
   const record = value && typeof value === "object" ? value as Record<string, unknown> : {};
   return {
@@ -213,4 +317,10 @@ function normalizeCharacter(value: unknown): StatusCharacter {
 
 function readString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim().length > 0 ? value : undefined;
+}
+
+function formatPanelValue(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value === undefined) return "";
+  return JSON.stringify(value) ?? String(value);
 }

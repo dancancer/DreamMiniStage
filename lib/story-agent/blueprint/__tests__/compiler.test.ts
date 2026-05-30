@@ -67,6 +67,19 @@ function createBundle(rawCharacter = readPngCard("Sgw3.png")): ImportedAssetBund
   });
 }
 
+function createCharacterOnlyBundle(filename: string, characterId: string): ImportedAssetBundle {
+  return createImportedAssetBundle({
+    bundleId: `bundle:${characterId}`,
+    sourceHash: "bundle-hash",
+    createdAt: "2026-05-29T00:00:00.000Z",
+    characterId,
+    character: {
+      raw: readPngCard(filename),
+      source: source(`test-baseline-assets/character-card/${filename}`, "png-character"),
+    },
+  });
+}
+
 describe("compileSessionBlueprint", () => {
   it("builds a core SessionBlueprint from real imported assets", () => {
     const blueprint = compileSessionBlueprint(createBundle());
@@ -163,6 +176,16 @@ describe("compileSessionBlueprint", () => {
             "sourceScriptId": "1f8cfad6-c1e4-4691-8b76-4a70d940bd6e",
             "title": "[美化]完整变量更新",
           },
+          {
+            "confidence": 0.78,
+            "dataTemplate": "$1",
+            "id": "39caa212-66d8-4536-a530-7214b6fc2c34:state-panel",
+            "kind": "state-panel",
+            "schemaVersion": 1,
+            "sourcePattern": "<StoryState>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StoryState>",
+            "sourceScriptId": "39caa212-66d8-4536-a530-7214b6fc2c34",
+            "title": "Story State",
+          },
         ],
         "schemaVersion": 5,
         "worldModules": [
@@ -200,6 +223,24 @@ describe("compileSessionBlueprint", () => {
     expect(messages.length).toBeGreaterThan(0);
     expect(messages[0]).toHaveProperty("role");
     expect(serialized).not.toMatch(/"(prompt_order|keysecondary|placement)":/);
+  });
+
+  it("compiles theater UpdateVariable semantics into a safe state panel rule", () => {
+    const blueprint = compileSessionBlueprint(
+      createCharacterOnlyBundle("V2.0Beta.png", "character:theater"),
+    );
+
+    expect(blueprint.profile.name).toBe("诡秘剧场");
+    expect(blueprint.renderRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "state-panel",
+          title: "Story State",
+          sourcePattern: "<StoryState>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StoryState>",
+        }),
+      ]),
+    );
+    expect(JSON.stringify(blueprint.renderRules)).not.toContain("dexie");
   });
 });
 
