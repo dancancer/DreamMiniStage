@@ -108,6 +108,29 @@ describe("createImportedAssetBundle", () => {
     );
   });
 
+  it("keeps cards with empty embedded regex_scripts importable", () => {
+    const bundle = createImportedAssetBundle({
+      bundleId: "empty-embedded-regex",
+      sourceHash: "bundle-hash",
+      createdAt: "2026-05-29T00:00:00.000Z",
+      characterId: "character:seagull",
+      character: {
+        raw: readPngCard("3.png"),
+        source: source("test-baseline-assets/character-card/3.png", "png-character"),
+      },
+    });
+
+    expect(bundle.character.name).toBe("海鸥小岛与天堂");
+    expect(bundle.regexScripts).toHaveLength(0);
+    expect(bundle.diagnostics).toContainEqual({
+      code: "regex.embedded_empty_or_unsupported",
+      severity: "info",
+      message: "Embedded regex_scripts contains no importable regex scripts.",
+      targetPath: "regexScripts.character-regex",
+      sourceField: "data.extensions.regex_scripts",
+    });
+  });
+
   it("fails fast when character identity is missing", () => {
     expect(() =>
       createImportedAssetBundle({

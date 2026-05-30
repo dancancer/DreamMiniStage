@@ -44,7 +44,7 @@ export function createImportedAssetBundle(
   const embeddedWorldBook = createEmbeddedWorldBook(card.data, input.character.source);
   const externalWorldBooks = (input.worldBooks ?? []).map(createWorldBook);
   const embeddedRegex = createEmbeddedRegexScripts(card.data, input.character.source);
-  const externalRegex = (input.regexScripts ?? []).flatMap(createRegexScripts);
+  const externalRegex = (input.regexScripts ?? []).map(createRegexScripts);
 
   return {
     schemaVersion: IMPORTED_ASSET_BUNDLE_SCHEMA_VERSION,
@@ -54,9 +54,15 @@ export function createImportedAssetBundle(
     character,
     worldBooks: compact([embeddedWorldBook, ...externalWorldBooks]),
     preset: input.preset ? createPreset(input.preset) : undefined,
-    regexScripts: [...embeddedRegex, ...externalRegex],
+    regexScripts: [
+      ...embeddedRegex.scripts,
+      ...externalRegex.flatMap((result) => result.scripts),
+    ],
     extensionArtifacts: createExtensionArtifacts(card.data, input.character.source),
-    diagnostics: [],
+    diagnostics: [
+      ...embeddedRegex.diagnostics,
+      ...externalRegex.flatMap((result) => result.diagnostics),
+    ],
   };
 }
 
@@ -159,33 +165,80 @@ function createPreset(input: AssetInput): ImportedPreset {
 function createEmbeddedRegexScripts(
   data: Record<string, unknown>,
   source: AssetSource,
-): ImportedRegexScript[] {
+): { scripts: ImportedRegexScript[]; diagnostics: ImportDiagnostic[] } {
   const extensions = asOptionalRecord(data.extensions);
-  if (!extensions || !("regex_scripts" in extensions)) return [];
+  if (!extensions || !("regex_scripts" in extensions)) {
+    return { scripts: [], diagnostics: [] };
+  }
+
+  const raw = extensions.regex_scripts;
+  if (!hasImportableRegexScript(raw)) {
+    return {
+      scripts: [],
+      diagnostics: [embeddedRegexSkippedDiagnostic()],
+    };
+  }
+
   return createRegexScripts({
     id: "character-regex",
     name: `${readString(data.name)} regex scripts`,
-    raw: extensions.regex_scripts,
+    raw,
     source,
   });
 }
 
-function createRegexScripts(input: AssetInput): ImportedRegexScript[] {
-  return importRegexScripts(input.raw).map((script, index) => {
-    const scriptKey = script.scriptKey || script.id || `${input.id}.regex.${index}`;
-    const raw = { ...script, scriptKey };
-    return {
-      id: raw.id ?? scriptKey,
-      source: input.source,
-      raw,
-      provenance: [{
-        targetPath: `regexScripts.${input.id}.${index}.raw`,
-        sourcePath: input.source.sourcePath,
-        sourceField: `scripts.${index}`,
-      }],
-      diagnostics: [],
-    };
-  });
+function createRegexScripts(input: AssetInput): {
+  scripts: ImportedRegexScript[];
+  diagnostics: ImportDiagnostic[];
+} {
+  return {
+    scripts: importRegexScripts(input.raw).map((script, index) => {
+      const scriptKey = script.scriptKey || script.id || `${input.id}.regex.${index}`;
+      const raw = { ...script, scriptKey };
+      return {
+        id: raw.id ?? scriptKey,
+        source: input.source,
+        raw,
+        provenance: [{
+          targetPath: `regexScripts.${input.id}.${index}.raw`,
+          sourcePath: input.source.sourcePath,
+          sourceField: `scripts.${index}`,
+        }],
+        diagnostics: [],
+      };
+    }),
+    diagnostics: [],
+  };
+}
+
+function hasImportableRegexScript(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(hasRegexPattern);
+  if (!value || typeof value !== "object") return false;
+  if (hasRegexPattern(value)) return true;
+  return Object.values(value).some((item) =>
+    Array.isArray(item)
+      ? item.some(hasRegexPattern)
+      : hasRegexPattern(item),
+  );
+}
+
+function hasRegexPattern(value: unknown): boolean {
+  return Boolean(
+    value &&
+    typeof value === "object" &&
+    "findRegex" in value &&
+    typeof (value as { findRegex?: unknown }).findRegex === "string",
+  );
+}
+
+function embeddedRegexSkippedDiagnostic(): ImportDiagnostic {
+  return {
+    code: "regex.embedded_empty_or_unsupported",
+    severity: "info",
+    message: "Embedded regex_scripts contains no importable regex scripts.",
+    targetPath: "regexScripts.character-regex",
+    sourceField: "data.extensions.regex_scripts",
+  };
 }
 
 function createExtensionArtifacts(
