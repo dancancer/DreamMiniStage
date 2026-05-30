@@ -56,6 +56,7 @@ interface Props {
   scriptVariables?: Record<string, unknown>;
   scripts?: TavernHelperScript[];
   renderIntents?: RenderIntent[];
+  onAppendInput?: (value: string) => void;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -73,6 +74,7 @@ function MessageBubbleInner({
   scriptVariables,
   scripts = [],
   renderIntents = [],
+  onAppendInput,
 }: Props) {
   const renderMatches = useMemo(
     () => extractRenderIntentMatches(rawHtml, renderIntents),
@@ -137,6 +139,7 @@ function MessageBubbleInner({
         <RenderIntentView
           intent={match.intent}
           key={`${match.intent.id}-${index}`}
+          onAppendInput={onAppendInput}
           values={match.values}
         />
       ))}

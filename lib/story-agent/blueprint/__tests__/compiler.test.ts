@@ -238,6 +238,11 @@ describe("compileSessionBlueprint", () => {
           title: "Story State",
           sourcePattern: "<StoryState>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StoryState>",
         }),
+        expect.objectContaining({
+          kind: "choice-list",
+          title: "Actions",
+          sourcePattern: "<StoryActions>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StoryActions>",
+        }),
       ]),
     );
     expect(JSON.stringify(blueprint.renderRules)).not.toContain("dexie");

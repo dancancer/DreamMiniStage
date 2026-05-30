@@ -7,6 +7,7 @@ import {
   prepareStoryTurn,
   type StorySessionState,
 } from "../story-session";
+import { storyActionsSourcePattern } from "../action/options";
 import { storyStateSourcePattern } from "../state/update";
 
 describe("SAC-Phase 6a StorySession runtime", () => {
@@ -259,6 +260,53 @@ describe("SAC-Phase 6a StorySession runtime", () => {
 
     expect(stateText).toContain("后台走廊");
     expect(stateText).toContain("线索数量");
+  });
+
+  it("turns action blocks into internal choice-list render data", async () => {
+    const blueprint = {
+      ...createBlueprint(),
+      renderRules: [{
+        schemaVersion: 1 as const,
+        id: "actions",
+        kind: "choice-list" as const,
+        sourceScriptId: "action-script",
+        title: "Actions",
+        confidence: 0.8,
+        options: [],
+        dataTemplate: "$1",
+        sourcePattern: storyActionsSourcePattern(),
+      }],
+    };
+    let saved = createStorySession({ dialogueId: "dialogue-actions", blueprint });
+    const commitSession = async (session: StorySessionState) => {
+      saved = session;
+    };
+
+    const result = await finalizeStoryTurn(prepareStoryTurn({
+      blueprint,
+      session: saved,
+      userInput: "look around",
+      model: modelInput(),
+      commitSession,
+    }), [
+      "<gametxt>剧场的灯一盏盏熄灭。</gametxt>",
+      "<action>",
+      "1. 检查侧门",
+      "2. 呼唤领座员",
+      "</action>",
+    ].join("\n"));
+
+    expect(result.screenContent).toContain("<StoryActions>");
+    expect(result.screenContent).not.toContain("<action>");
+    expect(saved.recentTranscript.at(-1)?.content).toBe("剧场的灯一盏盏熄灭。");
+
+    const nextTurn = prepareStoryTurn({
+      blueprint,
+      session: saved,
+      userInput: "continue",
+      model: modelInput(),
+    });
+    expect(nextTurn.promptMessages.some((message) => message.content.includes("<action>"))).toBe(true);
   });
 
   it("seeds the selected opening into the first story turn", async () => {

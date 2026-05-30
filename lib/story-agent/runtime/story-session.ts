@@ -14,6 +14,15 @@ import type { RenderIntent } from "@/lib/story-agent/render-intent";
 import { assemblePromptContext, type PromptContextMessage } from "./prompt-context";
 import { applyTextTransforms } from "./text-transform";
 import {
+  appendStoryActionsSourceTag,
+  applyStoryActionOptions,
+} from "./action/options";
+import {
+  hasActionOptionsIntent,
+  hasStatePanelIntent,
+  renderContractMessages,
+} from "./render/contracts";
+import {
   matchWorldModules,
   type WorldActivationState,
   type WorldHit,
@@ -196,6 +205,10 @@ export async function finalizeStoryTurn(
     now,
     emitSourceTag: hasStatePanelIntent(turn.renderIntents),
   });
+  const actionOptions = applyStoryActionOptions(output.text, {
+    emitSourceTag: hasActionOptionsIntent(turn.renderIntents),
+  });
+  const screenContent = appendStoryActionsSourceTag(stateUpdate.screenText, actionOptions.sourceTag);
   const nextSession = advanceStorySession({
     session: turn.session,
     userInput: turn.transformedInput,
@@ -212,7 +225,7 @@ export async function finalizeStoryTurn(
   await turn.commitSession?.(nextSession);
 
   return {
-    screenContent: stateUpdate.screenText,
+    screenContent,
     fullResponse: llmResponse,
     thinkingContent: "",
     parsedContent: { nextPrompts: [] },
@@ -303,38 +316,6 @@ function toModelMessage(message: PromptContextMessage): { role: string; content:
     role: message.role,
     content: message.content,
   };
-}
-
-function renderContractMessages(intents: RenderIntent[]): string[] {
-  const tags = new Set(intents.flatMap((intent) =>
-    intent.kind === "status-panel" && intent.sourcePattern
-      ? [statusTag(intent.sourcePattern)]
-      : [],
-  ));
-  return [...tags].map(statusRenderContract);
-}
-
-function hasStatePanelIntent(intents: RenderIntent[]): boolean {
-  return intents.some((intent) => intent.kind === "state-panel");
-}
-
-function statusTag(pattern: string): string {
-  return pattern.match(/<([a-z][a-z0-9_-]*)>/i)?.[1] ?? "SFW";
-}
-
-function statusRenderContract(tag: string): string {
-  const closeTag = `</${tag}>`;
-  return [
-    "Story UI render contract:",
-    `After every assistant story reply, include exactly one ${openTag(tag)}...${closeTag} status block after narrative content.`,
-    "The block is consumed by the UI renderer; do not wrap it in Markdown.",
-    `Use this raw JSON shape: ${openTag(tag)}{"mode":"sfw","date":"...","time":"...","characters":[{"name":"...","status":"...","relation":"...","pose":"...","clothing":"...","location":"...","avatar":null,"portrait":null,"thought":"(...)"}]}${closeTag}`,
-    "Include only active non-user characters. Use null for unknown avatar or portrait file names.",
-  ].join("\n");
-}
-
-function openTag(tag: string): string {
-  return `<${tag}>`;
 }
 
 function toHistory(session: StorySessionState): Array<{ role: "user" | "assistant"; content: string }> {

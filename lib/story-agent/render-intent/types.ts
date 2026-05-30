@@ -48,6 +48,8 @@ export interface RenderIntentBase {
 export interface ChoiceListRenderIntent extends RenderIntentBase {
   kind: "choice-list";
   options: ChoiceOption[];
+  dataTemplate?: string;
+  sourcePattern?: string;
 }
 
 export interface ChoiceOption {

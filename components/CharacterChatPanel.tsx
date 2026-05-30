@@ -181,6 +181,7 @@ export default function CharacterChatPanel({
   const [lastSwipeTarget, setLastSwipeTarget] = useState<string | null>(null);
   const [currentDisplayName, setCurrentDisplayName] = useState("");
   const { value: fastModelEnabled, setValue: setFastModelEnabled } = useLocalStorageBoolean("fastModelEnabled", true);
+  const userInputRef = useRef(userInput);
 
   // ========== 自定义 Hooks ==========
   const apiConfig = useApiConfig();
@@ -216,6 +217,13 @@ export default function CharacterChatPanel({
     setLastSwipeTarget(target ?? "next");
     return undefined;
   }, [messageCallbacks]);
+
+  const handleAppendInput = useCallback((value: string) => {
+    const action = value.trim();
+    if (!action) return;
+    const current = userInputRef.current.trim();
+    setUserInput(current ? `${current} ${action}` : action);
+  }, [setUserInput]);
 
   // ─── 组合消息回调：将本地适配层与外部回调合并 ───
   const bridgeMessageCallbacks = useMemo(() => ({
@@ -263,6 +271,10 @@ export default function CharacterChatPanel({
   useEffect(() => {
     setActiveModes((prev) => (prev.streaming === streamingEnabled ? prev : { ...prev, streaming: streamingEnabled }));
   }, [streamingEnabled, setActiveModes]);
+
+  useEffect(() => {
+    userInputRef.current = userInput;
+  }, [userInput]);
 
   // 同步快速模型状态
   useEffect(() => {
@@ -440,6 +452,7 @@ export default function CharacterChatPanel({
         t={t}
         scriptVariables={scriptBridge.scriptVariables}
         onScriptMessage={scriptBridge.handleScriptMessage}
+        onAppendInput={handleAppendInput}
         renderHeaderSlot={renderMessageHeaderSlot}
       />
 

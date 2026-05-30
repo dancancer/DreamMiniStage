@@ -16,6 +16,7 @@ import {
   type RenderIntent,
 } from "@/lib/story-agent/render-intent";
 import { containsHtml } from "@/lib/story-agent/render-intent/classifier";
+import { storyActionsSourcePattern } from "@/lib/story-agent/runtime/action/options";
 import { storyStateSourcePattern } from "@/lib/story-agent/runtime/state/update";
 import {
   SESSION_BLUEPRINT_SCHEMA_VERSION,
@@ -211,6 +212,7 @@ function compileRenderRules(scripts: ImportedRegexScript[]): RenderIntent[] {
   return [
     ...renderIntents,
     ...compileStatePanelRules(scripts),
+    ...compileActionChoiceRules(scripts),
   ];
 }
 
@@ -262,6 +264,33 @@ function hasStateUpdateConvention(script: ImportedRegexScript): boolean {
   return /UpdateVariable/i.test(script.raw.findRegex) ||
     /UpdateVariable/i.test(script.raw.replaceString ?? "") ||
     /变量更新/.test(script.raw.scriptName);
+}
+
+function compileActionChoiceRules(scripts: ImportedRegexScript[]): RenderIntent[] {
+  const script = scripts.find(isActionCleanupRule) ?? scripts.find(hasActionConvention);
+  if (!script) return [];
+  return [{
+    schemaVersion: RENDER_INTENT_SCHEMA_VERSION,
+    id: `${script.id}:action-options`,
+    kind: "choice-list",
+    sourceScriptId: script.id,
+    title: "Actions",
+    confidence: 0.76,
+    options: [],
+    dataTemplate: "$1",
+    sourcePattern: storyActionsSourcePattern(),
+  }];
+}
+
+function isActionCleanupRule(script: ImportedRegexScript): boolean {
+  return /<action>/i.test(script.raw.findRegex) &&
+    (script.raw.replaceString ?? "").trim().length === 0;
+}
+
+function hasActionConvention(script: ImportedRegexScript): boolean {
+  return /<action>/i.test(script.raw.findRegex) ||
+    /<action>/i.test(script.raw.replaceString ?? "") ||
+    /动作选项/.test(script.raw.scriptName);
 }
 
 function compileActivation(value: {

@@ -45,7 +45,11 @@ function captureValues(match: RegExpMatchArray): Record<string, string> {
 }
 
 function readSourcePattern(intent: RenderIntent): string | undefined {
-  if (intent.kind === "status-panel" || intent.kind === "state-panel") {
+  if (
+    intent.kind === "status-panel" ||
+    intent.kind === "state-panel" ||
+    intent.kind === "choice-list"
+  ) {
     return intent.sourcePattern;
   }
   return undefined;

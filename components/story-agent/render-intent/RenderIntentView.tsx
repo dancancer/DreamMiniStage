@@ -4,7 +4,7 @@ import type React from "react";
 import { Activity, ChevronDown, Clock, Database, MapPin, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { RenderIntent } from "@/lib/story-agent/render-intent";
+import type { ChoiceOption, RenderIntent } from "@/lib/story-agent/render-intent";
 
 interface RenderIntentViewProps {
   intent: RenderIntent;
@@ -18,11 +18,13 @@ export function RenderIntentView({
   onAppendInput,
 }: RenderIntentViewProps) {
   if (intent.kind === "choice-list") {
+    const options = resolveChoiceOptions(intent, values);
+    if (options.length === 0) return null;
     return (
       <section className="rounded-md border border-border bg-card/80 p-3 text-card-foreground">
         <h3 className="mb-2 text-sm font-semibold">{intent.title}</h3>
         <div className="grid gap-2">
-          {intent.options.map((option) => {
+          {options.map((option) => {
             const label = resolveTemplate(option.labelTemplate, values);
             const description = option.descriptionTemplate
               ? resolveTemplate(option.descriptionTemplate, values)
@@ -251,6 +253,42 @@ function resolveTemplate(template: string, values: Record<string, string>): stri
       return typeof value === "string" ? value : match;
     })
     .replace(/\$(\d+)/g, (match, index: string) => values[index] ?? match);
+}
+
+function resolveChoiceOptions(
+  intent: Extract<RenderIntent, { kind: "choice-list" }>,
+  values: Record<string, string>,
+): ChoiceOption[] {
+  const dynamicOptions = intent.dataTemplate
+    ? parseChoiceData(resolveTemplate(intent.dataTemplate, values))
+    : [];
+  return dynamicOptions.length > 0 ? dynamicOptions : intent.options;
+}
+
+function parseChoiceData(value: string): ChoiceOption[] {
+  try {
+    const parsed = JSON.parse(value) as Record<string, unknown>;
+    const options = Array.isArray(parsed.options) ? parsed.options : [];
+    return options.map(normalizeChoiceOption).filter((item): item is ChoiceOption => item !== null);
+  } catch {
+    return [];
+  }
+}
+
+function normalizeChoiceOption(value: unknown, index: number): ChoiceOption | null {
+  const record = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const label = readString(record.label);
+  const actionValue = readString(record.value) ?? label;
+  if (!label || !actionValue) return null;
+  return {
+    id: readString(record.id) ?? `action-${index + 1}`,
+    labelTemplate: label,
+    descriptionTemplate: readString(record.description),
+    action: {
+      type: "append-input" as const,
+      valueTemplate: actionValue,
+    },
+  };
 }
 
 function parseStatusData(value: string): StatusData | null {

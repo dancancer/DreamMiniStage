@@ -111,6 +111,10 @@ describe("regex RenderIntent classification", () => {
           kind: "state_update",
         }),
         expect.objectContaining({
+          scriptName: "隐藏动作选项",
+          kind: "prompt_transform",
+        }),
+        expect.objectContaining({
           scriptName: "正文-诡秘之主",
           kind: "unsupported",
           unsupportedReason: "script tag is not allowed",

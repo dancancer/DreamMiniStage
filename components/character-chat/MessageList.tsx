@@ -57,6 +57,7 @@ interface MessageListProps {
   renderHeaderSlot?: (message: Message, index: number) => React.ReactNode;
   scriptVariables?: Record<string, unknown>;
   onScriptMessage?: (data: ScriptMessageData) => Promise<unknown> | unknown;
+  onAppendInput?: (value: string) => void;
 }
 
 // ============================================================================
@@ -79,6 +80,7 @@ export default function MessageList({
   renderHeaderSlot,
   scriptVariables,
   onScriptMessage,
+  onAppendInput,
 }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -144,6 +146,7 @@ export default function MessageList({
                   t={t}
                   scriptVariables={scriptVariables}
                   onScriptMessage={onScriptMessage}
+                  onAppendInput={onAppendInput}
                   headerSlot={renderHeaderSlot?.(message, messageIndex)}
                 />
               );

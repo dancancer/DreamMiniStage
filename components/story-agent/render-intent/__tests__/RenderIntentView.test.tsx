@@ -69,6 +69,39 @@ describe("RenderIntentView", () => {
     cleanup(rendered);
   });
 
+  it("renders dynamic story action choices from structured source data", () => {
+    const rendered = renderIntent({
+      schemaVersion: 1,
+      id: "actions",
+      kind: "choice-list",
+      sourceScriptId: "script",
+      title: "Actions",
+      confidence: 0.8,
+      options: [],
+      dataTemplate: "$1",
+      sourcePattern: "<StoryActions>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StoryActions>",
+    }, {
+      1: JSON.stringify({
+        options: [{
+          id: "action-1",
+          label: "检查侧门",
+          description: "确认是否有人经过",
+          value: "检查侧门",
+        }],
+      }),
+    });
+
+    expect(rendered.container.textContent).toContain("检查侧门");
+    expect(rendered.container.textContent).toContain("确认是否有人经过");
+    expect(rendered.container.querySelector("script")).toBeNull();
+
+    const button = rendered.container.querySelector("button");
+    act(() => button?.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+    expect(rendered.onAppendInput).toHaveBeenCalledWith("检查侧门");
+
+    cleanup(rendered);
+  });
+
   it("renders a collapsible panel without raw HTML execution", () => {
     const rendered = renderIntent({
       schemaVersion: 1,

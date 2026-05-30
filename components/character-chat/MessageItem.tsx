@@ -70,6 +70,7 @@ interface MessageItemProps {
   headerSlot?: React.ReactNode;
   scriptVariables?: Record<string, unknown>;
   onScriptMessage?: (data: ScriptMessageData) => Promise<unknown> | unknown;
+  onAppendInput?: (value: string) => void;
 }
 
 // ╔══════════════════════════════════════════════════════════════════╗
@@ -139,6 +140,7 @@ export default function MessageItem({
   headerSlot,
   scriptVariables,
   onScriptMessage,
+  onAppendInput,
 }: MessageItemProps) {
   // 用户消息直接返回简化版
   if (message.role === "user") {
@@ -176,6 +178,7 @@ export default function MessageItem({
       headerSlot={headerSlot}
       scriptVariables={scriptVariables}
       onScriptMessage={onScriptMessage}
+      onAppendInput={onAppendInput}
     />
   );
 }
@@ -245,6 +248,7 @@ interface AssistantMessageProps {
   headerSlot?: React.ReactNode;
   scriptVariables?: Record<string, unknown>;
   onScriptMessage?: (data: ScriptMessageData) => Promise<unknown> | unknown;
+  onAppendInput?: (value: string) => void;
 }
 
 function AssistantMessage({
@@ -262,6 +266,7 @@ function AssistantMessage({
   headerSlot,
   scriptVariables,
   onScriptMessage,
+  onAppendInput,
 }: AssistantMessageProps) {
   const { enabled, targetIndex, isSending, activeMessageId } = streamingIntent;
   const showRegenerateButton = !isSending && isLastMessage;
@@ -317,6 +322,7 @@ function AssistantMessage({
         scripts={character.extensions?.TavernHelper_scripts || []}
         renderIntents={character.extensions?.storyRenderIntents || []}
         scriptVariables={scriptVariables}
+        onAppendInput={onAppendInput}
         isLoading={isSending && isLastMessage && message.content.trim() === ""}
         enableStreaming={isActivelyStreaming}
         onContentChange={isLastMessage ? onContentChange : undefined}
