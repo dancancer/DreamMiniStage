@@ -309,11 +309,13 @@ describe("SAC-Phase 6a StorySession runtime", () => {
     expect(turn.promptMessages.filter((message) => message.source === "prompt-stack")).toHaveLength(3);
     expect(turn.promptMessages.some((message) => message.source === "world")).toBe(true);
     expect(turn.promptMessages.some((message) => message.source === "render")).toBe(true);
-    expect(systemMessages).toHaveLength(2);
-    expect(systemMessages.map((message) => message.content).join("\n")).toContain("[Story instructions]");
-    expect(systemMessages.map((message) => message.content).join("\n")).toContain("[World context]");
-    expect(systemMessages.map((message) => message.content).join("\n")).toContain("[UI render contracts]");
-    expect(modelMessages.some((message) => message.content === "as turn wrapper.")).toBe(true);
+    expect(systemMessages).toHaveLength(1);
+    expect(systemMessages[0]?.content).toContain("[Story instructions]");
+    expect(systemMessages[0]?.content).toContain("[World context]");
+    expect(systemMessages[0]?.content).toContain("[UI render contracts]");
+    expect(systemMessages[0]?.content).toContain("as turn wrapper.");
+    expect(modelMessages.filter((message) => message.role === "user")).toHaveLength(1);
+    expect(modelMessages.some((message) => message.role === "assistant")).toBe(false);
     expect(countMatches(modelMessages.map((message) => message.content).join("\n"), "alpha continue")).toBe(1);
     expect(modelMessages.at(-1)).toMatchObject({ role: "user", content: "alpha continue" });
   });

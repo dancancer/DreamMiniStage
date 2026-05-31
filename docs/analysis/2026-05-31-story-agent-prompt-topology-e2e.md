@@ -60,6 +60,6 @@ That keeps the real user turn as the single source of truth at the tail of the r
 
 ## Remaining Gaps
 
-- Prompt topology is still influenced by deliberate assistant/user exemplars from the imported preset. They are no longer system-fragment noise, but they should be reviewed separately as a preset-compiler policy question.
+- Follow-up preset role topology is covered in `docs/analysis/2026-06-01-story-agent-preset-role-topology-e2e.md`.
 - Initial status before the first generated reply is still absent when the selected opening does not contain a supported status payload.
-- Model transport still originates from the browser and needs a server-side gateway before product hardening.
+- Follow-up model transport hardening is covered in `docs/analysis/2026-06-01-story-agent-model-gateway-e2e.md`.

@@ -1,0 +1,63 @@
+{
+  "appUrl": "http://localhost:3310",
+  "card": "Sgw3",
+  "model": "deepseek-v4-pro",
+  "inputText": "继续推进剧情，保持当前角色视角和状态栏。",
+  "gateway": {
+    "requestCount": 1,
+    "lastUrl": "http://localhost:3310/api/model-gateway/chat-completions",
+    "lastMethod": "POST",
+    "browserAuthorizationHeader": null,
+    "bodyHasApiKey": false,
+    "bodyHasBaseUrl": false
+  },
+  "providerFromBrowser": {
+    "requestCount": 0,
+    "requests": []
+  },
+  "request": {
+    "stream": false,
+    "streamOptions": null,
+    "maxTokens": 8192,
+    "messageCount": 3,
+    "roleCounts": {
+      "system": 1,
+      "assistant": 1,
+      "user": 1
+    },
+    "firstMessageRole": "system",
+    "lastMessageRole": "user",
+    "systemSections": {
+      "storyInstructions": true,
+      "worldContext": true,
+      "renderContracts": true,
+      "sessionMemory": false
+    },
+    "presetExamples": {
+      "userAsUser": false,
+      "assistantAsAssistant": false,
+      "userInSystem": true,
+      "assistantInSystem": true
+    },
+    "unresolvedRuntimePlaceholders": false,
+    "unresolvedRuntimePlaceholderSamples": [],
+    "currentUserInputCount": 1,
+    "promptChars": 25907
+  },
+  "response": {
+    "url": "http://localhost:3310/api/model-gateway/chat-completions",
+    "status": 200,
+    "contentType": "application/json"
+  },
+  "ui": {
+    "openingNavigatorBeforeSend": true,
+    "statusPanelVisible": true,
+    "rawStatusJsonVisible": false,
+    "firstMessageKeyLeak": false
+  },
+  "failures": [],
+  "screenshots": [
+    "docs/analysis/artifacts/2026-06-01-story-agent-preset-role-topology-initial.png",
+    "docs/analysis/artifacts/2026-06-01-story-agent-preset-role-topology-after-send.png"
+  ]
+}

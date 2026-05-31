@@ -63,4 +63,4 @@ Screenshots:
 ## Remaining Gaps
 
 - Follow-up status fallback extraction is covered in `docs/analysis/2026-06-01-story-agent-status-fallback-e2e.md`.
-- Prompt topology is still influenced by deliberate assistant/user exemplars from the imported preset. This is a preset-compiler policy question, not a transport issue.
+- Follow-up preset role topology is covered in `docs/analysis/2026-06-01-story-agent-preset-role-topology-e2e.md`.

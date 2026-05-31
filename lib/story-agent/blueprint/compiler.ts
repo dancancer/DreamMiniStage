@@ -22,7 +22,6 @@ import {
   SESSION_BLUEPRINT_SCHEMA_VERSION,
   type AgentProfile,
   type ContentRule,
-  type PromptRole,
   type PromptStack,
   type PromptStackMessage,
   type RepairReport,
@@ -110,7 +109,7 @@ function compileOpenings(character: ImportedAssetBundle["character"]) {
 function compilePromptStack(bundle: ImportedAssetBundle): PromptStack {
   const characterMessages = bundle.character.promptFragments.map((fragment, index) => ({
     id: `character:${fragment.id}`,
-    role: fragment.role,
+    role: "system" as const,
     content: fragment.content,
     enabled: fragment.content.trim().length > 0,
     order: index,
@@ -123,7 +122,7 @@ function compilePromptStack(bundle: ImportedAssetBundle): PromptStack {
     .sort(comparePresetPrompts)
     .map((prompt, index): PromptStackMessage => ({
       id: `preset:${prompt.identifier}`,
-      role: normalizeRole(prompt.role),
+      role: "system",
       content: prompt.content ?? "",
       enabled: prompt.enabled !== false,
       order: characterMessages.length + index,
@@ -324,11 +323,6 @@ function comparePresetPrompts(
   return String(left.group_id).localeCompare(String(right.group_id)) ||
     left.position - right.position ||
     left.identifier.localeCompare(right.identifier);
-}
-
-function normalizeRole(role: string | undefined): PromptRole {
-  if (role === "system" || role === "user" || role === "assistant") return role;
-  return "unknown";
 }
 
 function contentRule(

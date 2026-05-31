@@ -62,7 +62,9 @@ export function normalizePromptContextForModel(
   const normalized: PromptContextMessage[] = [];
   let contextBuffer: PromptContextMessage[] = [];
 
-  for (const message of messages.map((message) => removeContextUserEcho(message, latestUserContent))) {
+  for (const message of messages
+    .map(asRuntimeContextMessage)
+    .map((message) => removeContextUserEcho(message, latestUserContent))) {
     if (!message.content.trim()) continue;
     if (isMergeableSystemContext(message)) {
       contextBuffer.push(message);
@@ -186,6 +188,11 @@ function contextSectionTitle(source: PromptContextSource): string {
 
 function isMergeableSystemContext(message: PromptContextMessage): boolean {
   return message.role === "system" && message.source !== "history";
+}
+
+function asRuntimeContextMessage(message: PromptContextMessage): PromptContextMessage {
+  if (message.source === "history") return message;
+  return { ...message, role: "system" };
 }
 
 function latestUserHistoryContent(messages: PromptContextMessage[]): string {

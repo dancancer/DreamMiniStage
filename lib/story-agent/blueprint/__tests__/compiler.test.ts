@@ -225,6 +225,31 @@ describe("compileSessionBlueprint", () => {
     expect(serialized).not.toMatch(/"(prompt_order|keysecondary|placement)":/);
   });
 
+  it("compiles imported chat-role examples as story instructions", () => {
+    const blueprint = compileSessionBlueprint(createRoleExampleBundle());
+    const messages = assemblePromptMessages(blueprint);
+
+    expect(messages).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "character:character.mes_example",
+          role: "system",
+          content: "<START>\n{{char}}: example line",
+        }),
+        expect.objectContaining({
+          id: "preset:user-example",
+          role: "system",
+          content: "{{lastUserMessage}} wrapped by preset",
+        }),
+        expect.objectContaining({
+          id: "preset:assistant-example",
+          role: "system",
+          content: "assistant exemplar",
+        }),
+      ]),
+    );
+  });
+
   it("compiles theater UpdateVariable semantics into a safe state panel rule", () => {
     const blueprint = compileSessionBlueprint(
       createCharacterOnlyBundle("V2.0Beta.png", "character:theater"),
@@ -248,6 +273,47 @@ describe("compileSessionBlueprint", () => {
     expect(JSON.stringify(blueprint.renderRules)).not.toContain("dexie");
   });
 });
+
+function createRoleExampleBundle(): ImportedAssetBundle {
+  return createImportedAssetBundle({
+    bundleId: "role-example",
+    sourceHash: "role-example-hash",
+    createdAt: "2026-06-01T00:00:00.000Z",
+    characterId: "character:role-example",
+    character: {
+      raw: {
+        data: {
+          name: "Role Example",
+          mes_example: "<START>\n{{char}}: example line",
+        },
+      },
+      source: source("role-example.card.json", "json-character"),
+    },
+    preset: {
+      id: "preset-role-example",
+      name: "Role Example Preset",
+      raw: {
+        prompts: [
+          {
+            identifier: "user-example",
+            name: "User Example",
+            role: "user",
+            content: "{{lastUserMessage}} wrapped by preset",
+            enabled: true,
+          },
+          {
+            identifier: "assistant-example",
+            name: "Assistant Example",
+            role: "assistant",
+            content: "assistant exemplar",
+            enabled: true,
+          },
+        ],
+      },
+      source: source("role-example-preset.json", "st-preset"),
+    },
+  });
+}
 
 function countContentRules(rules: Array<{ kind: string }>): Record<string, number> {
   return rules.reduce<Record<string, number>>((counts, rule) => {
