@@ -6,6 +6,7 @@
  */
 
 import { loadStoryRuntimeBinding } from "@/lib/story-agent/session";
+import { orderPlayableOpenings } from "@/lib/story-agent/blueprint/profile/openings";
 import { applyStatusPanelFallback } from "@/lib/story-agent/runtime/render/status-fallback";
 import type { OpeningPayload } from "@/types/character-dialogue";
 
@@ -26,7 +27,7 @@ export async function prepareOpeningGreetings(params: {
       content: blueprint.profile.firstMessage || `你好，我是${blueprint.profile.name}。`,
     }];
 
-  return orderOpeningsForFirstDisplay(openings).map((opening, index) => {
+  return orderPlayableOpenings(openings).map((opening, index) => {
     const fullContent = renderOpeningMacros(opening.content, {
       charName: blueprint.profile.name,
       username: username || "user",
@@ -68,39 +69,4 @@ function renderOpeningMacros(
     .replace(/\{\{user\}\}/gi, names.username)
     .replace(/<char>/gi, names.charName)
     .replace(/<user>/gi, names.username);
-}
-
-function orderOpeningsForFirstDisplay<T extends { content: string }>(openings: T[]): T[] {
-  const firstPlayableIndex = openings.findIndex(isPlayableOpening);
-  if (firstPlayableIndex <= 0) return openings;
-  const firstPlayable = openings[firstPlayableIndex];
-  if (!firstPlayable) return openings;
-  return [
-    firstPlayable,
-    ...openings.slice(0, firstPlayableIndex),
-    ...openings.slice(firstPlayableIndex + 1),
-  ];
-}
-
-function isPlayableOpening(opening: { content: string }): boolean {
-  const text = opening.content.trim();
-  if (!text) return false;
-  if (isInstructionOnlyOpening(text)) return false;
-  return !isDocumentationOpening(text);
-}
-
-function isInstructionOnlyOpening(text: string): boolean {
-  return /^<开局>[\s\S]*<\/开局>$/i.test(text) && /按下面要求处理|follow the instructions/i.test(text);
-}
-
-function isDocumentationOpening(text: string): boolean {
-  const hints = [
-    /游玩前|使用前|说明/,
-    /插件|MagVarUpdate|TavernHelper/i,
-    /状态栏|状态表/,
-    /开场白|开场/,
-    /变量|user人设|人设/,
-  ];
-  const hitCount = hints.filter((hint) => hint.test(text)).length;
-  return text.length > 700 && hitCount >= 3;
 }

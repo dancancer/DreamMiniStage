@@ -69,14 +69,17 @@ Closed since the previous parity reports:
 3. `deepseek-v4-pro` token policy is active. Captured requests used `max_tokens=8192`.
 4. `<UpdateVariable>` is hidden from visible assistant text and can produce a `Story State` panel.
 5. `<action>` is hidden from visible assistant text and can produce an `Actions` panel. Clicking `检查侧门` appended `检查侧门` to `#send_textarea`.
+6. Theater's instruction-only `<开局>` opener is no longer shown or sent as the playable opening. Follow-up evidence: `docs/analysis/2026-06-01-story-agent-theater-opening-e2e.md`.
+7. Story Agent model calls now go through `/api/model-gateway/chat-completions`; follow-up E2E evidence is in `docs/analysis/2026-06-01-story-agent-model-gateway-e2e.md`.
 
 ## Remaining Gaps
 
-### 1. Opening selection is not wired through the created Story Agent session
+### 1. Opening lifecycle diagnostics are still shallow
 
-`Sgw` compiles 11 openings and `origin` compiles 8 openings, but the session view did not show the opening navigator in the E2E run. This is a direct product gap because upstream SillyTavern supports switching alternate greetings before committing the first user turn.
+The original opening lifecycle blocker is mostly closed in current probes:
 
-Theater still displays its instruction-only opener:
+- `Sgw` and `origin` expose pre-turn opening navigation and can switch alternate greetings.
+- `theater` no longer displays or prompts with its instruction-only opener:
 
 ```text
 <开局>
@@ -84,7 +87,7 @@ Theater still displays its instruction-only opener:
 </开局>
 ```
 
-That opener is useful as a trigger/instruction convention, but it is not a good user-facing first message.
+The remaining product gap is diagnostic clarity. The import page still exposes only an aggregate diagnostic count, so a user cannot yet inspect why a neutral opening was generated or which source opening was suppressed.
 
 ### 2. Prompt topology is still too fragmented
 
@@ -139,13 +142,7 @@ Theater action choices now work. Origin's opening choices are visible. But commu
 
 Unsupported UI should become an explicit import-time/product diagnostic. Silent degradation is still too easy.
 
-### 6. Model requests still originate from the browser
-
-The E2E capture endpoint received `/v1/chat/completions` directly from the browser context. That means the Story Agent path still exposes the provider endpoint and bearer credential to client-side execution. This was already identified in the Sgw report and remains open.
-
-The hard-replace direction should keep the runtime clean, but the transport boundary needs a server-side model gateway before this is product-grade.
-
-### 7. Legacy render pipeline still sits under Story Agent messages
+### 6. Legacy render pipeline still sits under Story Agent messages
 
 `MessageBubble` still runs `useMessageRenderPipeline` before rendering Story Agent `RenderIntentView`. That means the story path still shares old HTML/tag/script rendering machinery. The current hard-replace runtime is cleaner than before, but rendering still has a mixed boundary:
 
@@ -156,37 +153,27 @@ This should be split so Story Agent messages use a dedicated structured renderer
 
 ## Recommended Next Work
 
-1. Fix multi-opening lifecycle for compiled Story Agents.
-   - Show the opening navigator when `profile.openings.length > 1`.
-   - Keep opening unlocked until the first user turn.
-   - Add E2E coverage for `Sgw` and `origin`.
+1. Surface opening diagnostics in the import UX.
+   - Show `character.instruction_only_opening` as a user-readable feature-loss note.
+   - Let users inspect the generated neutral opening before creating the agent.
+   - Keep the runtime behavior deterministic; do not reintroduce source-asset parsing in `/session`.
 
-2. Add an opening compiler rule.
-   - Detect instruction-only openers such as `<开局> 请按下面要求处理 </开局>`.
-   - Prefer a playable alternate opening when available.
-   - Otherwise show an explicit import diagnostic and a neutral generated first scene.
-
-3. Normalize prompt topology.
+2. Normalize prompt topology.
    - Merge adjacent same-role system fragments into semantic sections.
    - Preserve provenance in debug metadata, not in request message count.
    - Gate with captured request snapshots.
 
-4. Harden status/render contract handling.
+3. Harden status/render contract handling.
    - Ensure unmatched status-like tags cannot leak naked JSON.
    - Add tests for `<SFW>...</SFW>` with and without matching render intent.
    - Expand status/data extraction for `origin` and `theater` families.
 
-5. Compile MVU-style initial state.
+4. Compile MVU-style initial state.
    - Extract variable defaults from character/worldbook/prompt conventions.
    - Seed `StorySession.storyState` before turn 1.
    - Keep the execution model deterministic; do not run third-party plugin code.
 
-6. Add server-side model gateway.
-   - Browser should call DreamMiniStage.
-   - DreamMiniStage should call the provider.
-   - Keep request capture/prompt viewer hooks at the gateway boundary.
-
-7. Split Story Agent rendering from legacy HTML/script rendering.
+5. Split Story Agent rendering from legacy HTML/script rendering.
    - Story Agent output should be plain narrative plus `RenderIntent` components.
    - Unsupported HTML/script assets should remain import diagnostics, not runtime behavior.
 

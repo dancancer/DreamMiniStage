@@ -19,6 +19,10 @@ import { containsHtml } from "@/lib/story-agent/render-intent/classifier";
 import { storyActionsSourcePattern } from "@/lib/story-agent/runtime/action/options";
 import { storyStateSourcePattern } from "@/lib/story-agent/runtime/state/update";
 import {
+  compileProfileOpenings,
+  diagnoseProfileOpenings,
+} from "./profile/openings";
+import {
   SESSION_BLUEPRINT_SCHEMA_VERSION,
   type AgentProfile,
   type ContentRule,
@@ -42,9 +46,10 @@ export function compileSessionBlueprint(
   bundle: ImportedAssetBundle,
   options: CompileSessionBlueprintOptions = {},
 ): SessionBlueprint {
+  const profile = compileProfile(bundle);
   const core = {
     schemaVersion: SESSION_BLUEPRINT_SCHEMA_VERSION as typeof SESSION_BLUEPRINT_SCHEMA_VERSION,
-    profile: compileProfile(bundle),
+    profile,
     promptStack: compilePromptStack(bundle),
     modelPolicy: compileModelPolicy(bundle),
     worldModules: bundle.worldBooks.map(compileWorldModule),
@@ -54,7 +59,14 @@ export function compileSessionBlueprint(
     contentRules: compileContentRules(bundle.regexScripts),
     renderRules: compileRenderRules(bundle.regexScripts),
     memoryPolicy: defaultMemoryPolicy(),
-    diagnostics: diagnoseImportedAssetBundle(bundle),
+    diagnostics: [
+      ...diagnoseImportedAssetBundle(bundle),
+      ...diagnoseProfileOpenings({
+        name: bundle.character.name,
+        firstMessage: bundle.character.firstMessage,
+        alternateGreetings: bundle.character.alternateGreetings,
+      }),
+    ],
     repairReport: emptyRepairReport(),
     provenance: collectProvenance(bundle),
   };
@@ -74,14 +86,19 @@ function compileModelPolicy(bundle: ImportedAssetBundle): ModelAdvancedSettings 
 
 function compileProfile(bundle: ImportedAssetBundle): AgentProfile {
   const character = bundle.character;
+  const openings = compileProfileOpenings({
+    name: character.name,
+    firstMessage: character.firstMessage,
+    alternateGreetings: character.alternateGreetings,
+  });
   return {
     id: character.id,
     name: character.name,
     description: character.description,
     personality: character.personality,
     scenario: character.scenario,
-    firstMessage: character.firstMessage,
-    openings: compileOpenings(character),
+    firstMessage: openings[0]?.content ?? character.firstMessage,
+    openings,
     exampleMessages: character.exampleMessages,
     promptFragments: character.promptFragments.map((fragment) => ({
       id: fragment.id,
@@ -90,20 +107,6 @@ function compileProfile(bundle: ImportedAssetBundle): AgentProfile {
       sourceField: fragment.sourceField,
     })),
   };
-}
-
-function compileOpenings(character: ImportedAssetBundle["character"]) {
-  const first = character.firstMessage ? [{
-    id: "opening:first_mes",
-    content: character.firstMessage,
-    sourceField: "data.first_mes",
-  }] : [];
-  const alternates = character.alternateGreetings.map((content, index) => ({
-    id: `opening:alternate:${index}`,
-    content,
-    sourceField: `data.alternate_greetings.${index}`,
-  }));
-  return [...first, ...alternates];
 }
 
 function compilePromptStack(bundle: ImportedAssetBundle): PromptStack {

@@ -256,6 +256,21 @@ describe("compileSessionBlueprint", () => {
     );
 
     expect(blueprint.profile.name).toBe("诡秘剧场");
+    expect(blueprint.profile.openings).toHaveLength(1);
+    expect(blueprint.profile.openings[0]).toMatchObject({
+      id: "opening:synthetic:neutral",
+      sourceField: "story-agent.synthetic_opening",
+    });
+    expect(blueprint.profile.firstMessage).toBe(blueprint.profile.openings[0].content);
+    expect(blueprint.profile.firstMessage).not.toContain("<开局>");
+    expect(blueprint.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "character.instruction_only_opening",
+          targetPath: "profile.openings",
+        }),
+      ]),
+    );
     expect(blueprint.renderRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

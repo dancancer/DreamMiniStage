@@ -74,6 +74,6 @@ These are still real product gaps, but they are no longer blocking the current h
 
 - Prompt topology is still fragmented. Sgw sends 44 messages; a future prompt normalizer should compact adjacent same-role fragments into named semantic blocks.
 - Initial Sgw opening status is now covered by `docs/analysis/2026-06-01-story-agent-opening-status-e2e.md`.
-- Cards with a single instruction-only opener still need a product decision: hidden trigger plus generated playable opener, or explicit unsupported diagnostic.
+- Cards with a single instruction-only opener are now covered by `docs/analysis/2026-06-01-story-agent-theater-opening-e2e.md`.
 - MagVarUpdate is still only covered for emitted `<UpdateVariable>` commands. Initial variable seeding and richer update semantics remain separate work.
 - UI regex coverage still depends on whether the import compiler can convert the source into a whitelisted RenderIntent.

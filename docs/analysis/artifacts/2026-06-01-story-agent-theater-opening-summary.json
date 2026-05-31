@@ -1,0 +1,38 @@
+{
+  "preview": {
+    "diagnosticCountText": "Diagnostics 249"
+  },
+  "initial": {
+    "hasRawOpeningTag": false,
+    "hasInstructionText": false,
+    "hasNeutralOpening": true,
+    "navLabel": null
+  },
+  "request": {
+    "url": "http://localhost:3311/api/model-gateway/chat-completions",
+    "gatewayStatus": 200,
+    "contentType": "application/json",
+    "model": "deepseek-v4-pro",
+    "stream": false,
+    "max_tokens": 8192,
+    "messageRoles": [
+      "system",
+      "assistant",
+      "user"
+    ],
+    "messageCount": 3,
+    "promptHasRawOpeningTag": false,
+    "promptHasInstructionText": false,
+    "promptHasNeutralOpening": true
+  },
+  "after": {
+    "hasUserInput": true,
+    "hasRawOpeningTag": false
+  },
+  "artifacts": {
+    "summary": "/Users/xupeng/mycode/DreamMiniStage/docs/analysis/artifacts/2026-06-01-story-agent-theater-opening-summary.json",
+    "initial": "/Users/xupeng/mycode/DreamMiniStage/docs/analysis/artifacts/2026-06-01-story-agent-theater-opening-initial.png",
+    "after": "/Users/xupeng/mycode/DreamMiniStage/docs/analysis/artifacts/2026-06-01-story-agent-theater-opening-after-send.png"
+  },
+  "consoleWarnings": []
+}

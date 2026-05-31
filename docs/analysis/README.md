@@ -7,6 +7,7 @@
 - 当前 Story Agent model gateway 验证：`docs/analysis/2026-06-01-story-agent-model-gateway-e2e.md`
 - 当前 Story Agent status fallback 验证：`docs/analysis/2026-06-01-story-agent-status-fallback-e2e.md`
 - 当前 Story Agent opening status 验证：`docs/analysis/2026-06-01-story-agent-opening-status-e2e.md`
+- 当前 Story Agent theater opening 验证：`docs/analysis/2026-06-01-story-agent-theater-opening-e2e.md`
 - 当前 Story Agent preset role 拓扑验证：`docs/analysis/2026-06-01-story-agent-preset-role-topology-e2e.md`
 - 当前宿主协议：`docs/analysis/session-host-bridge/README.md`
 - 当前机器报告（Markdown）：`docs/analysis/sillytavern-gap-report-latest.md`
