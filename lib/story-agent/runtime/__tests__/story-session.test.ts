@@ -404,7 +404,7 @@ describe("SAC-Phase 6a StorySession runtime", () => {
     }), "正文继续。");
 
     expect(result.screenContent).toContain("<SFW>");
-    expect(result.screenContent).toContain("\"status\":\"待更新\"");
+    expect(result.screenContent).toContain("\"status\":\"剧情推进中\"");
     expect(saved.recentTranscript.at(-1)?.content).toBe("正文继续。");
   });
 

@@ -62,5 +62,5 @@ Screenshots:
 
 ## Remaining Gaps
 
-- The status fallback is intentionally minimal (`待更新`) when the model omits structured status data. A later pass should improve extraction from generated timeline text and StoryState memory.
+- Follow-up status fallback extraction is covered in `docs/analysis/2026-06-01-story-agent-status-fallback-e2e.md`.
 - Prompt topology is still influenced by deliberate assistant/user exemplars from the imported preset. This is a preset-compiler policy question, not a transport issue.

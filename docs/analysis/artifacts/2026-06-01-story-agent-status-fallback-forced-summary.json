@@ -1,0 +1,23 @@
+{
+  "appUrl": "http://localhost:3310",
+  "card": "Sgw3",
+  "mode": "forced-fallback-ui",
+  "gatewayRequestCount": 1,
+  "request": {
+    "stream": false,
+    "maxTokens": 8192,
+    "currentUserInputCount": 1
+  },
+  "ui": {
+    "statusPanelVisible": true,
+    "fallbackStatusVisible": true,
+    "extractedDateVisible": true,
+    "extractedTimeVisible": true,
+    "extractedLocationVisible": true,
+    "rawStatusSourceVisible": false
+  },
+  "screenshots": [
+    "docs/analysis/artifacts/2026-06-01-story-agent-status-fallback-forced-after-send.png"
+  ],
+  "failures": []
+}

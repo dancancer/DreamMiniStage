@@ -1,0 +1,59 @@
+{
+  "appUrl": "http://localhost:3310",
+  "card": "Sgw3",
+  "model": "deepseek-v4-pro",
+  "inputText": "继续推进剧情；请正文第一行保留当前地点时间栏，格式为 地点｜日期｜星期｜时间，然后自然续写，不要输出 HTML。",
+  "gateway": {
+    "requestCount": 1,
+    "lastUrl": "http://localhost:3310/api/model-gateway/chat-completions",
+    "lastMethod": "POST",
+    "browserAuthorizationHeader": null,
+    "bodyHasApiKey": false,
+    "bodyHasBaseUrl": false
+  },
+  "providerFromBrowser": {
+    "requestCount": 0,
+    "requests": []
+  },
+  "request": {
+    "stream": false,
+    "streamOptions": null,
+    "maxTokens": 8192,
+    "messageCount": 9,
+    "roleCounts": {
+      "system": 3,
+      "assistant": 4,
+      "user": 2
+    },
+    "firstMessageRole": "system",
+    "lastMessageRole": "user",
+    "systemSections": {
+      "storyInstructions": true,
+      "worldContext": true,
+      "renderContracts": true,
+      "sessionMemory": false
+    },
+    "unresolvedRuntimePlaceholders": false,
+    "unresolvedRuntimePlaceholderSamples": [],
+    "currentUserInputCount": 1,
+    "promptChars": 25979
+  },
+  "response": {
+    "url": "http://localhost:3310/api/model-gateway/chat-completions",
+    "status": 200,
+    "contentType": "application/json"
+  },
+  "ui": {
+    "openingNavigatorBeforeSend": true,
+    "statusPanelVisible": true,
+    "statusFallbackVisible": false,
+    "timelineVisible": true,
+    "rawStatusJsonVisible": false,
+    "firstMessageKeyLeak": false
+  },
+  "failures": [],
+  "screenshots": [
+    "docs/analysis/artifacts/2026-06-01-story-agent-status-fallback-initial.png",
+    "docs/analysis/artifacts/2026-06-01-story-agent-status-fallback-after-send.png"
+  ]
+}
