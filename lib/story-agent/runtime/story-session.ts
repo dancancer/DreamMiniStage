@@ -11,7 +11,11 @@ import {
   type StoryMemoryState,
 } from "@/lib/story-agent/memory";
 import type { RenderIntent } from "@/lib/story-agent/render-intent";
-import { assemblePromptContext, type PromptContextMessage } from "./prompt-context";
+import {
+  assemblePromptContext,
+  normalizePromptContextForModel,
+  type PromptContextMessage,
+} from "./prompt-context";
 import { applyTextTransforms } from "./text-transform";
 import {
   appendStoryActionsSourceTag,
@@ -304,7 +308,7 @@ function buildStoryLlmConfig(
     language: model.language ?? "zh",
     dialogueKey: session.dialogueId,
     characterId: blueprint.profile.id,
-    messages: messages.map(toModelMessage),
+    messages: normalizePromptContextForModel(messages).map(toModelMessage),
   };
 }
 

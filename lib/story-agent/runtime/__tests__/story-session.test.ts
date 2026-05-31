@@ -31,7 +31,7 @@ describe("SAC-Phase 6a StorySession runtime", () => {
     });
     const result = await finalizeStoryTurn(turn, "raw answer");
 
-    expect(turn.llmConfig.messages?.map((message) => message.content)).toContain("Alpha lore");
+    expect(turn.llmConfig.messages?.map((message) => message.content).join("\n")).toContain("Alpha lore");
     expect(turn.llmConfig).not.toHaveProperty("scriptTools");
     expect(result.screenContent).toBe("screen answer");
     expect(saved.recentTranscript.map((message) => message.role)).toEqual(["user", "assistant"]);
@@ -150,11 +150,11 @@ describe("SAC-Phase 6a StorySession runtime", () => {
       model: { ...modelInput(), contextWindow: 200, username: "Tester" },
     });
 
-    const contents = turn.llmConfig.messages?.map((message) => message.content) ?? [];
-    const joined = contents.join("\n");
-    expect(contents).toContain("E2E_MARKER");
-    expect(joined).toMatch(/E2E_MARKER for Character\/Tester and Character\/Tester (alpha|beta) /);
-    expect(joined).not.toMatch(/\{\{(char|user|lastUserMessage|random|trim)[^}]*\}\}|<char>|<user>/i);
+    const promptJoined = turn.promptMessages.map((message) => message.content).join("\n");
+    const modelJoined = turn.llmConfig.messages?.map((message) => message.content).join("\n") ?? "";
+    expect(promptJoined).toMatch(/E2E_MARKER for Character\/Tester and Character\/Tester (alpha|beta) /);
+    expect(countMatches(modelJoined, "E2E_MARKER")).toBe(1);
+    expect(modelJoined).not.toMatch(/\{\{(char|user|lastUserMessage|random|trim)[^}]*\}\}|<char>|<user>/i);
   });
 
   it("preserves current user input even when prompt budget is exhausted", () => {
@@ -204,6 +204,77 @@ describe("SAC-Phase 6a StorySession runtime", () => {
       role: "user",
       content: "continue",
     });
+  });
+
+  it("keeps prompt provenance granular but sends a compact semantic system block to the model", () => {
+    const blueprint = {
+      ...createBlueprint(),
+      promptStack: {
+        messages: [
+          {
+            id: "persona",
+            role: "system" as const,
+            content: "Persona rules.",
+            enabled: true,
+            order: 0,
+            sourceKind: "character" as const,
+            sourcePath: "character.card",
+            sourceField: "description",
+          },
+          {
+            id: "style",
+            role: "system" as const,
+            content: "Style rules.",
+            enabled: true,
+            order: 1,
+            sourceKind: "preset" as const,
+            sourcePath: "preset.json",
+            sourceField: "prompt",
+          },
+          {
+            id: "turn-wrapper",
+            role: "user" as const,
+            content: "{{lastUserMessage}} as turn wrapper.",
+            enabled: true,
+            order: 2,
+            sourceKind: "preset" as const,
+            sourcePath: "preset.json",
+            sourceField: "prompt",
+          },
+        ],
+      },
+      renderRules: [{
+        schemaVersion: 1 as const,
+        id: "status",
+        kind: "status-panel" as const,
+        sourceScriptId: "status-script",
+        title: "状态栏",
+        confidence: 0.8,
+        fields: [],
+        dataTemplate: "$1",
+        sourcePattern: "<SFW>\\s*(\\{[\\s\\S]*?\\})\\s*</SFW>",
+      }],
+    };
+    const session = createStorySession({ dialogueId: "dialogue-topology", blueprint });
+    const turn = prepareStoryTurn({
+      blueprint,
+      session,
+      userInput: "alpha continue",
+      model: modelInput(),
+    });
+    const modelMessages = turn.llmConfig.messages ?? [];
+    const systemMessages = modelMessages.filter((message) => message.role === "system");
+
+    expect(turn.promptMessages.filter((message) => message.source === "prompt-stack")).toHaveLength(3);
+    expect(turn.promptMessages.some((message) => message.source === "world")).toBe(true);
+    expect(turn.promptMessages.some((message) => message.source === "render")).toBe(true);
+    expect(systemMessages).toHaveLength(2);
+    expect(systemMessages.map((message) => message.content).join("\n")).toContain("[Story instructions]");
+    expect(systemMessages.map((message) => message.content).join("\n")).toContain("[World context]");
+    expect(systemMessages.map((message) => message.content).join("\n")).toContain("[UI render contracts]");
+    expect(modelMessages.some((message) => message.content === "as turn wrapper.")).toBe(true);
+    expect(countMatches(modelMessages.map((message) => message.content).join("\n"), "alpha continue")).toBe(1);
+    expect(modelMessages.at(-1)).toMatchObject({ role: "user", content: "alpha continue" });
   });
 
   it("persists UpdateVariable commands as StoryState and keeps raw blocks out of history", async () => {
@@ -415,6 +486,10 @@ function modelInput() {
     maxTokens: 128,
     streaming: false,
   };
+}
+
+function countMatches(text: string, value: string): number {
+  return text.split(value).length - 1;
 }
 
 function createBlueprint(): SessionBlueprint {

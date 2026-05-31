@@ -57,6 +57,28 @@ export function assemblePromptContext(
   return fitBudget(messages, input.maxTokens ?? Infinity, requiredMessageIds(messages, input));
 }
 
+export function normalizePromptContextForModel(
+  messages: PromptContextMessage[],
+): PromptContextMessage[] {
+  const latestUserContent = latestUserHistoryContent(messages);
+  const normalized: PromptContextMessage[] = [];
+  let contextBuffer: PromptContextMessage[] = [];
+
+  for (const message of messages.map((message) => removeContextUserEcho(message, latestUserContent))) {
+    if (!message.content.trim()) continue;
+    if (isMergeableSystemContext(message)) {
+      contextBuffer.push(message);
+    } else {
+      normalized.push(...flushSystemContext(contextBuffer));
+      contextBuffer = [];
+      normalized.push(message);
+    }
+  }
+
+  normalized.push(...flushSystemContext(contextBuffer));
+  return normalized;
+}
+
 function fromPromptStack(message: CompiledPromptMessage): PromptContextMessage {
   return {
     id: message.id,
@@ -109,6 +131,84 @@ function fromHistory(
     content: message.content,
     source: "history",
     estimatedTokens: estimateTokens(message.content),
+  };
+}
+
+function flushSystemContext(messages: PromptContextMessage[]): PromptContextMessage[] {
+  if (messages.length === 0) return [];
+  if (messages.length === 1) return messages;
+  const content = formatSystemContext(messages);
+  return [{
+    id: `story-context:${messages[0]?.id ?? "start"}:${messages.at(-1)?.id ?? "end"}`,
+    role: "system",
+    content,
+    source: "prompt-stack",
+    sourcePath: "story-agent/runtime-normalized-context",
+    estimatedTokens: estimateTokens(content),
+  }];
+}
+
+function formatSystemContext(messages: PromptContextMessage[]): string {
+  return groupAdjacentContextSections(messages)
+    .map((section) => [
+      `[${contextSectionTitle(section.source)}]`,
+      section.messages
+        .map((message) => message.content.trim())
+        .filter(Boolean)
+        .join("\n\n"),
+    ].filter(Boolean).join("\n"))
+    .join("\n\n");
+}
+
+function groupAdjacentContextSections(messages: PromptContextMessage[]): Array<{
+  source: PromptContextSource;
+  messages: PromptContextMessage[];
+}> {
+  return messages.reduce<Array<{ source: PromptContextSource; messages: PromptContextMessage[] }>>(
+    (sections, message) => {
+      const previous = sections.at(-1);
+      if (previous?.source === message.source) {
+        previous.messages.push(message);
+      } else {
+        sections.push({ source: message.source, messages: [message] });
+      }
+      return sections;
+    },
+    [],
+  );
+}
+
+function contextSectionTitle(source: PromptContextSource): string {
+  if (source === "prompt-stack") return "Story instructions";
+  if (source === "world") return "World context";
+  if (source === "render") return "UI render contracts";
+  if (source === "memory") return "Session memory";
+  return "Conversation";
+}
+
+function isMergeableSystemContext(message: PromptContextMessage): boolean {
+  return message.role === "system" && message.source !== "history";
+}
+
+function latestUserHistoryContent(messages: PromptContextMessage[]): string {
+  return [...messages]
+    .reverse()
+    .find((message) => message.source === "history" && message.role === "user")
+    ?.content
+    .trim() ?? "";
+}
+
+function removeContextUserEcho(
+  message: PromptContextMessage,
+  latestUserContent: string,
+): PromptContextMessage {
+  if (!latestUserContent || message.source === "history") return message;
+  if (!message.content.includes(latestUserContent)) return message;
+  const content = message.content.split(latestUserContent).join("").replace(/[ \t]{2,}/g, " ").trim();
+  return {
+    ...message,
+    content,
+    estimatedTokens: estimateTokens(content),
   };
 }
 
