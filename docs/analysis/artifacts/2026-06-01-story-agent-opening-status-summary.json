@@ -1,0 +1,26 @@
+{
+  "initial": {
+    "hasStoryStatus": true,
+    "rawStatusSourceVisible": false
+  },
+  "request": {
+    "model": "deepseek-v4-pro",
+    "stream": false,
+    "max_tokens": 8192,
+    "messageRoles": [
+      "system",
+      "assistant",
+      "user"
+    ],
+    "messageCount": 3,
+    "assistantSyntheticStatusLeak": false,
+    "unresolvedPlaceholders": false,
+    "userTail": "玩家输入指令：继续，简短推进一段，不要结束场景。",
+    "gatewayResponse": {
+      "url": "http://localhost:3310/api/model-gateway/chat-completions",
+      "status": 200,
+      "contentType": "application/json"
+    }
+  },
+  "consoleWarnings": []
+}

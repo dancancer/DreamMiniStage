@@ -495,6 +495,38 @@ describe("SAC-Phase 6a StorySession runtime", () => {
     expect(saved.recentTranscript[0]?.content).toBe("Alternate opening chosen by the user.");
   });
 
+  it("uses raw fullContent rather than UI-only opening content in model context", async () => {
+    const blueprint = createBlueprint();
+    let saved = createStorySession({
+      dialogueId: "dialogue-opening-display",
+      blueprint,
+      now: "2026-05-29T00:00:00.000Z",
+    });
+    const commitSession = vi.fn(async (session: StorySessionState) => {
+      saved = session;
+    });
+
+    const turn = prepareStoryTurn({
+      blueprint,
+      session: saved,
+      userInput: "continue",
+      model: { ...modelInput(), contextWindow: 1 },
+      openingMessage: {
+        id: "opening:display",
+        content: "Raw opening.\n<SFW>{\"characters\":[]}</SFW>",
+        fullContent: "Raw opening.",
+      },
+      commitSession,
+    });
+
+    const promptText = turn.llmConfig.messages?.map((message) => message.content).join("\n") ?? "";
+    expect(promptText).toContain("Raw opening.");
+    expect(promptText).not.toContain("<SFW>");
+
+    await finalizeStoryTurn(turn, "raw answer");
+    expect(saved.recentTranscript[0]?.content).toBe("Raw opening.");
+  });
+
   it("uses summary, facts and relationship memory when recent transcript is trimmed", async () => {
     const blueprint = createBlueprint();
     let session = createStorySession({ dialogueId: "dialogue-4", blueprint });

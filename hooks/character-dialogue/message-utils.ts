@@ -37,7 +37,11 @@ export const extractOpeningMessages = (
     .map((node: any) => {
       const content = node?.parsedContent?.regexResult || node?.assistantResponse;
       if (!content) return null;
-      return { id: node.nodeId, content };
+      return {
+        id: node.nodeId,
+        content,
+        fullContent: node?.fullResponse || node?.assistantResponse || content,
+      };
     })
     .filter(Boolean) as OpeningMessage[];
 

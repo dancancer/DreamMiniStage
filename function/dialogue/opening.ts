@@ -1,11 +1,12 @@
 /**
- * @input  lib/story-agent/session
+ * @input  lib/story-agent/session, lib/story-agent/runtime/render/status-fallback
  * @output OpeningPayload, prepareOpeningGreeting
  * @pos    开场白准备 - 从 SessionBlueprint 读取并整理可展示开场
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
  */
 
 import { loadStoryRuntimeBinding } from "@/lib/story-agent/session";
+import { applyStatusPanelFallback } from "@/lib/story-agent/runtime/render/status-fallback";
 import type { OpeningPayload } from "@/types/character-dialogue";
 
 export type { OpeningPayload } from "@/types/character-dialogue";
@@ -26,14 +27,21 @@ export async function prepareOpeningGreetings(params: {
     }];
 
   return orderOpeningsForFirstDisplay(openings).map((opening, index) => {
-    const content = renderOpeningMacros(opening.content, {
+    const fullContent = renderOpeningMacros(opening.content, {
       charName: blueprint.profile.name,
       username: username || "user",
     });
+    const content = applyStatusPanelFallback({
+      text: fullContent,
+      intents: blueprint.renderRules,
+      characterName: blueprint.profile.name,
+      now: new Date().toISOString(),
+    });
+
     return {
       id: `${dialogueId}-opening-${index}`,
       content,
-      fullContent: content,
+      fullContent,
     };
   });
 }

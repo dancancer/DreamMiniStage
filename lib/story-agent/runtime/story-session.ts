@@ -341,7 +341,7 @@ function openingHistory(
   opening?: StoryOpeningMessage,
 ): Array<{ role: "assistant"; content: string }> {
   if (!shouldSeedOpening(session, opening)) return [];
-  return [{ role: "assistant", content: opening.content }];
+  return [{ role: "assistant", content: openingRuntimeContent(opening) }];
 }
 
 function openingTranscript(
@@ -350,7 +350,7 @@ function openingTranscript(
   now: string,
 ): StoryTranscriptMessage[] {
   if (!shouldSeedOpening(session, opening)) return [];
-  return [transcriptMessage("assistant", opening.content, now)];
+  return [transcriptMessage("assistant", openingRuntimeContent(opening), now)];
 }
 
 function shouldSeedOpening(
@@ -358,6 +358,10 @@ function shouldSeedOpening(
   opening?: StoryOpeningMessage,
 ): opening is StoryOpeningMessage {
   return Boolean(opening?.content && session.recentTranscript.length === 0);
+}
+
+function openingRuntimeContent(opening: StoryOpeningMessage): string {
+  return opening.fullContent || opening.content;
 }
 
 function transcriptMessage(

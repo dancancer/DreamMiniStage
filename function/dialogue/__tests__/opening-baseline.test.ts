@@ -122,6 +122,30 @@ describe("StoryBlueprint 开场白基线", () => {
       documentationOpening(),
     ]);
   });
+
+  it("为缺少状态源的开场补 UI 状态栏且保留原始 fullContent", async () => {
+    loadStoryRuntimeBinding.mockResolvedValueOnce({
+      blueprint: createBlueprint("吧台边 · 2026年6月1日 · 21:30\n夏瑾抬起眼，看向 {{user}}。", [statusIntent()]),
+      session: {},
+    });
+    const { initCharacterDialogue } = await import("../init");
+
+    const result = await initCharacterDialogue({
+      username: "测试用户",
+      dialogueId: "baseline-session",
+      characterId: "baseline-char",
+      language: "zh",
+      modelName: "gpt",
+      baseUrl: "http://localhost",
+      apiKey: "sk-test",
+      llmType: "openai",
+    });
+
+    expect(result.openingMessage?.fullContent).toBe("吧台边 · 2026年6月1日 · 21:30\n夏瑾抬起眼，看向 测试用户。");
+    expect(result.openingMessage?.content).toContain("<SFW>");
+    expect(result.openingMessage?.content).toContain("\"location\":\"吧台边\"");
+    expect(result.openingMessage?.content).toContain("\"name\":\"夏瑾\"");
+  });
 });
 
 function documentationOpening(): string {
@@ -133,7 +157,7 @@ function documentationOpening(): string {
   ].join("\n");
 }
 
-function createBlueprint(firstMessage: string): SessionBlueprint {
+function createBlueprint(firstMessage: string, renderRules: SessionBlueprint["renderRules"] = []): SessionBlueprint {
   return {
     id: "blueprint:baseline",
     schemaVersion: 5,
@@ -153,7 +177,7 @@ function createBlueprint(firstMessage: string): SessionBlueprint {
     outputTransforms: [],
     promptTransforms: [],
     contentRules: [],
-    renderRules: [],
+    renderRules,
     memoryPolicy: defaultMemoryPolicy(),
     diagnostics: [],
     repairReport: {
@@ -162,5 +186,19 @@ function createBlueprint(firstMessage: string): SessionBlueprint {
       rejectedPatches: [],
     },
     provenance: [],
+  };
+}
+
+function statusIntent(): SessionBlueprint["renderRules"][number] {
+  return {
+    schemaVersion: 1,
+    id: "status",
+    kind: "status-panel",
+    sourceScriptId: "status-script",
+    title: "状态栏",
+    confidence: 0.9,
+    fields: [],
+    dataTemplate: "$1",
+    sourcePattern: "<SFW>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/SFW>",
   };
 }
