@@ -71,25 +71,11 @@ Closed since the previous parity reports:
 5. `<action>` is hidden from visible assistant text and can produce an `Actions` panel. Clicking `检查侧门` appended `检查侧门` to `#send_textarea`.
 6. Theater's instruction-only `<开局>` opener is no longer shown or sent as the playable opening. Follow-up evidence: `docs/analysis/2026-06-01-story-agent-theater-opening-e2e.md`.
 7. Story Agent model calls now go through `/api/model-gateway/chat-completions`; follow-up E2E evidence is in `docs/analysis/2026-06-01-story-agent-model-gateway-e2e.md`.
+8. Import preview now surfaces high-signal feature-loss diagnostics and the generated first opening. Follow-up evidence: `docs/analysis/2026-06-01-story-agent-import-diagnostics-e2e.md`.
 
 ## Remaining Gaps
 
-### 1. Opening lifecycle diagnostics are still shallow
-
-The original opening lifecycle blocker is mostly closed in current probes:
-
-- `Sgw` and `origin` expose pre-turn opening navigation and can switch alternate greetings.
-- `theater` no longer displays or prompts with its instruction-only opener:
-
-```text
-<开局>
-请按下面要求处理
-</开局>
-```
-
-The remaining product gap is diagnostic clarity. The import page still exposes only an aggregate diagnostic count, so a user cannot yet inspect why a neutral opening was generated or which source opening was suppressed.
-
-### 2. Prompt topology is still too fragmented
+### 1. Prompt topology is still too fragmented
 
 Upstream ST requests in the committed traces use a compact alternating shape, usually 4 to 8 messages over these short runs. Dream now sends many small system messages:
 
@@ -104,7 +90,7 @@ This is not a request to mimic ST's exact layout. The issue is that the current 
 
 Good signal: current user input appeared once in each captured request, and no `{{char}}` / `{{user}}` macros remained unresolved.
 
-### 3. Status/UI coverage is inconsistent by card family
+### 2. Status/UI coverage is inconsistent by card family
 
 `Sgw` now has a working status render contract. The captured response's `<SFW>{...}</SFW>` became a status panel and did not leak raw tags.
 
@@ -116,7 +102,7 @@ Required behavior should be deterministic:
 - If a status-like tag is unsupported, remove it with an explicit unsupported diagnostic or leave it as escaped plain text with a clear user-visible warning.
 - Do not silently strip the tag and expose raw JSON as story prose.
 
-### 4. MagVarUpdate semantics are only partially covered
+### 3. MagVarUpdate semantics are only partially covered
 
 The current runtime can consume simple `<UpdateVariable>` commands after the model emits them. That closes the most obvious raw-tag leak.
 
@@ -129,7 +115,7 @@ The larger plugin behavior is still not covered:
 
 The important distinction: we should not execute MagVarUpdate. We should compile the variable model it implies.
 
-### 5. RenderIntent coverage is still narrow
+### 4. RenderIntent coverage is still narrow
 
 Theater action choices now work. Origin's opening choices are visible. But community-card UI is broader than the current whitelist:
 
@@ -142,7 +128,7 @@ Theater action choices now work. Origin's opening choices are visible. But commu
 
 Unsupported UI should become an explicit import-time/product diagnostic. Silent degradation is still too easy.
 
-### 6. Legacy render pipeline still sits under Story Agent messages
+### 5. Legacy render pipeline still sits under Story Agent messages
 
 `MessageBubble` still runs `useMessageRenderPipeline` before rendering Story Agent `RenderIntentView`. That means the story path still shares old HTML/tag/script rendering machinery. The current hard-replace runtime is cleaner than before, but rendering still has a mixed boundary:
 
@@ -151,29 +137,39 @@ Unsupported UI should become an explicit import-time/product diagnostic. Silent 
 
 This should be split so Story Agent messages use a dedicated structured renderer and legacy script/HTML behavior is not accidentally reintroduced.
 
+## Closed Opening Lifecycle Notes
+
+The original opening lifecycle blocker is mostly closed in current probes:
+
+- `Sgw` and `origin` expose pre-turn opening navigation and can switch alternate greetings.
+- `theater` no longer displays or prompts with its instruction-only opener:
+
+```text
+<开局>
+请按下面要求处理
+</开局>
+```
+
+The import page now shows the actual first opening, the `character.instruction_only_opening` diagnostic, and the target/source path that explains why the generated opening was used.
+
 ## Recommended Next Work
 
-1. Surface opening diagnostics in the import UX.
-   - Show `character.instruction_only_opening` as a user-readable feature-loss note.
-   - Let users inspect the generated neutral opening before creating the agent.
-   - Keep the runtime behavior deterministic; do not reintroduce source-asset parsing in `/session`.
-
-2. Normalize prompt topology.
+1. Normalize prompt topology.
    - Merge adjacent same-role system fragments into semantic sections.
    - Preserve provenance in debug metadata, not in request message count.
    - Gate with captured request snapshots.
 
-3. Harden status/render contract handling.
+2. Harden status/render contract handling.
    - Ensure unmatched status-like tags cannot leak naked JSON.
    - Add tests for `<SFW>...</SFW>` with and without matching render intent.
    - Expand status/data extraction for `origin` and `theater` families.
 
-4. Compile MVU-style initial state.
+3. Compile MVU-style initial state.
    - Extract variable defaults from character/worldbook/prompt conventions.
    - Seed `StorySession.storyState` before turn 1.
    - Keep the execution model deterministic; do not run third-party plugin code.
 
-5. Split Story Agent rendering from legacy HTML/script rendering.
+4. Split Story Agent rendering from legacy HTML/script rendering.
    - Story Agent output should be plain narrative plus `RenderIntent` components.
    - Unsupported HTML/script assets should remain import diagnostics, not runtime behavior.
 
@@ -181,4 +177,4 @@ This should be split so Story Agent messages use a dedicated structured renderer
 
 The direction is still sound. The recent fixes moved real behavior, not just docs: imports are more robust, model request settings are correct, and state/action render intents now work for concrete card patterns.
 
-The remaining gaps are not about copying SillyTavern menus. They are about preserving the semantics that users actually experience: greeting choice, persistent variables, action affordances, status dashboards, and long-session prompt stability. The next implementation pass should start with opening lifecycle and render/status hardening because those are immediately visible in E2E.
+The remaining gaps are not about copying SillyTavern menus. They are about preserving the semantics that users actually experience: persistent variables, action affordances, status dashboards, and long-session prompt stability. The next implementation pass should start with prompt topology normalization, then harden render/status contracts because those are the largest remaining request-shape and visible-output risks in E2E.

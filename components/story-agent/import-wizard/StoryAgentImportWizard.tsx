@@ -25,6 +25,10 @@ import type {
 } from "@/lib/story-agent/import";
 import { toast } from "@/lib/store/toast-store";
 import { cn } from "@/lib/utils";
+import {
+  PreviewDetails,
+  previewDetailLabels,
+} from "./PreviewDetails";
 
 type FileKind = "character" | "preset" | "worldbook" | "regex";
 
@@ -268,6 +272,11 @@ function SummaryPanel({
         ))}
       </div>
 
+      <PreviewDetails
+        preview={preview}
+        copy={previewDetailLabels(copy.language)}
+      />
+
       {preview.confirmation.required && (
         <div className="mt-4 rounded-md border border-destructive/25 bg-destructive/10 p-3">
           <div className="flex items-center gap-2 text-sm font-medium text-destructive">
@@ -295,6 +304,7 @@ function SummaryPanel({
 function labels(language: string) {
   const zh = language === "zh";
   return {
+    language,
     title: zh ? "导入 Story Agent" : "Import Story Agent",
     subtitle: zh
       ? "选择角色卡、世界书、预设和正则后，系统会先编译成 SessionBlueprint，再创建可直接进入的叙事会话。"
