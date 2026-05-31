@@ -28,11 +28,7 @@ export async function invokeDirectOpenAICompatibleModel(
   config: LLMConfig,
   callbacks?: Pick<StreamingCallbacks, "onUsage">,
 ): Promise<string> {
-  const response = await fetch(chatCompletionsUrl(config), {
-    method: "POST",
-    headers: requestHeaders(config),
-    body: JSON.stringify(requestBody(messages, config, false)),
-  });
+  const response = await fetchChatCompletions(messages, config, false);
 
   if (!response.ok) {
     throw new Error(`OpenAI-compatible API error: ${response.status} ${await response.text()}`);
@@ -49,11 +45,7 @@ export async function streamDirectOpenAICompatibleModel(
   config: LLMConfig,
   callbacks: StreamingCallbacks,
 ): Promise<string> {
-  const response = await fetch(chatCompletionsUrl(config), {
-    method: "POST",
-    headers: requestHeaders(config),
-    body: JSON.stringify(requestBody(messages, config, true)),
-  });
+  const response = await fetchChatCompletions(messages, config, true);
 
   if (!response.ok) {
     throw new Error(`OpenAI-compatible API error: ${response.status} ${await response.text()}`);
@@ -62,7 +54,7 @@ export async function streamDirectOpenAICompatibleModel(
   return readEventStream(response, callbacks);
 }
 
-function requestBody(
+export function requestBody(
   messages: ChatMessage[],
   config: LLMConfig,
   stream: boolean,
@@ -75,6 +67,43 @@ function requestBody(
     max_tokens: config.maxTokens,
     stop: config.stopStrings,
   });
+}
+
+export function gatewayRequestBody(
+  messages: ChatMessage[],
+  config: LLMConfig,
+  stream: boolean,
+): Record<string, unknown> {
+  return requestBody(messages, config, stream);
+}
+
+async function fetchChatCompletions(
+  messages: ChatMessage[],
+  config: LLMConfig,
+  stream: boolean,
+): Promise<Response> {
+  const useGateway = shouldUseModelGateway();
+  return fetch(useGateway ? modelGatewayUrl() : chatCompletionsUrl(config), {
+    method: "POST",
+    headers: useGateway ? gatewayHeaders() : requestHeaders(config),
+    body: JSON.stringify(useGateway
+      ? gatewayRequestBody(messages, config, stream)
+      : requestBody(messages, config, stream)),
+  });
+}
+
+function shouldUseModelGateway(): boolean {
+  return typeof window !== "undefined";
+}
+
+function modelGatewayUrl(): string {
+  return "/api/model-gateway/chat-completions";
+}
+
+function gatewayHeaders(): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+  };
 }
 
 async function readEventStream(

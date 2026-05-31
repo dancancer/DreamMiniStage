@@ -26,6 +26,7 @@ import {
   hasStatePanelIntent,
   renderContractMessages,
 } from "./render/contracts";
+import { applyStatusPanelFallback } from "./render/status-fallback";
 import {
   matchWorldModules,
   type WorldActivationState,
@@ -170,6 +171,7 @@ export function prepareStoryTurn(params: {
       charName: params.blueprint.profile.name,
       userName: params.model.username,
       lastUserMessage: input.text,
+      storyStateVariables: params.session.storyState.variables,
     },
     maxTokens: modelPolicy.contextWindow,
   });
@@ -212,7 +214,12 @@ export async function finalizeStoryTurn(
   const actionOptions = applyStoryActionOptions(output.text, {
     emitSourceTag: hasActionOptionsIntent(turn.renderIntents),
   });
-  const screenContent = appendStoryActionsSourceTag(stateUpdate.screenText, actionOptions.sourceTag);
+  const screenContent = applyStatusPanelFallback({
+    text: appendStoryActionsSourceTag(stateUpdate.screenText, actionOptions.sourceTag),
+    intents: turn.renderIntents,
+    characterName: turn.blueprint.profile.name,
+    now,
+  });
   const nextSession = advanceStorySession({
     session: turn.session,
     userInput: turn.transformedInput,

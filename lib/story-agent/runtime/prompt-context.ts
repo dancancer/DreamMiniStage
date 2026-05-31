@@ -4,6 +4,10 @@ import {
   type SessionBlueprint,
 } from "@/lib/story-agent/blueprint";
 import type { WorldHit } from "./world-module";
+import {
+  renderPromptMacros,
+  type PromptMacroContext,
+} from "./prompt-macros";
 
 export type PromptContextSource =
   | "prompt-stack"
@@ -30,12 +34,6 @@ export interface AssemblePromptContextInput {
   requiredHistoryIndexes?: number[];
   macroContext?: PromptMacroContext;
   maxTokens?: number;
-}
-
-export interface PromptMacroContext {
-  charName?: string;
-  userName?: string;
-  lastUserMessage?: string;
 }
 
 export interface AssemblePromptContextResult {
@@ -247,108 +245,6 @@ function fitBudget(
     omitted,
     totalTokens,
   };
-}
-
-function renderPromptMacros(
-  messages: PromptContextMessage[],
-  context: PromptMacroContext = {},
-): PromptContextMessage[] {
-  const variables = collectPromptVariables(messages, context);
-  return messages.map((message) => {
-    const content = renderMacros(message.content, context, variables);
-    return {
-      ...message,
-      content,
-      estimatedTokens: estimateTokens(content),
-    };
-  });
-}
-
-function collectPromptVariables(
-  messages: PromptContextMessage[],
-  context: PromptMacroContext,
-): Record<string, string> {
-  const variables: Record<string, string> = {};
-  for (const message of messages) {
-    message.content.replace(/\{\{([\s\S]*?)\}\}/g, (_match, body: string) => {
-      const set = body.match(/^setvar::([^:}]+)::([\s\S]*)$/i);
-      if (set?.[1]) {
-        variables[set[1]] = renderScalarMacros(set[2] ?? "", context, variables);
-        return "";
-      }
-      const add = body.match(/^addvar::([^:}]+)::([\s\S]*)$/i);
-      if (add?.[1]) {
-        variables[add[1]] = `${variables[add[1]] ?? ""}${renderScalarMacros(add[2] ?? "", context, variables)}`;
-      }
-      return "";
-    });
-  }
-  return variables;
-}
-
-function renderMacros(
-  content: string,
-  context: PromptMacroContext,
-  variables: Record<string, string>,
-): string {
-  const rendered = content.replace(/\{\{([\s\S]*?)\}\}/g, (match, body: string) => {
-    const scalar = renderKnownMacro(body, context, variables);
-    return scalar ?? (body.trim().startsWith("//") ? "" : match);
-  });
-
-  return renderAnglePlaceholders(rendered, context);
-}
-
-function renderScalarMacros(
-  content: string,
-  context: PromptMacroContext,
-  variables: Record<string, string>,
-): string {
-  return renderMacros(content, context, variables);
-}
-
-function renderKnownMacro(
-  body: string,
-  context: PromptMacroContext,
-  variables: Record<string, string>,
-): string | undefined {
-  const key = body.trim();
-  if (/^setvar::/i.test(key) || /^addvar::/i.test(key)) return "";
-  if (/^getvar::/i.test(key)) return variables[key.replace(/^getvar::/i, "").trim()] ?? "";
-  if (/^random::/i.test(key)) return pickDeterministicRandomValue(key, context);
-  if (/^trim$/i.test(key)) return "";
-  if (/^char$/i.test(key) || /^charIfNotGroup$/i.test(key)) return context.charName ?? "";
-  if (/^user$/i.test(key)) return context.userName ?? "user";
-  if (/^lastUserMessage$/i.test(key)) return context.lastUserMessage ?? "";
-  return undefined;
-}
-
-function renderAnglePlaceholders(content: string, context: PromptMacroContext): string {
-  return content
-    .replace(/<char>/gi, context.charName ?? "")
-    .replace(/<user>/gi, context.userName ?? "user");
-}
-
-function pickDeterministicRandomValue(
-  key: string,
-  context: PromptMacroContext,
-): string {
-  const rawOptions = key.replace(/^random::/i, "");
-  const separator = rawOptions.includes("::") ? "::" : ",";
-  const options = rawOptions
-    .split(separator)
-    .map((option) => option.trim())
-    .filter(Boolean);
-  if (options.length === 0) return "";
-  return options[stableIndex(`${context.charName ?? ""}|${context.userName ?? ""}|${key}`, options.length)] ?? "";
-}
-
-function stableIndex(seed: string, length: number): number {
-  let hash = 0;
-  for (let index = 0; index < seed.length; index += 1) {
-    hash = (hash * 31 + seed.charCodeAt(index)) >>> 0;
-  }
-  return hash % length;
 }
 
 function requiredMessageIds(

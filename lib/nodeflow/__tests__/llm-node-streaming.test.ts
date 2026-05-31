@@ -348,6 +348,10 @@ describe("LLMNodeTools.invokeLLMStream", () => {
       ),
     ).resolves.toBe("Hello");
 
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/model-gateway/chat-completions");
+    expect(fetchMock.mock.calls[0]?.[1]?.headers).toEqual({
+      "Content-Type": "application/json",
+    });
     const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
     expect(body).toMatchObject({
       model: "deepseek-v4-pro",
@@ -359,6 +363,8 @@ describe("LLMNodeTools.invokeLLMStream", () => {
     expect(body).not.toHaveProperty("top_p");
     expect(body).not.toHaveProperty("presence_penalty");
     expect(body).not.toHaveProperty("frequency_penalty");
+    expect(body).not.toHaveProperty("apiKey");
+    expect(body).not.toHaveProperty("baseUrl");
     expect(onReasoning).toHaveBeenCalledWith("reason");
   });
 });

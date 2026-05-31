@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 import withPWA from "next-pwa";
 
 const baseConfig: NextConfig = {
-  output: "export",
   distDir: ".next",
   images: {
     domains: ["localhost"],

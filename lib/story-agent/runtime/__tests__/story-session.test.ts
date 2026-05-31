@@ -157,6 +157,47 @@ describe("SAC-Phase 6a StorySession runtime", () => {
     expect(modelJoined).not.toMatch(/\{\{(char|user|lastUserMessage|random|trim)[^}]*\}\}|<char>|<user>/i);
   });
 
+  it("adapts imported template macros without leaking ST syntax to the model", () => {
+    const blueprint = createBlueprint();
+    const session = {
+      ...createStorySession({ dialogueId: "dialogue-imported-template", blueprint }),
+      storyState: {
+        ...createStorySession({ dialogueId: "dialogue-imported-template", blueprint }).storyState,
+        variables: { stat_data: { Soyo: { affection: 3 } } },
+      },
+    };
+    const turn = prepareStoryTurn({
+      blueprint: {
+        ...blueprint,
+        promptStack: {
+          messages: [{
+            id: "template",
+            role: "system",
+            content: [
+              "\"date\":\"{{当前日期,格式:X年X月X日星期X}}\"",
+              "\"state\":{{get_message_variable::stat_data}}",
+              "\"roll\":\"{{roll:1d26-1}}\"",
+            ].join("\n"),
+            enabled: true,
+            order: 0,
+            sourceKind: "preset",
+            sourcePath: "fixture",
+            sourceField: "content",
+          }],
+        },
+      },
+      session,
+      userInput: "continue",
+      model: modelInput(),
+    });
+    const modelJoined = turn.llmConfig.messages?.map((message) => message.content).join("\n") ?? "";
+
+    expect(modelJoined).not.toContain("{{");
+    expect(modelJoined).toContain("[当前日期,格式:X年X月X日星期X]");
+    expect(modelJoined).toContain("\"affection\": 3");
+    expect(modelJoined).toMatch(/"roll":"\d+"/);
+  });
+
   it("preserves current user input even when prompt budget is exhausted", () => {
     const blueprint = createBlueprint();
     const session = createStorySession({ dialogueId: "dialogue-budget", blueprint });
@@ -332,6 +373,39 @@ describe("SAC-Phase 6a StorySession runtime", () => {
 
     expect(stateText).toContain("后台走廊");
     expect(stateText).toContain("线索数量");
+  });
+
+  it("adds a minimal status source for UI rendering when the model omits status JSON", async () => {
+    const blueprint = {
+      ...createBlueprint(),
+      renderRules: [{
+        schemaVersion: 1 as const,
+        id: "status",
+        kind: "status-panel" as const,
+        sourceScriptId: "status-script",
+        title: "状态栏",
+        confidence: 0.8,
+        fields: [],
+        dataTemplate: "$1",
+        sourcePattern: "<SFW>\\s*(\\{[\\s\\S]*?\\})\\s*</SFW>",
+      }],
+    };
+    let saved = createStorySession({ dialogueId: "dialogue-status-fallback", blueprint });
+    const commitSession = async (session: StorySessionState) => {
+      saved = session;
+    };
+
+    const result = await finalizeStoryTurn(prepareStoryTurn({
+      blueprint,
+      session: saved,
+      userInput: "continue",
+      model: modelInput(),
+      commitSession,
+    }), "正文继续。");
+
+    expect(result.screenContent).toContain("<SFW>");
+    expect(result.screenContent).toContain("\"status\":\"待更新\"");
+    expect(saved.recentTranscript.at(-1)?.content).toBe("正文继续。");
   });
 
   it("turns action blocks into internal choice-list render data", async () => {
