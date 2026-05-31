@@ -13,6 +13,18 @@ export function extractRenderIntentMatches(
   return intents.flatMap((intent) => matchIntent(text, intent));
 }
 
+export function cleanRenderIntentMatchValues(
+  match: RenderIntentMatch,
+  matches: RenderIntentMatch[],
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(match.values).map(([key, value]) => [
+      key,
+      stripNestedSourceText(value, match, matches).trim(),
+    ]),
+  );
+}
+
 export function stripRenderIntentSources(
   text: string,
   intents: RenderIntent[],
@@ -46,8 +58,20 @@ function captureValues(match: RegExpMatchArray): Record<string, string> {
   );
 }
 
+function stripNestedSourceText(
+  value: string,
+  parent: RenderIntentMatch,
+  matches: RenderIntentMatch[],
+): string {
+  return matches.reduce(
+    (result, match) => match === parent ? result : result.split(match.sourceText).join(""),
+    value,
+  );
+}
+
 function readSourcePattern(intent: RenderIntent): string | undefined {
   if (
+    intent.kind === "collapsible-panel" ||
     intent.kind === "status-panel" ||
     intent.kind === "state-panel" ||
     intent.kind === "choice-list"

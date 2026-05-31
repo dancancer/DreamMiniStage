@@ -21,6 +21,7 @@ import { clearColorCache } from "@/lib/utils/html-tag-processor";
 import type { ScriptMessageData } from "@/types/script-message";
 import { useMessageRenderPipeline } from "@/components/message-bubble/useMessageRenderPipeline";
 import {
+  cleanRenderIntentMatchValues,
   extractRenderIntentMatches,
   stripRenderIntentSources,
   type RenderIntent,
@@ -140,7 +141,7 @@ function MessageBubbleInner({
           intent={match.intent}
           key={`${match.intent.id}-${index}`}
           onAppendInput={onAppendInput}
-          values={match.values}
+          values={cleanRenderIntentMatchValues(match, renderMatches)}
         />
       ))}
     </div>

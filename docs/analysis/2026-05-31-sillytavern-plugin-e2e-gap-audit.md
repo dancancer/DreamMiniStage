@@ -72,29 +72,16 @@ Closed since the previous parity reports:
 6. Theater's instruction-only `<开局>` opener is no longer shown or sent as the playable opening. Follow-up evidence: `docs/analysis/2026-06-01-story-agent-theater-opening-e2e.md`.
 7. Story Agent model calls now go through `/api/model-gateway/chat-completions`; follow-up E2E evidence is in `docs/analysis/2026-06-01-story-agent-model-gateway-e2e.md`.
 8. Import preview now surfaces high-signal feature-loss diagnostics and the generated first opening. Follow-up evidence: `docs/analysis/2026-06-01-story-agent-import-diagnostics-e2e.md`.
+9. Prompt topology is normalized before the model request while preserving source provenance in debug metadata. Follow-up evidence: `docs/analysis/2026-05-31-story-agent-prompt-topology-e2e.md` and `docs/analysis/2026-06-01-story-agent-preset-role-topology-e2e.md`.
+10. `origin` card collapsible UI source tags now render through structured `RenderIntent` panels. Follow-up evidence: `docs/analysis/2026-06-01-story-agent-origin-collapsible-render-e2e.md`.
 
 ## Remaining Gaps
 
-### 1. Prompt topology is still too fragmented
-
-Upstream ST requests in the committed traces use a compact alternating shape, usually 4 to 8 messages over these short runs. Dream now sends many small system messages:
-
-| Card | Dream roles |
-| --- | --- |
-| `Sgw` | 39 system, 4 assistant, 2 user |
-| `theater` | 40 system, 1 assistant, 1 user |
-| `origin` | 21 system, 1 assistant, 1 user |
-| `seagull` | 5 system, 1 assistant, 1 user |
-
-This is not a request to mimic ST's exact layout. The issue is that the current compiler is exposing internal asset fragments as request topology. That makes prompt inspection harder and increases provider-specific risk. We need a story prompt normalizer that compacts adjacent same-role fragments into a small number of semantically named blocks.
-
-Good signal: current user input appeared once in each captured request, and no `{{char}}` / `{{user}}` macros remained unresolved.
-
-### 2. Status/UI coverage is inconsistent by card family
+### 1. Status/UI coverage is inconsistent by card family
 
 `Sgw` now has a working status render contract. The captured response's `<SFW>{...}</SFW>` became a status panel and did not leak raw tags.
 
-`theater` has state/action UI but no status contract. When a response contains an unmatched `<SFW>` block, the HTML/tag layer can strip the tag and leave naked JSON visible. `origin` shows the same failure mode. This is not a model issue; it is a render-contract boundary issue.
+`origin` opening UI now renders its imported `StatusDashboard`, `UnitCard`, and `MissionProtocol` blocks as structured collapsible panels. The remaining issue is broader: `theater` has state/action UI but no status contract, and any card that emits an unsupported status-like tag can still degrade into visible raw data if the contract is missing.
 
 Required behavior should be deterministic:
 
@@ -102,7 +89,7 @@ Required behavior should be deterministic:
 - If a status-like tag is unsupported, remove it with an explicit unsupported diagnostic or leave it as escaped plain text with a clear user-visible warning.
 - Do not silently strip the tag and expose raw JSON as story prose.
 
-### 3. MagVarUpdate semantics are only partially covered
+### 2. MagVarUpdate semantics are only partially covered
 
 The current runtime can consume simple `<UpdateVariable>` commands after the model emits them. That closes the most obvious raw-tag leak.
 
@@ -115,9 +102,9 @@ The larger plugin behavior is still not covered:
 
 The important distinction: we should not execute MagVarUpdate. We should compile the variable model it implies.
 
-### 4. RenderIntent coverage is still narrow
+### 3. RenderIntent coverage is still narrow
 
-Theater action choices now work. Origin's opening choices are visible. But community-card UI is broader than the current whitelist:
+Theater action choices now work. Origin's opening collapsible dashboard now works. But community-card UI is broader than the current whitelist:
 
 - status dashboards;
 - multi-section meters;
@@ -128,7 +115,7 @@ Theater action choices now work. Origin's opening choices are visible. But commu
 
 Unsupported UI should become an explicit import-time/product diagnostic. Silent degradation is still too easy.
 
-### 5. Legacy render pipeline still sits under Story Agent messages
+### 4. Legacy render pipeline still sits under Story Agent messages
 
 `MessageBubble` still runs `useMessageRenderPipeline` before rendering Story Agent `RenderIntentView`. That means the story path still shares old HTML/tag/script rendering machinery. The current hard-replace runtime is cleaner than before, but rendering still has a mixed boundary:
 
@@ -154,22 +141,17 @@ The import page now shows the actual first opening, the `character.instruction_o
 
 ## Recommended Next Work
 
-1. Normalize prompt topology.
-   - Merge adjacent same-role system fragments into semantic sections.
-   - Preserve provenance in debug metadata, not in request message count.
-   - Gate with captured request snapshots.
-
-2. Harden status/render contract handling.
+1. Harden status/render contract handling.
    - Ensure unmatched status-like tags cannot leak naked JSON.
    - Add tests for `<SFW>...</SFW>` with and without matching render intent.
-   - Expand status/data extraction for `origin` and `theater` families.
+   - Expand status/data extraction for remaining `theater`-style families.
 
-3. Compile MVU-style initial state.
+2. Compile MVU-style initial state.
    - Extract variable defaults from character/worldbook/prompt conventions.
    - Seed `StorySession.storyState` before turn 1.
    - Keep the execution model deterministic; do not run third-party plugin code.
 
-4. Split Story Agent rendering from legacy HTML/script rendering.
+3. Split Story Agent rendering from legacy HTML/script rendering.
    - Story Agent output should be plain narrative plus `RenderIntent` components.
    - Unsupported HTML/script assets should remain import diagnostics, not runtime behavior.
 
@@ -177,4 +159,4 @@ The import page now shows the actual first opening, the `character.instruction_o
 
 The direction is still sound. The recent fixes moved real behavior, not just docs: imports are more robust, model request settings are correct, and state/action render intents now work for concrete card patterns.
 
-The remaining gaps are not about copying SillyTavern menus. They are about preserving the semantics that users actually experience: persistent variables, action affordances, status dashboards, and long-session prompt stability. The next implementation pass should start with prompt topology normalization, then harden render/status contracts because those are the largest remaining request-shape and visible-output risks in E2E.
+The remaining gaps are not about copying SillyTavern menus. They are about preserving the semantics that users actually experience: persistent variables, action affordances, status dashboards, and long-session stability. The next implementation pass should prioritize unmatched status/render contracts and MVU-style initial state compilation, then split Story Agent rendering away from the old HTML/script pipeline.

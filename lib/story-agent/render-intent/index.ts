@@ -19,6 +19,7 @@ export {
 } from "./report";
 
 export {
+  cleanRenderIntentMatchValues,
   extractRenderIntentMatches,
   stripRenderIntentSources,
   type RenderIntentMatch,

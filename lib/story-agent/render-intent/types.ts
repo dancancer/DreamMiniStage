@@ -67,6 +67,7 @@ export interface CollapsiblePanelRenderIntent extends RenderIntentBase {
   bodyTemplate: string;
   collapsedLabel: string;
   expandedLabel: string;
+  sourcePattern?: string;
 }
 
 export interface StatusPanelRenderIntent extends RenderIntentBase {

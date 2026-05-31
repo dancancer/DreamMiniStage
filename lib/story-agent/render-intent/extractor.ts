@@ -113,6 +113,7 @@ function extractCollapsiblePanel(script: RegexScript, html: string): RenderInten
     bodyTemplate: "$1",
     collapsedLabel: extractAttr(html, "data-close") ?? "Expand",
     expandedLabel: extractAttr(html, "data-open") ?? "Collapse",
+    sourcePattern: script.findRegex,
   };
 }
 

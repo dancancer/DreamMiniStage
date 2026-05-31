@@ -173,6 +173,7 @@ describe("compileSessionBlueprint", () => {
             "id": "1f8cfad6-c1e4-4691-8b76-4a70d940bd6e:collapsible-panel",
             "kind": "collapsible-panel",
             "schemaVersion": 1,
+            "sourcePattern": "/<update(?:variable)?>\\s*(.*)\\s*<\\/update(?:variable)?>/gsi",
             "sourceScriptId": "1f8cfad6-c1e4-4691-8b76-4a70d940bd6e",
             "title": "[美化]完整变量更新",
           },
@@ -286,6 +287,27 @@ describe("compileSessionBlueprint", () => {
       ]),
     );
     expect(JSON.stringify(blueprint.renderRules)).not.toContain("dexie");
+  });
+
+  it("keeps source patterns on collapsible UI render rules", () => {
+    const blueprint = compileSessionBlueprint(
+      createCharacterOnlyBundle("2.png", "character:origin"),
+    );
+
+    expect(blueprint.renderRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "collapsible-panel",
+          title: "UI-状态栏容器",
+          sourcePattern: "/<StatusDashboard>([\\s\\S]*?)<\\/StatusDashboard>/g",
+        }),
+        expect.objectContaining({
+          kind: "collapsible-panel",
+          title: "📂 UNIT STATUS / 展开数据",
+          sourcePattern: "/<UnitCard>([\\s\\S]*?)<\\/UnitCard>/g",
+        }),
+      ]),
+    );
   });
 });
 

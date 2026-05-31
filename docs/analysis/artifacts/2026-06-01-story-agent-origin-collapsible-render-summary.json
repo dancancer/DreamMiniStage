@@ -1,0 +1,51 @@
+{
+  "url": "http://localhost:3313/session?id=7e0a016a-55ac-4dbb-abd0-bc0a0f2b6c14",
+  "title": "DreamMiniStage - Interactive Storytelling Platform",
+  "roleTitleVisible": true,
+  "openingSwitcherVisible": true,
+  "collapsiblePanels": [
+    "📂 UNIT STATUS / 展开数据",
+    "UI-状态栏容器",
+    "💠 MISSION PROTOCOL",
+    "💠 MISSION PROTOCOL",
+    "💠 MISSION PROTOCOL"
+  ],
+  "openPanels": [
+    "📂 UNIT STATUS / 展开数据",
+    "UI-状态栏容器",
+    "💠 MISSION PROTOCOL"
+  ],
+  "containsRawStatusDashboard": false,
+  "containsRawUnitCard": false,
+  "containsRawMissionProtocol": false,
+  "containsUnitBody": true,
+  "containsDashboardBody": true,
+  "containsMissionBody": true,
+  "details": [
+    {
+      "open": true,
+      "summary": "📂 UNIT STATUS / 展开数据",
+      "text": "📂 UNIT STATUS / 展开数据【指挥官: user (Lv.1)】 ⚧️ 档案: 男性 | 唯一适格者 (The Compatible) ❤️ 状态: HP 85/100 (虚弱) | SAN 90/100 (冷静) 🔭 视野: [打开的冷冻舱] [满是灰尘的地板] [应急灯光] 🎒 装备 (Loadout): 🔫 [主武器]: [无] 🛡️ [服装]: 防冻病号服 (状态: 干燥/僵硬) > 👁️ [外观]: 简陋的白色连体织物，因长期冷冻而略显僵硬，紧贴着刚苏醒的身体，散发着淡淡的消毒水气味。 🔞 生理: [低温苏醒] 肢体知觉正在恢复中... 🔥 状态: 欲求 0% | 虚弱 🧬 天赋: [待定 - 系统将在您做出决策后自动抽取] 📝 感官自检: 四肢如同生锈的齿轮般沉重，视野边缘还有未消退的冷冻白霜。心脏的跳动声在死寂的空气中格外清晰。"
+    },
+    {
+      "open": true,
+      "summary": "UI-状态栏容器",
+      "text": "UI-状态栏容器【战术综控 (Command Dashboard)】 📅 时空: 静默纪元 102年 | 🕒 苏醒日 (08:00) | 🔌 外部传感器离线 ⚡ 资源: 💰 5,000 EP (应急资金) | 🛡️ 基地: 42% (需修缮) | 📦 战利品: 0件 <sep> 📡 情报: “欢迎回来，指挥官。检测到基地能源告急，请尽快做出决策。” 💬 内网: [无信号 - 等待机娘接入] <sep> 📊 [战斗结算]: 🏳️ [系统重启完成] 💤 [休整报告]: 🟢 [冷冻睡眠结束]"
+    },
+    {
+      "open": true,
+      "summary": "💠 MISSION PROTOCOL",
+      "text": "💠 MISSION PROTOCOL🎯 [方案 A: 定向检索 (Faction Search)] 💰 消耗: 3,000 EP (剩余 2,000 EP) 📝 效果: 启动 Mode B，指定一个阵营数据库，随机制造 1名 该阵营的精英机娘。 ⚖️ 备注: 稳健的战术选择。既获得了可靠的副官，又保留了部分资金用于购买弹药或生活设施。"
+    },
+    {
+      "open": false,
+      "summary": "💠 MISSION PROTOCOL",
+      "text": "💠 MISSION PROTOCOL💎 [方案 B: 精密重塑 (Specific Reform)] 💰 消耗: 5,000 EP (剩余 0 EP) 📝 效果: 启动 Mode A，直接指定一名你熟悉的角色姓名，将其完美具现化。 ⚖️ 备注: 孤注一掷的“梭哈”。你将得到最心仪的强力战力，但开局将身无分文，面临极大的生存压力。"
+    },
+    {
+      "open": false,
+      "summary": "💠 MISSION PROTOCOL",
+      "text": "💠 MISSION PROTOCOL🐹 [方案 C: 资源囤积 (Hoarding)] 💰 消耗: 0 EP (剩余 5,000 EP) 📝 效果: 不制造任何单位。你仅靠一把手枪和外骨骼独自探索。 ⚖️ 备注: 高难度“独狼”开局，但你将拥有最多的启动资金用于后续升级基地设施。"
+    }
+  ]
+}
