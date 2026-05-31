@@ -1,7 +1,7 @@
 /**
  * @input  lib/story-agent/session
  * @output OpeningPayload, prepareOpeningGreeting
- * @pos    开场白准备 - 从 SessionBlueprint 读取首条消息
+ * @pos    开场白准备 - 从 SessionBlueprint 读取并整理可展示开场
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
  */
 
@@ -25,7 +25,7 @@ export async function prepareOpeningGreetings(params: {
       content: blueprint.profile.firstMessage || `你好，我是${blueprint.profile.name}。`,
     }];
 
-  return openings.map((opening, index) => {
+  return orderOpeningsForFirstDisplay(openings).map((opening, index) => {
     const content = renderOpeningMacros(opening.content, {
       charName: blueprint.profile.name,
       username: username || "user",
@@ -57,5 +57,42 @@ function renderOpeningMacros(
 ): string {
   return content
     .replace(/\{\{char\}\}/gi, names.charName)
-    .replace(/\{\{user\}\}/gi, names.username);
+    .replace(/\{\{user\}\}/gi, names.username)
+    .replace(/<char>/gi, names.charName)
+    .replace(/<user>/gi, names.username);
+}
+
+function orderOpeningsForFirstDisplay<T extends { content: string }>(openings: T[]): T[] {
+  const firstPlayableIndex = openings.findIndex(isPlayableOpening);
+  if (firstPlayableIndex <= 0) return openings;
+  const firstPlayable = openings[firstPlayableIndex];
+  if (!firstPlayable) return openings;
+  return [
+    firstPlayable,
+    ...openings.slice(0, firstPlayableIndex),
+    ...openings.slice(firstPlayableIndex + 1),
+  ];
+}
+
+function isPlayableOpening(opening: { content: string }): boolean {
+  const text = opening.content.trim();
+  if (!text) return false;
+  if (isInstructionOnlyOpening(text)) return false;
+  return !isDocumentationOpening(text);
+}
+
+function isInstructionOnlyOpening(text: string): boolean {
+  return /^<开局>[\s\S]*<\/开局>$/i.test(text) && /按下面要求处理|follow the instructions/i.test(text);
+}
+
+function isDocumentationOpening(text: string): boolean {
+  const hints = [
+    /游玩前|使用前|说明/,
+    /插件|MagVarUpdate|TavernHelper/i,
+    /状态栏|状态表/,
+    /开场白|开场/,
+    /变量|user人设|人设/,
+  ];
+  const hitCount = hints.filter((hint) => hint.test(text)).length;
+  return text.length > 700 && hitCount >= 3;
 }

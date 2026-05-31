@@ -136,7 +136,7 @@ describe("SAC-Phase 6a StorySession runtime", () => {
           messages: [{
             id: "macro",
             role: "user",
-            content: "{{lastUserMessage}} for {{char}} and {{user}} {{trim}}",
+            content: "{{lastUserMessage}} for {{char}}/{{user}} and <char>/<user> {{random::alpha::beta}} {{trim}}",
             enabled: true,
             order: 0,
             sourceKind: "preset",
@@ -151,9 +151,10 @@ describe("SAC-Phase 6a StorySession runtime", () => {
     });
 
     const contents = turn.llmConfig.messages?.map((message) => message.content) ?? [];
+    const joined = contents.join("\n");
     expect(contents).toContain("E2E_MARKER");
-    expect(contents.join("\n")).toContain("E2E_MARKER for Character and Tester ");
-    expect(contents.join("\n")).not.toMatch(/\{\{[^}]+\}\}/);
+    expect(joined).toMatch(/E2E_MARKER for Character\/Tester and Character\/Tester (alpha|beta) /);
+    expect(joined).not.toMatch(/\{\{(char|user|lastUserMessage|random|trim)[^}]*\}\}|<char>|<user>/i);
   });
 
   it("preserves current user input even when prompt budget is exhausted", () => {

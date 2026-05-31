@@ -47,4 +47,11 @@ describe("render intent runtime", () => {
     expect(matches[0]?.values[1]).toContain("检查侧门");
     expect(stripRenderIntentSources(text, [actionIntent])).toBe("正文");
   });
+
+  it("strips unsupported SFW status blocks before the legacy HTML parser can expose JSON", () => {
+    const text = "正文\n<SFW>{\"date\":\"2020\",\"characters\":[]}</SFW>";
+
+    expect(stripRenderIntentSources(text, [])).toBe("正文");
+    expect(stripRenderIntentSources(text, [actionIntent])).toBe("正文");
+  });
 });

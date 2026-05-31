@@ -1,0 +1,177 @@
+{
+  "generatedAt": "2026-05-31T15:48:08.699Z",
+  "cases": [
+    {
+      "streaming": false,
+      "initial": {
+        "hasOpeningNavigator": true,
+        "leakedI18nKey": false,
+        "hasStatusPanel": false,
+        "defaultLooksLikeDocumentation": false,
+        "leakedRawStatusJson": false
+      },
+      "afterSend": {
+        "hasStatusPanel": true,
+        "leakedRawStatusJson": false,
+        "textLength": 2299
+      },
+      "requests": [
+        {
+          "model": "deepseek-v4-pro",
+          "stream": false,
+          "streamOptions": null,
+          "maxTokens": 8192,
+          "messageCount": 44,
+          "roles": [
+            "system",
+            "system",
+            "assistant",
+            "assistant",
+            "assistant",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "user",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "assistant",
+            "user"
+          ],
+          "unresolvedRuntimePlaceholders": false,
+          "containsStatusContract": true,
+          "firstMessageSnippet": "**CRITICAL: Output structure must follow this exact format. No deviations allowed.**\n\n**MANDATORY STRUCTURE:**\n\n<thinking>\n[思维链内容，必须思考每一条不得跳过！]\n</thinking>\n\n <time>\n在每次回复的正文前，必须输出一个用```包裹的世界时空栏，用于记录当前时空信息\n\n格式：\n```地点·yyyy年mm月dd日·星期·具体时间```\n\n核心规则：\n1. 世界时空栏必须持续运转",
+          "lastMessageSnippet": "玩家输入指令：继续剧情。请用两段以内回应，并更新状态栏。"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "contentType": "application/json"
+        }
+      ],
+      "consoleErrors": [],
+      "screenshots": {
+        "initialShot": "/Users/xupeng/mycode/DreamMiniStage/docs/analysis/artifacts/sgw-initial-buffered.png",
+        "finalShot": "/Users/xupeng/mycode/DreamMiniStage/docs/analysis/artifacts/sgw-after-send-buffered.png"
+      }
+    },
+    {
+      "streaming": true,
+      "initial": {
+        "hasOpeningNavigator": true,
+        "leakedI18nKey": false,
+        "hasStatusPanel": false,
+        "defaultLooksLikeDocumentation": false,
+        "leakedRawStatusJson": false
+      },
+      "afterSend": {
+        "hasStatusPanel": true,
+        "leakedRawStatusJson": false,
+        "textLength": 3119
+      },
+      "requests": [
+        {
+          "model": "deepseek-v4-pro",
+          "stream": true,
+          "streamOptions": {
+            "include_usage": true
+          },
+          "maxTokens": 8192,
+          "messageCount": 44,
+          "roles": [
+            "system",
+            "system",
+            "assistant",
+            "assistant",
+            "assistant",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "user",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "system",
+            "assistant",
+            "user"
+          ],
+          "unresolvedRuntimePlaceholders": false,
+          "containsStatusContract": true,
+          "firstMessageSnippet": "**CRITICAL: Output structure must follow this exact format. No deviations allowed.**\n\n**MANDATORY STRUCTURE:**\n\n<thinking>\n[思维链内容，必须思考每一条不得跳过！]\n</thinking>\n\n <time>\n在每次回复的正文前，必须输出一个用```包裹的世界时空栏，用于记录当前时空信息\n\n格式：\n```地点·yyyy年mm月dd日·星期·具体时间```\n\n核心规则：\n1. 世界时空栏必须持续运转",
+          "lastMessageSnippet": "玩家输入指令：继续剧情。请用两段以内回应，并更新状态栏。"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "contentType": "text/event-stream; charset=utf-8"
+        }
+      ],
+      "consoleErrors": [],
+      "screenshots": {
+        "initialShot": "/Users/xupeng/mycode/DreamMiniStage/docs/analysis/artifacts/sgw-initial-stream.png",
+        "finalShot": "/Users/xupeng/mycode/DreamMiniStage/docs/analysis/artifacts/sgw-after-send-stream.png"
+      }
+    }
+  ]
+}

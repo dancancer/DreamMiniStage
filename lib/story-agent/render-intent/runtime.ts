@@ -17,12 +17,14 @@ export function stripRenderIntentSources(
   text: string,
   intents: RenderIntent[],
 ): string {
-  return intents.reduce((result, intent) => {
+  const withoutMatchedSources = intents.reduce((result, intent) => {
     const sourcePattern = readSourcePattern(intent);
     if (!sourcePattern) return result;
     const regex = compileRegex(sourcePattern);
     return regex ? result.replace(regex, "").trim() : result;
   }, text);
+
+  return stripStatusJsonBlocks(withoutMatchedSources);
 }
 
 function matchIntent(text: string, intent: RenderIntent): RenderIntentMatch[] {
@@ -67,4 +69,10 @@ function compileRegex(pattern: string): RegExp | undefined {
 
 function ensureGlobalFlag(flags: string): string {
   return flags.includes("g") ? flags : `${flags}g`;
+}
+
+function stripStatusJsonBlocks(text: string): string {
+  return text
+    .replace(/<(SFW|NSFW)>\s*\{[\s\S]*?\}\s*<\/\1>/gi, "")
+    .trim();
 }

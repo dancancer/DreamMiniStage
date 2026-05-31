@@ -191,10 +191,12 @@ function renderMacros(
   context: PromptMacroContext,
   variables: Record<string, string>,
 ): string {
-  return content.replace(/\{\{([\s\S]*?)\}\}/g, (_match, body: string) => {
+  const rendered = content.replace(/\{\{([\s\S]*?)\}\}/g, (match, body: string) => {
     const scalar = renderKnownMacro(body, context, variables);
-    return scalar ?? (body.trim().startsWith("//") ? "" : "");
+    return scalar ?? (body.trim().startsWith("//") ? "" : match);
   });
+
+  return renderAnglePlaceholders(rendered, context);
 }
 
 function renderScalarMacros(
@@ -212,12 +214,41 @@ function renderKnownMacro(
 ): string | undefined {
   const key = body.trim();
   if (/^setvar::/i.test(key) || /^addvar::/i.test(key)) return "";
-  if (/^getvar::/i.test(key)) return variables[key.replace(/^getvar::/i, "")] ?? "";
+  if (/^getvar::/i.test(key)) return variables[key.replace(/^getvar::/i, "").trim()] ?? "";
+  if (/^random::/i.test(key)) return pickDeterministicRandomValue(key, context);
   if (/^trim$/i.test(key)) return "";
   if (/^char$/i.test(key) || /^charIfNotGroup$/i.test(key)) return context.charName ?? "";
   if (/^user$/i.test(key)) return context.userName ?? "user";
   if (/^lastUserMessage$/i.test(key)) return context.lastUserMessage ?? "";
   return undefined;
+}
+
+function renderAnglePlaceholders(content: string, context: PromptMacroContext): string {
+  return content
+    .replace(/<char>/gi, context.charName ?? "")
+    .replace(/<user>/gi, context.userName ?? "user");
+}
+
+function pickDeterministicRandomValue(
+  key: string,
+  context: PromptMacroContext,
+): string {
+  const rawOptions = key.replace(/^random::/i, "");
+  const separator = rawOptions.includes("::") ? "::" : ",";
+  const options = rawOptions
+    .split(separator)
+    .map((option) => option.trim())
+    .filter(Boolean);
+  if (options.length === 0) return "";
+  return options[stableIndex(`${context.charName ?? ""}|${context.userName ?? ""}|${key}`, options.length)] ?? "";
+}
+
+function stableIndex(seed: string, length: number): number {
+  let hash = 0;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) >>> 0;
+  }
+  return hash % length;
 }
 
 function requiredMessageIds(

@@ -8,6 +8,7 @@
  * ║                         Message List Component                             ║
  * ║                                                                            ║
  * ║  消息列表容器：滚动管理、空状态、开场白导航、加载指示器                       ║
+ * ║  缺失翻译时使用稳定中文标签，避免把 i18n key 泄漏到舞台界面                  ║
  * ║  职责单一：只负责消息列表的布局和滚动行为                                    ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
@@ -214,15 +215,22 @@ function OpeningNavigator({
   serifFontClass,
   t,
 }: OpeningNavigatorProps) {
+  const label = openingLabel(t);
+
   return (
     <div className="flex items-center justify-center gap-3 text-primary-soft">
       <NavButton direction="prev" onClick={() => onNavigate("prev")} disabled={isSending} />
       <span className={"text-sm "}>
-        {t("firstMessage") || "开场白"} {openingIndex + 1}/{totalOpenings}
+        {label} {openingIndex + 1}/{totalOpenings}
       </span>
       <NavButton direction="next" onClick={() => onNavigate("next")} disabled={isSending} />
     </div>
   );
+}
+
+function openingLabel(t: (key: string) => string): string {
+  const translated = t("firstMessage");
+  return translated && translated !== "firstMessage" ? translated : "开场白";
 }
 
 interface NavButtonProps {

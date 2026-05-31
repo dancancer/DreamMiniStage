@@ -22,6 +22,10 @@
 - `MessageList.tsx` 现在在过滤隐藏消息/示例消息后仍保留原始消息索引，避免 header slot、slash 跳转与渲染顺序继续使用漂移后的可见索引。
 - `MessageItem.tsx` 现在为每条可见消息输出 `data-session-message-id` / `data-session-message-index` 锚点，供 `/session` 页面宿主实现 `/chat-jump` / `/floor-teleport` 的真实滚动定位。
 
+## 最新变更（2026-05-31）
+
+- `MessageList.tsx` 的开场白导航在缺失 `firstMessage` 翻译时稳定显示“开场白”，避免把 i18n key 泄漏到会话界面。
+
 ## 最新变更（2026-03-20）
 
 - `SessionToolbar.tsx` 已新增会话级工具栏雏形，并由 `index.ts` 统一导出，供后续把模型 / streaming / fast mode / swipe 这类会话级控制从消息头迁出。
