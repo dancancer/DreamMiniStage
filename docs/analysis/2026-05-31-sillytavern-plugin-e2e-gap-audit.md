@@ -74,6 +74,7 @@ Closed since the previous parity reports:
 8. Import preview now surfaces high-signal feature-loss diagnostics and the generated first opening. Follow-up evidence: `docs/analysis/2026-06-01-story-agent-import-diagnostics-e2e.md`.
 9. Prompt topology is normalized before the model request while preserving source provenance in debug metadata. Follow-up evidence: `docs/analysis/2026-05-31-story-agent-prompt-topology-e2e.md` and `docs/analysis/2026-06-01-story-agent-preset-role-topology-e2e.md`.
 10. `origin` card collapsible UI source tags now render through structured `RenderIntent` panels. Follow-up evidence: `docs/analysis/2026-06-01-story-agent-origin-collapsible-render-e2e.md`.
+11. Sgw MVU-style initial variables are compiled from `[InitVar]` entries into the blueprint, seed `StorySession.storyState` before turn 1, and reach the first model request through `[Session memory]`. The old `{{get_message_variable::stat_data}}` echo is stripped from world context to avoid duplicated state sources. Follow-up evidence: `docs/analysis/2026-06-01-story-agent-initial-state-e2e.md`.
 
 ## Remaining Gaps
 
@@ -89,15 +90,14 @@ Required behavior should be deterministic:
 - If a status-like tag is unsupported, remove it with an explicit unsupported diagnostic or leave it as escaped plain text with a clear user-visible warning.
 - Do not silently strip the tag and expose raw JSON as story prose.
 
-### 2. MagVarUpdate semantics are only partially covered
+### 2. MagVarUpdate semantics are still broader than initial state bootstrap
 
-The current runtime can consume simple `<UpdateVariable>` commands after the model emits them. That closes the most obvious raw-tag leak.
+The current runtime can consume simple `<UpdateVariable>` commands after the model emits them. Sgw-style initial variables are also compiled and seeded before the first user turn.
 
-The larger plugin behavior is still not covered:
+The larger plugin behavior is still not fully covered:
 
-- initial variable templates and default state are not consistently compiled into `StorySession.storyState`;
 - cards that rely on `StatusDashboard` or custom MVU variables still need card-specific state schema extraction;
-- `status_current_variables` is not guaranteed for every card that used MVU upstream;
+- `status_current_variables` is now runtime-owned for the covered Sgw path, but broader card families still need extraction coverage;
 - visible reasoning/planning text from upstream-style prompts remains possible and needs a QA/output policy.
 
 The important distinction: we should not execute MagVarUpdate. We should compile the variable model it implies.
@@ -146,9 +146,9 @@ The import page now shows the actual first opening, the `character.instruction_o
    - Add tests for `<SFW>...</SFW>` with and without matching render intent.
    - Expand status/data extraction for remaining `theater`-style families.
 
-2. Compile MVU-style initial state.
-   - Extract variable defaults from character/worldbook/prompt conventions.
-   - Seed `StorySession.storyState` before turn 1.
+2. Broaden MVU-style state schema coverage.
+   - Extract card-specific state schemas beyond the current Sgw `[InitVar]` pattern.
+   - Keep `status_current_variables` runtime-owned for every supported MVU family.
    - Keep the execution model deterministic; do not run third-party plugin code.
 
 3. Split Story Agent rendering from legacy HTML/script rendering.
@@ -159,4 +159,4 @@ The import page now shows the actual first opening, the `character.instruction_o
 
 The direction is still sound. The recent fixes moved real behavior, not just docs: imports are more robust, model request settings are correct, and state/action render intents now work for concrete card patterns.
 
-The remaining gaps are not about copying SillyTavern menus. They are about preserving the semantics that users actually experience: persistent variables, action affordances, status dashboards, and long-session stability. The next implementation pass should prioritize unmatched status/render contracts and MVU-style initial state compilation, then split Story Agent rendering away from the old HTML/script pipeline.
+The remaining gaps are not about copying SillyTavern menus. They are about preserving the semantics that users actually experience: persistent variables, action affordances, status dashboards, and long-session stability. The next implementation pass should prioritize unmatched status/render contracts, broader MVU schema extraction, then split Story Agent rendering away from the old HTML/script pipeline.

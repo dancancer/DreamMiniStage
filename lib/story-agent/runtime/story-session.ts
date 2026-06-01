@@ -34,10 +34,10 @@ import {
 } from "./world-module";
 import {
   applyStoryStateUpdate,
-  createEmptyStoryState,
   formatStoryStateMessages,
   type StoryStateData,
 } from "./state/update";
+import { createInitialStoryState } from "./state/initial";
 
 export interface StoryTranscriptMessage {
   id: string;
@@ -110,7 +110,7 @@ export interface StoryPreparedTurn {
 
 export function createStorySession(params: {
   dialogueId: string;
-  blueprint: Pick<SessionBlueprint, "id">;
+  blueprint: Pick<SessionBlueprint, "id" | "initialState">;
   now?: string;
 }): StorySessionState {
   const now = params.now ?? new Date().toISOString();
@@ -124,7 +124,7 @@ export function createStorySession(params: {
       activeIntentIds: [],
       updatedAt: now,
     },
-    storyState: createEmptyStoryState(now),
+    storyState: createInitialStoryState(params.blueprint.initialState, now),
     memory: createEmptyStoryMemoryState(now),
     updatedAt: now,
   };

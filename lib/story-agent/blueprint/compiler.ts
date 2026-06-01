@@ -22,6 +22,7 @@ import {
   compileProfileOpenings,
   diagnoseProfileOpenings,
 } from "./profile/openings";
+import { compileInitialState } from "./initial-state";
 import {
   SESSION_BLUEPRINT_SCHEMA_VERSION,
   type AgentProfile,
@@ -58,6 +59,7 @@ export function compileSessionBlueprint(
     promptTransforms: compileTransforms(bundle.regexScripts, "prompt"),
     contentRules: compileContentRules(bundle.regexScripts),
     renderRules: compileRenderRules(bundle.regexScripts),
+    initialState: compileInitialState(bundle),
     memoryPolicy: defaultMemoryPolicy(),
     diagnostics: [
       ...diagnoseImportedAssetBundle(bundle),
@@ -148,10 +150,11 @@ function compileWorldModule(book: ImportedWorldBook): WorldModule {
 
 function compileWorldEntry(entry: ImportedWorldBookEntry): WorldModuleEntry {
   const item = entry.normalized;
+  const content = stripStoryStateVariableEcho(item.content);
   return {
     id: entry.id,
     enabled: item.enabled,
-    content: item.content,
+    content,
     primaryKeys: item.keys,
     secondaryKeys: item.secondary_keys,
     secondaryKeyLogic: item.selectiveLogic ?? "AND_ANY",
@@ -173,6 +176,12 @@ function compileWorldEntry(entry: ImportedWorldBookEntry): WorldModuleEntry {
     },
     sourceField: entry.provenance[0]?.sourceField ?? "entries",
   };
+}
+
+function stripStoryStateVariableEcho(content: string): string {
+  return content
+    .replace(/<status_current_variables>\s*\{\{get_message_variable::stat_data\}\}\s*<\/status_current_variables>\s*/gi, "")
+    .trim();
 }
 
 function compileTransforms(

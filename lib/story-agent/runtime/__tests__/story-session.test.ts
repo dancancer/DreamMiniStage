@@ -457,6 +457,44 @@ describe("SAC-Phase 6a StorySession runtime", () => {
     expect(nextTurn.promptMessages.some((message) => message.content.includes("<action>"))).toBe(true);
   });
 
+  it("seeds compiled initial variables before the first user turn", () => {
+    const blueprint = {
+      ...createBlueprint(),
+      initialState: {
+        variables: {
+          stat_data: {
+            祥子: { 好感度: [0, "relationship toward user"] },
+          },
+        },
+        sources: ["fixture:[InitVar]"],
+        errors: [],
+      },
+    };
+    const session = createStorySession({
+      dialogueId: "dialogue-initial-state",
+      blueprint,
+      now: "2026-05-29T00:00:00.000Z",
+    });
+    const turn = prepareStoryTurn({
+      blueprint,
+      session,
+      userInput: "continue",
+      model: modelInput(),
+    });
+    const stateText = turn.promptMessages
+      .filter((message) => message.content.includes("<status_current_variables>"))
+      .map((message) => message.content)
+      .join("\n");
+
+    expect(session.storyState.variables).toMatchObject({
+      stat_data: {
+        祥子: { 好感度: [0, "relationship toward user"] },
+      },
+    });
+    expect(stateText).toContain("status_current_variables");
+    expect(stateText).toContain("relationship toward user");
+  });
+
   it("seeds the selected opening into the first story turn", async () => {
     const blueprint = createBlueprint();
     let saved = createStorySession({
@@ -603,7 +641,7 @@ function countMatches(text: string, value: string): number {
 function createBlueprint(): SessionBlueprint {
   return {
     id: "blueprint:test",
-    schemaVersion: 5,
+    schemaVersion: 6,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
@@ -660,6 +698,7 @@ function createBlueprint(): SessionBlueprint {
         action: { type: "append-input", valueTemplate: "$1" },
       }],
     }],
+    initialState: { variables: {}, sources: [], errors: [] },
     memoryPolicy: defaultMemoryPolicy(),
     diagnostics: [],
     repairReport: {

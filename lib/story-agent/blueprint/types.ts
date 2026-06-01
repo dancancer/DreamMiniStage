@@ -7,7 +7,7 @@ import type { SecondaryKeyLogic } from "@/lib/models/world-book-model";
 import type { MemoryPolicy } from "@/lib/story-agent/memory";
 import type { RenderIntent } from "@/lib/story-agent/render-intent";
 
-export const SESSION_BLUEPRINT_SCHEMA_VERSION = 5;
+export const SESSION_BLUEPRINT_SCHEMA_VERSION = 6;
 
 export type PromptRole = "system" | "user" | "assistant" | "unknown";
 export type PromptSourceKind = "character" | "preset";
@@ -113,6 +113,12 @@ export interface ContentRule {
   sourcePath: string;
 }
 
+export interface StoryInitialState {
+  variables: Record<string, unknown>;
+  sources: string[];
+  errors: string[];
+}
+
 export interface RepairReport {
   appliedPatches: string[];
   manualPatches: string[];
@@ -133,6 +139,7 @@ export interface SessionBlueprint {
   promptTransforms: TextTransform[];
   contentRules: ContentRule[];
   renderRules: RenderIntent[];
+  initialState: StoryInitialState;
   memoryPolicy: MemoryPolicy;
   diagnostics: ImportDiagnostic[];
   repairReport: RepairReport;

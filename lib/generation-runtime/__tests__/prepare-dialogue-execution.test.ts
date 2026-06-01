@@ -6,7 +6,7 @@ const mockStore = vi.hoisted(() => ({
   saveStorySession: vi.fn(),
   blueprint: {
     id: "blueprint:test",
-    schemaVersion: 5,
+    schemaVersion: 6,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
@@ -54,6 +54,7 @@ const mockStore = vi.hoisted(() => ({
         action: { type: "append-input", valueTemplate: "$1" },
       }],
     }],
+    initialState: { variables: {}, sources: [], errors: [] },
     memoryPolicy: {
       status: "active",
       summary: { maxChars: 1200, preserveRecentEpisodes: 8 },

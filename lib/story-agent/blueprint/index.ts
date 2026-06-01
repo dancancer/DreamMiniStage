@@ -20,6 +20,7 @@ export {
   type PromptStackMessage,
   type RepairReport,
   type SessionBlueprint,
+  type StoryInitialState,
   type TextTransform,
   type TransformDirection,
   type WorldActivation,

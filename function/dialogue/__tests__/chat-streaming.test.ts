@@ -169,7 +169,7 @@ function createPreparedExecution(userInput: string): PreparedDialogueExecution {
 function createBlueprint(): SessionBlueprint {
   return {
     id: "blueprint:test",
-    schemaVersion: 5,
+    schemaVersion: 6,
     sourceHash: "hash",
     createdAt: "2026-05-29T00:00:00.000Z",
     profile: {
@@ -205,6 +205,7 @@ function createBlueprint(): SessionBlueprint {
     promptTransforms: [],
     contentRules: [],
     renderRules: [],
+    initialState: { variables: {}, sources: [], errors: [] },
     memoryPolicy: defaultMemoryPolicy(),
     diagnostics: [],
     repairReport: {

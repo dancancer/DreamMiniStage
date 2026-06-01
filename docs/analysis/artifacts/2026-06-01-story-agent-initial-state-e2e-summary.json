@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-06-01T11:58:00+08:00",
+  "sourceAsset": "test-baseline-assets/character-card/Sgw3.png",
+  "sessionUrl": "http://localhost:3303/session?id=17f392b3-7959-4f66-abd9-fff1c5996d52",
+  "mockedRoute": "**/api/model-gateway/chat-completions",
+  "model": "deepseek-v4-pro",
+  "messageCount": 3,
+  "stream": false,
+  "maxTokens": 8192,
+  "assertions": {
+    "containsInitialRelationshipState": true,
+    "containsFirstTurnSessionMemory": true,
+    "containsUpdateVariableRule": true,
+    "containsUnresolvedHandlebarMacros": false,
+    "containsLegacyStatDataEcho": false,
+    "actualStateSnapshotBlockCount": 1,
+    "worldContextContainsActualStateSnapshot": false,
+    "worldContextContainsLegacyEcho": false,
+    "sessionMemoryContainsStateSnapshot": true
+  },
+  "artifacts": {
+    "screenshot": "docs/analysis/artifacts/2026-06-01-story-agent-initial-state-e2e.png",
+    "requestBody": "docs/analysis/artifacts/2026-06-01-story-agent-initial-state-request-body.json"
+  }
+}

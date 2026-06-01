@@ -98,6 +98,11 @@ describe("compileSessionBlueprint", () => {
       promptTransforms: blueprint.promptTransforms.length,
       contentRules: countContentRules(blueprint.contentRules),
       renderRules: blueprint.renderRules,
+      initialState: {
+        keyCount: Object.keys(blueprint.initialState.variables).length,
+        sourceCount: blueprint.initialState.sources.length,
+        errors: blueprint.initialState.errors,
+      },
       modelPolicy: blueprint.modelPolicy,
       memoryPolicy: blueprint.memoryPolicy,
     }).toMatchInlineSnapshot(`
@@ -105,6 +110,11 @@ describe("compileSessionBlueprint", () => {
         "contentRules": {
           "html-ui-unsupported": 36,
           "markdown-only": 40,
+        },
+        "initialState": {
+          "errors": [],
+          "keyCount": 12,
+          "sourceCount": 1,
         },
         "inputTransforms": 34,
         "memoryPolicy": {
@@ -188,7 +198,7 @@ describe("compileSessionBlueprint", () => {
             "title": "Story State",
           },
         ],
-        "schemaVersion": 5,
+        "schemaVersion": 6,
         "worldModules": [
           {
             "entries": 140,
@@ -287,6 +297,42 @@ describe("compileSessionBlueprint", () => {
       ]),
     );
     expect(JSON.stringify(blueprint.renderRules)).not.toContain("dexie");
+  });
+
+  it("compiles disabled InitVar world entries into blueprint initial state", () => {
+    const sgw = compileSessionBlueprint(createCharacterOnlyBundle("Sgw3.png", "character:sgw"));
+    const theater = compileSessionBlueprint(
+      createCharacterOnlyBundle("V2.0Beta.png", "character:theater"),
+    );
+
+    expect(sgw.initialState.sources).toEqual([
+      "test-baseline-assets/character-card/Sgw3.png:[InitVar]System_Relationships",
+    ]);
+    expect(sgw.initialState.variables).toMatchObject({
+      高松灯: { 好感度: [0, expect.any(String)] },
+      长崎素世: { 好感度: [0, expect.any(String)] },
+    });
+    expect(theater.initialState.sources).toEqual([
+      "test-baseline-assets/character-card/V2.0Beta.png:[InitVar]",
+    ]);
+    expect(theater.initialState.variables).toMatchObject({
+      性别: "男",
+      当前序列: "序列9-占卜家",
+      神性: 1,
+    });
+  });
+
+  it("strips legacy stat_data echo from world context while preserving update policy", () => {
+    const blueprint = compileSessionBlueprint(createCharacterOnlyBundle("Sgw3.png", "character:sgw"));
+    const content = blueprint.worldModules
+      .flatMap((module) => module.entries)
+      .find((entry) => entry.content.includes("好感度变量更新规则"))
+      ?.content ?? "";
+
+    expect(content).toContain("好感度变量更新规则");
+    expect(content).toContain("<UpdateVariable>");
+    expect(content).not.toContain("get_message_variable::stat_data");
+    expect(content).not.toMatch(/<status_current_variables>\s*\{\{/);
   });
 
   it("keeps source patterns on collapsible UI render rules", () => {
