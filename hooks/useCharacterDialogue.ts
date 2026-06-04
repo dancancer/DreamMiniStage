@@ -11,7 +11,7 @@
  * ║  设计原则：数据驱动、引用稳定、性能优化                                        ║
  * ║  【重构】从 useState 迁移到 Zustand Store                                   ║
  * ║  【重构】使用 OpeningSelection 收口开场选择状态                               ║
- * ║  【重构】使用 DialogueModelProfile 收口生成模型参数                            ║
+ * ║  【重构】使用 DialogueGenerationProfile 收口生成模型参数                       ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 

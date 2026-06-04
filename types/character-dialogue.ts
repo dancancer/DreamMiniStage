@@ -1,12 +1,12 @@
 /**
  * @input  lib/model-runtime
- * @output DialogueMessage, OpeningMessage, OpeningPayload, OpeningSelection, Character, LLMType, LLMConfig, UseCharacterDialogueOptions, UseCharacterDialogueReturn
- * @pos    类型定义层 - 角色对话核心类型：消息、开场白、LLM 配置、Hook 接口
+ * @output DialogueMessage, OpeningMessage, OpeningPayload, OpeningSelection, Character, LLMType, LLMConfig, DialogueGenerationProfile, UseCharacterDialogueOptions, UseCharacterDialogueReturn
+ * @pos    类型定义层 - 角色对话核心类型：消息、开场白、LLM 配置、生成 Profile、Hook 接口
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
  *
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                     Character Dialogue Type Defs                          ║
- * ║  角色对话相关的共享类型：消息、开场白、LLM 配置、Hook 返回值                   ║
+ * ║  角色对话相关的共享类型：消息、开场白、LLM 配置、生成 Profile、Hook 返回值        ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -61,6 +61,17 @@ export interface LLMConfig {
   advanced?: ModelAdvancedSettings;
   /** Instruction mode 模板 ID */
   instructTemplateId?: string;
+}
+
+export interface DialogueGenerationProfile {
+  language: "zh" | "en";
+  modelName: string;
+  baseUrl: string;
+  apiKey: string;
+  llmType: LLMType;
+  responseLength: number;
+  fastModel: boolean;
+  advanced?: ModelAdvancedSettings;
 }
 
 export interface UseCharacterDialogueOptions {

@@ -6,8 +6,12 @@
  * ╚══════════════════════════════════════════════════════════════════════════╝
  */
 
-import type { DialogueMessage, OpeningMessage, OpeningPayload } from "@/types/character-dialogue";
-import type { ModelAdvancedSettings } from "@/lib/model-runtime";
+import type {
+  DialogueGenerationProfile,
+  DialogueMessage,
+  OpeningMessage,
+  OpeningPayload,
+} from "@/types/character-dialogue";
 import type { SendOptions } from "@/lib/slash-command/types";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -34,36 +38,25 @@ export interface DialogueData {
    操作参数类型
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export interface LLMConfig {
-  language: "zh" | "en";
-  modelName: string;
-  baseUrl: string;
-  apiKey: string;
-  llmType: "openai" | "ollama" | "gemini";
-  responseLength: number;
-  fastModel: boolean;
-  advanced?: ModelAdvancedSettings;
-}
-
-export interface InitDialogueParams extends LLMConfig {
+export interface InitDialogueParams extends DialogueGenerationProfile {
   dialogueKey: string;
   characterId: string;
 }
 
-export interface SendMessageParams extends LLMConfig {
+export interface SendMessageParams extends DialogueGenerationProfile {
   dialogueKey: string;
   characterId: string;
   message: string;
   onError?: (message: string) => void;
 }
 
-export interface TriggerGenerationParams extends LLMConfig {
+export interface TriggerGenerationParams extends DialogueGenerationProfile {
   dialogueKey: string;
   characterId: string;
   onError?: (message: string) => void;
 }
 
-export interface RegenerateParams extends LLMConfig {
+export interface RegenerateParams extends DialogueGenerationProfile {
   onError?: (message: string) => void;
 }
 

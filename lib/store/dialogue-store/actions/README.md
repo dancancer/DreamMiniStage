@@ -17,3 +17,7 @@
 | `lifecycle-actions.ts` | 操作 | 生命周期操作 |
 | `message-actions.ts` | 操作 | 消息操作 |
 | `navigation-actions.ts` | 操作 | 导航操作 |
+
+## 最新变更（2026-06-04）
+
+- `generation-actions.ts` 的内部 `GenerateOptions` 复用 `DialogueGenerationProfile`，生成操作不再手写模型字段副本。

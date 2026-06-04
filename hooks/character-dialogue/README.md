@@ -14,7 +14,8 @@
 
 ## 最新变更（2026-06-04）
 
-- 新增 `model-profile.ts`，用 `DialogueModelProfile` 收口生成模型参数；`useCharacterDialogue.ts` 不再在初始化、发送、重生成和触发生成路径重复拆装模型字段。
+- `model-profile.ts` 现在返回共享的 `DialogueGenerationProfile` 契约，Hook 侧只负责把当前偏好读数组装成生成 Profile。
+- 新增 `model-profile.ts`，用 `DialogueGenerationProfile` 收口生成模型参数；`useCharacterDialogue.ts` 不再在初始化、发送、重生成和触发生成路径重复拆装模型字段。
 
 ## 之前变更（2026-05-30）
 

@@ -1,6 +1,6 @@
 /**
  * @input  types/character-dialogue
- * @output DialogueModelProfile, buildDialogueModelProfile
+ * @output DialogueGenerationProfile, buildDialogueModelProfile
  * @pos    对话模型 Profile - 将模型配置、语言、输出长度和快模型模式收束为生成 Profile
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
  *
@@ -10,18 +10,7 @@
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
-import type { LLMConfig } from "@/types/character-dialogue";
-
-export interface DialogueModelProfile {
-  language: "zh" | "en";
-  modelName: string;
-  baseUrl: string;
-  apiKey: string;
-  llmType: LLMConfig["llmType"];
-  advanced?: LLMConfig["advanced"];
-  responseLength: number;
-  fastModel: boolean;
-}
+import type { DialogueGenerationProfile, LLMConfig } from "@/types/character-dialogue";
 
 interface BuildDialogueModelProfileInput {
   language: "zh" | "en";
@@ -30,7 +19,7 @@ interface BuildDialogueModelProfileInput {
   fastModelEnabled: boolean;
 }
 
-export function buildDialogueModelProfile(input: BuildDialogueModelProfileInput): DialogueModelProfile {
+export function buildDialogueModelProfile(input: BuildDialogueModelProfileInput): DialogueGenerationProfile {
   const { language, llmConfig, responseLength, fastModelEnabled } = input;
   const { llmType, modelName, baseUrl, apiKey, advanced } = llmConfig;
 

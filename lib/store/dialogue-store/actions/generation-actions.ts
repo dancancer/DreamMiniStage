@@ -10,7 +10,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { extractNodeIdFromMessageId } from "@/utils/message-id";
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
-import { type ModelAdvancedSettings } from "@/lib/model-runtime";
 import { emitAssistantMessageReceived, emitGenerationEnded, emitUserMessageSent } from "./dialogue-event-emitter";
 import {
   finalizeBufferedAssistantMessage,
@@ -26,24 +25,16 @@ import type {
   RegenerateParams,
   DialogueState,
 } from "../types";
-import type { OpeningPayload } from "@/types/character-dialogue";
+import type { DialogueGenerationProfile, OpeningPayload } from "@/types/character-dialogue";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    核心生成逻辑 - 好品味：统一抽象，消除特殊情况
    ═══════════════════════════════════════════════════════════════════════════ */
 
-interface GenerateOptions {
+interface GenerateOptions extends DialogueGenerationProfile {
   dialogueKey: string;
   characterId: string;
   userMessage: string;
-  language: "zh" | "en";
-  modelName: string;
-  baseUrl: string;
-  apiKey: string;
-  llmType: "openai" | "ollama" | "gemini";
-  responseLength: number;
-  fastModel: boolean;
-  advanced?: ModelAdvancedSettings;
   pendingOpening: OpeningPayload | undefined;
   generationType: "normal" | "continue";
   onError?: (message: string) => void;
