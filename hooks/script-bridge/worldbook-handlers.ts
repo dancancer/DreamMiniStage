@@ -1,5 +1,5 @@
 /**
- * @input  hooks/script-bridge/types, lib/data/roleplay/world-book-operation, function/worldbook/*
+ * @input  hooks/script-bridge/types, lib/data/roleplay/world-book-operation, lib/data/roleplay/world-book-keys, function/worldbook/*
  * @output worldbookHandlers
  * @pos    世界书操作 Handlers - WorldBook 的完整 CRUD 与绑定管理
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
@@ -10,6 +10,10 @@
  */
 
 import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
+import {
+  createCharacterWorldBookRecordKey,
+  isWorldBookSettingsRecordKey,
+} from "@/lib/data/roleplay/world-book-keys";
 import { importWorldBookFromJson } from "@/function/worldbook/import";
 import {
   listGlobalWorldBooks,
@@ -24,10 +28,20 @@ import type { ApiCallContext, ApiHandlerMap } from "./types";
 //                              基础 CRUD
 // ============================================================================
 
+function getCurrentCharacterWorldBookKey(ctx: ApiCallContext): string | null {
+  return ctx.characterId ? createCharacterWorldBookRecordKey(ctx.characterId) : null;
+}
+
+function resolveTargetWorldBookKey(ctx: ApiCallContext, target?: string): string | null {
+  const normalized = target?.trim();
+  return normalized || getCurrentCharacterWorldBookKey(ctx);
+}
+
 async function get(args: unknown[], ctx: ApiCallContext) {
   const [id] = args as [string];
-  if (!ctx.characterId) return null;
-  const wb = await WorldBookOperations.getWorldBook(ctx.characterId);
+  const worldBookKey = getCurrentCharacterWorldBookKey(ctx);
+  if (!worldBookKey) return null;
+  const wb = await WorldBookOperations.getWorldBook(worldBookKey);
   if (!wb) return null;
   const normalizedId = String(id);
   return (
@@ -43,8 +57,9 @@ async function get(args: unknown[], ctx: ApiCallContext) {
 
 async function search(args: unknown[], ctx: ApiCallContext) {
   const [query] = args as [string];
-  if (!ctx.characterId || !query) return [];
-  const wb = await WorldBookOperations.getWorldBook(ctx.characterId);
+  const worldBookKey = getCurrentCharacterWorldBookKey(ctx);
+  if (!worldBookKey || !query) return [];
+  const wb = await WorldBookOperations.getWorldBook(worldBookKey);
   if (!wb) return [];
   const lowerQuery = query.toLowerCase();
   return Object.values(wb).filter(
@@ -56,26 +71,30 @@ async function search(args: unknown[], ctx: ApiCallContext) {
 
 async function replace(args: unknown[], ctx: ApiCallContext) {
   const [entries] = args as [Record<string, WorldBookEntry> | WorldBookEntry[]];
-  if (!ctx.characterId) return false;
-  return WorldBookOperations.updateWorldBook(ctx.characterId, entries || {});
+  const worldBookKey = getCurrentCharacterWorldBookKey(ctx);
+  if (!worldBookKey) return false;
+  return WorldBookOperations.updateWorldBook(worldBookKey, entries || {});
 }
 
 async function createEntry(args: unknown[], ctx: ApiCallContext) {
   const [entry] = args as [WorldBookEntry];
-  if (!ctx.characterId || !entry) return null;
-  return WorldBookOperations.addWorldBookEntry(ctx.characterId, entry);
+  const worldBookKey = getCurrentCharacterWorldBookKey(ctx);
+  if (!worldBookKey || !entry) return null;
+  return WorldBookOperations.addWorldBookEntry(worldBookKey, entry);
 }
 
 async function updateEntry(args: unknown[], ctx: ApiCallContext) {
   const [entryId, updates] = args as [string, Partial<WorldBookEntry>];
-  if (!ctx.characterId || !entryId) return false;
-  return WorldBookOperations.updateWorldBookEntry(ctx.characterId, entryId, updates || {});
+  const worldBookKey = getCurrentCharacterWorldBookKey(ctx);
+  if (!worldBookKey || !entryId) return false;
+  return WorldBookOperations.updateWorldBookEntry(worldBookKey, entryId, updates || {});
 }
 
 async function deleteEntry(args: unknown[], ctx: ApiCallContext) {
   const [entryId] = args as [string];
-  if (!ctx.characterId || !entryId) return false;
-  return WorldBookOperations.deleteWorldBookEntry(ctx.characterId, entryId);
+  const worldBookKey = getCurrentCharacterWorldBookKey(ctx);
+  if (!worldBookKey || !entryId) return false;
+  return WorldBookOperations.deleteWorldBookEntry(worldBookKey, entryId);
 }
 
 // ============================================================================
@@ -84,14 +103,15 @@ async function deleteEntry(args: unknown[], ctx: ApiCallContext) {
 
 async function importJson(args: unknown[], ctx: ApiCallContext) {
   const [json, options] = args as [string | Record<string, unknown>, Record<string, unknown>?];
-  if (!ctx.characterId) return { success: false, message: "Missing characterId" };
+  const worldBookKey = getCurrentCharacterWorldBookKey(ctx);
+  if (!worldBookKey) return { success: false, message: "Missing characterId" };
   const content = typeof json === "string" ? json : JSON.stringify(json || {});
-  return importWorldBookFromJson(ctx.characterId, JSON.parse(content), options as any);
+  return importWorldBookFromJson(worldBookKey, JSON.parse(content), options as any);
 }
 
 async function exportWb(args: unknown[], ctx: ApiCallContext) {
   const [targetId] = args as [string?];
-  const target = targetId || ctx.characterId;
+  const target = resolveTargetWorldBookKey(ctx, targetId);
   if (!target) return null;
   return WorldBookOperations.getWorldBook(target);
 }
@@ -102,7 +122,7 @@ async function exportWb(args: unknown[], ctx: ApiCallContext) {
 
 async function getNames() {
   const worldBooks = await WorldBookOperations.getWorldBooks();
-  return Object.keys(worldBooks).filter((key) => !key.endsWith("_settings"));
+  return Object.keys(worldBooks).filter((key) => !isWorldBookSettingsRecordKey(key));
 }
 
 async function getGlobalNames() {
@@ -125,14 +145,16 @@ async function rebindGlobalWorldbooks(args: unknown[]) {
 
 async function saveAsGlobal(args: unknown[], ctx: ApiCallContext) {
   const [name, description] = args as [string, string?];
-  if (!ctx.characterId || !name) return { success: false, message: "Missing character or name" };
-  return saveAsGlobalWorldBook(ctx.characterId, name, description, ctx.characterId);
+  const worldBookKey = getCurrentCharacterWorldBookKey(ctx);
+  if (!worldBookKey || !name) return { success: false, message: "Missing character or name" };
+  return saveAsGlobalWorldBook(worldBookKey, name, description, ctx.characterId);
 }
 
 async function importFromGlobal(args: unknown[], ctx: ApiCallContext) {
   const [globalId] = args as [string];
-  if (!ctx.characterId || !globalId) return { success: false, message: "Missing ids" };
-  return importFromGlobalWorldBook(ctx.characterId, globalId);
+  const worldBookKey = getCurrentCharacterWorldBookKey(ctx);
+  if (!worldBookKey || !globalId) return { success: false, message: "Missing ids" };
+  return importFromGlobalWorldBook(worldBookKey, globalId);
 }
 
 async function deleteGlobal(args: unknown[]) {
@@ -223,7 +245,7 @@ async function getOrCreateChatWorldbook(args: unknown[], ctx: ApiCallContext) {
 
 async function createWorldbook(args: unknown[], ctx: ApiCallContext) {
   const [name, entries] = args as [string, Record<string, WorldBookEntry> | WorldBookEntry[] | undefined];
-  const targetName = name || ctx.characterId;
+  const targetName = resolveTargetWorldBookKey(ctx, name);
   if (!targetName) return null;
   await WorldBookOperations.updateWorldBook(targetName, entries || {});
   return targetName;
@@ -231,21 +253,21 @@ async function createWorldbook(args: unknown[], ctx: ApiCallContext) {
 
 async function deleteWorldbook(args: unknown[], ctx: ApiCallContext) {
   const [name] = args as [string];
-  const targetName = name || ctx.characterId;
+  const targetName = resolveTargetWorldBookKey(ctx, name);
   if (!targetName) return false;
   return WorldBookOperations.deleteWorldBook(targetName);
 }
 
 async function replaceWorldbook(args: unknown[], ctx: ApiCallContext) {
   const [entries, target] = args as [Record<string, WorldBookEntry> | WorldBookEntry[], string?];
-  const targetName = target || ctx.characterId;
+  const targetName = resolveTargetWorldBookKey(ctx, target);
   if (!targetName) return false;
   return WorldBookOperations.updateWorldBook(targetName, entries || {});
 }
 
 async function updateWorldbookWith(args: unknown[], ctx: ApiCallContext) {
   const [entries, target] = args as [Record<string, WorldBookEntry>, string?];
-  const targetName = target || ctx.characterId;
+  const targetName = resolveTargetWorldBookKey(ctx, target);
   if (!targetName) return false;
   const current = (await WorldBookOperations.getWorldBook(targetName)) || {};
   const merged = { ...current, ...(entries || {}) };
@@ -254,7 +276,7 @@ async function updateWorldbookWith(args: unknown[], ctx: ApiCallContext) {
 
 async function createWorldbookEntries(args: unknown[], ctx: ApiCallContext) {
   const [entries, target] = args as [WorldBookEntry[], string?];
-  const targetName = target || ctx.characterId;
+  const targetName = resolveTargetWorldBookKey(ctx, target);
   if (!targetName || !Array.isArray(entries)) return [];
   const current = (await WorldBookOperations.getWorldBook(targetName)) || {};
   const createdIds: string[] = [];
@@ -269,7 +291,7 @@ async function createWorldbookEntries(args: unknown[], ctx: ApiCallContext) {
 
 async function deleteWorldbookEntries(args: unknown[], ctx: ApiCallContext) {
   const [entryIds, target] = args as [string[], string?];
-  const targetName = target || ctx.characterId;
+  const targetName = resolveTargetWorldBookKey(ctx, target);
   if (!targetName || !Array.isArray(entryIds)) return false;
   const current = (await WorldBookOperations.getWorldBook(targetName)) || {};
   entryIds.forEach((id) => delete current[id]);

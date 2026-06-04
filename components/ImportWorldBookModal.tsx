@@ -43,7 +43,7 @@ import {
 
 interface ImportWorldBookModalProps {
   isOpen: boolean;
-  characterId: string;
+  worldBookKey: string;
   onClose: () => void;
   onImportSuccess: () => void;
 }
@@ -67,7 +67,7 @@ function mapToGlobalItem(book: GlobalWorldBook): GlobalItem {
    主组件
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export default function ImportWorldBookModal({ isOpen, characterId, onClose, onImportSuccess }: ImportWorldBookModalProps) {
+export default function ImportWorldBookModal({ isOpen, worldBookKey, onClose, onImportSuccess }: ImportWorldBookModalProps) {
   const { t, serifFontClass } = useLanguage();
 
   // UI 状态
@@ -124,7 +124,7 @@ export default function ImportWorldBookModal({ isOpen, characterId, onClose, onI
       const text = await file.text();
       const jsonData = JSON.parse(text);
       const options = saveAsGlobal ? { saveAsGlobal: true, globalName: globalName.trim() || file.name.replace(".json", ""), globalDescription: globalDescription.trim(), sourceCharacterName: undefined } : undefined;
-      const result = await importWorldBookFromJson(characterId, jsonData, options);
+      const result = await importWorldBookFromJson(worldBookKey, jsonData, options);
       setImportResult({
         ...result,
         semantics: result.success ? summarizeChecklistSemantics("worldbook") : undefined,
@@ -138,7 +138,7 @@ export default function ImportWorldBookModal({ isOpen, characterId, onClose, onI
     } finally {
       setIsImporting(false);
     }
-  }, [characterId, saveAsGlobal, globalName, globalDescription, onImportSuccess]);
+  }, [worldBookKey, saveAsGlobal, globalName, globalDescription, onImportSuccess]);
 
   /* ─────────────────────────────────────────────────────────────────────────
      全局导入
@@ -149,7 +149,7 @@ export default function ImportWorldBookModal({ isOpen, characterId, onClose, onI
 
     setIsImporting(true);
     try {
-      const result = await importFromGlobalWorldBook(characterId, selectedGlobalId);
+      const result = await importFromGlobalWorldBook(worldBookKey, selectedGlobalId);
       if (result.success) {
         setImportResult({
           success: true,
@@ -169,7 +169,7 @@ export default function ImportWorldBookModal({ isOpen, characterId, onClose, onI
     } finally {
       setIsImporting(false);
     }
-  }, [characterId, selectedGlobalId, onImportSuccess]);
+  }, [worldBookKey, selectedGlobalId, onImportSuccess]);
 
   /* ─────────────────────────────────────────────────────────────────────────
      删除全局

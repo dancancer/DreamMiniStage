@@ -23,6 +23,10 @@ import { getWorldBookEntries } from "@/function/worldbook/info";
 import { deleteWorldBookEntry } from "@/function/worldbook/delete";
 import { saveAdvancedWorldBookEntry } from "@/function/worldbook/edit";
 import { bulkToggleWorldBookEntries } from "@/function/worldbook/bulk-operations";
+import {
+  createCharacterWorldBookRecordKey,
+  createDialogueWorldBookRecordKey,
+} from "@/lib/data/roleplay/world-book-keys";
 import { useTableSort, sortItems } from "@/hooks/useTableSort";
 import { useTableFilter, filterItems } from "@/hooks/useTableFilter";
 
@@ -104,8 +108,8 @@ export default function WorldBookEditor({
   // 计算存储键（好品味：无 if-else）
   const storageKey = useMemo(() => {
     if (bookLevel === "global" && globalKey) return globalKey;
-    if (bookLevel === "dialogue" && dialogueKey) return `dialogue:${dialogueKey}`;
-    return `character:${characterId}`;
+    if (bookLevel === "dialogue" && dialogueKey) return createDialogueWorldBookRecordKey(dialogueKey);
+    return createCharacterWorldBookRecordKey(characterId);
   }, [bookLevel, characterId, dialogueKey, globalKey]);
 
   const { sortBy, sortOrder, handleSortByChange, handleSortOrderToggle } = useTableSort({
@@ -450,7 +454,7 @@ export default function WorldBookEditor({
       {isImportModalOpen && (
         <ImportWorldBookModal
           isOpen={isImportModalOpen}
-          characterId={storageKey}
+          worldBookKey={storageKey}
           onClose={() => setIsImportModalOpen(false)}
           onImportSuccess={() => {
             setIsImportModalOpen(false);

@@ -25,7 +25,7 @@ export interface ImportWorldBookResult {
 }
 
 export async function importWorldBookFromJson(
-  characterId: string,
+  worldBookKey: string,
   jsonData: unknown,
   options?: {
     saveAsGlobal?: boolean;
@@ -34,8 +34,8 @@ export async function importWorldBookFromJson(
     sourceCharacterName?: string;
   },
 ): Promise<ImportWorldBookResult> {
-  if (!characterId) {
-    throw new Error("Character ID is required");
+  if (!worldBookKey) {
+    throw new Error("World Book key is required");
   }
 
   const result: ImportWorldBookResult = {
@@ -66,7 +66,7 @@ export async function importWorldBookFromJson(
       return result;
     }
 
-    const worldBook = await WorldBookOperations.getWorldBook(characterId) || {};
+    const worldBook = await WorldBookOperations.getWorldBook(worldBookKey) || {};
     const now = Date.now();
 
     for (const entry of normalizedEntries) {
@@ -116,7 +116,7 @@ export async function importWorldBookFromJson(
     }
 
     if (result.importedCount > 0) {
-      const updateResult = await WorldBookOperations.updateWorldBook(characterId, worldBook);
+      const updateResult = await WorldBookOperations.updateWorldBook(worldBookKey, worldBook);
       if (updateResult) {
         result.success = true;
         result.message = `Successfully imported ${result.importedCount} entries`;
@@ -124,7 +124,7 @@ export async function importWorldBookFromJson(
         if (options?.saveAsGlobal && options.globalName) {
           try {
             const globalResult = await saveAsGlobalWorldBook(
-              characterId,
+              worldBookKey,
               options.globalName,
               options.globalDescription,
               options.sourceCharacterName,

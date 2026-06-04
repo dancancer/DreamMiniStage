@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * @input  lib/data/roleplay/world-book-operation, lib/models/world-book-model
+ * @input  lib/data/roleplay/world-book-operation, lib/data/roleplay/world-book-keys, lib/models/world-book-model
  * @output GlobalWorldBookMetadata, listGlobalWorldBooks, createGlobalWorldBook, deleteGlobalWorldBook, toggleGlobalWorldBook, copyCharacterToGlobal, updateGlobalWorldBookMetadata, getGlobalWorldBookDetail
  * @pos    全局世界书管理 - 全局世界书的 CRUD 操作和启用/禁用管理
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
@@ -14,6 +14,12 @@
  */
 
 import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
+import {
+  createCharacterWorldBookRecordKey,
+  createUniqueGlobalWorldBookRecordKey,
+  getWorldBookRecordPrefix,
+  isGlobalWorldBookRecordKey,
+} from "@/lib/data/roleplay/world-book-keys";
 import type { WorldBookEntry } from "@/lib/models/world-book-model";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -42,7 +48,9 @@ export interface GlobalWorldBookMetadata {
  */
 export async function listGlobalWorldBooks(): Promise<GlobalWorldBookMetadata[]> {
   try {
-    const globalKeys = await WorldBookOperations.getWorldBookKeysByPrefix("global:");
+    const globalKeys = await WorldBookOperations.getWorldBookKeysByPrefix(
+      getWorldBookRecordPrefix("global"),
+    );
     const books: GlobalWorldBookMetadata[] = [];
 
     for (const key of globalKeys) {
@@ -78,10 +86,8 @@ export async function createGlobalWorldBook(
       return { success: false, globalKey: "", error: "名称不能为空" };
     }
 
-    // 生成唯一键：global:{timestamp}_{random}
     const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 8);
-    const globalKey = `global:${timestamp}_${random}`;
+    const globalKey = createUniqueGlobalWorldBookRecordKey();
 
     // 创建空的世界书条目集合
     await WorldBookOperations.updateWorldBook(globalKey, {});
@@ -123,7 +129,7 @@ export async function deleteGlobalWorldBook(
   globalKey: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!globalKey.startsWith("global:")) {
+    if (!isGlobalWorldBookRecordKey(globalKey)) {
       return { success: false, error: "无效的全局世界书键" };
     }
 
@@ -155,7 +161,7 @@ export async function toggleGlobalWorldBook(
   enabled: boolean,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!globalKey.startsWith("global:")) {
+    if (!isGlobalWorldBookRecordKey(globalKey)) {
       return { success: false, error: "无效的全局世界书键" };
     }
 
@@ -196,7 +202,7 @@ export async function copyCharacterToGlobal(
 ): Promise<{ success: boolean; globalKey: string; error?: string }> {
   try {
     // 读取角色世界书
-    const charKey = `character:${characterId}`;
+    const charKey = createCharacterWorldBookRecordKey(characterId);
     const charWorldBook = await WorldBookOperations.getWorldBook(charKey);
 
     if (!charWorldBook || Object.keys(charWorldBook).length === 0) {
@@ -254,7 +260,7 @@ export async function updateGlobalWorldBookMetadata(
   updates: Partial<Omit<GlobalWorldBookMetadata, "id" | "createdAt">>,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!globalKey.startsWith("global:")) {
+    if (!isGlobalWorldBookRecordKey(globalKey)) {
       return { success: false, error: "无效的全局世界书键" };
     }
 
@@ -297,7 +303,7 @@ export async function getGlobalWorldBookDetail(globalKey: string): Promise<{
   error?: string;
 }> {
   try {
-    if (!globalKey.startsWith("global:")) {
+    if (!isGlobalWorldBookRecordKey(globalKey)) {
       return { success: false, error: "无效的全局世界书键" };
     }
 

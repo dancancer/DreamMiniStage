@@ -1,5 +1,5 @@
 /**
- * @input  lib/data/local-storage, lib/models/world-book-model
+ * @input  lib/data/local-storage, lib/data/roleplay/world-book-keys, lib/models/world-book-model
  * @output WorldBookOperations, WorldBookSettings
  * @pos    世界书数据操作层,管理条目的 CRUD 与设置
  * @update 一旦我被更新,务必更新我的开头注释,以及所属文件夹的 README.md
@@ -12,6 +12,10 @@ import {
   getRecordByKey,
   putRecord,
 } from "@/lib/data/local-storage";
+import {
+  createWorldBookSettingsRecordKey,
+  isWorldBookSettingsRecordKey,
+} from "@/lib/data/roleplay/world-book-keys";
 import { WorldBookEntry } from "@/lib/models/world-book-model";
 
 export interface WorldBookSettings {
@@ -56,7 +60,7 @@ export class WorldBookOperations {
     const allBooks = await this.getWorldBooks();
     return Object.keys(allBooks).filter((key) => {
       // 排除 settings 键
-      if (key.endsWith("_settings")) return false;
+      if (isWorldBookSettingsRecordKey(key)) return false;
       // 匹配前缀
       return key.startsWith(prefix);
     });
@@ -223,7 +227,8 @@ export class WorldBookOperations {
    * @returns 世界书设置（包含默认值）
    */
   static async getWorldBookSettings(key: string): Promise<WorldBookSettings> {
-    const settings = await getRecordByKey<WorldBookSettings>(WORLD_BOOK_FILE, `${key}_settings`);
+    const settingsKey = createWorldBookSettingsRecordKey(key);
+    const settings = await getRecordByKey<WorldBookSettings>(WORLD_BOOK_FILE, settingsKey);
 
     if (!settings) {
       return { ...DEFAULT_SETTINGS };
@@ -249,7 +254,7 @@ export class WorldBookOperations {
     const currentSettings = await this.getWorldBookSettings(key);
     const newSettings = { ...currentSettings, ...updates };
 
-    await putRecord(WORLD_BOOK_FILE, `${key}_settings`, newSettings);
+    await putRecord(WORLD_BOOK_FILE, createWorldBookSettingsRecordKey(key), newSettings);
 
     return newSettings;
   }
@@ -262,7 +267,7 @@ export class WorldBookOperations {
    */
   static async deleteWorldBook(key: string): Promise<boolean> {
     try {
-      const settingsKey = `${key}_settings`;
+      const settingsKey = createWorldBookSettingsRecordKey(key);
       const [worldBook, settings] = await Promise.all([
         getRecordByKey<unknown>(WORLD_BOOK_FILE, key),
         getRecordByKey<unknown>(WORLD_BOOK_FILE, settingsKey),

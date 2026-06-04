@@ -17,26 +17,16 @@ import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/lib/store/toast-store";
 import { useSessionStore } from "@/lib/store/session-store";
-import { useGroupChatStore } from "@/lib/group-chat/store";
-import { useCheckpointStore } from "@/lib/checkpoint/store";
 import { useScriptVariables } from "@/lib/store/script-variables";
-import { useModelStore } from "@/lib/store/model-store";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
-import { syncModelConfigToStorage } from "@/lib/model-runtime";
 import { usePromptConfigCallbacks } from "@/hooks/prompt-config/use-prompt-config-callbacks";
 import { buildSwitchedSessionName, buildTemporarySessionName } from "@/app/session/session-switch";
-import { resolveSessionSlashHostBridge } from "@/app/session/session-host-bridge";
-import { createSessionDefaultHostBridge } from "@/app/session/session-host-defaults";
-import { listSessionGalleryItems } from "@/app/session/session-gallery";
-import { createSessionStoreHostCallbacks } from "@/app/session/session-store-hosts";
 import { createSessionNavigationActions } from "@/app/session/session-navigation-actions";
-import { createSessionHostActions } from "@/app/session/session-host-actions";
 import { createSessionChatActions } from "@/app/session/session-chat-actions";
-import { createSessionHostCallbacks, resolveSessionHostBridgeState } from "@/app/session/session-host";
 import { createSessionSlashExecutor } from "@/app/session/session-slash-executor";
-import { getSessionWorldInfoTimedEffect, setSessionWorldInfoTimedEffect } from "@/app/session/session-timed-world-info";
 import { createSessionDialogueActions } from "@/app/session/session-dialogue-actions";
 import { createSessionQuickReplyExecutorStore } from "@/app/session/session-quick-reply-store";
+import { createSessionToolHost } from "@/app/session/session-tool-host";
 import type { SessionGalleryItem } from "@/app/session/session-gallery";
 import type { ScriptHostDebugState } from "@/hooks/script-bridge/host-debug-state";
 import type { Character, DialogueMessage } from "@/types/character-dialogue";
@@ -110,51 +100,22 @@ export function useSessionPageActions({
   const setScriptVariable = useScriptVariables((state) => state.setVariable);
   const deleteScriptVariable = useScriptVariables((state) => state.deleteVariable);
 
-  const defaultSessionHostBridge = useMemo(() => createSessionDefaultHostBridge({ language }), [language]);
-  const resolveSessionHostBridge = useCallback(() => {
-    const injectedBridge = typeof window === "undefined" ? null : resolveSessionSlashHostBridge(window);
-    return resolveSessionHostBridgeState(defaultSessionHostBridge, injectedBridge);
-  }, [defaultSessionHostBridge]);
-  const sessionHostCallbacks = useMemo(
-    () => createSessionHostCallbacks(resolveSessionHostBridge),
-    [resolveSessionHostBridge],
-  );
-  const sessionStoreHostCallbacks = useMemo(() => createSessionStoreHostCallbacks({
+  const sessionToolHost = useMemo(() => createSessionToolHost({
     sessionId,
-    dialogueMessages: dialogue.messages,
-    deps: {
-      createCheckpoint: (dialogueId, messageId, requestedName) =>
-        useCheckpointStore.getState().createCheckpoint(dialogueId, messageId, requestedName),
-      createBranch: (dialogueId, messageId, parentSessionId) =>
-        useCheckpointStore.getState().createBranch(dialogueId, messageId, parentSessionId),
-      getCheckpoint: (dialogueId, messageId) =>
-        useCheckpointStore.getState().getCheckpoint(dialogueId, messageId),
-      listCheckpoints: (dialogueId, messages, links) =>
-        useCheckpointStore.getState().listCheckpoints(dialogueId, messages, links),
-      goCheckpoint: (dialogueId, messageId, parentSessionId) =>
-        useCheckpointStore.getState().goCheckpoint(dialogueId, messageId, parentSessionId),
-      exitCheckpoint: (dialogueId) =>
-        useCheckpointStore.getState().exitCheckpoint(dialogueId),
-      getCheckpointParent: (dialogueId) =>
-        useCheckpointStore.getState().getCheckpointParent(dialogueId),
-      getWorldInfoTimedEffect: getSessionWorldInfoTimedEffect,
-      setWorldInfoTimedEffect: setSessionWorldInfoTimedEffect,
-      getGroupMember: (dialogueId, target, field) =>
-        useGroupChatStore.getState().getGroupMember(dialogueId, target, field),
-      getGroupMemberCount: (dialogueId) =>
-        useGroupChatStore.getState().getGroupMemberCount(dialogueId),
-      addGroupMember: (dialogueId, target) =>
-        useGroupChatStore.getState().addGroupMember(dialogueId, target),
-      removeGroupMember: (dialogueId, target) =>
-        useGroupChatStore.getState().removeGroupMember(dialogueId, target),
-      moveGroupMember: (dialogueId, target, direction) =>
-        useGroupChatStore.getState().moveGroupMember(dialogueId, target, direction),
-      peekGroupMember: (dialogueId, target) =>
-        useGroupChatStore.getState().peekGroupMember(dialogueId, target),
-      setGroupMemberEnabled: (dialogueId, target, enabled) =>
-        useGroupChatStore.getState().setGroupMemberEnabled(dialogueId, target, enabled),
-    },
-  }), [dialogue.messages, sessionId]);
+    language,
+    currentCharacter,
+    openingMessages: dialogue.openingMessages,
+    messages: dialogue.messages,
+    setGalleryState,
+  }), [
+    sessionId,
+    language,
+    currentCharacter,
+    dialogue.openingMessages,
+    dialogue.messages,
+    setGalleryState,
+  ]);
+  const { resolveSessionHostBridge, storeHostCallbacks: sessionStoreHostCallbacks, hostActions } = sessionToolHost;
 
   const resolveCharacterSwitchTarget = useCallback(async (target: string): Promise<string> => {
     const normalized = target.trim();
@@ -223,24 +184,6 @@ export function useSessionPageActions({
     setCharacterNameOverride,
   ]);
 
-  const hostActions = useMemo(() => createSessionHostActions({
-    currentCharacter,
-    openingMessages: dialogue.openingMessages,
-    messages: dialogue.messages,
-    setGalleryState,
-    listSessionGalleryItems,
-    getModelConfigs: () => useModelStore.getState(),
-    syncModelConfigToStorage,
-    hostCallbacks: sessionHostCallbacks,
-    storeHostCallbacks: sessionStoreHostCallbacks,
-  }), [
-    currentCharacter,
-    dialogue.openingMessages,
-    dialogue.messages,
-    setGalleryState,
-    sessionHostCallbacks,
-    sessionStoreHostCallbacks,
-  ]);
   const dialogueActions = useMemo(() => createSessionDialogueActions({
     sessionId,
     characterId,

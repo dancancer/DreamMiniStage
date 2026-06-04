@@ -1,12 +1,17 @@
 /**
- * @input  lib/data/roleplay/world-book-operation, lib/models/world-book-model
+ * @input  lib/data/roleplay/world-book-operation, lib/data/roleplay/world-book-keys, lib/models/world-book-model
  * @output GlobalWorldBook, GlobalWorldBookResult, ListGlobalWorldBooksResult, getNextGlobalId, saveAsGlobalWorldBook, listGlobalWorldBooks, getGlobalWorldBook, importFromGlobalWorldBook, deleteGlobalWorldBook
  * @pos    全局世界书 - 全局世界书的 CRUD 与导入导出
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
  */
 
-import { WorldBookOperations, WorldBookSettings } from "@/lib/data/roleplay/world-book-operation";
-import { WorldBookEntry } from "@/lib/models/world-book-model";
+import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
+import {
+  createUniqueGlobalWorldBookRecordKey,
+  getWorldBookRecordPrefix,
+  isGlobalWorldBookRecordKey,
+} from "@/lib/data/roleplay/world-book-keys";
+import type { WorldBookEntry } from "@/lib/models/world-book-model";
 
 export interface GlobalWorldBook {
   id: string;
@@ -33,37 +38,21 @@ export interface ListGlobalWorldBooksResult {
 }
 
 export async function getNextGlobalId(): Promise<string> {
-  try {
-    const result = await listGlobalWorldBooks();
-    if (!result.success) {
-      return "global_1";
-    }
-
-    const existingIds = result.globalWorldBooks.map(book => {
-      const match = book.id.match(/^global_(\d+)$/);
-      return match ? parseInt(match[1], 10) : 0;
-    });
-
-    const maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0;
-    return `global_${maxId + 1}`;
-  } catch (error) {
-    console.error("Failed to get next global ID:", error);
-    return "global_1";
-  }
+  return createUniqueGlobalWorldBookRecordKey();
 }
 
 export async function saveAsGlobalWorldBook(
-  characterId: string,
+  sourceWorldBookKey: string,
   name: string,
   description?: string,
   sourceCharacterName?: string,
 ): Promise<GlobalWorldBookResult> {
   try {
-    const worldBook = await WorldBookOperations.getWorldBook(characterId);
+    const worldBook = await WorldBookOperations.getWorldBook(sourceWorldBookKey);
     if (!worldBook) {
       return {
         success: false,
-        message: "Character world book not found",
+        message: "Source World Book not found",
       };
     }
 
@@ -79,7 +68,7 @@ export async function saveAsGlobalWorldBook(
           imported: true,
           importedAt: now,
           globalSource: true,
-          sourceCharacterId: characterId,
+          sourceCharacterId: sourceWorldBookKey,
           sourceCharacterName,
         },
       };
@@ -94,7 +83,7 @@ export async function saveAsGlobalWorldBook(
       createdAt: now,
       updatedAt: now,
       entryCount: Object.keys(globalWorldBook).length,
-      sourceCharacterId: characterId,
+      sourceCharacterId: sourceWorldBookKey,
       sourceCharacterName,
     };
 
@@ -124,16 +113,14 @@ export async function saveAsGlobalWorldBook(
 export async function listGlobalWorldBooks(): Promise<ListGlobalWorldBooksResult> {
   try {
     const globalWorldBooks: GlobalWorldBook[] = [];
+    const globalKeys = await WorldBookOperations.getWorldBookKeysByPrefix(
+      getWorldBookRecordPrefix("global"),
+    );
 
-    const worldBooksData = await WorldBookOperations.getWorldBooks();
-    
-    for (const key of Object.keys(worldBooksData)) {
-      if (key.startsWith("global_") && key.endsWith("_settings")) {
-        const settings = worldBooksData[key] as WorldBookSettings;
-        
-        if (settings && settings.metadata) {
-          globalWorldBooks.push(settings.metadata as GlobalWorldBook);
-        }
+    for (const key of globalKeys) {
+      const settings = await WorldBookOperations.getWorldBookSettings(key);
+      if (settings.metadata) {
+        globalWorldBooks.push(settings.metadata as GlobalWorldBook);
       }
     }
 
@@ -160,7 +147,7 @@ export async function getGlobalWorldBook(globalId: string): Promise<{
   message?: string;
 }> {
   try {
-    if (!globalId.startsWith("global_")) {
+    if (!isGlobalWorldBookRecordKey(globalId)) {
       return {
         success: false,
         message: "Invalid global world book ID",
@@ -192,7 +179,7 @@ export async function getGlobalWorldBook(globalId: string): Promise<{
 }
 
 export async function importFromGlobalWorldBook(
-  characterId: string,
+  targetWorldBookKey: string,
   globalId: string,
 ): Promise<{
   success: boolean;
@@ -209,7 +196,7 @@ export async function importFromGlobalWorldBook(
       };
     }
 
-    const characterWorldBook = await WorldBookOperations.getWorldBook(characterId) || {};
+    const characterWorldBook = await WorldBookOperations.getWorldBook(targetWorldBookKey) || {};
     const now = Date.now();
     let importedCount = 0;
 
@@ -230,7 +217,7 @@ export async function importFromGlobalWorldBook(
       importedCount++;
     }
 
-    const saveResult = await WorldBookOperations.updateWorldBook(characterId, characterWorldBook);
+    const saveResult = await WorldBookOperations.updateWorldBook(targetWorldBookKey, characterWorldBook);
     if (!saveResult) {
       return {
         success: false,
@@ -259,20 +246,20 @@ export async function deleteGlobalWorldBook(globalId: string): Promise<{
   message: string;
 }> {
   try {
-    if (!globalId.startsWith("global_")) {
+    if (!isGlobalWorldBookRecordKey(globalId)) {
       return {
         success: false,
         message: "Invalid global world book ID",
       };
     }
 
-    await WorldBookOperations.updateWorldBook(globalId, {});
-    
-    await WorldBookOperations.updateWorldBookSettings(globalId, {
-      enabled: false,
-      contextWindow: 5,
-      metadata: null,
-    });
+    const deleted = await WorldBookOperations.deleteWorldBook(globalId);
+    if (!deleted) {
+      return {
+        success: false,
+        message: "Global world book not found",
+      };
+    }
 
     return {
       success: true,

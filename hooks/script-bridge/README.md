@@ -43,6 +43,7 @@
 
 ## 近期约束
 
+- `worldbook-handlers.ts` 的当前角色 World Book 路径统一通过 `world-book-keys.ts` 转成 `character:` record key；全局保存/导入不再把 raw `characterId` 直接传给数据层。
 - `generation-handlers.ts` 默认生成长度统一使用 `DEFAULT_RESPONSE_LENGTH`，只有脚本显式传入 `custom_api.max_tokens` 时才覆盖每轮输出上限。
 - `slash-handlers.ts` 的 `triggerSlash` 仅接收命令字符串参数，回调统一从 `ApiCallContext` 注入，不再支持额外 options 覆盖。
 - `slash-handlers.ts` 已补齐 JS-Slash-Runner 音频通道能力（`bgm|ambient` 的 mode/enable/playlist 状态控制）。

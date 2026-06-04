@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * @input  lib/data/roleplay/world-book-operation, lib/models/world-book-model
+ * @input  lib/data/roleplay/world-book-operation, lib/data/roleplay/world-book-keys, lib/models/world-book-model
  * @output getDialogueWorldBook, saveDialogueWorldBookEntry, updateDialogueWorldBookEntry, deleteDialogueWorldBookEntry, getDialogueWorldBookEntries, deleteDialogueWorldBook, bulkToggleDialogueWorldBookEntries
  * @pos    会话级世界书 - 会话级世界书的 CRUD 操作
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
@@ -14,6 +14,7 @@
  */
 
 import { WorldBookOperations } from "@/lib/data/roleplay/world-book-operation";
+import { createDialogueWorldBookRecordKey } from "@/lib/data/roleplay/world-book-keys";
 import type { WorldBookEntry } from "@/lib/models/world-book-model";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -30,7 +31,7 @@ export async function getDialogueWorldBook(
   dialogueKey: string,
 ): Promise<Record<string, WorldBookEntry> | null> {
   try {
-    const key = `dialogue:${dialogueKey}`;
+    const key = createDialogueWorldBookRecordKey(dialogueKey);
     return await WorldBookOperations.getWorldBook(key);
   } catch (error) {
     console.error("[DialogueWB] Failed to get dialogue world book:", error);
@@ -50,7 +51,7 @@ export async function saveDialogueWorldBookEntry(
   entry: WorldBookEntry,
 ): Promise<{ success: boolean; entryId?: string; error?: string }> {
   try {
-    const key = `dialogue:${dialogueKey}`;
+    const key = createDialogueWorldBookRecordKey(dialogueKey);
 
     // 添加会话级标记
     const enhancedEntry: WorldBookEntry = {
@@ -92,7 +93,7 @@ export async function updateDialogueWorldBookEntry(
   updates: Partial<WorldBookEntry>,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const key = `dialogue:${dialogueKey}`;
+    const key = createDialogueWorldBookRecordKey(dialogueKey);
 
     const success = await WorldBookOperations.updateWorldBookEntry(key, entryId, updates);
 
@@ -122,7 +123,7 @@ export async function deleteDialogueWorldBookEntry(
   entryId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const key = `dialogue:${dialogueKey}`;
+    const key = createDialogueWorldBookRecordKey(dialogueKey);
 
     const success = await WorldBookOperations.deleteWorldBookEntry(key, entryId);
 
@@ -155,7 +156,7 @@ export async function getDialogueWorldBookEntries(dialogueKey: string): Promise<
   error?: string;
 }> {
   try {
-    const key = `dialogue:${dialogueKey}`;
+    const key = createDialogueWorldBookRecordKey(dialogueKey);
     const worldBook = await WorldBookOperations.getWorldBook(key);
 
     if (!worldBook) {
@@ -202,7 +203,7 @@ export async function deleteDialogueWorldBook(
   dialogueKey: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const key = `dialogue:${dialogueKey}`;
+    const key = createDialogueWorldBookRecordKey(dialogueKey);
 
     const success = await WorldBookOperations.deleteWorldBook(key);
 

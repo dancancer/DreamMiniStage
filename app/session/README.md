@@ -17,6 +17,7 @@
 | `use-session-host-debug.ts` | 调试状态 | `/session` 页面直输 slash 与 script bridge 共享的 host-debug 控制器 |
 | `session-host-bridge.ts` | 协议模块 | `/session` 宿主桥接协议、window key、解析工具 |
 | `session-host.ts` | 宿主工具 | 默认宿主 + 注入宿主的合并与高价值命令回调 |
+| `session-tool-host.ts` | 工具宿主 | `/session` 工具宿主、store 回调、gallery、proxy 的统一装配 |
 | `session-host-defaults.ts` | 默认能力 | `/session` 内建 translate / yt-script provider 与默认宿主实现 |
 | `session-gallery.ts` | 画廊工具 | `/show-gallery` / `/list-gallery` 的最小可信素材解析 |
 | `session-message-events.ts` | 消息工具 | `DreamMiniStage:*ChatMessages` 事件的解析、补丁与刷新逻辑 |
@@ -38,6 +39,7 @@
 
 - `session-page-layout.tsx` 现在把 `openingSelection` 作为单一 Interface 传给 `CharacterChatPanel`，不再在页面装配层拆传 `openingMessages/openingIndex/openingLocked`。
 - `session-page-layout.tsx` 不再向 `CharacterChatPanel` 构造和透传 Session host capability callback 组；这些能力保留在 `use-session-page-actions.ts` / slash host 路径中。
+- `session-tool-host.ts` 现在统一装配默认宿主、注入宿主、checkpoint / group / World Book timed-effect store 回调、gallery 与 proxy 动作；`use-session-page-actions.ts` 不再直接认识这些底层 wiring。
 
 ## 最新变更（2026-03-07）
 

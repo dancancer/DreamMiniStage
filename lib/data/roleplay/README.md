@@ -19,11 +19,13 @@
 | `regex-script-operation.ts` | 操作类 | 正则脚本操作 |
 | `regex-script-source.ts` | 辅助模块 | 正则脚本来源装配、授权判断与排序规则 |
 | `session-operation.ts` | 操作类 | 会话操作 |
+| `world-book-keys.ts` | 辅助模块 | 世界书本地 record key 与 settings key 规则 |
 | `world-book-operation.ts` | 操作类 | 世界书操作 |
 
 ## 最新变更（2026-06-04）
 
 - `world-book-operation.ts` 与 `regex-script-operation.ts` 的 owner/key 更新路径改为单 record 写入；collection listing 统一使用 `local-storage.ts` 的 `getRecordMap()`，不再为了更新一个 key 清空并重写整个 store。
+- `world-book-keys.ts` 集中定义 `global:` / `character:` / `dialogue:` 与 `_settings` 规则；`world-book-operation.ts` 不再手拼 settings key。
 
 ## 之前变更（2026-03-08）
 
