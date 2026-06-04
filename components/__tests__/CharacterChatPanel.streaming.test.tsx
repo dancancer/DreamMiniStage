@@ -105,9 +105,7 @@ function renderPanel(): RenderedPanel {
           { id: "m0", role: "user", content: "hello" },
           { id: "m1", role: "assistant", content: "world" },
         ]}
-        openingMessages={[]}
-        openingIndex={0}
-        openingLocked={true}
+        openingSelection={{ messages: [], index: 0, locked: true }}
         userInput=""
         setUserInput={vi.fn()}
         isSending={true}

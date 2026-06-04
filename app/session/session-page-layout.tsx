@@ -7,7 +7,7 @@
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                      Session Page Layout                                 ║
  * ║                                                                           ║
- * ║  收口 chat/editor/modal 组合，让内容页只保留状态与装配入口。                 ║
+ * ║  收口 chat/editor/modal 组合，让开场选择以 OpeningSelection 透传。           ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -18,7 +18,12 @@ import dynamic from "next/dynamic";
 import CharacterChatPanel from "@/components/CharacterChatPanel";
 import SessionContentView from "@/app/session/session-content-view";
 import SessionChatView from "@/app/session/session-chat-view";
-import type { Character, DialogueMessage } from "@/types/character-dialogue";
+import type {
+  Character,
+  DialogueMessage,
+  OpeningDirection,
+  OpeningSelection,
+} from "@/types/character-dialogue";
 import type { SessionGalleryItem } from "@/app/session/session-gallery";
 import type {
   ScriptHostDebugSnapshot,
@@ -54,9 +59,7 @@ const LazyDialogueTreeModal = dynamic(() => import("@/components/DialogueTreeMod
 
 interface DialogueController {
   messages: DialogueMessage[];
-  openingMessages: { id: string; content: string }[];
-  openingIndex: number;
-  openingLocked: boolean;
+  openingSelection: OpeningSelection;
   suggestedInputs: string[];
   isSending: boolean;
   addUserMessage: (text: string, options?: SendOptions) => void | Promise<void>;
@@ -64,7 +67,7 @@ interface DialogueController {
   triggerGeneration: () => Promise<void>;
   handleSwipe: (target?: string) => Promise<void>;
   handleRegenerate: (nodeId: string) => Promise<void>;
-  handleOpeningNavigate: (direction: "prev" | "next") => Promise<void>;
+  handleOpeningNavigate: (direction: OpeningDirection) => Promise<void>;
   truncateMessagesAfter: (nodeId: string) => Promise<void>;
   exportJsonl: () => Promise<void>;
   importJsonl: (file: File) => Promise<void>;
@@ -141,9 +144,7 @@ function buildChatPanelProps(params: Omit<Props, "characterView" | "galleryState
   return {
     character: currentCharacter,
     messages: dialogue.messages,
-    openingMessages: dialogue.openingMessages,
-    openingIndex: dialogue.openingIndex,
-    openingLocked: dialogue.openingLocked,
+    openingSelection: dialogue.openingSelection,
     userInput,
     setUserInput,
     isSending: dialogue.isSending,

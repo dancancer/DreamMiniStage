@@ -10,7 +10,7 @@
  * ║  基于 Zustand Store 的对话管理 - 消除不稳定依赖                              ║
  * ║  设计原则：数据驱动、引用稳定、性能优化                                        ║
  * ║  【重构】从 useState 迁移到 Zustand Store                                   ║
- * ║  【重构】使用 resolveDialogueKey 统一解析对话标识                             ║
+ * ║  【重构】使用 OpeningSelection 收口开场选择状态                               ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -24,11 +24,7 @@ import type { SendOptions } from "@/lib/slash-command/types";
 import { exportDialogueJsonl, importDialogueJsonl } from "@/function/dialogue/jsonl";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
 import { toast } from "@/lib/store/toast-store";
-import type { DialogueMessage } from "@/types/character-dialogue";
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   类型定义
-   ═══════════════════════════════════════════════════════════════════════════ */
+import type { DialogueMessage, OpeningDirection, OpeningSelection } from "@/types/character-dialogue";
 
 export interface UseCharacterDialogueOptions {
   characterId: string | null;
@@ -45,10 +41,6 @@ export interface UseCharacterDialogueOptions {
 const EMPTY_MESSAGES: never[] = [];
 const EMPTY_OPENING_MESSAGES: never[] = [];
 const EMPTY_SUGGESTED_INPUTS: never[] = [];
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   主 Hook
-   ═══════════════════════════════════════════════════════════════════════════ */
 
 export function useCharacterDialogue({
   characterId,
@@ -120,6 +112,10 @@ export function useCharacterDialogue({
       (state) => state.dialogues[storeKey ?? ""]?.openingIndex ?? 0,
       [storeKey],
     ),
+  );
+  const openingSelection = useMemo<OpeningSelection>(
+    () => ({ messages: openingMessages, index: openingIndex, locked: openingLocked }),
+    [openingMessages, openingIndex, openingLocked],
   );
 
   // ═══════════════════════════════════════════════════════════════
@@ -242,7 +238,7 @@ export function useCharacterDialogue({
   );
 
   const handleOpeningNavigate = useCallback(
-    async (direction: "prev" | "next") => {
+    async (direction: OpeningDirection) => {
       if (!storeKey) return;
       await navigateOpening(storeKey, direction);
     },
@@ -369,6 +365,7 @@ export function useCharacterDialogue({
     // 展示数据（细粒度订阅）
     messages,
     openingMessages,
+    openingSelection,
     suggestedInputs,
     
     // 控制状态（细粒度订阅）

@@ -1,6 +1,6 @@
 /**
  * @input  lib/model-runtime
- * @output DialogueMessage, OpeningMessage, OpeningPayload, Character, LLMType, LLMConfig, UseCharacterDialogueOptions, UseCharacterDialogueReturn
+ * @output DialogueMessage, OpeningMessage, OpeningPayload, OpeningSelection, Character, LLMType, LLMConfig, UseCharacterDialogueOptions, UseCharacterDialogueReturn
  * @pos    类型定义层 - 角色对话核心类型：消息、开场白、LLM 配置、Hook 接口
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
  *
@@ -35,6 +35,14 @@ export interface OpeningPayload {
   fullContent: string;
 }
 
+export type OpeningDirection = "prev" | "next";
+
+export interface OpeningSelection {
+  messages: OpeningMessage[];
+  index: number;
+  locked: boolean;
+}
+
 export interface Character {
   id: string;
   name: string;
@@ -64,6 +72,7 @@ export interface UseCharacterDialogueOptions {
 export interface UseCharacterDialogueReturn {
   messages: DialogueMessage[];
   openingMessages: OpeningMessage[];
+  openingSelection: OpeningSelection;
   openingIndex: number;
   openingLocked: boolean;
   suggestedInputs: string[];
@@ -79,7 +88,7 @@ export interface UseCharacterDialogueReturn {
   truncateMessagesAfter: (nodeId: string) => Promise<void>;
   handleRegenerate: (nodeId: string) => Promise<void>;
   handleSwipe: (target?: string) => Promise<void>;
-  handleOpeningNavigate: (direction: "prev" | "next") => Promise<void>;
+  handleOpeningNavigate: (direction: OpeningDirection) => Promise<void>;
   exportJsonl: () => Promise<void>;
   importJsonl: (file: File) => Promise<void>;
   readLlmConfig: () => LLMConfig;

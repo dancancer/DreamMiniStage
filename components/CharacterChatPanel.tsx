@@ -8,7 +8,7 @@
  * ║                     Character Chat Panel Component                        ║
  * ║                                                                           ║
  * ║  角色聊天面板：编排层组件，组合子组件实现完整功能                                 ║
- * ║  设计原则：只编排故事消息，不接线脚本执行 runtime                                  ║
+ * ║  设计原则：组合 Story runtime，开场选择以 OpeningSelection 透传                 ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -36,6 +36,10 @@ import { useLocalStorageBoolean } from "@/hooks/useLocalStorage";
 import { resolveStreamingEnabled } from "@/lib/model-runtime";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type {
+  OpeningDirection,
+  OpeningSelection,
+} from "@/types/character-dialogue";
 import {
   SESSION_EXPORT_JSONL_EVENT,
   SESSION_IMPORT_JSONL_EVENT,
@@ -80,9 +84,7 @@ type Character = MessageCharacter & {
 interface Props {
   character: Character;
   messages: Message[];
-  openingMessages: { id: string; content: string }[];
-  openingIndex: number;
-  openingLocked: boolean;
+  openingSelection: OpeningSelection;
   userInput: string;
   setUserInput: (val: string) => void;
   isSending: boolean;
@@ -91,7 +93,7 @@ interface Props {
   onSuggestedInput: (input: string) => void;
   onTruncate: (id: string) => void;
   onRegenerate: (id: string) => void;
-  onOpeningNavigate: (direction: "prev" | "next") => void;
+  onOpeningNavigate: (direction: OpeningDirection) => void;
   fontClass: string;
   serifFontClass: string;
   t: (key: string) => string;
@@ -130,9 +132,7 @@ interface Props {
 export default function CharacterChatPanel({
   character,
   messages,
-  openingMessages,
-  openingIndex,
-  openingLocked,
+  openingSelection,
   userInput,
   setUserInput,
   isSending,
@@ -337,9 +337,7 @@ export default function CharacterChatPanel({
       <MessageList
         messages={messages}
         character={character}
-        openingMessages={openingMessages}
-        openingIndex={openingIndex}
-        openingLocked={openingLocked}
+        openingSelection={openingSelection}
         streamingIntent={streamingIntent}
         onTruncate={onTruncate}
         onRegenerate={onRegenerate}

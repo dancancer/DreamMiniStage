@@ -34,6 +34,10 @@
 - `session-ui-events.ts` 负责把侧栏里的低频动作桥接回主聊天面板，避免重新把这些控制塞回 `CharacterChatPanel`。
 - `WorldbookPanel` 已补上“当前会话世界书 / 全局世界书库”两种明确模式，和 `Regex / Preset` 的全局工作区语义保持一致。
 
+## 最新变更（2026-06-04）
+
+- `session-page-layout.tsx` 现在把 `openingSelection` 作为单一 Interface 传给 `CharacterChatPanel`，不再在页面装配层拆传 `openingMessages/openingIndex/openingLocked`。
+
 ## 最新变更（2026-03-07）
 
 - `page.tsx` 已把 `/tempchat` 接到真实宿主：会为当前角色创建带 `[temp]` 后缀的新会话并跳转。

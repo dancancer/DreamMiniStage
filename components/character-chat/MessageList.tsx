@@ -9,7 +9,7 @@
  * ║                                                                            ║
  * ║  消息列表容器：滚动管理、空状态、开场白导航、加载指示器                       ║
  * ║  缺失翻译时使用稳定中文标签，避免把 i18n key 泄漏到舞台界面                  ║
- * ║  职责单一：只负责消息列表的布局和滚动行为，不中转脚本 runtime                ║
+ * ║  职责单一：只负责消息列表布局，开场导航状态交给 OpeningSelection Module      ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -20,26 +20,27 @@ import { ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import { MemoizedMessageItem, type Message, type MessageCharacter } from "./MessageItem";
 import { Button } from "@/components/ui/button";
 import type { ChatStreamingIntent } from "./streaming-types";
+import {
+  getOpeningNavigatorState,
+  type OpeningNavigatorState,
+} from "./opening-selection";
+import type {
+  OpeningDirection,
+  OpeningSelection,
+} from "@/types/character-dialogue";
 
 // ============================================================================
 //                              类型定义
 // ============================================================================
 
-interface OpeningMessage {
-  id: string;
-  content: string;
-}
-
 interface MessageListProps {
   messages: Message[];
   character: MessageCharacter;
-  openingMessages: OpeningMessage[];
-  openingIndex: number;
-  openingLocked: boolean;
+  openingSelection: OpeningSelection;
   streamingIntent: ChatStreamingIntent;
   onTruncate: (id: string) => void;
   onRegenerate: (id: string) => void;
-  onOpeningNavigate: (direction: "prev" | "next") => void;
+  onOpeningNavigate: (direction: OpeningDirection) => void;
   fontClass: string;
   serifFontClass: string;
   t: (key: string) => string;
@@ -54,9 +55,7 @@ interface MessageListProps {
 export default function MessageList({
   messages,
   character,
-  openingMessages,
-  openingIndex,
-  openingLocked,
+  openingSelection,
   streamingIntent,
   onTruncate,
   onRegenerate,
@@ -86,12 +85,12 @@ export default function MessageList({
     .map((message, index) => ({ message, index }))
     .filter(({ message }) => !message.hidden && message.role !== "sample");
 
-  // 显示开场白导航条件（未锁定且仅有开场消息时）
-  const showOpeningNav =
-    !openingLocked &&
-    openingMessages.length > 1 &&
-    visibleMessages.length === 1 &&
-    visibleMessages[0]?.message.role === "assistant";
+  const openingNavigator = getOpeningNavigatorState({
+    selection: openingSelection,
+    visibleMessageCount: visibleMessages.length,
+    firstVisibleRole: visibleMessages[0]?.message.role,
+    label: openingLabel(t),
+  });
 
   return (
     <div
@@ -125,14 +124,11 @@ export default function MessageList({
             })}
 
             {/* 开场白导航（展示在开场消息底部） */}
-            {showOpeningNav && (
+            {openingNavigator.visible && (
               <OpeningNavigator
-                openingIndex={openingIndex}
-                totalOpenings={openingMessages.length}
+                state={openingNavigator}
                 onNavigate={onOpeningNavigate}
                 isSending={streamingIntent.isSending}
-                serifFontClass={serifFontClass}
-                t={t}
               />
             )}
 
@@ -170,29 +166,21 @@ function EmptyState({ serifFontClass, t }: EmptyStateProps) {
 }
 
 interface OpeningNavigatorProps {
-  openingIndex: number;
-  totalOpenings: number;
-  onNavigate: (direction: "prev" | "next") => void;
+  state: OpeningNavigatorState;
+  onNavigate: (direction: OpeningDirection) => void;
   isSending: boolean;
-  serifFontClass: string;
-  t: (key: string) => string;
 }
 
 function OpeningNavigator({
-  openingIndex,
-  totalOpenings,
+  state,
   onNavigate,
   isSending,
-  serifFontClass,
-  t,
 }: OpeningNavigatorProps) {
-  const label = openingLabel(t);
-
   return (
     <div className="flex items-center justify-center gap-3 text-primary-soft">
       <NavButton direction="prev" onClick={() => onNavigate("prev")} disabled={isSending} />
       <span className={"text-sm "}>
-        {label} {openingIndex + 1}/{totalOpenings}
+        {state.label} {state.current + 1}/{state.total}
       </span>
       <NavButton direction="next" onClick={() => onNavigate("next")} disabled={isSending} />
     </div>
