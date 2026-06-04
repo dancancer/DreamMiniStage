@@ -8,9 +8,10 @@
 
 | 文件 | 地位 | 功能 |
 |------|------|------|
-| `chat.ts` | 核心操作 | 对话生成主入口与非流式路径 |
+| `chat.ts` | 核心操作 | 对话生成主入口、请求归一与响应封装 |
 | `chat-shared.ts` | 核心操作 | workflow 参数构建与响应后处理共享逻辑 |
 | `chat-streaming.ts` | 核心操作 | buffered chunked delivery 流式响应封装 |
+| `story-turn-lifecycle.ts` | 核心操作 | Story turn 建树、开场落盘、用户 turn 落盘与 runtime prepare |
 | `init.ts` | 操作 | 对话初始化 |
 | `opening.ts` | 操作 | 开场白处理 |
 | `edit.ts` | 操作 | 消息编辑 |
@@ -24,7 +25,11 @@
 | `jsonl.ts` | 操作 | JSONL 导入导出 |
 | `processed-dialogue.ts` | 操作 | 处理后对话数据 |
 
-## 最新变更（2026-03-09）
+## 最新变更（2026-06-04）
+
+- `story-turn-lifecycle.ts` 收口 Story turn 的建树、开场节点、pending user turn 与 story runtime prepare；`chat.ts` 只保留请求归一、错误响应和 transport 调用。
+
+## 之前变更（2026-03-09）
 
 - `chat.ts` 现只保留主入口与非流式路径；流式 SSE 实现拆到 `chat-streaming.ts`，共享 workflow/后处理逻辑拆到 `chat-shared.ts`，单文件重新回到 400 行以内。
 
