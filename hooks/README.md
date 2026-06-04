@@ -9,10 +9,11 @@ React Hook 层。这里放跨页面状态 Hook，以及按子域拆分的 Hook h
 | 文件/目录 | 地位 | 功能 |
 |------|------|------|
 | `useCharacterDialogue.ts` | 对话控制 Hook | 从 dialogue store 读取会话状态，并输出页面可用的操作 Interface |
-| `character-dialogue/` | 对话 helper | 消息格式化、开场提取与对话偏好 |
+| `character-dialogue/` | 对话 helper | 消息格式化、开场提取、对话偏好与模型 Profile |
 | `script-bridge/` | Script bridge runtime | 显式脚本桥迁移/调试路径 |
 | `useRegexScripts/` | Regex Hook | 正则脚本 UI 状态与操作 |
 
 ## 最新变更（2026-06-04）
 
+- `character-dialogue/model-profile.ts` 新增 `DialogueModelProfile`，让 `useCharacterDialogue.ts` 通过单一生成 Profile 调用 store 操作，避免四条生成路径重复拆装模型字段。
 - `useCharacterDialogue.ts` 现在输出 `openingSelection`，让 UI 调用者消费单一开场选择 Interface；原始 `openingMessages/openingIndex/openingLocked` 仍保留给 gallery/host 等非 UI 读取路径。

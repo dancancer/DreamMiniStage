@@ -1,5 +1,5 @@
 /**
- * @input  lib/store/dialogue-store, hooks/character-dialogue/useDialoguePreferences, lib/core/dialogue-key, function/dialogue/jsonl
+ * @input  lib/store/dialogue-store, hooks/character-dialogue/useDialoguePreferences, hooks/character-dialogue/model-profile, lib/core/dialogue-key, function/dialogue/jsonl
  * @output useCharacterDialogue, UseCharacterDialogueOptions
  * @pos    角色对话核心 Hook - 基于 Zustand Store 的对话状态与操作管理
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
@@ -11,6 +11,7 @@
  * ║  设计原则：数据驱动、引用稳定、性能优化                                        ║
  * ║  【重构】从 useState 迁移到 Zustand Store                                   ║
  * ║  【重构】使用 OpeningSelection 收口开场选择状态                               ║
+ * ║  【重构】使用 DialogueModelProfile 收口生成模型参数                            ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -19,6 +20,7 @@
 import { useCallback, useMemo } from "react";
 import { useDialogueStore } from "@/lib/store/dialogue-store/index";
 import { useDialoguePreferences } from "@/hooks/character-dialogue/useDialoguePreferences";
+import { buildDialogueModelProfile } from "@/hooks/character-dialogue/model-profile";
 import { resolveDialogueKey } from "@/lib/core/dialogue-key";
 import type { SendOptions } from "@/lib/slash-command/types";
 import { exportDialogueJsonl, importDialogueJsonl } from "@/function/dialogue/jsonl";
@@ -50,6 +52,15 @@ export function useCharacterDialogue({
   t,
 }: UseCharacterDialogueOptions) {
   const { language, readLlmConfig, responseLength, fastModelEnabled } = useDialoguePreferences();
+  const readModelProfile = useCallback(
+    () => buildDialogueModelProfile({
+      language,
+      llmConfig: readLlmConfig(),
+      responseLength,
+      fastModelEnabled,
+    }),
+    [language, readLlmConfig, responseLength, fastModelEnabled],
+  );
 
   // ═══════════════════════════════════════════════════════════════
   // 计算实际的对话索引 Key
@@ -150,54 +161,29 @@ export function useCharacterDialogue({
 
   const handleInitializeNewDialogue = useCallback(
     async (charId: string, sessId?: string) => {
-      const { llmType, modelName, baseUrl, apiKey, advanced } = readLlmConfig();
       const key = sessId || charId;
       await initializeNewDialogue({
         dialogueKey: key,
         characterId: charId,
-        language,
-        modelName,
-        baseUrl,
-        apiKey,
-        llmType,
-        advanced,
-        responseLength,
-        fastModel: fastModelEnabled,
+        ...readModelProfile(),
       });
     },
-    [language, readLlmConfig, initializeNewDialogue, responseLength, fastModelEnabled],
+    [readModelProfile, initializeNewDialogue],
   );
 
   const handleSendMessage = useCallback(
     async (message: string) => {
       if (!storeKey || !characterId) return;
 
-      const { llmType, modelName, baseUrl, apiKey, advanced } = readLlmConfig();
       await sendMessage({
         dialogueKey: storeKey,
         characterId,
         message,
-        language,
-        modelName,
-        baseUrl,
-        apiKey,
-        llmType,
-        advanced,
-        responseLength,
-        fastModel: fastModelEnabled,
+        ...readModelProfile(),
         onError,
       });
     },
-    [
-      storeKey,
-      characterId,
-      language,
-      responseLength,
-      fastModelEnabled,
-      readLlmConfig,
-      sendMessage,
-      onError,
-    ],
+    [storeKey, characterId, readModelProfile, sendMessage, onError],
   );
 
   const handleTruncateMessagesAfter = useCallback(
@@ -212,29 +198,12 @@ export function useCharacterDialogue({
     async (nodeId: string) => {
       if (!storeKey || !characterId) return;
 
-      const { llmType, modelName, baseUrl, apiKey, advanced } = readLlmConfig();
       await regenerateMessage(storeKey, characterId, nodeId, {
-        language,
-        modelName,
-        baseUrl,
-        apiKey,
-        llmType,
-        advanced,
-        responseLength,
-        fastModel: fastModelEnabled,
+        ...readModelProfile(),
         onError,
       });
     },
-    [
-      storeKey,
-      characterId,
-      language,
-      responseLength,
-      fastModelEnabled,
-      readLlmConfig,
-      regenerateMessage,
-      onError,
-    ],
+    [storeKey, characterId, readModelProfile, regenerateMessage, onError],
   );
 
   const handleOpeningNavigate = useCallback(
@@ -336,30 +305,13 @@ export function useCharacterDialogue({
   const triggerGeneration = useCallback(async () => {
     if (!storeKey || !characterId) return;
 
-    const { llmType, modelName, baseUrl, apiKey, advanced } = readLlmConfig();
     await triggerGenerationStore({
       dialogueKey: storeKey,
       characterId,
-      language,
-      modelName,
-      baseUrl,
-      apiKey,
-      llmType,
-      advanced,
-      responseLength,
-      fastModel: fastModelEnabled,
+      ...readModelProfile(),
       onError,
     });
-  }, [
-    storeKey,
-    characterId,
-    language,
-    responseLength,
-    fastModelEnabled,
-    readLlmConfig,
-    triggerGenerationStore,
-    onError,
-  ]);
+  }, [storeKey, characterId, readModelProfile, triggerGenerationStore, onError]);
 
   return {
     // 展示数据（细粒度订阅）
