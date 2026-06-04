@@ -94,10 +94,11 @@ function MessageBubbleInner({
     characterId,
     enableStreaming,
   });
+  const hasRenderableContent = displayHtml.trim() !== "" || renderMatches.length > 0;
   const shouldShowLoading = (
     isLoading ||
-    rawHtml.trim() === "" ||
-    (pipeline.phase === "parsed" && pipeline.isParsing)
+    !hasRenderableContent ||
+    (pipeline.phase === "parsed" && pipeline.isParsing && renderMatches.length === 0)
   );
 
   // 清理颜色缓存
@@ -108,7 +109,7 @@ function MessageBubbleInner({
   // ╔══════════════════════════════════════════════════════════════════╗
   // ║  加载状态                                                         ║
   // ╚══════════════════════════════════════════════════════════════════╝
-  if (isLoading || (rawHtml.trim() === "" && renderMatches.length === 0)) {
+  if (isLoading || !hasRenderableContent) {
     return null;
   }
 
@@ -117,7 +118,7 @@ function MessageBubbleInner({
   }
 
   if (pipeline.phase === "preview" || pipeline.phase === "transition") {
-    return <StreamingPreview html={rawHtml} />;
+    return <StreamingPreview html={displayHtml} />;
   }
 
   return (

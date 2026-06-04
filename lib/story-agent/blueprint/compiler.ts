@@ -18,6 +18,7 @@ import {
 import { containsHtml } from "@/lib/story-agent/render-intent/classifier";
 import { storyActionsSourcePattern } from "@/lib/story-agent/runtime/action/options";
 import { storyStateSourcePattern } from "@/lib/story-agent/runtime/state/update";
+import { diagnoseUnsupportedRenderContracts } from "./render/diagnostics";
 import {
   compileProfileOpenings,
   diagnoseProfileOpenings,
@@ -48,6 +49,7 @@ export function compileSessionBlueprint(
   options: CompileSessionBlueprintOptions = {},
 ): SessionBlueprint {
   const profile = compileProfile(bundle);
+  const renderRules = compileRenderRules(bundle.regexScripts);
   const core = {
     schemaVersion: SESSION_BLUEPRINT_SCHEMA_VERSION as typeof SESSION_BLUEPRINT_SCHEMA_VERSION,
     profile,
@@ -58,11 +60,12 @@ export function compileSessionBlueprint(
     outputTransforms: compileTransforms(bundle.regexScripts, "output"),
     promptTransforms: compileTransforms(bundle.regexScripts, "prompt"),
     contentRules: compileContentRules(bundle.regexScripts),
-    renderRules: compileRenderRules(bundle.regexScripts),
+    renderRules,
     initialState: compileInitialState(bundle),
     memoryPolicy: defaultMemoryPolicy(),
     diagnostics: [
       ...diagnoseImportedAssetBundle(bundle),
+      ...diagnoseUnsupportedRenderContracts(bundle, renderRules),
       ...diagnoseProfileOpenings({
         name: bundle.character.name,
         firstMessage: bundle.character.firstMessage,

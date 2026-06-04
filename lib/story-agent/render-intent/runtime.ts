@@ -36,7 +36,7 @@ export function stripRenderIntentSources(
     return regex ? result.replace(regex, "").trim() : result;
   }, text);
 
-  return stripStatusJsonBlocks(withoutMatchedSources);
+  return stripUnsafeJsonSources(withoutMatchedSources);
 }
 
 function matchIntent(text: string, intent: RenderIntent): RenderIntentMatch[] {
@@ -95,8 +95,77 @@ function ensureGlobalFlag(flags: string): string {
   return flags.includes("g") ? flags : `${flags}g`;
 }
 
-function stripStatusJsonBlocks(text: string): string {
-  return text
-    .replace(/<(SFW|NSFW)>\s*\{[\s\S]*?\}\s*<\/\1>/gi, "")
-    .trim();
+function stripUnsafeJsonSources(text: string): string {
+  return stripLooseStatusJson(stripStatusLikeJsonTags(text)).trim();
+}
+
+function stripStatusLikeJsonTags(text: string): string {
+  return text.replace(
+    /<((?:[a-z][a-z0-9_-]*(?:status|state|dashboard|variables?)[a-z0-9_-]*)|status|state|dashboard|variables?|SFW|NSFW)>\s*([\[{][\s\S]*?[\]}])\s*<\/\1>/gi,
+    (match, _tag: string, payload: string) =>
+      parseJson(payload) === undefined ? match : "",
+  );
+}
+
+function stripLooseStatusJson(text: string): string {
+  const ranges = jsonRanges(text).filter(({ value }) => isStatusPayload(value));
+  return ranges.reduceRight(
+    (result, range) => `${result.slice(0, range.start)}${result.slice(range.end)}`,
+    text,
+  );
+}
+
+function jsonRanges(text: string): Array<{ start: number; end: number; value: unknown }> {
+  const ranges: Array<{ start: number; end: number; value: unknown }> = [];
+  for (let index = 0; index < text.length; index += 1) {
+    if (text[index] !== "{") continue;
+    const end = findJsonObjectEnd(text, index);
+    if (end < 0) continue;
+    const value = parseJson(text.slice(index, end));
+    if (value !== undefined) ranges.push({ start: index, end, value });
+    index = end - 1;
+  }
+  return ranges;
+}
+
+function findJsonObjectEnd(text: string, start: number): number {
+  let depth = 0;
+  let quoted = false;
+  let escaped = false;
+  for (let index = start; index < text.length; index += 1) {
+    const char = text[index];
+    if (escaped) {
+      escaped = false;
+    } else if (char === "\\") {
+      escaped = quoted;
+    } else if (char === "\"") {
+      quoted = !quoted;
+    } else if (!quoted && char === "{") {
+      depth += 1;
+    } else if (!quoted && char === "}") {
+      depth -= 1;
+      if (depth === 0) return index + 1;
+    }
+  }
+  return -1;
+}
+
+function parseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
+function isStatusPayload(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  return Array.isArray(record.characters) ||
+    (typeof record.mode === "string" && hasStatusMeta(record));
+}
+
+function hasStatusMeta(record: Record<string, unknown>): boolean {
+  return ["date", "time", "location", "characters"]
+    .some((key) => key in record);
 }

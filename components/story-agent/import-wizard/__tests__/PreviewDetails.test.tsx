@@ -51,6 +51,13 @@ describe("PreviewDetails", () => {
           targetPath: "regexScripts.1.raw.replaceString",
           sourceField: "replaceString",
         },
+        {
+          code: "render.status_contract_unsupported",
+          severity: "warning",
+          message: "Status-like source tag <status> contains JSON but has no compiled RenderIntent.",
+          targetPath: "profile.promptFragments.character.description",
+          sourceField: "data.description",
+        },
       ],
     });
 
@@ -61,7 +68,8 @@ describe("PreviewDetails", () => {
     expect(text).toContain("profile.openings");
     expect(text).toContain("data.first_mes");
     expect(text).toContain("regex.ui_html_unsupported");
-    expect(text).toContain("Showing 2/2");
+    expect(text).toContain("render.status_contract_unsupported");
+    expect(text).toContain("Showing 3/3");
   });
 });
 

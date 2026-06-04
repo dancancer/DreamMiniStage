@@ -75,11 +75,22 @@ describe("render intent runtime", () => {
     expect(stripRenderIntentSources(text, [actionIntent])).toBe("正文");
   });
 
-  it("strips unsupported SFW status blocks before the legacy HTML parser can expose JSON", () => {
-    const text = "正文\n<SFW>{\"date\":\"2020\",\"characters\":[]}</SFW>";
+  it("strips unsupported status JSON blocks before the legacy HTML parser can expose JSON", () => {
+    const text = [
+      "正文",
+      "<SFW>{\"date\":\"2020\",\"characters\":[]}</SFW>",
+      "<CurrentState>{\"mode\":\"status\",\"location\":\"后台\"}</CurrentState>",
+      "{\"mode\":\"sfw\",\"characters\":[]}",
+    ].join("\n");
 
     expect(stripRenderIntentSources(text, [])).toBe("正文");
     expect(stripRenderIntentSources(text, [actionIntent])).toBe("正文");
+  });
+
+  it("keeps status-like narrative tags when the payload is not JSON", () => {
+    const text = "正文\n<CurrentState>[not json]</CurrentState>";
+
+    expect(stripRenderIntentSources(text, [])).toBe(text);
   });
 
   it("extracts collapsible UI blocks from their source tag", () => {

@@ -4,6 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import MessageBubble from "../MessageBubble";
 import * as contentParser from "@/lib/utils/content-parser";
+import type { RenderIntent } from "@/lib/story-agent/render-intent";
 
 const harness = vi.hoisted(() => ({
   parseAsyncResult: [{ type: "html", content: "<strong>parsed</strong>" }],
@@ -92,6 +93,47 @@ describe("MessageBubble streaming", () => {
     );
     expect(contentParser.parseContent).not.toHaveBeenCalled();
     expect(contentParser.parseContentAsync).not.toHaveBeenCalled();
+
+    unmountBubble(rendered);
+  });
+
+  it("does not expose status source JSON while streaming", () => {
+    const rendered = renderBubble(
+      <MessageBubble
+        html={"正文\n<CurrentState>{\"mode\":\"status\",\"location\":\"后台\"}</CurrentState>"}
+        enableStreaming={true}
+      />,
+    );
+
+    expect(rendered.container.textContent).toContain("正文");
+    expect(rendered.container.textContent).not.toContain("CurrentState");
+    expect(rendered.container.textContent).not.toContain("\"location\"");
+
+    unmountBubble(rendered);
+  });
+
+  it("renders source-only status intents after sanitizing the message text", () => {
+    const statusIntent: RenderIntent = {
+      schemaVersion: 1,
+      id: "status",
+      kind: "status-panel",
+      sourceScriptId: "status-script",
+      title: "状态栏",
+      confidence: 0.8,
+      fields: [],
+      dataTemplate: "$1",
+      sourcePattern: "<SFW>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/SFW>",
+    };
+    const rendered = renderBubble(
+      <MessageBubble
+        html={"<SFW>{\"mode\":\"sfw\",\"characters\":[]}</SFW>"}
+        renderIntents={[statusIntent]}
+      />,
+    );
+
+    expect(rendered.container.textContent).toContain("Story Status");
+    expect(rendered.container.textContent).toContain("0 characters");
+    expect(rendered.container.textContent).not.toContain("<SFW>");
 
     unmountBubble(rendered);
   });

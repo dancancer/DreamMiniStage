@@ -12,6 +12,7 @@
 - 当前 Story Agent preset role 拓扑验证：`docs/analysis/2026-06-01-story-agent-preset-role-topology-e2e.md`
 - 当前 Story Agent origin 折叠 UI 验证：`docs/analysis/2026-06-01-story-agent-origin-collapsible-render-e2e.md`
 - 当前 Story Agent initial state 验证：`docs/analysis/2026-06-01-story-agent-initial-state-e2e.md`
+- 当前 Story Agent 工作总结：`docs/analysis/2026-06-01-story-agent-work-summary.md`
 - 当前宿主协议：`docs/analysis/session-host-bridge/README.md`
 - 当前机器报告（Markdown）：`docs/analysis/sillytavern-gap-report-latest.md`
 - 当前机器报告（JSON）：`docs/analysis/sillytavern-gap-report-latest.json`

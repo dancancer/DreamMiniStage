@@ -32,7 +32,8 @@ export interface PreviewDetailCopy {
 const FEATURE_LOSS_PRIORITY: Record<string, number> = {
   "character.instruction_only_opening": 0,
   "regex.ui_html_unsupported": 1,
-  "extension.unsupported": 2,
+  "render.status_contract_unsupported": 2,
+  "extension.unsupported": 3,
 };
 
 const FEATURE_LOSS_CODES = new Set(Object.keys(FEATURE_LOSS_PRIORITY));
