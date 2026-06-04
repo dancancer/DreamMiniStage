@@ -5,8 +5,8 @@ import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-
 import { consumeLegacyDialogueStream } from "@/lib/generation-runtime/transport/legacy-dialogue-stream";
 import { resolveLegacyDialogueTransport } from "@/lib/generation-runtime/transport/legacy-dialogue-transport";
 import type { GenerationEvent } from "@/lib/generation-runtime/types";
-import { resolveStreamingEnabled, type ModelAdvancedSettings } from "@/lib/model-runtime";
-import type { OpeningPayload } from "@/types/character-dialogue";
+import { resolveStreamingEnabled } from "@/lib/model-runtime";
+import type { DialogueGenerationProfile, OpeningPayload } from "@/types/character-dialogue";
 import { getDisplayUsername } from "@/utils/username-helper";
 import {
   appendCompletedAssistantMessage,
@@ -38,21 +38,13 @@ export interface GenerationLifecycleInput {
   run: (startTime: number) => Promise<boolean>;
 }
 
-export interface ChatRequestInput {
+export interface ChatRequestInput extends DialogueGenerationProfile {
   dialogueKey: string;
   characterId: string;
   userInput: string;
   nodeId: string;
   parentNodeId?: string;
   pendingOpening?: OpeningPayload;
-  llmType: "openai" | "ollama" | "gemini";
-  modelName: string;
-  baseUrl: string;
-  apiKey: string;
-  language: "zh" | "en";
-  responseLength: number;
-  fastModel: boolean;
-  advanced?: ModelAdvancedSettings;
 }
 
 interface StreamingHandlerParams {
