@@ -19,8 +19,8 @@ vi.mock("@/lib/generation-runtime/prepare/prepare-dialogue-execution", () => ({
   prepareDialogueExecution: (...args: unknown[]) => prepareDialogueExecutionMock(...args),
 }));
 
-vi.mock("@/lib/generation-runtime/run-dialogue-generation", () => ({
-  runDialogueGeneration: (...args: unknown[]) => runDialogueGenerationMock(...args),
+vi.mock("@/lib/generation-runtime/dialogue-turn", () => ({
+  runPreparedDialogueTurn: (...args: unknown[]) => runDialogueGenerationMock(...args),
 }));
 
 vi.mock("@/lib/data/roleplay/character-dialogue-operation", () => ({

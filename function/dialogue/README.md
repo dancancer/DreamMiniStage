@@ -8,7 +8,8 @@
 
 | 文件 | 地位 | 功能 |
 |------|------|------|
-| `chat.ts` | 核心操作 | 对话生成主入口、请求归一与响应封装 |
+| `chat.ts` | 核心操作 | 对话生成主入口、请求归一与错误响应封装 |
+| `dialogue-turn.ts` | 核心操作 | Dialogue Turn prepare 与 response transport 编排 |
 | `chat-shared.ts` | 核心操作 | workflow 参数构建与响应后处理共享逻辑 |
 | `chat-streaming.ts` | 核心操作 | buffered chunked delivery 流式响应封装 |
 | `story-turn-lifecycle.ts` | 核心操作 | Story turn 建树、开场落盘、用户 turn 落盘与 runtime prepare |
@@ -27,6 +28,7 @@
 
 ## 最新变更（2026-06-04）
 
+- `dialogue-turn.ts` 成为 Dialogue Turn lifecycle 的入口，`chat.ts` 不再直接知道 prepare 与 response transport 的调用顺序。
 - `init.ts` 的初始化 Interface 只保留 `dialogueId/characterId/language/username`，开场初始化不再携带未使用的模型配置字段。
 - `story-turn-lifecycle.ts` 收口 Story turn 的建树、开场节点、pending user turn 与 story runtime prepare；`chat.ts` 只保留请求归一、错误响应和 transport 调用。
 

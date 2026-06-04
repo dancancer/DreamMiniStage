@@ -1,16 +1,15 @@
 /**
- * @input  function/dialogue/chat-streaming, function/dialogue/story-turn-lifecycle
+ * @input  function/dialogue/dialogue-turn
  * @output handleCharacterChatRequest
- * @pos    对话生成入口 - 请求归一、Story turn lifecycle 调用与响应封装
+ * @pos    对话生成入口 - 请求归一与错误响应封装
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
  */
 
 import { DEFAULT_RESPONSE_LENGTH } from "@/lib/model-capabilities";
-import { handlePreparedDialogueResponse } from "@/function/dialogue/chat-streaming";
 import {
-  prepareStoryDialogueTurn,
+  runStoryDialogueTurn,
   type StoryTurnLifecycleInput,
-} from "@/function/dialogue/story-turn-lifecycle";
+} from "@/function/dialogue/dialogue-turn";
 
 type CharacterChatRequestPayload = Omit<
   StoryTurnLifecycleInput,
@@ -65,15 +64,7 @@ export async function handleCharacterChatRequest(
   }
 
   try {
-    const turn = await prepareStoryDialogueTurn(normalizeRequest(payload));
-
-    return await handlePreparedDialogueResponse({
-      dialogueId: turn.dialogueId,
-      originalMessage: turn.originalMessage,
-      nodeId: turn.nodeId,
-      preparedExecution: turn.preparedExecution,
-      streaming: turn.responseStreaming,
-    });
+    return await runStoryDialogueTurn(normalizeRequest(payload));
   } catch (error) {
     return createProcessingErrorResponse(error);
   }

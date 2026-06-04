@@ -1,12 +1,12 @@
 /**
- * @input  function/dialogue/chat-shared, lib/streaming, lib/generation-runtime
+ * @input  lib/streaming, lib/generation-runtime/dialogue-turn
  * @output handleStreamingResponse
  * @pos    对话流式响应 - buffered chunked delivery SSE 封装
  */
 
 import { createSSEResponse } from "@/lib/streaming";
 import { createErrorEvent } from "@/lib/generation-runtime/events";
-import { runDialogueGeneration } from "@/lib/generation-runtime/run-dialogue-generation";
+import { runPreparedDialogueTurn } from "@/lib/generation-runtime/dialogue-turn";
 import { createBufferedSink } from "@/lib/generation-runtime/sinks/create-buffered-sink";
 import { createSseSink } from "@/lib/generation-runtime/sinks/create-sse-sink";
 import type { PreparedDialogueExecution } from "@/lib/generation-runtime/types";
@@ -42,7 +42,7 @@ async function createBufferedResponse(
 ): Promise<Response> {
   const sink = createBufferedSink();
 
-  await runDialogueGeneration({
+  await runPreparedDialogueTurn({
     dialogueId: params.dialogueId,
     originalMessage: params.originalMessage,
     nodeId: params.nodeId,
@@ -59,7 +59,7 @@ export async function handleStreamingResponse(params: StreamingParams): Promise<
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        await runDialogueGeneration({
+        await runPreparedDialogueTurn({
           dialogueId,
           originalMessage,
           nodeId,

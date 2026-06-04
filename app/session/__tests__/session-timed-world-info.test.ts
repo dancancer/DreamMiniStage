@@ -151,10 +151,10 @@ describe("session-timed-world-info", () => {
       uid: "uid-1",
       effect: "cooldown",
       state: "on",
-    })).rejects.toThrow("/wi-set-timed-effect effect is not configured on lore entry: cooldown");
+    })).rejects.toThrow("/wi-set-timed-effect effect is not configured on World Book entry: cooldown");
   });
 
-  it("fails fast when lorebook entry cannot be resolved", async () => {
+  it("fails fast when World Book entry cannot be resolved", async () => {
     mocks.getWorldBook.mockResolvedValue({});
 
     await expect(getSessionWorldInfoTimedEffect({
@@ -163,6 +163,6 @@ describe("session-timed-world-info", () => {
       uid: "missing",
       effect: "sticky",
       format: "boolean",
-    })).rejects.toThrow("Lorebook entry not found: missing");
+    })).rejects.toThrow("World Book entry not found: missing");
   });
 });

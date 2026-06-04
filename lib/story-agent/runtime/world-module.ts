@@ -2,6 +2,7 @@ import type {
   SessionBlueprint,
   WorldModuleEntry,
 } from "@/lib/story-agent/blueprint";
+import { decrementWorldBookTimedEffectValue } from "@/lib/world-book/timed-effects";
 
 export interface WorldActivationEntryState {
   stickyRemaining: number;
@@ -185,9 +186,9 @@ function matchesDelayedStart(
 
 function tickState(state: WorldActivationEntryState | undefined): WorldActivationEntryState {
   return {
-    stickyRemaining: Math.max((state?.stickyRemaining ?? 0) - 1, 0),
-    cooldownRemaining: Math.max((state?.cooldownRemaining ?? 0) - 1, 0),
-    delayRemaining: Math.max((state?.delayRemaining ?? 0) - 1, 0),
+    stickyRemaining: decrementWorldBookTimedEffectValue(state?.stickyRemaining),
+    cooldownRemaining: decrementWorldBookTimedEffectValue(state?.cooldownRemaining),
+    delayRemaining: decrementWorldBookTimedEffectValue(state?.delayRemaining),
   };
 }
 
