@@ -12,14 +12,17 @@ import { getDisplayUsername } from "@/utils/username-helper";
 import { extractOpeningMessages, formatMessages } from "@/hooks/character-dialogue/message-utils";
 import { mergeDialogueData } from "./generation-event-state";
 import { replaceDialogueSnapshot } from "./dialogue-snapshot-state";
-import type { InitDialogueParams } from "../types";
 import { DEFAULT_DIALOGUE_DATA } from "../types";
+import type {
+  DialogueData,
+  DialogueState,
+  InitDialogueParams,
+  OpeningPayload,
+} from "../types";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    获取最新对话
    ═══════════════════════════════════════════════════════════════════════════ */
-
-import type { DialogueState } from "../types";
 
 export async function fetchLatestDialogue(
   dialogueKey: string,
@@ -96,54 +99,45 @@ export async function initializeNewDialogue(
       throw new Error(`Failed to initialize dialogue: ${initData}`);
     }
 
-    const openings = initData.openingMessages || [];
+    const dialogueData = buildInitializedDialogueData(
+      initData.openingMessages,
+      initData.openingMessage,
+    );
 
-    // 有多个开场白
-    if (openings.length > 0) {
-      setState((state: DialogueState) => ({
-        dialogues: {
-          ...state.dialogues,
-          [dialogueKey]: {
-            ...DEFAULT_DIALOGUE_DATA,
-            openingMessages: openings,
-            openingIndex: 0,
-            openingLocked: false,
-            pendingOpening: initData.openingMessage || openings[0],
-            messages: [
-              {
-                id: openings[0].id,
-                role: "assistant",
-                content: openings[0].content,
-              },
-            ],
-            suggestedInputs: [],
-          },
-        },
-      }));
-      return;
-    }
-
-    // 单个开场白
-    if (initData.firstMessage) {
-      setState((state: DialogueState) => ({
-        dialogues: {
-          ...state.dialogues,
-          [dialogueKey]: {
-            ...DEFAULT_DIALOGUE_DATA,
-            pendingOpening: initData.openingMessage,
-            messages: [
-              {
-                id: initData.openingMessage?.id || `${dialogueKey}-opening`,
-                role: "assistant",
-                content: initData.firstMessage,
-              },
-            ],
-          },
-        },
-      }));
-    }
+    setState((state: DialogueState) => ({
+      dialogues: {
+        ...state.dialogues,
+        [dialogueKey]: dialogueData,
+      },
+    }));
   } catch (error) {
     console.error("Error initializing dialogue:", error);
     throw error;
   }
+}
+
+function buildInitializedDialogueData(
+  openings: OpeningPayload[],
+  pendingOpening: OpeningPayload | undefined,
+): DialogueData {
+  const opening = pendingOpening ?? openings[0];
+  if (!opening) {
+    throw new Error("Missing opening message");
+  }
+
+  return {
+    ...DEFAULT_DIALOGUE_DATA,
+    openingMessages: openings,
+    openingIndex: 0,
+    openingLocked: false,
+    pendingOpening: opening,
+    messages: [
+      {
+        id: opening.id,
+        role: "assistant",
+        content: opening.content,
+      },
+    ],
+    suggestedInputs: [],
+  };
 }
