@@ -13,4 +13,4 @@ export { default as MessageItem, MemoizedMessageItem } from "./MessageItem";
 export { default as MessageList } from "./MessageList";
 export { default as SessionToolbar } from "./SessionToolbar";
 
-export type { Message } from "./MessageItem";
+export type { Message, MessageCharacter } from "./MessageItem";

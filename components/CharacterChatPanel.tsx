@@ -8,7 +8,7 @@
  * ║                     Character Chat Panel Component                        ║
  * ║                                                                           ║
  * ║  角色聊天面板：编排层组件，组合子组件实现完整功能                                 ║
- * ║  设计原则：只做组合和状态协调，具体逻辑委托给子组件和 hooks                        ║
+ * ║  设计原则：只编排故事消息，不接线脚本执行 runtime                                  ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -18,12 +18,10 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { getDisplayUsername, setDisplayUsername } from "@/utils/username-helper";
 import { useApiConfig } from "@/hooks/useApiConfig";
-import { useScriptBridge } from "@/hooks/useScriptBridge";
 import type {
   ScriptHostDebugSnapshot,
   ScriptHostDebugState,
 } from "@/hooks/script-bridge/host-debug-state";
-import type { SendOptions } from "@/lib/slash-command/types";
 import type {
   MessageCallbacks,
   ChatManagementCallbacks,
@@ -36,7 +34,6 @@ import type {
 } from "@/types/slash-callback-domains";
 import { useLocalStorageBoolean } from "@/hooks/useLocalStorage";
 import { resolveStreamingEnabled } from "@/lib/model-runtime";
-import type { TavernHelperScript } from "@/lib/models/character-model";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,6 +49,7 @@ import {
   MessageHeaderControls,
   MessageList,
   type Message,
+  type MessageCharacter,
 } from "@/components/character-chat";
 import type { ChatStreamingIntent } from "@/components/character-chat/streaming-types";
 
@@ -75,16 +73,9 @@ const LazyScriptDebugPanel = dynamic(
 //                              类型定义
 // ============================================================================
 
-interface Character {
-  id: string;
-  name: string;
+type Character = MessageCharacter & {
   personality?: string;
-  avatar_path?: string;
-  extensions?: {
-    TavernHelper_scripts?: TavernHelperScript[];
-    [key: string]: unknown;
-  };
-}
+};
 
 interface Props {
   character: Character;
@@ -156,22 +147,8 @@ export default function CharacterChatPanel({
   t,
   activeModes,
   setActiveModes,
-  language,
-  dialogueKey,
-  chatName,
   messageCallbacks,
-  chatManagementCallbacks,
-  checkpointCallbacks,
-  groupMemberCallbacks,
-  expressionCallbacks,
-  hostCapabilityCallbacks,
-  worldInfoCallbacks,
-  navigationCallbacks,
-  hostCapabilitySources,
-  hasHostOverrides,
   hostDebug,
-  hostDebugState,
-  onHostDebugUpdate,
   onExportJsonl,
   onImportJsonl,
 }: Props) {
@@ -187,30 +164,6 @@ export default function CharacterChatPanel({
   const apiConfig = useApiConfig();
   const currentConfig = apiConfig.getCurrentConfig();
   const streamingEnabled = resolveStreamingEnabled(currentConfig?.advanced);
-  // ─── Slash Command 回调适配，优先使用外部传入，否则回退到基础 onSend/onTrigger ───
-  const onSendMessage = messageCallbacks?.onSend;
-  const onTriggerGeneration = messageCallbacks?.onTrigger;
-
-  const handleSendAs = useCallback(async (role: string, text: string) => {
-    if (messageCallbacks?.onSendAs) return messageCallbacks.onSendAs(role, text);
-    if (onSendMessage) return onSendMessage(`[${role}] ${text}`);
-  }, [messageCallbacks, onSendMessage]);
-
-  const handleSendSystem = useCallback(async (text: string, options?: SendOptions) => {
-    if (messageCallbacks?.onSendSystem) return messageCallbacks.onSendSystem(text, options);
-    if (onSendMessage) return onSendMessage(`[SYS] ${text}`, options);
-  }, [messageCallbacks, onSendMessage]);
-
-  const handleImpersonate = useCallback(async (text: string) => {
-    if (messageCallbacks?.onImpersonate) return messageCallbacks.onImpersonate(text);
-    if (onSendMessage) await onSendMessage(`[impersonate] ${text}`);
-    if (onTriggerGeneration) await onTriggerGeneration();
-  }, [messageCallbacks, onSendMessage, onTriggerGeneration]);
-
-  const handleContinue = useCallback(async () => {
-    if (messageCallbacks?.onContinue) return messageCallbacks.onContinue();
-    if (onTriggerGeneration) return onTriggerGeneration();
-  }, [messageCallbacks, onTriggerGeneration]);
 
   const handleSwipe = useCallback(async (target?: string) => {
     if (messageCallbacks?.onSwipe) return messageCallbacks.onSwipe(target);
@@ -224,42 +177,6 @@ export default function CharacterChatPanel({
     const current = userInputRef.current.trim();
     setUserInput(current ? `${current} ${action}` : action);
   }, [setUserInput]);
-
-  // ─── 组合消息回调：将本地适配层与外部回调合并 ───
-  const bridgeMessageCallbacks = useMemo(() => ({
-    ...messageCallbacks,
-    onSendAs: handleSendAs,
-    onSendSystem: handleSendSystem,
-    onImpersonate: handleImpersonate,
-    onContinue: handleContinue,
-    onSwipe: handleSwipe,
-  }), [messageCallbacks, handleSendAs, handleSendSystem, handleImpersonate, handleContinue, handleSwipe]);
-
-  // ─── 组合会话管理回调：注入 getChatName 和 setInput，合并外部回调 ───
-  const bridgeChatCallbacks = useMemo(() => ({
-    ...chatManagementCallbacks,
-    onGetChatName: () => chatName || dialogueKey || character.name || "",
-    onSetInput: (text: string) => setUserInput(text),
-  }), [chatManagementCallbacks, chatName, dialogueKey, character.name, setUserInput]);
-
-  const scriptBridge = useScriptBridge({
-    characterId: character.id,
-    characterName: character.name,
-    dialogueId: dialogueKey,
-    messages,
-    messageCallbacks: bridgeMessageCallbacks,
-    chatManagementCallbacks: bridgeChatCallbacks,
-    checkpointCallbacks,
-    groupMemberCallbacks,
-    expressionCallbacks,
-    hostCapabilityCallbacks,
-    worldInfoCallbacks,
-    navigationCallbacks,
-    hostCapabilitySources,
-    hasHostOverrides,
-    hostDebugState,
-    onHostDebugUpdate,
-  });
 
   // ═══════════════════════════════════════════════════════════════
   // 初始化流式传输状态
@@ -316,26 +233,6 @@ export default function CharacterChatPanel({
       window.removeEventListener(SESSION_IMPORT_JSONL_EVENT, handleImportJsonl as EventListener);
     };
   }, [onExportJsonl, onImportJsonl]);
-
-  // ═══════════════════════════════════════════════════════════════
-  // 广播最新消息到脚本系统
-  // 
-  // 【优化】使用 ref 追踪已广播的消息 ID，避免重复广播
-  // 只在新消息出现时广播，而不是每次 messages 引用变化都广播
-  // ═══════════════════════════════════════════════════════════════
-  const lastBroadcastedIdRef = useRef<string | null>(null);
-  
-  useEffect(() => {
-    if (messages.length === 0) return;
-    
-    const lastMessage = messages[messages.length - 1];
-    // 只有当消息 ID 变化时才广播，避免重复触发
-    if (lastMessage.id !== lastBroadcastedIdRef.current) {
-      lastBroadcastedIdRef.current = lastMessage.id;
-      scriptBridge.broadcastMessage(lastMessage);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages]);
 
   // ========== 事件处理器 ==========
   const handleUserNameSave = useCallback((newDisplayName: string) => {
@@ -450,8 +347,6 @@ export default function CharacterChatPanel({
         fontClass={fontClass}
         serifFontClass={serifFontClass}
         t={t}
-        scriptVariables={scriptBridge.scriptVariables}
-        onScriptMessage={scriptBridge.handleScriptMessage}
         onAppendInput={handleAppendInput}
         renderHeaderSlot={renderMessageHeaderSlot}
       />
@@ -485,7 +380,7 @@ export default function CharacterChatPanel({
       <LazyScriptDebugPanel
         isOpen={showScriptDebugPanel}
         onClose={() => setShowScriptDebugPanel(false)}
-        scripts={scriptBridge.scriptStatuses}
+        scripts={[]}
         hostDebug={hostDebug}
       />
     </div>

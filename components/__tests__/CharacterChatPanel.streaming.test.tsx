@@ -57,15 +57,6 @@ vi.mock("@/components/ScriptDebugPanel", () => ({
   default: () => null,
 }));
 
-vi.mock("@/hooks/useScriptBridge", () => ({
-  useScriptBridge: () => ({
-    scriptVariables: {},
-    handleScriptMessage: vi.fn(),
-    broadcastMessage: vi.fn(),
-    scriptStatuses: [],
-  }),
-}));
-
 vi.mock("@/components/character-chat", async () => {
   const ReactModule = await import("react");
 

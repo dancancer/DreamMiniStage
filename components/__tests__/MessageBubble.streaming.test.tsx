@@ -4,13 +4,14 @@ import { createRoot, type Root } from "react-dom/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import MessageBubble from "../MessageBubble";
 import * as contentParser from "@/lib/utils/content-parser";
+import type { ContentSegment } from "@/types/content-segment";
 import type { RenderIntent } from "@/lib/story-agent/render-intent";
 
 const harness = vi.hoisted(() => ({
-  parseAsyncResult: [{ type: "html", content: "<strong>parsed</strong>" }],
+  parseAsyncResult: [{ type: "html", content: "<strong>parsed</strong>" }] as ContentSegment[],
   parseAsyncImpl: undefined as
     | undefined
-    | (() => Promise<Array<{ type: string; content: string }>>),
+    | (() => Promise<ContentSegment[]>),
 }));
 
 vi.mock("@/lib/utils/content-parser", () => ({
@@ -138,6 +139,30 @@ describe("MessageBubble streaming", () => {
     unmountBubble(rendered);
   });
 
+  it("does not render sandbox segments in story runtime", async () => {
+    harness.parseAsyncResult = [
+      { type: "html", content: "<p>stage text</p>" },
+      {
+        type: "sandbox",
+        id: "legacy-script",
+        content: "<!DOCTYPE html><html><body><script>window.bad = true;</script></body></html>",
+      },
+    ];
+
+    const rendered = renderBubble(<MessageBubble html="stage text" />);
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(rendered.container.innerHTML).toContain("<p>stage text</p>");
+    expect(rendered.container.querySelector("iframe")).toBeNull();
+    expect(rendered.container.innerHTML).not.toContain("legacy-script");
+
+    unmountBubble(rendered);
+  });
+
   it("re-renders with parsed content when streaming mode turns off", async () => {
     const rendered = renderBubble(
       <MessageBubble
@@ -166,7 +191,7 @@ describe("MessageBubble streaming", () => {
   });
 
   it("keeps raw streamed content visible while async parsing is still pending", async () => {
-    let resolveParse: ((value: Array<{ type: string; content: string }>) => void) | undefined;
+    let resolveParse: ((value: ContentSegment[]) => void) | undefined;
     harness.parseAsyncImpl = () => new Promise((resolve) => {
       resolveParse = resolve;
     });

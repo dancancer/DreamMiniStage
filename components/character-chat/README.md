@@ -11,11 +11,17 @@
 | `index.ts` | 模块入口 | 导出聊天组件 |
 | `MessageList.tsx` | 主组件 | 消息列表 |
 | `MessageItem.tsx` | 子组件 | 消息项 |
+| `message-item/` | 子模块 | 消息项类型与纯展示 helper |
 | `MessageHeaderControls.tsx` | 子组件 | 消息头部控件 |
 | `ChatInput.tsx` | 子组件 | 输入框 |
 | `ApiSelector.tsx` | 子组件 | API 选择器 |
 | `SessionToolbar.tsx` | 子组件 | 会话级工具栏 |
-| `SessionToolbar.tsx` | 新组件 | 显示当前模型、Streaming/快速开关与滑动提示的工具栏，并以 `apiSelector` 与 `modeControls` 插槽承接控制元素。 |
+
+## 最新变更（2026-06-04）
+
+- `MessageList.tsx` 不再中转 `scriptVariables` / `onScriptMessage`，Interface 回到消息列表布局、滚动、开场导航和流式意图。
+- `MessageItem.tsx` 不再读取 `TavernHelper_scripts`，助手消息只把故事 HTML、`storyRenderIntents` 和输入追加回调传给 `MessageBubble`。
+- `message-item/` 新增类型与展示 helper 子 Module，收口消息项头像、操作按钮和角色 tone 的 Implementation，主 `MessageItem.tsx` 保持在 400 行以内。
 
 ## 最新变更（2026-03-06）
 

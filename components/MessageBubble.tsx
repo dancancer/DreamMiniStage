@@ -8,17 +8,15 @@
  * ║                         MessageBubble 组件                                 ║
  * ║                                                                            ║
  * ║  职责：渲染聊天消息的 HTML 内容                                             ║
- * ║  架构：组合 HtmlSegment + ScriptSandbox，职责分离                           ║
+ * ║  架构：组合 HtmlSegment + RenderIntentView，不执行脚本                       ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
 "use client";
 
 import { useEffect, memo, useMemo } from "react";
-import { ScriptSandbox } from "./ScriptSandbox";
 import { RenderIntentView } from "@/components/story-agent/render-intent";
 import { clearColorCache } from "@/lib/utils/html-tag-processor";
-import type { ScriptMessageData } from "@/types/script-message";
 import { useMessageRenderPipeline } from "@/components/message-bubble/useMessageRenderPipeline";
 import {
   cleanRenderIntentMatchValues,
@@ -31,31 +29,11 @@ import {
    类型定义
    ═══════════════════════════════════════════════════════════════════════════ */
 
-interface TavernHelperScriptValue {
-  id: string;
-  name: string;
-  content: string;
-  info?: string;
-  buttons?: { name: string; visible: boolean }[];
-  data?: Record<string, unknown>;
-  enabled?: boolean;
-}
-
-type TavernHelperScript =
-  | { type: "script"; value: TavernHelperScriptValue }
-  | { name: string; content: string; enabled?: boolean; id?: string }
-  | TavernHelperScriptValue;
-
 interface Props {
   html: string;
   characterId?: string;
   isLoading?: boolean;
   enableStreaming?: boolean;
-  onContentChange?: () => void;
-  enableScript?: boolean;
-  onScriptMessage?: (data: ScriptMessageData) => Promise<unknown> | unknown;
-  scriptVariables?: Record<string, unknown>;
-  scripts?: TavernHelperScript[];
   renderIntents?: RenderIntent[];
   onAppendInput?: (value: string) => void;
 }
@@ -69,11 +47,6 @@ function MessageBubbleInner({
   characterId,
   isLoading = false,
   enableStreaming = false,
-  onContentChange,
-  enableScript = false,
-  onScriptMessage,
-  scriptVariables,
-  scripts = [],
   renderIntents = [],
   onAppendInput,
 }: Props) {
@@ -85,12 +58,8 @@ function MessageBubbleInner({
     () => stripRenderIntentSources(rawHtml, renderIntents),
     [rawHtml, renderIntents],
   );
-  const contentWithScripts = useMemo(
-    () => injectScriptsIntoContent(displayHtml, scripts),
-    [displayHtml, scripts],
-  );
   const pipeline = useMessageRenderPipeline({
-    html: contentWithScripts,
+    html: displayHtml,
     characterId,
     enableStreaming,
   });
@@ -123,20 +92,11 @@ function MessageBubbleInner({
 
   return (
     <div className="space-y-3 whitespace-pre-wrap prose prose-invert max-w-none">
-      {pipeline.segments.map((segment, index) =>
-        segment.type === "html" ? (
-          <HtmlSegment key={`html-${index}`} html={segment.content} />
-        ) : (
-          <ScriptSandbox
-            key={segment.id}
-            id={segment.id}
-            html={segment.content}
-            variables={enableScript ? scriptVariables : undefined}
-            onMessage={enableScript ? onScriptMessage : undefined}
-            onHeightChange={onContentChange}
-          />
-        ),
-      )}
+      {pipeline.segments.map((segment, index) => (
+        segment.type === "html"
+          ? <HtmlSegment key={`html-${index}`} html={segment.content} />
+          : null
+      ))}
       {renderMatches.map((match, index) => (
         <RenderIntentView
           intent={match.intent}
@@ -156,9 +116,6 @@ function MessageBubbleInner({
  * 1. html 内容变化
  * 2. characterId 变化
  * 3. isLoading 状态变化
- * 
- * 忽略 onScriptMessage、scriptVariables、onContentChange 的引用变化
- * 这些回调/数据通过 ref 或闭包获取最新值
  */
 const MessageBubble = memo(MessageBubbleInner, (prev, next) => {
   // 内容变化 → 必须重渲染
@@ -173,8 +130,6 @@ const MessageBubble = memo(MessageBubbleInner, (prev, next) => {
   // 流式预览/完整解析切换 → 必须重渲染
   if (prev.enableStreaming !== next.enableStreaming) return false;
   
-  // scripts 数组长度变化 → 必须重渲染
-  if ((prev.scripts?.length ?? 0) !== (next.scripts?.length ?? 0)) return false;
   if ((prev.renderIntents?.length ?? 0) !== (next.renderIntents?.length ?? 0)) return false;
   
   // 其他情况 → 跳过重渲染
@@ -200,79 +155,3 @@ const StreamingPreview = memo(function StreamingPreview({ html }: { html: string
     </div>
   );
 });
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   TavernHelper 脚本处理
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function normalizeScript(script: TavernHelperScript): TavernHelperScriptValue | null {
-  // 新格式: { type: "script", value: {...} }
-  if ("type" in script && script.type === "script" && "value" in script) {
-    if (script.value.enabled === false) return null;
-    return script.value;
-  }
-
-  // 旧格式: { name, content, ... }
-  if ("name" in script && "content" in script) {
-    if ("enabled" in script && script.enabled === false) return null;
-    const id =
-      "id" in script && script.id
-        ? script.id
-        : `script-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-    return { id, name: script.name, content: script.content, enabled: true };
-  }
-
-  return null;
-}
-
-function injectScriptsIntoContent(rawHtml: string, scripts: TavernHelperScript[]): string {
-  if (scripts.length === 0) {
-    return rawHtml;
-  }
-
-  const scriptTags = scripts
-    .map(normalizeScript)
-    .filter((s): s is TavernHelperScriptValue => s !== null)
-    .map(generateScriptTag)
-    .join("\n");
-
-  if (!scriptTags) {
-    return rawHtml;
-  }
-
-  return scriptTags + rawHtml;
-}
-
-function generateScriptTag(script: TavernHelperScriptValue): string {
-  const { id, name, content, data } = script;
-  const escapedName = name.replace(/'/g, "\\'").replace(/\n/g, "\\n");
-  const escapedId = id.replace(/'/g, "\\'");
-  const importMatch = content.match(/^\s*import\s+['"](.+?)['"]\s*;?\s*$/);
-
-  if (importMatch) {
-    // 动态脚本加载
-    return `
-      <script data-script-id="${escapedId}" data-script-name="${escapedName}">
-        (function() {
-          var script = document.createElement('script');
-          script.src = '${importMatch[1]}';
-          script.async = true;
-          window.__tavernHelperScriptData = window.__tavernHelperScriptData || {};
-          window.__tavernHelperScriptData['${escapedId}'] = ${JSON.stringify(data || {})};
-          document.head.appendChild(script);
-        })();
-      </script>
-    `;
-  }
-
-  // 内联脚本
-  return `
-    <script data-script-id="${escapedId}" data-script-name="${escapedName}">
-      (function() {
-        window.__tavernHelperScriptData = window.__tavernHelperScriptData || {};
-        window.__tavernHelperScriptData['${escapedId}'] = ${JSON.stringify(data || {})};
-        try { ${content} } catch (e) { console.error('[TavernHelper] Error:', e); }
-      })();
-    </script>
-  `;
-}

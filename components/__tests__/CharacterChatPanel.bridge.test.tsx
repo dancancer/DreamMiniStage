@@ -8,9 +8,7 @@ import {
 import CharacterChatPanel from "../CharacterChatPanel";
 
 const harness = vi.hoisted(() => ({
-  lastOnScriptMessage: undefined as
-    | ((message: { type: string; payload?: { method?: string; args?: unknown[] } }) => Promise<unknown> | unknown)
-    | undefined,
+  lastMessageListProps: undefined as Record<string, unknown> | undefined,
 }));
 
 vi.mock("@/hooks/useApiConfig", () => ({
@@ -59,12 +57,8 @@ vi.mock("@/components/character-chat", async () => {
     ChatInput: () => <div data-testid="chat-input" />,
     ControlPanel: () => null,
     MessageHeaderControls: () => null,
-    MessageList: ({
-      onScriptMessage,
-    }: {
-      onScriptMessage?: (message: { type: string; payload?: { method?: string; args?: unknown[] } }) => Promise<unknown> | unknown;
-    }) => {
-      harness.lastOnScriptMessage = onScriptMessage;
+    MessageList: (props: Record<string, unknown>) => {
+      harness.lastMessageListProps = props;
       return ReactModule.createElement("div", { "data-testid": "message-list" });
     },
   };
@@ -132,33 +126,14 @@ function unmountPanel(rendered: RenderedPanel): void {
 
 describe("CharacterChatPanel story script boundary", () => {
   beforeEach(() => {
-    harness.lastOnScriptMessage = undefined;
+    harness.lastMessageListProps = undefined;
   });
 
-  it("fails fast for script bridge messages and records host debug state", async () => {
+  it("does not expose script bridge messages to the story message list", () => {
     const rendered = renderPanel();
 
-    await expect(async () => {
-      await act(async () => {
-        await harness.lastOnScriptMessage?.({
-          type: "API_CALL",
-          payload: {
-            method: "triggerSlash",
-            args: ["/proxy Claude Reverse"],
-          },
-        });
-      });
-    }).rejects.toThrow("Script bridge execution is not supported in story runtime");
-
-    expect(rendered.onHostDebugUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      recentApiCalls: [
-        expect.objectContaining({
-          capability: "story-runtime-script-execution",
-          outcome: "fail-fast",
-          resolvedPath: "fail-fast",
-        }),
-      ],
-    }));
+    expect(harness.lastMessageListProps).not.toHaveProperty("onScriptMessage");
+    expect(rendered.onHostDebugUpdate).not.toHaveBeenCalled();
 
     unmountPanel(rendered);
   });

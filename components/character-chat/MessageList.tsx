@@ -9,7 +9,7 @@
  * ║                                                                            ║
  * ║  消息列表容器：滚动管理、空状态、开场白导航、加载指示器                       ║
  * ║  缺失翻译时使用稳定中文标签，避免把 i18n key 泄漏到舞台界面                  ║
- * ║  职责单一：只负责消息列表的布局和滚动行为                                    ║
+ * ║  职责单一：只负责消息列表的布局和滚动行为，不中转脚本 runtime                ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -17,25 +17,13 @@
 
 import { useRef, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
-import { MemoizedMessageItem, type Message } from "./MessageItem";
+import { MemoizedMessageItem, type Message, type MessageCharacter } from "./MessageItem";
 import { Button } from "@/components/ui/button";
-import type { TavernHelperScript } from "@/lib/models/character-model";
 import type { ChatStreamingIntent } from "./streaming-types";
+
 // ============================================================================
 //                              类型定义
 // ============================================================================
-
-import type { ScriptMessageData } from "@/types/script-message";
-
-interface Character {
-  id: string;
-  name: string;
-  avatar_path?: string;
-  extensions?: {
-    TavernHelper_scripts?: TavernHelperScript[];
-    [key: string]: unknown;
-  };
-}
 
 interface OpeningMessage {
   id: string;
@@ -44,7 +32,7 @@ interface OpeningMessage {
 
 interface MessageListProps {
   messages: Message[];
-  character: Character;
+  character: MessageCharacter;
   openingMessages: OpeningMessage[];
   openingIndex: number;
   openingLocked: boolean;
@@ -56,8 +44,6 @@ interface MessageListProps {
   serifFontClass: string;
   t: (key: string) => string;
   renderHeaderSlot?: (message: Message, index: number) => React.ReactNode;
-  scriptVariables?: Record<string, unknown>;
-  onScriptMessage?: (data: ScriptMessageData) => Promise<unknown> | unknown;
   onAppendInput?: (value: string) => void;
 }
 
@@ -79,8 +65,6 @@ export default function MessageList({
   serifFontClass,
   t,
   renderHeaderSlot,
-  scriptVariables,
-  onScriptMessage,
   onAppendInput,
 }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -91,16 +75,6 @@ export default function MessageList({
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, []);
-
-  // 条件滚动（仅当接近底部时）
-  const maybeScrollToBottom = useCallback((threshold = 120) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
-    if (distance < threshold) {
-      scrollToBottom();
-    }
-  }, [scrollToBottom]);
 
   // 消息变化时滚动
   useEffect(() => {
@@ -141,12 +115,9 @@ export default function MessageList({
                   streamingIntent={streamingIntent}
                   onTruncate={onTruncate}
                   onRegenerate={onRegenerate}
-                  onContentChange={visibleIndex === visibleMessages.length - 1 ? maybeScrollToBottom : undefined}
                   fontClass={fontClass}
                   serifFontClass={serifFontClass}
                   t={t}
-                  scriptVariables={scriptVariables}
-                  onScriptMessage={onScriptMessage}
                   onAppendInput={onAppendInput}
                   headerSlot={renderHeaderSlot?.(message, messageIndex)}
                 />

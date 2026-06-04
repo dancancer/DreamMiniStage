@@ -8,7 +8,7 @@
  * ║                         Message Item Component                             ║
  * ║                                                                            ║
  * ║  单条消息渲染：用户消息 vs 助手消息                                         ║
- * ║  设计原则：用条件渲染替代重复代码，组合优于继承                              ║
+ * ║  设计原则：只渲染故事内容，不接触 TavernHelper 脚本字段                     ║
  * ║  【性能优化】使用 React.memo 避免不必要的重渲染                              ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
@@ -16,60 +16,40 @@
 "use client";
 
 import React, { useCallback } from "react";
-import { ArrowUp, RefreshCw, User } from "lucide-react";
 import MessageBubble from "@/components/MessageBubble";
 import ThinkBubble from "@/components/ThinkBubble";
-import { CharacterAvatarBackground } from "@/components/CharacterAvatarBackground";
 import { trackButtonClick } from "@/utils/google-analytics";
-import { Button } from "@/components/ui/button";
-import type { TavernHelperScript } from "@/lib/models/character-model";
-import type { ScriptMessageData } from "@/types/script-message";
 import type { ChatStreamingIntent } from "./streaming-types";
-import type { RenderIntent } from "@/lib/story-agent/render-intent";
+import {
+  MessageHeader,
+  normalizeRole,
+  pickRoleTone,
+  renderRoleLabel,
+} from "./message-item/presentation";
+import type {
+  Message,
+  MessageCharacter,
+  MessageRoleKind,
+} from "./message-item/types";
+
+export type { Message, MessageCharacter } from "./message-item/types";
 
 // ============================================================================
 //                              类型定义
 // ============================================================================
 
-export interface Message {
-  id: string;
-  role: string;
-  thinkingContent?: string;
-  content: string;
-  name?: string;
-  compact?: boolean;
-  hidden?: boolean;
-  timestamp?: string;
-  isUser?: boolean;
-  swipe?: { activeIndex: number; total: number };
-}
-
-interface Character {
-  id: string;
-  name: string;
-  avatar_path?: string;
-  extensions?: {
-    TavernHelper_scripts?: TavernHelperScript[];
-    storyRenderIntents?: RenderIntent[];
-    [key: string]: unknown;
-  };
-}
-
 interface MessageItemProps {
   message: Message;
   index: number;
-  character: Character;
+  character: MessageCharacter;
   isLastMessage: boolean;
   streamingIntent: ChatStreamingIntent;
   onTruncate: (id: string) => void;
   onRegenerate: (id: string) => void;
-  onContentChange?: () => void;
   fontClass: string;
   serifFontClass: string;
   t: (key: string) => string;
   headerSlot?: React.ReactNode;
-  scriptVariables?: Record<string, unknown>;
-  onScriptMessage?: (data: ScriptMessageData) => Promise<unknown> | unknown;
   onAppendInput?: (value: string) => void;
 }
 
@@ -80,17 +60,13 @@ interface MessageItemProps {
 interface RoleMessageProps {
   message: Message;
   index: number;
-  roleKind: "system" | "narrator" | "custom";
-  scriptVariables?: Record<string, unknown>;
-  onScriptMessage?: (data: ScriptMessageData) => Promise<unknown> | unknown;
+  roleKind: Exclude<MessageRoleKind, "assistant">;
 }
 
 function RoleMessage({
   message,
   index,
   roleKind,
-  scriptVariables,
-  onScriptMessage,
 }: RoleMessageProps) {
   const tone = pickRoleTone(roleKind);
   const displayName = (message.name || "").trim();
@@ -112,8 +88,6 @@ function RoleMessage({
           <MessageBubble
             html={message.content}
             characterId={message.role}
-            onScriptMessage={onScriptMessage}
-            scriptVariables={scriptVariables}
           />
         </div>
       </div>
@@ -133,13 +107,10 @@ export default function MessageItem({
   streamingIntent,
   onTruncate,
   onRegenerate,
-  onContentChange,
   fontClass,
   serifFontClass,
   t,
   headerSlot,
-  scriptVariables,
-  onScriptMessage,
   onAppendInput,
 }: MessageItemProps) {
   // 用户消息直接返回简化版
@@ -155,8 +126,6 @@ export default function MessageItem({
         message={message}
         index={index}
         roleKind={roleKind}
-        scriptVariables={scriptVariables}
-        onScriptMessage={onScriptMessage}
       />
     );
   }
@@ -171,13 +140,10 @@ export default function MessageItem({
       streamingIntent={streamingIntent}
       onTruncate={onTruncate}
       onRegenerate={onRegenerate}
-      onContentChange={onContentChange}
       fontClass={fontClass}
       serifFontClass={serifFontClass}
       t={t}
       headerSlot={headerSlot}
-      scriptVariables={scriptVariables}
-      onScriptMessage={onScriptMessage}
       onAppendInput={onAppendInput}
     />
   );
@@ -236,18 +202,15 @@ function extractUserContent(content: string): string {
 interface AssistantMessageProps {
   message: Message;
   index: number;
-  character: Character;
+  character: MessageCharacter;
   isLastMessage: boolean;
   streamingIntent: ChatStreamingIntent;
   onTruncate: (id: string) => void;
   onRegenerate: (id: string) => void;
-  onContentChange?: () => void;
   fontClass: string;
   serifFontClass: string;
   t: (key: string) => string;
   headerSlot?: React.ReactNode;
-  scriptVariables?: Record<string, unknown>;
-  onScriptMessage?: (data: ScriptMessageData) => Promise<unknown> | unknown;
   onAppendInput?: (value: string) => void;
 }
 
@@ -259,13 +222,10 @@ function AssistantMessage({
   streamingIntent,
   onTruncate,
   onRegenerate,
-  onContentChange,
   fontClass,
   serifFontClass,
   t,
   headerSlot,
-  scriptVariables,
-  onScriptMessage,
   onAppendInput,
 }: AssistantMessageProps) {
   const { enabled, targetIndex, isSending, activeMessageId } = streamingIntent;
@@ -297,7 +257,6 @@ function AssistantMessage({
       {/* 消息头部 */}
       <MessageHeader
         character={character}
-        serifFontClass={serifFontClass}
         showRegenerateButton={showRegenerateButton}
         onTruncate={handleTruncate}
         onRegenerate={handleRegenerate}
@@ -319,178 +278,13 @@ function AssistantMessage({
         key={message.id}
         html={message.content}
         characterId={character.id}
-        scripts={character.extensions?.TavernHelper_scripts || []}
         renderIntents={character.extensions?.storyRenderIntents || []}
-        scriptVariables={scriptVariables}
         onAppendInput={onAppendInput}
         isLoading={isSending && isLastMessage && message.content.trim() === ""}
         enableStreaming={isActivelyStreaming}
-        onContentChange={isLastMessage ? onContentChange : undefined}
-        enableScript={true}
-        onScriptMessage={onScriptMessage}
       />
     </div>
   );
-}
-
-// ============================================================================
-//                              消息头部
-// ============================================================================
-
-interface MessageHeaderProps {
-  character: Character;
-  serifFontClass: string;
-  showRegenerateButton: boolean;
-  onTruncate: () => void;
-  onRegenerate: () => void;
-  t: (key: string) => string;
-  headerSlot?: React.ReactNode;
-}
-
-function MessageHeader({
-  character,
-  serifFontClass,
-  showRegenerateButton,
-  onTruncate,
-  onRegenerate,
-  t,
-  headerSlot,
-}: MessageHeaderProps) {
-  return (
-    <div className="flex items-center mb-2">
-      {/* 头像 */}
-      <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
-        {character.avatar_path ? (
-          <CharacterAvatarBackground avatarPath={character.avatar_path} />
-        ) : (
-          <DefaultAvatar />
-        )}
-      </div>
-
-      {/* 名称和控制按钮 */}
-      <div className="flex items-center">
-        <span className={"text-sm font-medium text-cream "}>
-          {character.name}
-        </span>
-        {showRegenerateButton && headerSlot}
-      </div>
-
-      {/* 操作按钮 */}
-      <div className="flex items-center">
-        <ActionButton
-          onClick={onTruncate}
-          tooltip={t("characterChat.jumpToMessage")}
-          icon={<TruncateIcon />}
-          hoverColor="success"
-        />
-        {showRegenerateButton && (
-          <ActionButton
-            onClick={onRegenerate}
-            tooltip={t("characterChat.regenerateMessage")}
-            icon={<RegenerateIcon />}
-            hoverColor="primary"
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function DefaultAvatar() {
-  return (
-    <div className="w-full h-full flex items-center justify-center ">
-      <User className="h-4 w-4 text-ink" />
-    </div>
-  );
-}
-
-// ============================================================================
-//                              操作按钮
-// ============================================================================
-
-interface ActionButtonProps {
-  onClick: () => void;
-  tooltip: string;
-  icon: React.ReactNode;
-  hoverColor: "success" | "primary";
-}
-
-function ActionButton({ onClick, tooltip, icon, hoverColor }: ActionButtonProps) {
-  const colorClass = hoverColor === "success"
-    ? "hover:text-success"
-    : "hover:text-primary-300";
-
-  return (
-    <Button
-      variant="outline"
-      size="icon"
-      onClick={onClick}
-      className={`ml-1 h-6 w-6 text-ink-soft bg-surface border-stroke hover:border-stroke-strong group relative ${colorClass}`}
-      data-tooltip={tooltip}
-    >
-      <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-overlay text-cream text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap border border-border">
-        {tooltip}
-      </div>
-      {icon}
-    </Button>
-  );
-}
-
-function TruncateIcon() {
-  return <ArrowUp className="w-3 h-3" />;
-}
-
-function RegenerateIcon() {
-  return <RefreshCw className="w-3 h-3" />;
-}
-
-// ╔══════════════════════════════════════════════════════════════════╗
-// ║  角色辅助函数                                                     ║
-// ╚══════════════════════════════════════════════════════════════════╝
-
-function normalizeRole(role: string): "assistant" | "system" | "narrator" | "custom" {
-  const key = (role || "").toLowerCase();
-  if (key === "user") return "assistant"; // 已在上层过滤，这里兜底
-  if (key === "assistant" || key === "impersonate") return "assistant";
-  if (key === "system" || key === "sys") return "system";
-  if (key === "narrator" || key === "comment") return "narrator";
-  return "custom";
-}
-
-function pickRoleTone(role: "system" | "narrator" | "custom") {
-  if (role === "system") {
-    return {
-      badgeBg: "bg-muted",
-      badgeText: "text-muted-foreground",
-      badgeBorder: "border-border",
-      bodyBg: "bg-muted/60",
-      bodyBorder: "border-border",
-      caption: "SYSTEM MESSAGE",
-    };
-  }
-  if (role === "narrator") {
-    return {
-      badgeBg: "bg-sidebar",
-      badgeText: "text-foreground",
-      badgeBorder: "border-border/60",
-      bodyBg: "bg-sidebar",
-      bodyBorder: "border-border/60",
-      caption: "NARRATOR",
-    };
-  }
-  return {
-    badgeBg: "bg-card",
-    badgeText: "text-foreground",
-    badgeBorder: "border-border",
-    bodyBg: "bg-card",
-    bodyBorder: "border-border",
-    caption: "CUSTOM ROLE",
-  };
-}
-
-function renderRoleLabel(role: string): string {
-  if (!role) return "role";
-  return role.length > 16 ? `${role.slice(0, 15)}…` : role;
 }
 
 // ============================================================================
