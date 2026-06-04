@@ -120,12 +120,7 @@ function renderPanel(): RenderedPanel {
         t={(key) => key}
         activeModes={{ streaming: false, fastModel: false }}
         setActiveModes={vi.fn()}
-        language="en"
-        dialogueKey="dialogue-1"
-        chatName="Session One"
         hostDebug={readHostDebugSnapshot(hostDebugState)}
-        hostDebugState={hostDebugState}
-        onHostDebugUpdate={vi.fn()}
       />,
     );
   });

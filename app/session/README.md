@@ -37,6 +37,7 @@
 ## 最新变更（2026-06-04）
 
 - `session-page-layout.tsx` 现在把 `openingSelection` 作为单一 Interface 传给 `CharacterChatPanel`，不再在页面装配层拆传 `openingMessages/openingIndex/openingLocked`。
+- `session-page-layout.tsx` 不再向 `CharacterChatPanel` 构造和透传 Session host capability callback 组；这些能力保留在 `use-session-page-actions.ts` / slash host 路径中。
 
 ## 最新变更（2026-03-07）
 

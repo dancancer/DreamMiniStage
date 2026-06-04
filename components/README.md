@@ -20,3 +20,4 @@
 - `MessageBubble.tsx` 不再组合 `ScriptSandbox`，parser 产出的 `sandbox` segment 在故事消息里会被忽略，只保留 HTML 与 RenderIntent 渲染。
 - `ScriptSandbox.tsx` 继续作为显式迁移/调试 Adapter 存在，不再由普通故事消息自动触发。
 - `CharacterChatPanel.tsx` 现在以 `OpeningSelection` 透传开场选择状态，避免 UI 装配层继续拆传 `openingMessages/openingIndex/openingLocked`。
+- `CharacterChatPanel.tsx` 不再接收 Session host capability callback 组；聊天面板只保留真实使用的 `onSwipe` 与 `hostDebug` 快照。

@@ -70,7 +70,6 @@ vi.mock("@/components/character-chat", async () => {
 interface RenderedPanel {
   container: HTMLDivElement;
   root: Root;
-  onHostDebugUpdate: ReturnType<typeof vi.fn>;
 }
 
 function renderPanel(): RenderedPanel {
@@ -79,7 +78,6 @@ function renderPanel(): RenderedPanel {
 
   const root = createRoot(container);
   const hostDebugState = createHostDebugState();
-  const onHostDebugUpdate = vi.fn();
   act(() => {
     root.render(
       <CharacterChatPanel
@@ -102,17 +100,12 @@ function renderPanel(): RenderedPanel {
         t={(key) => key}
         activeModes={{ streaming: false, fastModel: false }}
         setActiveModes={vi.fn()}
-        language="en"
-        dialogueKey="dialogue-1"
-        chatName="Session One"
         hostDebug={readHostDebugSnapshot(hostDebugState)}
-        hostDebugState={hostDebugState}
-        onHostDebugUpdate={onHostDebugUpdate}
       />,
     );
   });
 
-  return { container, root, onHostDebugUpdate };
+  return { container, root };
 }
 
 function unmountPanel(rendered: RenderedPanel): void {
@@ -131,7 +124,6 @@ describe("CharacterChatPanel story script boundary", () => {
     const rendered = renderPanel();
 
     expect(harness.lastMessageListProps).not.toHaveProperty("onScriptMessage");
-    expect(rendered.onHostDebugUpdate).not.toHaveBeenCalled();
 
     unmountPanel(rendered);
   });

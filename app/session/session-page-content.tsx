@@ -235,7 +235,6 @@ function SessionPageContent() {
       currentCharacter={currentCharacter}
       characterId={characterId}
       currentCharacterName={currentCharacterName}
-      currentSessionName={currentSessionName}
       sessionId={sessionId}
       userInput={userInput}
       setUserInput={setUserInput}
@@ -243,7 +242,6 @@ function SessionPageContent() {
       setActiveModes={setActiveModesBridge}
       fontClass={fontClass}
       serifFontClass={serifFontClass}
-      language={language as "zh" | "en"}
       t={t}
       galleryState={galleryState}
       setGalleryState={setGalleryState}
@@ -255,8 +253,6 @@ function SessionPageContent() {
       actions={actions}
       setCharacterView={setCharacterView}
       hostDebug={sessionHostDebug.hostDebug}
-      hostDebugState={sessionHostDebug.hostDebugState}
-      onHostDebugUpdate={sessionHostDebug.syncHostDebug}
     />
   );
 }

@@ -7,7 +7,7 @@
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                      Session Page Layout                                 ║
  * ║                                                                           ║
- * ║  收口 chat/editor/modal 组合，让开场选择以 OpeningSelection 透传。           ║
+ * ║  收口 chat/editor/modal 组合，避免 chat 面板承载 Session host capability。   ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -27,10 +27,8 @@ import type {
 import type { SessionGalleryItem } from "@/app/session/session-gallery";
 import type {
   ScriptHostDebugSnapshot,
-  ScriptHostDebugState,
 } from "@/hooks/script-bridge/host-debug-state";
 import type { useSessionPageActions } from "@/app/session/use-session-page-actions";
-import type { SendOptions } from "@/lib/slash-command/types";
 
 const LazyWorldBookEditor = dynamic(() => import("@/components/WorldBookEditor"), {
   ssr: false,
@@ -62,9 +60,6 @@ interface DialogueController {
   openingSelection: OpeningSelection;
   suggestedInputs: string[];
   isSending: boolean;
-  addUserMessage: (text: string, options?: SendOptions) => void | Promise<void>;
-  addRoleMessage: (role: string, text: string, options?: SendOptions) => void | Promise<void>;
-  triggerGeneration: () => Promise<void>;
   handleSwipe: (target?: string) => Promise<void>;
   handleRegenerate: (nodeId: string) => Promise<void>;
   handleOpeningNavigate: (direction: OpeningDirection) => Promise<void>;
@@ -79,7 +74,6 @@ interface Props {
   currentCharacter: Character;
   characterId: string;
   currentCharacterName: string;
-  currentSessionName: string;
   sessionId: string;
   userInput: string;
   setUserInput: (value: string) => void;
@@ -87,7 +81,6 @@ interface Props {
   setActiveModes: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
   fontClass: string;
   serifFontClass: string;
-  language: "zh" | "en";
   t: (key: string) => string;
   galleryState: {
     open: boolean;
@@ -107,8 +100,6 @@ interface Props {
   actions: ReturnType<typeof useSessionPageActions>;
   setCharacterView: (view: "chat" | "worldbook" | "preset" | "regex") => void;
   hostDebug: ScriptHostDebugSnapshot;
-  hostDebugState: ScriptHostDebugState;
-  onHostDebugUpdate: (snapshot: ScriptHostDebugSnapshot) => void;
 }
 
 function SessionDeferredState({ label }: { label: string }) {
@@ -124,21 +115,16 @@ function SessionDeferredState({ label }: { label: string }) {
 function buildChatPanelProps(params: Omit<Props, "characterView" | "galleryState" | "setGalleryState" | "isLoginModalOpen" | "setIsLoginModalOpen" | "isBranchOpen" | "setIsBranchOpen" | "setCharacterView">): React.ComponentProps<typeof CharacterChatPanel> {
   const {
     currentCharacter,
-    currentSessionName,
-    sessionId,
     userInput,
     setUserInput,
     activeModes,
     setActiveModes,
     fontClass,
     serifFontClass,
-    language,
     t,
     dialogue,
     actions,
     hostDebug,
-    hostDebugState,
-    onHostDebugUpdate,
   } = params;
 
   return {
@@ -159,70 +145,8 @@ function buildChatPanelProps(params: Omit<Props, "characterView" | "galleryState
     t,
     activeModes,
     setActiveModes,
-    language,
-    dialogueKey: sessionId,
-    chatName: currentSessionName,
-    // ─── 域回调分组 ───
-    messageCallbacks: {
-      onSend: dialogue.addUserMessage,
-      onTrigger: dialogue.triggerGeneration,
-      onSendAs: dialogue.addRoleMessage,
-      onSendSystem: (text: string, options?: SendOptions) => dialogue.addRoleMessage?.("system", text, options),
-      onImpersonate: (text: string) => dialogue.addRoleMessage?.("assistant", text),
-      onContinue: dialogue.triggerGeneration,
-      onSwipe: dialogue.handleSwipe,
-    },
-    chatManagementCallbacks: {
-      onRenameChat: actions.handleRenameChat,
-      onOpenTemporaryChat: actions.handleOpenTemporaryChat,
-      onForceSaveChat: actions.handleForceSaveChat,
-      onHideMessages: actions.handleHideMessages,
-      onUnhideMessages: actions.handleUnhideMessages,
-    },
-    checkpointCallbacks: {
-      onCreateCheckpoint: actions.handleCreateCheckpoint,
-      onCreateBranch: actions.handleCreateBranch,
-      onGetCheckpoint: actions.handleGetCheckpoint,
-      onListCheckpoints: actions.handleListCheckpoints,
-      onGoCheckpoint: actions.handleGoCheckpoint,
-      onExitCheckpoint: actions.handleExitCheckpoint,
-      onGetCheckpointParent: actions.handleGetCheckpointParent,
-    },
-    groupMemberCallbacks: {
-      onGetGroupMember: actions.handleGetGroupMember,
-      onAddGroupMember: actions.handleAddGroupMember,
-      onRemoveGroupMember: actions.handleRemoveGroupMember,
-      onMoveGroupMember: actions.handleMoveGroupMember,
-      onPeekGroupMember: actions.handlePeekGroupMember,
-      onGetGroupMemberCount: actions.handleGetGroupMemberCount,
-      onSetGroupMemberEnabled: actions.handleSetGroupMemberEnabled,
-    },
-    hostCapabilityCallbacks: {
-      onSelectProxyPreset: actions.handleSelectProxyPreset,
-      onTranslateText: actions.handleTranslateText,
-      onGetYouTubeTranscript: actions.handleGetYouTubeTranscript,
-      onGetClipboardText: actions.handleGetClipboardText,
-      onSetClipboardText: actions.handleSetClipboardText,
-      onIsExtensionInstalled: actions.handleIsExtensionInstalled,
-      onGetExtensionEnabledState: actions.handleGetExtensionEnabledState,
-      onSetExtensionEnabled: actions.handleSetExtensionEnabled,
-    },
-    worldInfoCallbacks: {
-      onGetWorldInfoTimedEffect: actions.handleGetWorldInfoTimedEffect,
-      onSetWorldInfoTimedEffect: actions.handleSetWorldInfoTimedEffect,
-    },
-    navigationCallbacks: {
-      onListGallery: actions.handleListGallery,
-      onShowGallery: actions.handleShowGallery,
-      onJumpToMessage: actions.handleJumpToMessage,
-      onSwitchCharacter: actions.handleSwitchCharacter,
-      onRenameCurrentCharacter: actions.handleRenameCurrentCharacter,
-    },
-    hostCapabilitySources: actions.resolveSessionHostBridge().capabilitySources,
-    hasHostOverrides: actions.resolveSessionHostBridge().hasHostOverrides,
+    onSwipe: dialogue.handleSwipe,
     hostDebug,
-    hostDebugState,
-    onHostDebugUpdate,
     onExportJsonl: dialogue.exportJsonl,
     onImportJsonl: dialogue.importJsonl,
   };

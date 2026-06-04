@@ -8,7 +8,7 @@
  * ║                     Character Chat Panel Component                        ║
  * ║                                                                           ║
  * ║  角色聊天面板：编排层组件，组合子组件实现完整功能                                 ║
- * ║  设计原则：组合 Story runtime，开场选择以 OpeningSelection 透传                 ║
+ * ║  设计原则：组合 Story runtime，不承载 Session host capability Interface        ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -20,18 +20,7 @@ import { getDisplayUsername, setDisplayUsername } from "@/utils/username-helper"
 import { useApiConfig } from "@/hooks/useApiConfig";
 import type {
   ScriptHostDebugSnapshot,
-  ScriptHostDebugState,
 } from "@/hooks/script-bridge/host-debug-state";
-import type {
-  MessageCallbacks,
-  ChatManagementCallbacks,
-  CheckpointCallbacks,
-  GroupMemberCallbacks,
-  ExpressionCallbacks,
-  HostCapabilityCallbacks,
-  WorldInfoCallbacks,
-  NavigationCallbacks,
-} from "@/types/slash-callback-domains";
 import { useLocalStorageBoolean } from "@/hooks/useLocalStorage";
 import { resolveStreamingEnabled } from "@/lib/model-runtime";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -99,28 +88,8 @@ interface Props {
   t: (key: string) => string;
   activeModes: Record<string, unknown>;
   setActiveModes: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
-  language: "zh" | "en";
-  // ─── 提示词查看器参数 ───
-  dialogueKey?: string;
-  chatName?: string;
-  // ─── 域回调分组 ───
-  messageCallbacks?: MessageCallbacks;
-  chatManagementCallbacks?: ChatManagementCallbacks;
-  checkpointCallbacks?: CheckpointCallbacks;
-  groupMemberCallbacks?: GroupMemberCallbacks;
-  expressionCallbacks?: ExpressionCallbacks;
-  hostCapabilityCallbacks?: HostCapabilityCallbacks;
-  worldInfoCallbacks?: WorldInfoCallbacks;
-  navigationCallbacks?: NavigationCallbacks;
-  // ─── debug & 杂项 ───
-  hostCapabilitySources?: Partial<Record<
-    "translation" | "youtubeTranscript" | "clipboardRead" | "clipboardWrite" | "extensionRead" | "extensionWrite" | "galleryList" | "galleryShow",
-    "session-default" | "api-context"
-  >>;
-  hasHostOverrides?: boolean;
+  onSwipe?: (target?: string) => void | Promise<void>;
   hostDebug: ScriptHostDebugSnapshot;
-  hostDebugState: ScriptHostDebugState;
-  onHostDebugUpdate: (snapshot: ScriptHostDebugSnapshot) => void;
   onExportJsonl?: () => void | Promise<void>;
   onImportJsonl?: (file: File) => void | Promise<void>;
 }
@@ -147,7 +116,7 @@ export default function CharacterChatPanel({
   t,
   activeModes,
   setActiveModes,
-  messageCallbacks,
+  onSwipe,
   hostDebug,
   onExportJsonl,
   onImportJsonl,
@@ -166,10 +135,10 @@ export default function CharacterChatPanel({
   const streamingEnabled = resolveStreamingEnabled(currentConfig?.advanced);
 
   const handleSwipe = useCallback(async (target?: string) => {
-    if (messageCallbacks?.onSwipe) return messageCallbacks.onSwipe(target);
+    if (onSwipe) return onSwipe(target);
     setLastSwipeTarget(target ?? "next");
     return undefined;
-  }, [messageCallbacks]);
+  }, [onSwipe]);
 
   const handleAppendInput = useCallback((value: string) => {
     const action = value.trim();
