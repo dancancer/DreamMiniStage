@@ -38,9 +38,10 @@ export interface DialogueData {
    操作参数类型
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export interface InitDialogueParams extends DialogueGenerationProfile {
+export interface InitDialogueParams {
   dialogueKey: string;
   characterId: string;
+  language: "zh" | "en";
 }
 
 export interface SendMessageParams extends DialogueGenerationProfile {

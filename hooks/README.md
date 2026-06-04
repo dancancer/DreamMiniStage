@@ -15,5 +15,6 @@ React Hook 层。这里放跨页面状态 Hook，以及按子域拆分的 Hook h
 
 ## 最新变更（2026-06-04）
 
+- `useCharacterDialogue.ts` 初始化新对话时只传 `dialogueKey/characterId/language`，不再为开场初始化读取生成 Profile。
 - `character-dialogue/model-profile.ts` 新增 `DialogueGenerationProfile` 构建路径，让 `useCharacterDialogue.ts` 通过单一生成 Profile 调用 store 操作，避免四条生成路径重复拆装模型字段。
 - `useCharacterDialogue.ts` 现在输出 `openingSelection`，让 UI 调用者消费单一开场选择 Interface；原始 `openingMessages/openingIndex/openingLocked` 仍保留给 gallery/host 等非 UI 读取路径。

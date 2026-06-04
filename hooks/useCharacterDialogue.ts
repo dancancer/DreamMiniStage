@@ -165,10 +165,10 @@ export function useCharacterDialogue({
       await initializeNewDialogue({
         dialogueKey: key,
         characterId: charId,
-        ...readModelProfile(),
+        language,
       });
     },
-    [readModelProfile, initializeNewDialogue],
+    [language, initializeNewDialogue],
   );
 
   const handleSendMessage = useCallback(

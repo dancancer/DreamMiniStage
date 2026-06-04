@@ -81,7 +81,7 @@ export async function initializeNewDialogue(
   params: InitDialogueParams,
   setState: (updater: (state: DialogueState) => Partial<DialogueState>) => void,
 ) {
-  const { dialogueKey, characterId, language, modelName, baseUrl, apiKey, llmType } = params;
+  const { dialogueKey, characterId, language } = params;
 
   try {
     const username = getDisplayUsername();
@@ -89,10 +89,6 @@ export async function initializeNewDialogue(
       username,
       dialogueId: dialogueKey,
       characterId,
-      modelName,
-      baseUrl,
-      apiKey,
-      llmType,
       language,
     });
 

@@ -40,10 +40,6 @@ describe("initCharacterDialogue", () => {
       dialogueId: "session-1",
       characterId: "char-1",
       language: "zh",
-      modelName: "gpt",
-      baseUrl: "",
-      apiKey: "key",
-      llmType: "openai",
     });
 
     expect(loadStoryRuntimeBinding).toHaveBeenCalledWith("session-1");

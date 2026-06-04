@@ -42,10 +42,6 @@ describe("StoryBlueprint 开场白基线", () => {
       dialogueId: "baseline-session",
       characterId: "baseline-char",
       language: "zh",
-      modelName: "gpt",
-      baseUrl: "http://localhost",
-      apiKey: "sk-test",
-      llmType: "openai",
     });
 
     expect(loadStoryRuntimeBinding).toHaveBeenCalledWith("baseline-session");
@@ -78,10 +74,6 @@ describe("StoryBlueprint 开场白基线", () => {
       dialogueId: "baseline-session",
       characterId: "baseline-char",
       language: "zh",
-      modelName: "gpt",
-      baseUrl: "http://localhost",
-      apiKey: "sk-test",
-      llmType: "openai",
     });
 
     expect(result.openingMessages.map((opening) => opening.content)).toEqual([
@@ -111,10 +103,6 @@ describe("StoryBlueprint 开场白基线", () => {
       dialogueId: "baseline-session",
       characterId: "baseline-char",
       language: "zh",
-      modelName: "gpt",
-      baseUrl: "http://localhost",
-      apiKey: "sk-test",
-      llmType: "openai",
     });
 
     expect(result.openingMessages.map((opening) => opening.content)).toEqual([
@@ -135,10 +123,6 @@ describe("StoryBlueprint 开场白基线", () => {
       dialogueId: "baseline-session",
       characterId: "baseline-char",
       language: "zh",
-      modelName: "gpt",
-      baseUrl: "http://localhost",
-      apiKey: "sk-test",
-      llmType: "openai",
     });
 
     expect(result.openingMessage?.fullContent).toBe("吧台边 · 2026年6月1日 · 21:30\n夏瑾抬起眼，看向 测试用户。");

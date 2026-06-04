@@ -15,4 +15,5 @@
 
 ## 最新变更（2026-06-04）
 
+- `types.ts` 的 `InitDialogueParams` 现在只表达开场初始化真实依赖，不再继承生成 Profile。
 - `types.ts` 的生成参数现在复用 `DialogueGenerationProfile`，dialogue store 不再维护一份本地 `LLMConfig` 字段副本。

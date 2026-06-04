@@ -20,4 +20,5 @@
 
 ## 最新变更（2026-06-04）
 
+- `lifecycle-actions.ts` 初始化新对话时只传开场初始化所需字段，不再转发模型名、密钥或 provider 类型。
 - `generation-actions.ts` 的内部 `GenerateOptions` 复用 `DialogueGenerationProfile`，生成操作不再手写模型字段副本。

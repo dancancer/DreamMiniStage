@@ -12,10 +12,6 @@ interface InitCharacterDialogueOptions {
   dialogueId: string;  // 对话树 ID（sessionId）
   characterId: string;
   language?: "zh" | "en";
-  modelName: string;
-  baseUrl: string;
-  apiKey: string;
-  llmType: "openai" | "ollama" | "gemini";
 }
 
 export async function initCharacterDialogue(options: InitCharacterDialogueOptions) {

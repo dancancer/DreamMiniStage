@@ -20,6 +20,7 @@
 
 ## 最新变更（2026-06-04）
 
+- `dialogue-store/types.ts` 的初始化参数不再继承生成 Profile，开场初始化路径只表达真实依赖。
 - `dialogue-store/types.ts` 复用共享的 `DialogueGenerationProfile`，避免 store 层复制生成模型字段契约。
 
 ## 之前变更（2026-03-08）
