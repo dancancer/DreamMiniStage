@@ -16,3 +16,7 @@
 | `global.ts` | 操作 | 全局正则管理 |
 | `get-setting.ts` | 操作 | 获取正则设置 |
 | `update-setting.ts` | 操作 | 更新正则设置 |
+
+## 最新变更（2026-06-04）
+
+- `global.ts` 和 `import.ts` 改用 `RegexScriptOperations` 的公开 collection Interface 列出与删除全局正则，不再直接访问底层 store map。

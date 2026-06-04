@@ -55,6 +55,12 @@ vi.mock("@/lib/data/local-storage", () => ({
       value: deepClone(value),
     }));
   },
+  getRecordMap: async (store: string) => {
+    const bucket = mockStores[store] ?? new Map<string, any>();
+    return Object.fromEntries(
+      Array.from(bucket.entries()).map(([key, value]) => [key, deepClone(value)]),
+    );
+  },
   clearStore: async (store: string) => {
     mockStores[store]?.clear();
   },

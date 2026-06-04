@@ -121,17 +121,15 @@ export async function importRegexScriptFromJson(
         
         if (options?.saveAsGlobal && options.globalName) {
           try {
-            const store = await RegexScriptOperations["getRegexScriptStore"]();
+            const globalSettings = await RegexScriptOperations.listGlobalRegexScriptSettings();
             let nextId = 1;
             
-            for (const key of Object.keys(store)) {
-              if (key.startsWith("global_regex_") && key.endsWith("_settings")) {
-                const match = key.match(/^global_regex_(\d+)_settings$/);
-                if (match) {
-                  const id = parseInt(match[1], 10);
-                  if (id >= nextId) {
-                    nextId = id + 1;
-                  }
+            for (const { ownerId } of globalSettings) {
+              const match = ownerId.match(/^global_regex_(\d+)$/);
+              if (match) {
+                const id = parseInt(match[1], 10);
+                if (id >= nextId) {
+                  nextId = id + 1;
                 }
               }
             }

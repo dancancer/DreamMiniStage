@@ -30,32 +30,12 @@ export async function deleteCharacter(character_id: string): Promise<{ success?:
     await LocalCharacterDialogueOperations.deleteDialogueTree(character_id);
 
     try {
-      const worldBooks = await WorldBookOperations["getWorldBooks"]();
-      
-      if (worldBooks[character_id]) {
-        delete worldBooks[character_id];
-      }
-      
-      if (worldBooks[`${character_id}_settings`]) {
-        delete worldBooks[`${character_id}_settings`];
-      }
-      
-      await WorldBookOperations["saveWorldBooks"](worldBooks);
+      await WorldBookOperations.deleteWorldBook(character_id);
     } catch (worldBookErr) {
       console.warn("Failed to delete world book:", worldBookErr);
     }
     try {
-      const scriptStore = await RegexScriptOperations["getRegexScriptStore"]();
-      
-      if (scriptStore[character_id]) {
-        delete scriptStore[character_id];
-      }
-      
-      if (scriptStore[`${character_id}_settings`]) {
-        delete scriptStore[`${character_id}_settings`];
-      }
-      
-      await RegexScriptOperations["saveRegexScriptStore"](scriptStore);
+      await RegexScriptOperations.deleteRegexScriptOwner(character_id);
     } catch (regexErr) {
       console.warn("Failed to delete regex scripts:", regexErr);
     }

@@ -16,14 +16,18 @@ import type { WorldBookEntry } from "@/lib/models/world-book-model";
 
 vi.mock("@/lib/data/local-storage", () => ({
   WORLD_BOOK_FILE: "world_book",
+  deleteRecord: vi.fn(),
   getAllEntries: vi.fn(),
+  getRecordMap: vi.fn(),
   getRecordByKey: vi.fn(),
   putRecord: vi.fn(),
   clearStore: vi.fn(),
 }));
 
 import {
+  deleteRecord,
   getAllEntries,
+  getRecordMap,
   getRecordByKey,
   putRecord,
   clearStore,
@@ -44,13 +48,13 @@ describe("WorldBookOperations", () => {
 
   describe("getWorldBookKeysByPrefix", () => {
     it("应该返回匹配前缀的所有键", async () => {
-      vi.mocked(getAllEntries).mockResolvedValue([
-        { key: "global:fantasy_1", value: {} },
-        { key: "global:scifi_2", value: {} },
-        { key: "character:char_123", value: {} },
-        { key: "dialogue:dlg_xyz", value: {} },
-        { key: "global:fantasy_1_settings", value: {} }, // settings 键
-      ]);
+      vi.mocked(getRecordMap).mockResolvedValue({
+        "global:fantasy_1": {},
+        "global:scifi_2": {},
+        "character:char_123": {},
+        "dialogue:dlg_xyz": {},
+        "global:fantasy_1_settings": {},
+      });
 
       const result = await WorldBookOperations.getWorldBookKeysByPrefix("global:");
 
@@ -59,11 +63,11 @@ describe("WorldBookOperations", () => {
     });
 
     it("应该排除 settings 键", async () => {
-      vi.mocked(getAllEntries).mockResolvedValue([
-        { key: "character:char_1", value: {} },
-        { key: "character:char_1_settings", value: {} },
-        { key: "character:char_2", value: {} },
-      ]);
+      vi.mocked(getRecordMap).mockResolvedValue({
+        "character:char_1": {},
+        "character:char_1_settings": {},
+        "character:char_2": {},
+      });
 
       const result = await WorldBookOperations.getWorldBookKeysByPrefix("character:");
 
@@ -72,10 +76,10 @@ describe("WorldBookOperations", () => {
     });
 
     it("没有匹配的键时应该返回空数组", async () => {
-      vi.mocked(getAllEntries).mockResolvedValue([
-        { key: "character:char_1", value: {} },
-        { key: "dialogue:dlg_1", value: {} },
-      ]);
+      vi.mocked(getRecordMap).mockResolvedValue({
+        "character:char_1": {},
+        "dialogue:dlg_1": {},
+      });
 
       const result = await WorldBookOperations.getWorldBookKeysByPrefix("global:");
 
@@ -83,12 +87,12 @@ describe("WorldBookOperations", () => {
     });
 
     it("应该处理不同的前缀", async () => {
-      vi.mocked(getAllEntries).mockResolvedValue([
-        { key: "global:test_1", value: {} },
-        { key: "character:test_2", value: {} },
-        { key: "dialogue:test_3", value: {} },
-        { key: "persona:test_4", value: {} },
-      ]);
+      vi.mocked(getRecordMap).mockResolvedValue({
+        "global:test_1": {},
+        "character:test_2": {},
+        "dialogue:test_3": {},
+        "persona:test_4": {},
+      });
 
       const globalKeys = await WorldBookOperations.getWorldBookKeysByPrefix("global:");
       const charKeys = await WorldBookOperations.getWorldBookKeysByPrefix("character:");
@@ -374,16 +378,16 @@ describe("WorldBookOperations", () => {
     });
 
     it("deleteWorldBook 应该删除主记录和 settings", async () => {
-      vi.mocked(getAllEntries).mockResolvedValue([
-        { key: "global:fantasy_1", value: {} },
-        { key: "global:fantasy_1_settings", value: {} },
-      ]);
-      vi.mocked(putRecord).mockResolvedValue(undefined);
-      vi.mocked(clearStore).mockResolvedValue(undefined);
+      vi.mocked(getRecordByKey)
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({});
+      vi.mocked(deleteRecord).mockResolvedValue(undefined);
 
       const result = await WorldBookOperations.deleteWorldBook("global:fantasy_1");
 
       expect(result).toBe(true);
+      expect(deleteRecord).toHaveBeenCalledWith("world_book", "global:fantasy_1");
+      expect(deleteRecord).toHaveBeenCalledWith("world_book", "global:fantasy_1_settings");
     });
   });
 });

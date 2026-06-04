@@ -70,18 +70,11 @@ export async function getNextGlobalId(): Promise<string> {
 export async function listGlobalRegexScripts(): Promise<ListGlobalRegexScriptsResult> {
   try {
     const globalRegexScripts: GlobalRegexScript[] = [];
-    const store = await RegexScriptOperations["getRegexScriptStore"]();
-    
-    for (const key of Object.keys(store)) {
-      if (key.startsWith("global_regex_") && key.endsWith("_settings")) {
-        const settings = store[key];
+    const settingsEntries = await RegexScriptOperations.listGlobalRegexScriptSettings();
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // 类型守卫：确保 settings 包含有效的 metadata
-        // ═══════════════════════════════════════════════════════════════════════
-        if (hasMetadata(settings)) {
-          globalRegexScripts.push(settings.metadata);
-        }
+    for (const { settings } of settingsEntries) {
+      if (hasMetadata(settings)) {
+        globalRegexScripts.push(settings.metadata);
       }
     }
 
@@ -214,13 +207,7 @@ export async function deleteGlobalRegexScript(globalId: string): Promise<{
       };
     }
 
-    const store = await RegexScriptOperations["getRegexScriptStore"]();
-    
-    delete store[globalId];
-    
-    delete store[`${globalId}_settings`];
-    
-    await RegexScriptOperations["saveRegexScriptStore"](store);
+    await RegexScriptOperations.deleteRegexScriptOwner(globalId);
 
     return {
       success: true,

@@ -17,9 +17,14 @@
 | `regex-allow-list-operation.ts` | 操作类 | 正则白名单操作 |
 | `regex-preset-operation.ts` | 操作类 | 正则预设操作 |
 | `regex-script-operation.ts` | 操作类 | 正则脚本操作 |
+| `regex-script-source.ts` | 辅助模块 | 正则脚本来源装配、授权判断与排序规则 |
 | `session-operation.ts` | 操作类 | 会话操作 |
 | `world-book-operation.ts` | 操作类 | 世界书操作 |
 
-## 最新变更（2026-03-08）
+## 最新变更（2026-06-04）
+
+- `world-book-operation.ts` 与 `regex-script-operation.ts` 的 owner/key 更新路径改为单 record 写入；collection listing 统一使用 `local-storage.ts` 的 `getRecordMap()`，不再为了更新一个 key 清空并重写整个 store。
+
+## 之前变更（2026-03-08）
 
 - `preset-operation.ts` 现已保留 ST 预设中的关键采样参数，导入后不会再丢失 `openai_max_context`、`openai_max_tokens`、`temperature`、`top_p` 等信息。

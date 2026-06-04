@@ -12,3 +12,7 @@
 | `delete.ts` | 操作 | 角色删除 |
 | `list.ts` | 操作 | 角色列表查询 |
 | `move-to-top.ts` | 操作 | 角色置顶 |
+
+## 最新变更（2026-06-04）
+
+- `delete.ts` 删除关联世界书和正则脚本时改用公开数据操作 Interface，不再绕过 Module 直接读写底层 store map。

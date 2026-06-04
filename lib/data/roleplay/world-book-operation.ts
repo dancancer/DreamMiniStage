@@ -7,8 +7,8 @@
 
 import {
   WORLD_BOOK_FILE,
-  clearStore,
-  getAllEntries,
+  deleteRecord,
+  getRecordMap,
   getRecordByKey,
   putRecord,
 } from "@/lib/data/local-storage";
@@ -36,13 +36,7 @@ export class WorldBookOperations {
    * 获取所有世界书键值对
    */
   static async getWorldBooks(): Promise<Record<string, unknown>> {
-    const entries = await getAllEntries<unknown>(WORLD_BOOK_FILE);
-    return entries.reduce<Record<string, unknown>>((acc, { key, value }) => {
-      if (key) {
-        acc[String(key)] = value;
-      }
-      return acc;
-    }, {});
+    return getRecordMap<unknown>(WORLD_BOOK_FILE);
   }
 
   /**
@@ -66,13 +60,6 @@ export class WorldBookOperations {
       // 匹配前缀
       return key.startsWith(prefix);
     });
-  }
-
-  private static async saveWorldBooks(worldBooks: Record<string, unknown>): Promise<void> {
-    await clearStore(WORLD_BOOK_FILE);
-    for (const [key, value] of Object.entries(worldBooks)) {
-      await putRecord(WORLD_BOOK_FILE, key, value);
-    }
   }
 
   // ════════════════════════════════════════════════════════════════════════
@@ -113,8 +100,6 @@ export class WorldBookOperations {
     key: string,
     worldBook: Record<string, WorldBookEntry> | WorldBookEntry[],
   ): Promise<boolean> {
-    const worldBooks = await this.getWorldBooks();
-
     const processEntry = (entry: WorldBookEntry): WorldBookEntry => {
       const ext = (entry.extensions || {}) as Record<string, unknown>;
       const extDepth = typeof ext.depth === "number" ? ext.depth : undefined;
@@ -160,8 +145,7 @@ export class WorldBookOperations {
         }),
       );
 
-    worldBooks[key] = entries;
-    await this.saveWorldBooks(worldBooks);
+    await putRecord(WORLD_BOOK_FILE, key, entries);
     return true;
   }
 
@@ -262,12 +246,10 @@ export class WorldBookOperations {
     key: string,
     updates: Partial<WorldBookSettings>,
   ): Promise<WorldBookSettings> {
-    const worldBooks = await this.getWorldBooks();
     const currentSettings = await this.getWorldBookSettings(key);
     const newSettings = { ...currentSettings, ...updates };
 
-    worldBooks[`${key}_settings`] = newSettings;
-    await this.saveWorldBooks(worldBooks);
+    await putRecord(WORLD_BOOK_FILE, `${key}_settings`, newSettings);
 
     return newSettings;
   }
@@ -280,22 +262,16 @@ export class WorldBookOperations {
    */
   static async deleteWorldBook(key: string): Promise<boolean> {
     try {
-      const worldBooks = await this.getWorldBooks();
-      let changed = false;
-
-      if (worldBooks[key]) {
-        delete worldBooks[key];
-        changed = true;
-      }
-
-      if (worldBooks[`${key}_settings`]) {
-        delete worldBooks[`${key}_settings`];
-        changed = true;
-      }
-
-      if (!changed) return false;
-
-      await this.saveWorldBooks(worldBooks);
+      const settingsKey = `${key}_settings`;
+      const [worldBook, settings] = await Promise.all([
+        getRecordByKey<unknown>(WORLD_BOOK_FILE, key),
+        getRecordByKey<unknown>(WORLD_BOOK_FILE, settingsKey),
+      ]);
+      if (!worldBook && !settings) return false;
+      await Promise.all([
+        worldBook ? deleteRecord(WORLD_BOOK_FILE, key) : Promise.resolve(),
+        settings ? deleteRecord(WORLD_BOOK_FILE, settingsKey) : Promise.resolve(),
+      ]);
       return true;
     } catch (error) {
       console.error("Error deleting world book:", error);

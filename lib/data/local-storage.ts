@@ -45,10 +45,6 @@ const STORE_NAMES = [
   REGEX_PRESETS_FILE,
 ];
 
-// 预留数组模式仓库（当前无启用项）
-const ARRAY_STORES: string[] = [];
-
-// 迁移到按记录存储的仓库
 const RECORD_STORES: Array<string> = [
   CHARACTERS_RECORD_FILE,
   CHARACTER_DIALOGUES_FILE,
@@ -91,7 +87,6 @@ const BackupSchema = z.object({
 }).passthrough();
 
 let dbPromise: Promise<IDBDatabase> | null = null;
-let initPromise: Promise<void> | null = null;
 
 function assertIndexedDB(): IDBFactory {
   if (typeof indexedDB === "undefined") {
@@ -146,41 +141,7 @@ function openDB(): Promise<IDBDatabase> {
 }
 
 async function ensureDataStoresInitialized(): Promise<void> {
-  if (initPromise) {
-    return initPromise;
-  }
-
-  initPromise = (async () => {
-    const db = await openDB();
-
-    await Promise.all(ARRAY_STORES.map(async storeName => {
-      const tx = db.transaction(storeName, "readwrite");
-      const store = tx.objectStore(storeName);
-      const existing = await promisify(store.get("data"));
-      if (existing === undefined) {
-        await promisify(store.put([], "data"));
-      }
-    }));
-  })();
-
-  return initPromise;
-}
-
-export async function readData(storeName: string): Promise<unknown[]> {
-  await ensureDataStoresInitialized();
-  const db = await openDB();
-  const tx = db.transaction(storeName, "readonly");
-  const store = tx.objectStore(storeName);
-  const result = await promisify(store.get("data"));
-  return result !== undefined ? (result as unknown[]) : [];
-}
-
-export async function writeData(storeName: string, data: unknown[]): Promise<void> {
-  await ensureDataStoresInitialized();
-  const db = await openDB();
-  const tx = db.transaction(storeName, "readwrite");
-  const store = tx.objectStore(storeName);
-  await promisify(store.put(data, "data"));
+  await openDB();
 }
 
 export async function initializeDataFiles(): Promise<void> {
@@ -249,6 +210,14 @@ export async function getAllEntries<T>(storeName: string): Promise<Array<{ key: 
   return entries;
 }
 
+export async function getRecordMap<T>(storeName: string): Promise<Record<string, T>> {
+  const entries = await getAllEntries<T>(storeName);
+  return entries.reduce<Record<string, T>>((acc, { key, value }) => {
+    acc[String(key)] = value;
+    return acc;
+  }, {});
+}
+
 export async function putRecord<T>(storeName: string, key: IDBValidKey, value: T): Promise<void> {
   await ensureDataStoresInitialized();
   const db = await openDB();
@@ -287,13 +256,6 @@ export async function exportAllData(): Promise<Record<string, unknown>> {
   const db = await openDB();
   const exportData: Record<string, unknown> = {};
 
-  // Handle array-based stores
-  for (const storeName of ARRAY_STORES) {
-    const data = await readData(storeName);
-    exportData[storeName] = data;
-  }
-
-  // Handle record-based stores
   for (const storeName of RECORD_STORES) {
     const entries = await getAllEntries<unknown>(storeName);
     exportData[storeName] = entries.map(({ key, value }) => {
@@ -337,14 +299,7 @@ export async function exportAllData(): Promise<Record<string, unknown>> {
 export async function importAllData(data: Record<string, unknown>): Promise<void> {
   const payload = validateBackupPayload(data);
 
-  // Array-based stores: full replace
-  for (const storeName of ARRAY_STORES) {
-    if (Array.isArray(payload[storeName])) {
-      await writeData(storeName, payload[storeName]);
-    }
-  }
-
-  // Record-based stores: clear then bulk put（分批防止长时间阻塞）
+  // Record stores use explicit full replace during backup restore.
   for (const storeName of RECORD_STORES) {
     const records = payload[storeName];
     if (!Array.isArray(records)) continue;
