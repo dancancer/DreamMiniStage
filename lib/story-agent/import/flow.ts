@@ -14,6 +14,11 @@ import {
 } from "@/lib/story-agent/blueprint";
 import { diagnoseInitialStateSources } from "@/lib/story-agent/blueprint/initial-state";
 import {
+  synthesizeUnsupportedWidgets,
+  type WidgetSynthesisDiagnostic,
+  type WidgetSynthesisModel,
+} from "@/lib/story-agent/render-intent";
+import {
   createStoryAgentCharacterData,
   createStorySessionForCharacter,
   saveStoryBlueprint,
@@ -52,6 +57,43 @@ export async function compileStoryAgentImportWithQaRepair(
     autoApplied: qaRepair.autoApplied,
     pendingConfirmation: qaRepair.pendingConfirmation,
   });
+}
+
+// NS-Phase 4.2 富 UI 复现（ADR-0011）：把 classifier 标 unsupported 的 script-widget 交给注入的
+// widget 合成模型，复现为白名单 RenderIntent 追加进 blueprint.renderRules；无法安全复现的落
+// Import Diagnostic（render.widget_synthesis_failed）。全程不执行任何 script（INV-3）。模型端口
+// 由调用方注入——prod 传 model-gateway adapter，测试传 fake。与 QA-repair 解耦、可独立串联。
+export async function synthesizeImportWidgets(
+  preview: StoryAgentImportPreview,
+  widgetSynthesisModel: WidgetSynthesisModel,
+): Promise<StoryAgentImportPreview> {
+  const { intents, diagnostics } = await synthesizeUnsupportedWidgets(
+    preview.bundle.regexScripts.map((script) => script.raw),
+    widgetSynthesisModel,
+  );
+  if (intents.length === 0 && diagnostics.length === 0) return preview;
+
+  const blueprint: SessionBlueprint = {
+    ...preview.blueprint,
+    renderRules: [...preview.blueprint.renderRules, ...intents],
+    diagnostics: [...preview.blueprint.diagnostics, ...diagnostics.map(toSynthesisDiagnostic)],
+  };
+  return {
+    ...preview,
+    blueprint,
+    summary: summarizeStoryAgentImport(preview.bundle, blueprint),
+    confirmation: createConfirmation(blueprint, preview.qaRepair?.pendingConfirmation),
+    diagnostics: [...preview.bundle.diagnostics, ...blueprint.diagnostics],
+  };
+}
+
+function toSynthesisDiagnostic(diagnostic: WidgetSynthesisDiagnostic): ImportDiagnostic {
+  return {
+    code: "render.widget_synthesis_failed",
+    severity: "warning",
+    message: `Unsupported UI widget "${diagnostic.scriptName}" could not be reproduced as a RenderIntent: ${diagnostic.reason}`,
+    sourceField: diagnostic.scriptName,
+  };
 }
 
 function buildImportedBundle(

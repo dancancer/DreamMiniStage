@@ -19,6 +19,15 @@ export {
 } from "./report";
 
 export {
+  createWidgetSynthesisModel,
+  synthesizeRenderIntent,
+  synthesizeUnsupportedWidgets,
+  type UnsupportedWidgetSynthesisResult,
+  type WidgetSynthesisDiagnostic,
+  type WidgetSynthesisModel,
+} from "./synthesize-widget";
+
+export {
   cleanRenderIntentMatchValues,
   extractRenderIntentMatches,
   stripRenderIntentSources,

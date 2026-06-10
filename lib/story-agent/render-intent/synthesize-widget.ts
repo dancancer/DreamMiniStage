@@ -2,10 +2,11 @@
 // WidgetSynthesisModel 端口），产出 RenderIntentSpec → 经 4.1 确定性安全校验 → 编译成白名单
 // RenderIntent。LLM 失败 / 输出非规格 / 规格不安全，一律降级为 reason（落 Import Diagnostic），
 // 绝不让不安全内容进入渲染。prod 由调用方注入 model-gateway adapter，测试注入 fake。
+import type { RegexScript } from "@/lib/models/regex-script-model";
 import type { LLMConfig } from "@/lib/nodeflow/LLMNode/llm-config";
 import { cleanModelCallConfig } from "@/lib/nodeflow/LLMNode/clean-model-call-config";
 import { extractFirstJsonObject } from "@/lib/utils/extract-json";
-import { stripCodeFence } from "./classifier";
+import { classifyRegexScript, containsHtml, stripCodeFence } from "./classifier";
 import {
   compileRenderIntentSpec,
   validateRenderIntentSpec,
@@ -56,6 +57,50 @@ export async function synthesizeRenderIntent(
   }
 
   return { intent: compileRenderIntentSpec(spec, widget.scriptId) };
+}
+
+export interface WidgetSynthesisDiagnostic {
+  scriptName: string;
+  reason: string;
+}
+
+export interface UnsupportedWidgetSynthesisResult {
+  /** 合成并校验通过的安全 RenderIntent，供追加进 blueprint.renderRules。 */
+  intents: RenderIntent[];
+  /** 未能复现的 widget，供落 Import Diagnostic。 */
+  diagnostics: WidgetSynthesisDiagnostic[];
+}
+
+// 对一组 regex 脚本：只挑分类为 unsupported 且确实是 HTML widget 的，逐个交给 model 合成，
+// 合格 intent 收集、失败原因落诊断。非 UI / 可白名单转换的脚本由 compiler 既有路径处理，跳过。
+export async function synthesizeUnsupportedWidgets(
+  scripts: RegexScript[],
+  model: WidgetSynthesisModel,
+): Promise<UnsupportedWidgetSynthesisResult> {
+  const intents: RenderIntent[] = [];
+  const diagnostics: WidgetSynthesisDiagnostic[] = [];
+
+  for (const script of scripts) {
+    const classification = classifyRegexScript(script);
+    if (classification.kind !== "unsupported") continue;
+    const html = stripCodeFence(script.replaceString ?? "");
+    if (!containsHtml(html)) continue;
+
+    const outcome = await synthesizeRenderIntent(
+      { scriptId: classification.scriptId, scriptName: classification.scriptName, html },
+      model,
+    );
+    if (outcome.intent) {
+      intents.push(outcome.intent);
+    } else {
+      diagnostics.push({
+        scriptName: classification.scriptName,
+        reason: outcome.reason ?? "widget synthesis produced no render intent",
+      });
+    }
+  }
+
+  return { intents, diagnostics };
 }
 
 // 仅做形状 coerce（kind/title/sourceTag 为字符串）；安全性交由 validateRenderIntentSpec。

@@ -139,7 +139,63 @@ describe("story agent import flow", () => {
     expect(preview.confirmation.required).toBe(true);
     expect(preview.blueprint.profile.name).toBe("QA Card");
   });
+
+  it("synthesizes an unsupported UI widget into an extra render rule", async () => {
+    const { compileStoryAgentImport, synthesizeImportWidgets } = await import("../flow");
+    const preview = compileStoryAgentImport(widgetInput());
+    const before = preview.blueprint.renderRules.length;
+    const model = async () => ({
+      kind: "status-panel",
+      title: "好感度",
+      sourceTag: "Dashboard",
+      fields: [{ label: "好感", valueTemplate: "$json.aff" }],
+    });
+
+    const next = await synthesizeImportWidgets(preview, model);
+
+    expect(next.blueprint.renderRules.length).toBe(before + 1);
+    expect(next.blueprint.renderRules.some((rule) => rule.kind === "status-panel")).toBe(true);
+    expect(next.summary.renderRuleCount).toBe(before + 1);
+  });
+
+  it("records a diagnostic when an unsupported widget cannot be synthesized", async () => {
+    const { compileStoryAgentImport, synthesizeImportWidgets } = await import("../flow");
+    const preview = compileStoryAgentImport(widgetInput());
+    const before = preview.blueprint.renderRules.length;
+    const model = async () => ({ nope: true });
+
+    const next = await synthesizeImportWidgets(preview, model);
+
+    expect(next.blueprint.renderRules.length).toBe(before);
+    expect(next.diagnostics.some((diagnostic) => diagnostic.code === "render.widget_synthesis_failed")).toBe(true);
+  });
 });
+
+function widgetInput() {
+  return {
+    characterId: "agent-widget",
+    createdAt: "2026-06-10T00:00:00.000Z",
+    character: {
+      raw: { data: { name: "Widget Card", first_mes: "hi" } },
+      source: source("widget.card.json", "json-character"),
+    },
+    regexScripts: [{
+      id: "widget-regex",
+      name: "widget-regex",
+      raw: {
+        scripts: [{
+          id: "dash-1",
+          scriptName: "好感度面板",
+          findRegex: "<Dashboard>([\\s\\S]*?)</Dashboard>",
+          replaceString: "<div class='dash'><script>render()</script></div>",
+          trimStrings: [],
+          placement: [2],
+        }],
+      },
+      source: source("widget.regex.json", "regex"),
+    }],
+  };
+}
 
 function createInput() {
   return {

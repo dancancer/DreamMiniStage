@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { LLMConfig } from "@/lib/nodeflow/LLMNode/llm-config";
+import { RegexPlacement, type RegexScript } from "@/lib/models/regex-script-model";
 import {
   buildWidgetSynthesisPrompt,
   createWidgetSynthesisModel,
   parseRenderIntentSpec,
   synthesizeRenderIntent,
+  synthesizeUnsupportedWidgets,
 } from "../synthesize-widget";
 
 const widget = {
@@ -78,6 +80,53 @@ describe("parseRenderIntentSpec", () => {
 
   it("throws when there is no JSON object", () => {
     expect(() => parseRenderIntentSpec("no json here")).toThrow();
+  });
+});
+
+function regexScript(partial: Partial<RegexScript> & Pick<RegexScript, "scriptName">): RegexScript {
+  return {
+    scriptKey: partial.scriptName,
+    scriptName: partial.scriptName,
+    findRegex: partial.findRegex ?? "<Widget>(.*?)</Widget>",
+    replaceString: partial.replaceString ?? "",
+    trimStrings: [],
+    placement: partial.placement ?? [RegexPlacement.AI_OUTPUT],
+    promptOnly: partial.promptOnly,
+    markdownOnly: partial.markdownOnly,
+  };
+}
+
+describe("synthesizeUnsupportedWidgets", () => {
+  it("synthesizes only unsupported UI widgets, skipping supported and non-UI scripts", async () => {
+    const scripts = [
+      regexScript({ scriptName: "好感度", replaceString: "<div class='aff'><script>render()</script></div>" }),
+      regexScript({ scriptName: "纯提示", replaceString: "", promptOnly: true }),
+    ];
+    let calls = 0;
+    const model = async () => {
+      calls += 1;
+      return { kind: "status-panel", title: "好感度", sourceTag: "SFW", fields: [{ label: "好感", valueTemplate: "$json.aff" }] };
+    };
+
+    const { intents, diagnostics } = await synthesizeUnsupportedWidgets(scripts, model);
+
+    expect(calls).toBe(1);
+    expect(intents).toHaveLength(1);
+    expect(intents[0].kind).toBe("status-panel");
+    expect(intents[0].sourceScriptId).toBe("好感度");
+    expect(diagnostics).toHaveLength(0);
+  });
+
+  it("records a diagnostic when an unsupported widget cannot be synthesized", async () => {
+    const scripts = [regexScript({ scriptName: "复杂面板", replaceString: "<div><script>x</script></div>" })];
+    const model = async () => ({ nope: true });
+
+    const { intents, diagnostics } = await synthesizeUnsupportedWidgets(scripts, model);
+
+    expect(intents).toHaveLength(0);
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].scriptName).toBe("复杂面板");
+    expect(diagnostics[0].reason).toBeTruthy();
   });
 });
 

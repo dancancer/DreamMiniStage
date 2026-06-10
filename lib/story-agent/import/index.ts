@@ -1,7 +1,9 @@
 export {
   commitStoryAgentImport,
   compileStoryAgentImport,
+  compileStoryAgentImportWithQaRepair,
   importStoryAgentSession,
+  synthesizeImportWidgets,
 } from "./flow";
 
 export type {
