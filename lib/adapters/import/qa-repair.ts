@@ -6,6 +6,7 @@
 import type { ImportedAssetBundle, ImportDiagnostic } from "./bundle-types";
 import { diagnoseImportedAssetBundle } from "./bundle-diagnostics";
 import {
+  RepairPatchValidationError,
   applyAutoRepairPatch,
   isRepairablePath,
   validateRepairOutput,
@@ -25,11 +26,20 @@ export interface QaRepairOutcome {
   pendingConfirmation: ValidatedRepairPatch[];
 }
 
+export interface RunImportQaRepairOptions {
+  /** 调用方补充的诊断（如 blueprint 层的 initial-state / 未知约定诊断），让 QA 模型看到。 */
+  extraDiagnostics?: ImportDiagnostic[];
+}
+
 export async function runImportQaRepair(
   bundle: ImportedAssetBundle,
   qaModel: QaModelPort,
+  options: RunImportQaRepairOptions = {},
 ): Promise<QaRepairOutcome> {
-  const diagnostics = diagnoseImportedAssetBundle(bundle);
+  const diagnostics = [
+    ...diagnoseImportedAssetBundle(bundle),
+    ...(options.extraDiagnostics ?? []),
+  ];
   const input: LlmQaInput = {
     bundleId: bundle.bundleId,
     schemaVersion: bundle.schemaVersion,
@@ -39,6 +49,20 @@ export async function runImportQaRepair(
 
   const validated = validateRepairOutput(await qaModel(input));
 
+  // repairablePaths 是 host-side allowlist，不只是 prompt 提示：模型不得修补未提供的路径
+  // （即便该路径在全局 risk map 上是 low-risk），否则可能静默自动应用未经请求的改动。
+  const offered = new Set(input.repairablePaths);
+  for (const entry of validated) {
+    if (!offered.has(entry.patch.targetPath)) {
+      throw new RepairPatchValidationError(
+        "repair.path_not_offered",
+        `Patch targets "${entry.patch.targetPath}", which was not offered in repairablePaths.`,
+      );
+    }
+  }
+
+  // low-risk 自动应用，medium/high 留待确认。当前 repairablePaths 仅含 character.* 高风险
+  // 路径，故实际多为 pending；待 offered 集合纳入 low-risk 路径后，auto-apply 分支即生效。
   const autoApplied: ValidatedRepairPatch[] = [];
   const pendingConfirmation: ValidatedRepairPatch[] = [];
   let repaired = bundle;

@@ -70,7 +70,15 @@ export {
   runImportQaRepair,
   type QaModelPort,
   type QaRepairOutcome,
+  type RunImportQaRepairOptions,
 } from "./qa-repair";
+
+export {
+  buildQaRepairPrompt,
+  createQaModelAdapter,
+  parseQaRepairResponse,
+  type QaModelAdapterDeps,
+} from "./qa-repair-model";
 
 export {
   regexImportPipeline,

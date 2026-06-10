@@ -47,38 +47,21 @@ function makeBundleMissingDescription(): ImportedAssetBundle {
 }
 
 describe("runImportQaRepair", () => {
-  it("auto-applies low-risk patches and defers medium/high for confirmation", async () => {
-    const bundle = makeBundle();
-    const qaModel = async (_input: LlmQaInput) => ({
+  it("rejects a patch targeting a path outside the offered allowlist", async () => {
+    const bundle = makeBundleMissingDescription();
+    const qaModel = async () => ({
       patches: [
         {
           id: "p1",
           operation: "replace",
           targetPath: "/character/creator",
           value: "qa-bot",
-          reason: "normalize creator metadata",
-        },
-        {
-          id: "p2",
-          operation: "replace",
-          targetPath: "/character/description",
-          value: "rewritten identity",
-          reason: "improve description",
+          reason: "unsolicited change outside repairablePaths",
         },
       ],
     });
 
-    const outcome = await runImportQaRepair(bundle, qaModel);
-
-    expect(outcome.bundle.character.creator).toBe("qa-bot");
-    expect(outcome.bundle.character.description).toBe("original description");
-    expect(outcome.autoApplied.map((entry) => entry.patch.targetPath)).toEqual([
-      "/character/creator",
-    ]);
-    expect(outcome.pendingConfirmation.map((entry) => entry.patch.targetPath)).toEqual([
-      "/character/description",
-    ]);
-    expect(bundle.character.creator).toBe("orig");
+    await expect(runImportQaRepair(bundle, qaModel)).rejects.toThrow();
   });
 
   it("offers JSON Pointer repairable paths the model can echo and validate", async () => {
@@ -105,6 +88,9 @@ describe("runImportQaRepair", () => {
     expect(outcome.pendingConfirmation.map((entry) => entry.patch.targetPath)).toContain(
       "/character/description",
     );
+    // /character/description is high-risk → deferred, not auto-applied.
+    expect(outcome.autoApplied).toEqual([]);
+    expect(outcome.bundle.character.description).toBeUndefined();
   });
 
   it("propagates patch validation errors instead of swallowing them", async () => {
@@ -123,6 +109,32 @@ describe("runImportQaRepair", () => {
     });
 
     await expect(runImportQaRepair(bundle, qaModel)).rejects.toThrow();
+  });
+
+  it("includes caller-supplied extra diagnostics in the QA input", async () => {
+    const bundle = makeBundle();
+    let received: LlmQaInput | undefined;
+    const qaModel = async (input: LlmQaInput) => {
+      received = input;
+      return { patches: [] };
+    };
+
+    await runImportQaRepair(bundle, qaModel, {
+      extraDiagnostics: [
+        {
+          code: "story.initial_state.template_only",
+          severity: "warning",
+          message: "template only",
+          targetPath: "initialState.variables",
+        },
+      ],
+    });
+
+    expect(received?.diagnostics.some((d) => d.code === "story.initial_state.template_only")).toBe(
+      true,
+    );
+    // state-source diagnostics add context but must NOT widen the patchable allowlist.
+    expect(received?.repairablePaths).toEqual([]);
   });
 
   it("passes bundle id, schema version and diagnostics to the QA model", async () => {

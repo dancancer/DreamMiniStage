@@ -12,6 +12,7 @@ import {
   compileSessionBlueprint,
   type SessionBlueprint,
 } from "@/lib/story-agent/blueprint";
+import { diagnoseInitialStateSources } from "@/lib/story-agent/blueprint/initial-state";
 import {
   createStoryAgentCharacterData,
   createStorySessionForCharacter,
@@ -42,7 +43,11 @@ export async function compileStoryAgentImportWithQaRepair(
   qaModel: QaModelPort,
 ): Promise<StoryAgentImportPreview> {
   const { bundle, createdAt } = buildImportedBundle(input);
-  const qaRepair = await runImportQaRepair(bundle, qaModel);
+  // 把 blueprint 层的 initial-state / 未知约定诊断也喂给 QA 模型，使其能看到变量约定缺口
+  // （这些诊断在 bundle 层不可见）。QA 仍只在编译期运行，不进运行时（INV-6）。
+  const qaRepair = await runImportQaRepair(bundle, qaModel, {
+    extraDiagnostics: diagnoseInitialStateSources(bundle),
+  });
   return previewFromBundle(qaRepair.bundle, input.blueprintId, createdAt, {
     autoApplied: qaRepair.autoApplied,
     pendingConfirmation: qaRepair.pendingConfirmation,

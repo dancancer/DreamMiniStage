@@ -1,0 +1,83 @@
+// qa-repair-model —— QaModelPort 的 prod 适配器。
+// 把"调真实模型"收敛在这里：用用户当前会话模型配置 + QA prompt 走非流式 invokeLLM，
+// 解析出待校验的 patch 输出。invokeLLM 被注入，便于单测；prompt/parse 是纯函数。
+import type { LLMConfig } from "@/lib/nodeflow/LLMNode/llm-config";
+import { extractFirstJsonObject } from "@/lib/utils/extract-json";
+import type { QaModelPort } from "./qa-repair";
+import type { LlmQaInput } from "./repair-patch";
+
+type ChatMessage = { role: string; content: string };
+
+const SYSTEM_INSTRUCTION = [
+  "You are an import QA assistant for DreamMiniStage.",
+  "You receive import diagnostics for a compiled asset bundle and propose minimal, typed repair patches.",
+  "Rules:",
+  '- Output ONLY a JSON object of the shape {"patches": RepairPatch[]}. No prose, no markdown fences.',
+  "- Each patch: { id, operation: 'add'|'replace'|'remove', targetPath, value (omit for remove), reason }.",
+  "- targetPath MUST be a JSON Pointer starting with '/'. Only patch paths listed in repairablePaths.",
+  "- Do NOT rewrite whole assets. Do NOT set a claimedRisk; risk is computed deterministically by the host.",
+  '- If nothing should change, return {"patches": []}.',
+].join("\n");
+
+export function buildQaRepairPrompt(input: LlmQaInput): ChatMessage[] {
+  return [
+    { role: "system", content: SYSTEM_INSTRUCTION },
+    { role: "user", content: JSON.stringify(input, null, 2) },
+  ];
+}
+
+export function parseQaRepairResponse(text: string): unknown {
+  const json = extractFirstJsonObject(stripCodeFence(text));
+  if (!json) {
+    throw new Error("QA repair response did not contain a JSON object.");
+  }
+  return JSON.parse(json);
+}
+
+export interface QaModelAdapterDeps {
+  /** 非流式模型调用，返回完整文本（prod 传 LLMNodeTools.invokeLLM）。 */
+  invokeLLM: (config: LLMConfig) => Promise<string>;
+  /** 用户当前会话模型配置（modelName/apiKey/baseUrl/llmType/...）。 */
+  baseConfig: LLMConfig;
+}
+
+export function createQaModelAdapter(deps: QaModelAdapterDeps): QaModelPort {
+  return async (input) => {
+    const response = await deps.invokeLLM({
+      ...modelCallConfig(deps.baseConfig),
+      streaming: false,
+      messages: buildQaRepairPrompt(input),
+    });
+    return parseQaRepairResponse(response);
+  };
+}
+
+// 只保留模型调用本身需要的字段，剔除会话级污染（tools / mvuToolEnabled / scriptTools /
+// promptNames / postProcessingMode / prefill / placeholder / stopStrings / 会话标识等）：
+// QA-repair 期望的是一次纯非流式 JSON 文本调用。白名单方式，新增会话字段默认被排除。
+function modelCallConfig(config: LLMConfig): LLMConfig {
+  return {
+    modelName: config.modelName,
+    apiKey: config.apiKey,
+    baseUrl: config.baseUrl,
+    llmType: config.llmType,
+    temperature: config.temperature,
+    contextWindow: config.contextWindow,
+    maxTokens: config.maxTokens,
+    timeout: config.timeout,
+    maxRetries: config.maxRetries,
+    topP: config.topP,
+    frequencyPenalty: config.frequencyPenalty,
+    presencePenalty: config.presencePenalty,
+    topK: config.topK,
+    repeatPenalty: config.repeatPenalty,
+    language: config.language,
+  };
+}
+
+function stripCodeFence(value: string): string {
+  return value
+    .replace(/^```[a-z]*\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+}
