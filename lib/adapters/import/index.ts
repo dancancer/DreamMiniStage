@@ -67,6 +67,12 @@ export {
 } from "./repair-patch";
 
 export {
+  runImportQaRepair,
+  type QaModelPort,
+  type QaRepairOutcome,
+} from "./qa-repair";
+
+export {
   regexImportPipeline,
   importRegexScripts,
   canImportRegexScripts,

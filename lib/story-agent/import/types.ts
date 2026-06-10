@@ -2,6 +2,7 @@ import type {
   AssetSource,
   ImportedAssetBundle,
   ImportDiagnostic,
+  ValidatedRepairPatch,
 } from "@/lib/adapters/import";
 import type { SessionBlueprint } from "@/lib/story-agent/blueprint";
 import type { Session } from "@/types/session";
@@ -51,6 +52,11 @@ export interface StoryAgentImportPreview {
   summary: StoryAgentImportSummary;
   confirmation: StoryAgentConfirmation;
   diagnostics: ImportDiagnostic[];
+  /** 导入期 QA-repair 结果（仅在走 LLM 质检路径时存在）。 */
+  qaRepair?: {
+    autoApplied: ValidatedRepairPatch[];
+    pendingConfirmation: ValidatedRepairPatch[];
+  };
 }
 
 export interface StoryAgentCommitInput {

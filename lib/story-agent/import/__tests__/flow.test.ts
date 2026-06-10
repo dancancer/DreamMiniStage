@@ -108,6 +108,40 @@ describe("story agent import flow", () => {
     expect(turn.llmConfig.messages.length).toBeGreaterThan(0);
     expect(turn.llmConfig.dialogueKey).toBe("session-1");
   });
+
+  it("runs import QA repair, auto-applying low-risk and deferring high-risk patches", async () => {
+    const { compileStoryAgentImportWithQaRepair } = await import("../flow");
+    const qaModel = async () => ({
+      patches: [
+        {
+          id: "p1",
+          operation: "replace",
+          targetPath: "/character/creator",
+          value: "qa-bot",
+          reason: "normalize creator metadata",
+        },
+        {
+          id: "p2",
+          operation: "replace",
+          targetPath: "/character/description",
+          value: "rewritten identity",
+          reason: "improve description",
+        },
+      ],
+    });
+
+    const preview = await compileStoryAgentImportWithQaRepair(createInput(), qaModel);
+
+    expect(preview.bundle.character.creator).toBe("qa-bot");
+    expect(preview.qaRepair?.autoApplied.map((entry) => entry.patch.targetPath)).toEqual([
+      "/character/creator",
+    ]);
+    expect(preview.qaRepair?.pendingConfirmation.map((entry) => entry.patch.targetPath)).toEqual([
+      "/character/description",
+    ]);
+    expect(preview.confirmation.required).toBe(true);
+    expect(preview.blueprint.profile.name).toBe("【Sgw】又看一集");
+  });
 });
 
 function createInput() {

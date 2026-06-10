@@ -1,6 +1,10 @@
 import {
   createImportedAssetBundle,
+  runImportQaRepair,
   type ImportDiagnostic,
+  type ImportedAssetBundle,
+  type QaModelPort,
+  type ValidatedRepairPatch,
 } from "@/lib/adapters/import";
 import { setBlob } from "@/lib/data/local-storage";
 import { LocalCharacterRecordOperations } from "@/lib/data/roleplay/character-record-operation";
@@ -26,6 +30,28 @@ import type {
 export function compileStoryAgentImport(
   input: StoryAgentImportInput,
 ): StoryAgentImportPreview {
+  const { bundle, createdAt } = buildImportedBundle(input);
+  return previewFromBundle(bundle, input.blueprintId, createdAt);
+}
+
+// 走 QA-repair LLM 质检的导入预览：bundle 构建后先跑 QA-repair（low-risk 自动应用、
+// medium/high 留待确认），再用修复后的 bundle 编译 blueprint。qaModel 是注入的端口，
+// 不在此发起真实模型调用——prod 由调用方传入 model-gateway adapter，测试传 fake。
+export async function compileStoryAgentImportWithQaRepair(
+  input: StoryAgentImportInput,
+  qaModel: QaModelPort,
+): Promise<StoryAgentImportPreview> {
+  const { bundle, createdAt } = buildImportedBundle(input);
+  const qaRepair = await runImportQaRepair(bundle, qaModel);
+  return previewFromBundle(qaRepair.bundle, input.blueprintId, createdAt, {
+    autoApplied: qaRepair.autoApplied,
+    pendingConfirmation: qaRepair.pendingConfirmation,
+  });
+}
+
+function buildImportedBundle(
+  input: StoryAgentImportInput,
+): { bundle: ImportedAssetBundle; createdAt: string } {
   const createdAt = input.createdAt ?? new Date().toISOString();
   const characterId = input.characterId ?? createCharacterId(input.character.source.sourceHash);
   const bundle = createImportedAssetBundle({
@@ -38,17 +64,23 @@ export function compileStoryAgentImport(
     preset: input.preset,
     regexScripts: input.regexScripts,
   });
-  const blueprint = compileSessionBlueprint(bundle, {
-    id: input.blueprintId,
-    createdAt,
-  });
+  return { bundle, createdAt };
+}
 
+function previewFromBundle(
+  bundle: ImportedAssetBundle,
+  blueprintId: string | undefined,
+  createdAt: string,
+  qaRepair?: StoryAgentImportPreview["qaRepair"],
+): StoryAgentImportPreview {
+  const blueprint = compileSessionBlueprint(bundle, { id: blueprintId, createdAt });
   return {
     bundle,
     blueprint,
     summary: summarizeStoryAgentImport(bundle, blueprint),
-    confirmation: createConfirmation(blueprint),
+    confirmation: createConfirmation(blueprint, qaRepair?.pendingConfirmation),
     diagnostics: [...bundle.diagnostics, ...blueprint.diagnostics],
+    qaRepair,
   };
 }
 
@@ -122,12 +154,19 @@ function summarizeBlueprint(blueprint: SessionBlueprint): StoryAgentImportSummar
   };
 }
 
-function createConfirmation(blueprint: SessionBlueprint): StoryAgentConfirmation {
+function createConfirmation(
+  blueprint: SessionBlueprint,
+  pendingPatches: ValidatedRepairPatch[] = [],
+): StoryAgentConfirmation {
   const reasons = [
     ...blueprint.repairReport.manualPatches.map((patch) => `Manual repair required: ${patch}`),
     ...blueprint.diagnostics
       .filter((diagnostic: ImportDiagnostic) => diagnostic.severity === "error")
       .map((diagnostic) => diagnostic.message),
+    ...pendingPatches.map(
+      (entry) =>
+        `QA repair NOT applied — manual review required (${entry.computedRisk}): ${entry.patch.targetPath} — ${entry.patch.reason}`,
+    ),
   ];
 
   return {

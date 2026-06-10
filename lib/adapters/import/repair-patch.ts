@@ -110,6 +110,12 @@ export function computeRepairRisk(
   return "high";
 }
 
+/** 给定 JSON Pointer 是否命中某条 repair 风险规则（即模型可以安全提议修补的路径）。 */
+export function isRepairablePath(targetPath: string): boolean {
+  if (!targetPath.startsWith("/")) return false;
+  return REPAIR_RISK_RULES.some((rule) => matchesPointer(rule.pattern, targetPath));
+}
+
 export function validateRepairPatch(input: unknown): ValidatedRepairPatch {
   const patch = repairPatchSchema.parse(input);
   assertOperationValue(patch);
