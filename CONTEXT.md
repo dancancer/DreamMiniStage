@@ -130,6 +130,10 @@ _Avoid_: Plugin script, JavaScript, render code
 从受支持叙事输出模式中提取的安全 UI 语义结构。它描述界面可以渲染什么，不执行任意来源内容。
 _Avoid_: HTML, widget code, script output
 
+**Render Intent Synthesis**:
+导入期把不安全的 script-driven UI widget 的**功能意图**复现为安全 Render Intent 的分析过程：分析 widget 消费什么数据、渲染什么结构，由 LLM 产出经确定性校验的声明式规格，再编译为白名单 Render Intent。它**不执行源脚本**，也不产出可执行代码。
+_Avoid_: script execution, HTML passthrough, widget transpilation
+
 **Unsupported Regex Fallback**:
 对无法安全表达的 regex 或源行为的显式处理方式。不支持的行为应成为诊断或被剥离，不应静默运行。
 _Avoid_: Compatibility mode, silent fallback, best effort execution

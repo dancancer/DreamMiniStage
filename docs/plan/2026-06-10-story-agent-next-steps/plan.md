@@ -48,8 +48,17 @@
 ### NS-Phase 3：RenderIntent 能力广度（主干 #2）+ 同区架构债
 
 - **3.0 render-helpers 去重**（架构候选 #5，纯 `proceed`、零护栏）：把逐字重复的 `isStatusJsonSourcePattern` / `isSfwStatusSourcePattern` 抽到 `lib/story-agent/render-intent/status-pattern.ts`。作为该区热身，**可作为整轮第一步**。
-- **3.1 gap-driven 拓宽白名单**：按真实卡需求补 world/map、media/opening player、card-specific action widget、可折叠长摘要；unsupported 一律转显式诊断（[[ADR-0005]]）。
-- **3.2 收尾 renderer isolation**（待完成项）：补对称的 legacy-mode 渲染边界测试（验证普通消息仍走 `RegexProcessor`），守护 [[ADR-0008]]。
+- **3.1 gap-driven 白名单（已分析，重定向）**：`scripts/analyze-card-gaps.ts` 跑目标卡发现富 UI 几乎全是 `<script>` 驱动全 HTML，按 [[ADR-0005]] 被拒——白名单已覆盖 collapsible/status/state/choice 等安全 widget，单纯"加 widget"无法解锁脚本 UI。富 UI 复现改由 **NS-Phase 4 Render Intent Synthesis** 承接。
+- **3.2 收尾 renderer isolation** ✅ 已落地：补了显式 `renderMode="legacy"` 对称测试，守护 [[ADR-0008]]。
+
+### NS-Phase 4：Render Intent Synthesis（富 UI 安全复现，见 [[ADR-0011]]）
+
+由目标卡 gap 分析驱动：把 script-driven UI widget 的功能复现为安全 RenderIntent，**不执行脚本**。
+
+- **4.1 RenderIntentSpec 规格 + 确定性安全校验**（地基，可独立 TDD）：定义 LLM 产出的声明式规格（白名单 kind / title / 字段 / 源 tag / 数据模板），及拒绝 script/handler/DOM/任意 HTML、只允许安全模板的 validator（类比 repair-patch typed patch）。
+- **4.2 导入期 widget 合成器**（复用 QA adapter）：把 unsupported script-widget 的 HTML 交给导入期 LLM，产出 RenderIntentSpec；经 4.1 校验后编译成 RenderIntent；不合格落 Import Diagnostic。
+- **4.3 数据契约**：widget 渲染所需的结构化数据由模型按约定吐出（与 Story State / 状态 tag 对齐）；纯表现型无数据契约的脚本保持 unsupported + 诊断。
+- **4.4 逐卡验证**：用 `scripts/analyze-card-gaps.ts` + 浏览器 E2E 验证目标卡的好感度/状态栏等 widget 安全复现。
 
 ### 正交架构债（独立小 PR，穿插推进）
 
@@ -75,9 +84,11 @@
 
 ## 7. 建议推进顺序
 
-1. （热身）NS-3.0 render-helpers —— 纯 proceed、零风险，验证流程。
-2. NS-Phase 1 MVU/状态能力广度 —— 主干 #1。
-3. NS-Phase 2 记忆能力 + 删死码 —— 主干 + 架构债两得。
-4. NS-Phase 3 RenderIntent 广度 + renderer 收尾。
-5. 穿插：persist-leak、self-sinks（正交架构债，独立小 PR）。
-6. 收尾债；之后再开后置项（branch capabilities）。
+1. （热身）NS-3.0 render-helpers —— ✅ 已落地。
+2. NS-Phase 1 MVU/状态能力广度 —— ✅ 核心落地（registry / replay 码 / QA-repair 编排器+adapter / state diagnostics / thinking；1.2b 完整变量注入与 4.x 同源待做）。
+3. NS-Phase 2 记忆能力 + 删死码 —— ✅ 落地。
+4. NS-Phase 3 renderer 收尾 ✅；白名单广度经分析重定向至 NS-Phase 4。
+5. 正交架构债：persist-leak ✅；self-sinks 有据跳过（SSE 复用 buffered，拆分反增 sink→sink 耦合，Codex 认同）。
+6. 收尾债：`.playwright-mcp` gitignore ✅；`.husky` chmod / push 留待你处理。
+7. **NS-Phase 4 Render Intent Synthesis** —— 下一主要工作；先做 4.1 规格 + 确定性安全校验地基。
+8. 后置项（branch capabilities / MVU A2 fold / state-parser）待主干收口。

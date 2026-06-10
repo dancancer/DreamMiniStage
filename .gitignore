@@ -73,5 +73,6 @@ lib/core/__tests__/prompt-assembly-output.json
 
 /test-baseline-assets
 /.playwright-cli/
+/.playwright-mcp/
 /.agents/
 /.codex/

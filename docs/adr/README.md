@@ -20,3 +20,4 @@
 | [0008](0008-story-render-mode-boundary.md) | Story Agent 渲染走 story render mode，与 legacy RegexProcessor 有运行时边界 | accepted |
 | [0009](0009-capability-parity-trunk-goal.md) | 主干目标：对真实 SillyTavern + 插件做能力对齐（gap-driven）；分支能力非主干、后置 | accepted |
 | [0010](0010-variable-convention-registry-with-llm-fallback.md) | 初始变量提取：确定性 Variable Convention 注册表 + 导入期 LLM 推断兜底 | accepted |
+| [0011](0011-render-intent-synthesis.md) | 富 UI 脚本经导入期功能分析复现为安全 RenderIntent，不执行脚本 | accepted |
