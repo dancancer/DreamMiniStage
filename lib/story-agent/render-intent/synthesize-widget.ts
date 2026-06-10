@@ -2,6 +2,10 @@
 // WidgetSynthesisModel 端口），产出 RenderIntentSpec → 经 4.1 确定性安全校验 → 编译成白名单
 // RenderIntent。LLM 失败 / 输出非规格 / 规格不安全，一律降级为 reason（落 Import Diagnostic），
 // 绝不让不安全内容进入渲染。prod 由调用方注入 model-gateway adapter，测试注入 fake。
+import type { LLMConfig } from "@/lib/nodeflow/LLMNode/llm-config";
+import { cleanModelCallConfig } from "@/lib/nodeflow/LLMNode/clean-model-call-config";
+import { extractFirstJsonObject } from "@/lib/utils/extract-json";
+import { stripCodeFence } from "./classifier";
 import {
   compileRenderIntentSpec,
   validateRenderIntentSpec,
@@ -66,4 +70,53 @@ function coerceSpec(raw: unknown): RenderIntentSpec | undefined {
     return undefined;
   }
   return record as unknown as RenderIntentSpec;
+}
+
+// ── prod 适配器：把 widget 交给非流式模型，要求其只产 RenderIntentSpec JSON ──────────────
+type ChatMessage = { role: string; content: string };
+
+const SYNTHESIS_SYSTEM = [
+  "You analyze a SillyTavern UI widget (HTML, possibly script-driven) and describe how to reproduce",
+  "its visual function as a SAFE declarative RenderIntentSpec — WITHOUT executing any script.",
+  "Rules:",
+  "- Output ONLY a JSON object (a RenderIntentSpec). No prose, no markdown fences.",
+  "- kind MUST be one of: status-panel | collapsible-panel | choice-list | state-panel.",
+  "- Describe WHAT DATA the widget renders and the source tag the model emits to carry it",
+  "  (sourceTag: a bare tag name like StatusDashboard or SFW).",
+  "- status-panel: { kind, title, sourceTag, fields:[{label, valueTemplate}] }, valueTemplate like $json.affection.",
+  "- collapsible-panel: { kind, title, sourceTag, bodyTemplate, collapsedLabel?, expandedLabel? }.",
+  "- choice-list: { kind, title, sourceTag, options:[{id, labelTemplate, descriptionTemplate?, valueTemplate}] }.",
+  "- NEVER include raw HTML, <script>, inline handlers or executable code in any value.",
+  '- If the widget cannot be safely reproduced as data, return {"kind":"unsupported"}.',
+].join("\n");
+
+export function buildWidgetSynthesisPrompt(input: WidgetSynthesisInput): ChatMessage[] {
+  return [
+    { role: "system", content: SYNTHESIS_SYSTEM },
+    { role: "user", content: `Widget name: ${input.scriptName}\nWidget HTML:\n${input.html}` },
+  ];
+}
+
+export function parseRenderIntentSpec(text: string): unknown {
+  const json = extractFirstJsonObject(stripCodeFence(text));
+  if (!json) {
+    throw new Error("widget synthesis response did not contain a JSON object.");
+  }
+  return JSON.parse(json);
+}
+
+export interface WidgetSynthesisModelDeps {
+  invokeLLM: (config: LLMConfig) => Promise<string>;
+  baseConfig: LLMConfig;
+}
+
+export function createWidgetSynthesisModel(deps: WidgetSynthesisModelDeps): WidgetSynthesisModel {
+  return async (input) => {
+    const response = await deps.invokeLLM({
+      ...cleanModelCallConfig(deps.baseConfig),
+      streaming: false,
+      messages: buildWidgetSynthesisPrompt(input),
+    });
+    return parseRenderIntentSpec(response);
+  };
 }

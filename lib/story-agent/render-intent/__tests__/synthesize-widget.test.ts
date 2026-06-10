@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { synthesizeRenderIntent } from "../synthesize-widget";
+import type { LLMConfig } from "@/lib/nodeflow/LLMNode/llm-config";
+import {
+  buildWidgetSynthesisPrompt,
+  createWidgetSynthesisModel,
+  parseRenderIntentSpec,
+  synthesizeRenderIntent,
+} from "../synthesize-widget";
 
 const widget = {
   scriptId: "card-regex:好感度",
@@ -51,5 +57,47 @@ describe("synthesizeRenderIntent", () => {
     const outcome = await synthesizeRenderIntent(widget, model);
     expect(outcome.intent).toBeUndefined();
     expect(outcome.reason).toContain("model");
+  });
+});
+
+describe("buildWidgetSynthesisPrompt", () => {
+  it("instructs the model to emit a RenderIntentSpec for the widget", () => {
+    const messages = buildWidgetSynthesisPrompt({ scriptName: "好感度", html: "<div class='x'></div>" });
+    expect(messages[0].role).toBe("system");
+    expect(messages[0].content).toMatch(/RenderIntentSpec/);
+    const user = messages.find((m) => m.role === "user");
+    expect(user?.content).toContain("好感度");
+    expect(user?.content).toContain("<div");
+  });
+});
+
+describe("parseRenderIntentSpec", () => {
+  it("extracts a spec object from a fenced response", () => {
+    expect(parseRenderIntentSpec('```json\n{"kind":"status-panel"}\n```')).toEqual({ kind: "status-panel" });
+  });
+
+  it("throws when there is no JSON object", () => {
+    expect(() => parseRenderIntentSpec("no json here")).toThrow();
+  });
+});
+
+describe("createWidgetSynthesisModel", () => {
+  it("calls the model non-streaming with sanitized config and parses the spec", async () => {
+    let seen: LLMConfig | undefined;
+    const invokeLLM = async (config: LLMConfig) => {
+      seen = config;
+      return '{"kind":"status-panel","title":"好感度","sourceTag":"SFW"}';
+    };
+    const model = createWidgetSynthesisModel({
+      invokeLLM,
+      baseConfig: { modelName: "m", apiKey: "k", llmType: "openai", mvuToolEnabled: true, tools: true },
+    });
+
+    const spec = await model({ scriptName: "好感度", html: "<div></div>" });
+
+    expect(spec).toMatchObject({ kind: "status-panel", title: "好感度" });
+    expect(seen?.streaming).toBe(false);
+    expect(seen?.mvuToolEnabled).toBeUndefined();
+    expect(seen?.tools).toBeUndefined();
   });
 });
