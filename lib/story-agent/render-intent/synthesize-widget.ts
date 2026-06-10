@@ -51,12 +51,17 @@ export async function synthesizeRenderIntent(
     return { reason: "synthesis model did not return a RenderIntentSpec" };
   }
 
-  const validation = validateRenderIntentSpec(spec);
-  if (!validation.valid) {
-    return { reason: `unsafe or invalid spec: ${validation.reasons.join("; ")}` };
+  // validate/compile 也兜在 try 内：即便 spec 形状畸形（嵌套字段非数组等），也降级为
+  // reason 落诊断，绝不让单个坏 widget 抛出中断整个导入富化。
+  try {
+    const validation = validateRenderIntentSpec(spec);
+    if (!validation.valid) {
+      return { reason: `unsafe or invalid spec: ${validation.reasons.join("; ")}` };
+    }
+    return { intent: compileRenderIntentSpec(spec, widget.scriptId) };
+  } catch (error) {
+    return { reason: `synthesis validation error: ${(error as Error).message}` };
   }
-
-  return { intent: compileRenderIntentSpec(spec, widget.scriptId) };
 }
 
 export interface WidgetSynthesisDiagnostic {

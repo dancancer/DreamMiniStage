@@ -387,11 +387,12 @@ function repairSummary(preview: StoryAgentImportPreview): string {
 function activeModelBaseConfig(): LLMConfig | null {
   const config = useModelStore.getState().getActiveConfig();
   if (!config?.model) return null;
+  // advanced 先铺底，canonical 字段后写，避免持久化/异常的 advanced 覆盖 modelName/apiKey 等。
   return {
+    ...config.advanced,
     modelName: config.model,
     apiKey: config.apiKey,
     baseUrl: config.baseUrl,
     llmType: config.type,
-    ...config.advanced,
   } as LLMConfig;
 }

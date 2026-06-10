@@ -52,10 +52,13 @@ export function validateRenderIntentSpec(spec: RenderIntentSpec): RenderIntentSp
   if (!isSafeTag(spec.sourceTag)) reasons.push(`unsafe sourceTag: ${spec.sourceTag}`);
 
   if (spec.kind === "status-panel") {
-    if (!spec.fields || spec.fields.length === 0) reasons.push("status-panel requires fields");
-    for (const field of spec.fields ?? []) {
-      if (!isSafeText(field.label) || !isSafeText(field.valueTemplate)) {
-        reasons.push(`unsafe status field: ${field.label}`);
+    if (!Array.isArray(spec.fields) || spec.fields.length === 0) {
+      reasons.push("status-panel requires fields");
+    } else {
+      for (const field of spec.fields) {
+        if (!field || !isSafeText(field.label) || !isSafeText(field.valueTemplate)) {
+          reasons.push(`unsafe status field: ${field?.label}`);
+        }
       }
     }
   } else if (spec.kind === "collapsible-panel") {
@@ -63,12 +66,16 @@ export function validateRenderIntentSpec(spec: RenderIntentSpec): RenderIntentSp
     if (spec.collapsedLabel !== undefined && !isSafeText(spec.collapsedLabel)) reasons.push("unsafe collapsedLabel");
     if (spec.expandedLabel !== undefined && !isSafeText(spec.expandedLabel)) reasons.push("unsafe expandedLabel");
   } else if (spec.kind === "choice-list") {
-    if (!spec.options || spec.options.length === 0) reasons.push("choice-list requires options");
-    for (const option of spec.options ?? []) {
-      const safe = isSafeText(option.labelTemplate) &&
-        isSafeText(option.valueTemplate) &&
-        (option.descriptionTemplate === undefined || isSafeText(option.descriptionTemplate));
-      if (!safe) reasons.push(`unsafe option: ${option.id}`);
+    if (!Array.isArray(spec.options) || spec.options.length === 0) {
+      reasons.push("choice-list requires options");
+    } else {
+      for (const option of spec.options) {
+        const safe = option &&
+          isSafeText(option.labelTemplate) &&
+          isSafeText(option.valueTemplate) &&
+          (option.descriptionTemplate === undefined || isSafeText(option.descriptionTemplate));
+        if (!safe) reasons.push(`unsafe option: ${option?.id}`);
+      }
     }
   } else if (spec.kind === "state-panel") {
     if (!spec.bodyTemplate && !spec.fields) {
@@ -116,8 +123,9 @@ export function compileRenderIntentSpec(spec: RenderIntentSpec, sourceScriptId: 
       return {
         ...base,
         kind: "choice-list",
-        options: (spec.options ?? []).map((option) => ({
-          id: option.id,
+        // 不信任模型给的 option.id（可能含 raw tag/script 文本）；确定性生成稳定 id。
+        options: (spec.options ?? []).map((option, index) => ({
+          id: `choice-${index + 1}`,
           labelTemplate: option.labelTemplate,
           descriptionTemplate: option.descriptionTemplate,
           action: { type: "append-input", valueTemplate: option.valueTemplate },

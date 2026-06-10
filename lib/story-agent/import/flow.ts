@@ -99,7 +99,7 @@ export async function synthesizeImportWidgets(
     blueprint,
     summary: summarizeStoryAgentImport(preview.bundle, blueprint),
     confirmation: createConfirmation(blueprint, preview.qaRepair?.pendingConfirmation),
-    diagnostics: [...preview.bundle.diagnostics, ...blueprint.diagnostics],
+    diagnostics: blueprint.diagnostics,
   };
 }
 
@@ -142,7 +142,8 @@ function previewFromBundle(
     blueprint,
     summary: summarizeStoryAgentImport(bundle, blueprint),
     confirmation: createConfirmation(blueprint, qaRepair?.pendingConfirmation),
-    diagnostics: [...bundle.diagnostics, ...blueprint.diagnostics],
+    // blueprint.diagnostics 已含（加 bundle 前缀的）bundle 诊断，无需再拼一份未加前缀的。
+    diagnostics: blueprint.diagnostics,
     qaRepair,
   };
 }

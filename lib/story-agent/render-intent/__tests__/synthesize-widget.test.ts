@@ -52,6 +52,13 @@ describe("synthesizeRenderIntent", () => {
     expect(outcome.reason).toBeTruthy();
   });
 
+  it("degrades to a reason (no throw) when the model returns a malformed nested shape", async () => {
+    const model = async () => ({ kind: "status-panel", title: "x", sourceTag: "X", fields: { not: "array" } });
+    const outcome = await synthesizeRenderIntent(widget, model);
+    expect(outcome.intent).toBeUndefined();
+    expect(outcome.reason).toBeTruthy();
+  });
+
   it("degrades to a reason when the model throws", async () => {
     const model = async () => {
       throw new Error("model down");
