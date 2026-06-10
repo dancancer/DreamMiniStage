@@ -92,6 +92,10 @@ _Avoid_: Error log, warning text, debug output
 导入阶段的修复记录，说明哪些修复已应用、哪些需要人工处理、哪些被拒绝。它解释清理状态，不是运行时行为。
 _Avoid_: Changelog, migration log, patch list
 
+**Variable Convention**:
+角色卡、世界书或扩展用来声明初始 Story State 的一种可识别模式，例如 `[InitVar]` 世界书条目、`<status_current_variables>` / `<StoryState>` JSON 标签、MVU `initial` 对象、TavernHelper variables 对。它是**按约定识别、不按单卡定制**的提取单位：识别一种约定，所有遵循该约定的角色卡都能自动适配，无需逐卡提取。无法识别的约定必须成为 Import Diagnostic，不静默丢弃。
+_Avoid_: per-card schema, 逐卡提取, hardcoded card config
+
 ### Context And Prompt Assets
 
 **World Book**:
