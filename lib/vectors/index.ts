@@ -2,7 +2,7 @@
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║                         向量系统模块入口                                   ║
  * ║                                                                            ║
- * ║  统一导出向量嵌入、搜索、存储和记忆检索功能                                   ║
+ * ║  统一导出向量嵌入、搜索、存储功能                                            ║
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -73,25 +73,3 @@ export {
   isIndexedDBSupported,
   createStorage,
 } from "./storage";
-
-// ============================================================================
-//                              记忆检索模块导出
-// ============================================================================
-
-export type {
-  MemoryType,
-  MemoryEntry,
-  RetrievalResult,
-  RetrievalConfig,
-  MessageMemorizationOptions,
-} from "./memory-retrieval";
-
-export {
-  DEFAULT_RETRIEVAL_CONFIG,
-  MemoryRetrievalManager,
-  messageToMemoryEntry,
-  messagesToMemoryEntries,
-  createMemoryRetrievalManager,
-  formatRetrievalResults,
-  generateMemoryId,
-} from "./memory-retrieval";

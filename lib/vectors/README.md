@@ -12,4 +12,3 @@
 | `embeddings.ts` | 核心 | 文本向量化 |
 | `storage.ts` | 核心 | 向量存储 |
 | `search.ts` | 核心 | 相似度搜索 |
-| `memory-retrieval.ts` | 核心 | 记忆检索 |

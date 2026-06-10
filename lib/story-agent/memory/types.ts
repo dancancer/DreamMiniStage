@@ -14,6 +14,8 @@ export interface MemoryPolicy {
     maxEntries: number;
   };
   failureMode: "degrade";
+  /** 是否把收敛出的 Facts/Relationships 写入向量记忆供检索。默认关（opt-in，避免每轮 finalize 的 embedding 开销）。 */
+  vectorizeMemory?: boolean;
 }
 
 export interface StoryRunningSummary {

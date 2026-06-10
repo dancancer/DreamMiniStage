@@ -7,6 +7,11 @@ export {
   createEmptyStoryMemoryState,
   defaultMemoryPolicy,
 } from "./policy";
+export {
+  ingestStoryMemory,
+  storyMemoryToVectorEntries,
+  type StoryMemoryVectorSink,
+} from "./vectorize";
 export type {
   ExtractedStoryMemory,
   MemoryPolicy,

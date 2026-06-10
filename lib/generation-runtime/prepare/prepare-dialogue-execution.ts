@@ -2,12 +2,16 @@ import type { DialogueRuntimeParams } from "./dialogue-runtime-params";
 import type { PreparedDialogueExecution } from "@/lib/generation-runtime/types";
 import { saveStorySession, loadStoryRuntimeBinding } from "@/lib/story-agent/session";
 import { prepareStoryTurn } from "@/lib/story-agent/runtime/story-session";
+import { ingestStoryMemory } from "@/lib/story-agent/memory";
+import { getVectorMemoryManager } from "@/lib/vector-memory/manager";
 
 export async function prepareDialogueExecution(
   params: DialogueRuntimeParams,
 ): Promise<PreparedDialogueExecution> {
   const dialogueId = params.dialogueKey ?? params.characterId;
   const { blueprint, session } = await loadStoryRuntimeBinding(dialogueId);
+  const vectorizeMemory =
+    blueprint.memoryPolicy?.status === "active" && blueprint.memoryPolicy.vectorizeMemory === true;
   const turn = prepareStoryTurn({
     blueprint,
     session,
@@ -34,7 +38,14 @@ export async function prepareDialogueExecution(
       username: params.username,
     },
     openingMessage: params.openingMessage,
-    commitSession: saveStorySession,
+    // 持久化 session 后，opt-in 地把收敛出的 Facts/Relationships best-effort 写入向量记忆供检索。
+    // 显式组合在 commit 边界（非 runtime finalize 里的隐藏 fire-and-forget）；默认关，避免每轮 embedding 开销。
+    commitSession: async (next) => {
+      await saveStorySession(next);
+      if (vectorizeMemory) {
+        await ingestStoryMemory(getVectorMemoryManager(), dialogueId, next.memory);
+      }
+    },
   });
 
   return {
