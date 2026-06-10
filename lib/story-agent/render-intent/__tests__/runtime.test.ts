@@ -18,6 +18,18 @@ const statusIntent: RenderIntent = {
   sourcePattern: "<SFW>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/SFW>",
 };
 
+const dashboardStatusIntent: RenderIntent = {
+  schemaVersion: 1,
+  id: "status-dashboard-json",
+  kind: "status-panel",
+  sourceScriptId: "script",
+  title: "Status Dashboard",
+  confidence: 0.8,
+  fields: [],
+  dataTemplate: "$1",
+  sourcePattern: "<StatusDashboard>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StatusDashboard>",
+};
+
 const actionIntent: RenderIntent = {
   schemaVersion: 1,
   id: "actions",
@@ -66,6 +78,15 @@ describe("render intent runtime", () => {
     expect(stripRenderIntentSources(text, [statusIntent])).toBe("正文");
   });
 
+  it("extracts custom dashboard status JSON without leaving source tags", () => {
+    const text = "正文\n<StatusDashboard>{\"sections\":[{\"title\":\"资源\",\"fields\":[]}]}</StatusDashboard>";
+    const matches = extractRenderIntentMatches(text, [dashboardStatusIntent]);
+
+    expect(matches).toHaveLength(1);
+    expect(matches[0]?.values[1]).toContain("\"sections\"");
+    expect(stripRenderIntentSources(text, [dashboardStatusIntent])).toBe("正文");
+  });
+
   it("extracts dynamic action choice JSON from internal source tags", () => {
     const text = "正文\n<StoryActions>{\"options\":[{\"label\":\"检查侧门\",\"value\":\"检查侧门\"}]}</StoryActions>";
     const matches = extractRenderIntentMatches(text, [actionIntent]);
@@ -80,6 +101,8 @@ describe("render intent runtime", () => {
       "正文",
       "<SFW>{\"date\":\"2020\",\"characters\":[]}</SFW>",
       "<CurrentState>{\"mode\":\"status\",\"location\":\"后台\"}</CurrentState>",
+      "{\"sections\":[{\"title\":\"资源\",\"fields\":[]}]}",
+      "{\"meters\":[{\"label\":\"HP\",\"value\":85,\"max\":100}]}",
       "{\"mode\":\"sfw\",\"characters\":[]}",
     ].join("\n");
 

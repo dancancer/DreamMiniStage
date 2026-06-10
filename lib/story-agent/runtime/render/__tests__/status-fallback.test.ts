@@ -14,6 +14,13 @@ const statusIntent: RenderIntent = {
   sourcePattern: "<SFW>\\s*(\\{[\\s\\S]*?\\})\\s*</SFW>",
 };
 
+const dashboardStatusIntent: RenderIntent = {
+  ...statusIntent,
+  id: "dashboard-status",
+  title: "Tactical Terminal",
+  sourcePattern: "<StatusDashboard>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StatusDashboard>",
+};
+
 describe("status panel fallback", () => {
   it("extracts timeline bar metadata into the fallback status source", () => {
     const text = [
@@ -100,6 +107,19 @@ describe("status panel fallback", () => {
       characterName: "祥子",
       now: "2026-06-01T00:00:00.000Z",
     })).toBe(text);
+  });
+
+  it("uses the custom status tag when synthesizing fallback dashboard data", () => {
+    const result = applyStatusPanelFallback({
+      text: "后台｜2026年6月1日｜星期一｜21:10\n\n警报灯闪烁。",
+      intents: [dashboardStatusIntent],
+      characterName: "守夜人",
+      now: "2026-06-01T00:00:00.000Z",
+    });
+
+    expect(result).toContain("<StatusDashboard>");
+    expect(result).toContain("\"mode\":\"statusdashboard\"");
+    expect(result).not.toContain("<SFW>");
   });
 });
 

@@ -22,6 +22,7 @@
 
 - `MessageList.tsx` 不再中转 `scriptVariables` / `onScriptMessage`，Interface 回到消息列表布局、滚动、开场导航和流式意图。
 - `MessageItem.tsx` 不再读取 `TavernHelper_scripts`，助手消息只把故事 HTML、`storyRenderIntents` 和输入追加回调传给 `MessageBubble`。
+- `MessageItem.tsx` 根据 `storyBlueprintId` 给 `MessageBubble` 传入 Story render mode，Story Agent 输出不再经过 legacy `RegexProcessor`。
 - `message-item/` 新增类型与展示 helper 子 Module，收口消息项头像、操作按钮和角色 tone 的 Implementation，主 `MessageItem.tsx` 保持在 400 行以内。
 - `MessageList.tsx` 现在消费 `OpeningSelection`，并通过 `opening-selection.ts` 生成开场导航状态，不再自己拼装 `openingMessages/openingIndex/openingLocked` 三件套。
 

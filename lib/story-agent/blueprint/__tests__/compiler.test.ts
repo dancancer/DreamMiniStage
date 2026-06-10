@@ -340,6 +340,14 @@ describe("compileSessionBlueprint", () => {
       createCharacterOnlyBundle("2.png", "character:origin"),
     );
 
+    expect(blueprint.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "story.initial_state.template_only",
+          sourceField: expect.stringContaining("【UI】双视点战术终端"),
+        }),
+      ]),
+    );
     expect(blueprint.renderRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

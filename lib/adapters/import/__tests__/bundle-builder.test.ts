@@ -108,6 +108,127 @@ describe("createImportedAssetBundle", () => {
     );
   });
 
+  it("extracts supported variable conventions from static extension data", () => {
+    const bundle = createImportedAssetBundle({
+      bundleId: "extension-variables",
+      sourceHash: "bundle-hash",
+      createdAt: "2026-06-04T00:00:00.000Z",
+      characterId: "character:extension-variables",
+      character: {
+        raw: {
+          data: {
+            name: "Extension Variables",
+            first_mes: "hello",
+            extensions: {
+              mvu_replay: readJson("test-baseline-assets/mvu-examples/variable-chain.json"),
+              tavern_helper: [
+                ["scripts", [{ name: "remote", content: "import 'https://example.test/script.js'" }]],
+                ["variables", { hp: 7 }],
+              ],
+            },
+          },
+        },
+        source: source("extension-variables.card.json", "json-character"),
+      },
+    });
+
+    expect(bundle.extensionArtifacts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          extensionKey: "mvu_replay",
+          kind: "variable-convention",
+          supported: false,
+        }),
+        expect.objectContaining({
+          extensionKey: "mvu_replay.initial",
+          kind: "variable-convention",
+          supported: true,
+          payload: { hp: 10, nested: { level: 1 } },
+          diagnostics: [],
+        }),
+        expect.objectContaining({
+          extensionKey: "tavern_helper",
+          kind: "script",
+          supported: false,
+        }),
+        expect.objectContaining({
+          extensionKey: "tavern_helper.variables",
+          kind: "variable-convention",
+          supported: true,
+          payload: { hp: 7 },
+        }),
+      ]),
+    );
+  });
+
+  it("flags MVU replay mutation with a dedicated diagnostic code", () => {
+    const bundle = createImportedAssetBundle({
+      bundleId: "replay-mutation",
+      sourceHash: "bundle-hash",
+      createdAt: "2026-06-10T00:00:00.000Z",
+      characterId: "character:replay-mutation",
+      character: {
+        raw: {
+          data: {
+            name: "Replay Mutation",
+            first_mes: "hello",
+            extensions: {
+              mvu_replay: readJson("test-baseline-assets/mvu-examples/variable-chain.json"),
+              misc_meta: { foo: "bar" },
+            },
+          },
+        },
+        source: source("replay-mutation.card.json", "json-character"),
+      },
+    });
+
+    const replay = bundle.extensionArtifacts.find(
+      (artifact) => artifact.extensionKey === "mvu_replay",
+    );
+    expect(replay?.supported).toBe(false);
+    expect(replay?.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      "extension.mvu_replay_mutation_unsupported",
+    );
+
+    const misc = bundle.extensionArtifacts.find(
+      (artifact) => artifact.extensionKey === "misc_meta",
+    );
+    expect(misc?.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      "extension.unsupported",
+    );
+  });
+
+  it("flags pair-list MVU replay mutation with the dedicated diagnostic code", () => {
+    const bundle = createImportedAssetBundle({
+      bundleId: "replay-pairs",
+      sourceHash: "bundle-hash",
+      createdAt: "2026-06-10T00:00:00.000Z",
+      characterId: "character:replay-pairs",
+      character: {
+        raw: {
+          data: {
+            name: "Replay Pairs",
+            first_mes: "hello",
+            extensions: {
+              mvu_pairs: [
+                ["initial", { hp: 5 }],
+                ["update", { hp: 9 }],
+              ],
+            },
+          },
+        },
+        source: source("replay-pairs.card.json", "json-character"),
+      },
+    });
+
+    const replay = bundle.extensionArtifacts.find(
+      (artifact) => artifact.extensionKey === "mvu_pairs",
+    );
+    expect(replay?.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      "extension.mvu_replay_mutation_unsupported",
+    );
+  });
+
   it("keeps cards with empty embedded regex_scripts importable", () => {
     const bundle = createImportedAssetBundle({
       bundleId: "empty-embedded-regex",

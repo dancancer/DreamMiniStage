@@ -1,10 +1,12 @@
 import { RegexPlacement, type RegexScript } from "@/lib/models/regex-script-model";
+import { isSfwStatusSourcePattern, isStatusJsonSourcePattern } from "./status-pattern";
 import type { RegexClassification } from "./types";
 
 export function classifyRegexScript(script: RegexScript): RegexClassification {
   const html = stripCodeFence(script.replaceString ?? "");
   const scriptId = script.scriptKey || script.id || script.scriptName;
-  if (isStatusSourcePattern(script, html)) {
+  const unsafe = findUnsafeHtmlReason(html);
+  if (isStatusSourcePattern(script, html, unsafe)) {
     return {
       scriptId,
       scriptName: script.scriptName,
@@ -39,11 +41,15 @@ export function classifyRegexScript(script: RegexScript): RegexClassification {
   return classification(script, "unsupported", 0.4, ["no supported placement"], "unclassified regex rule");
 }
 
-function isStatusSourcePattern(script: RegexScript, html: string): boolean {
-  return /状态栏|status/i.test(script.scriptName) &&
-    containsHtml(html) &&
-    /<SFW>|<NSFW>/i.test(script.findRegex) &&
-    /\\\{/.test(script.findRegex);
+function isStatusSourcePattern(script: RegexScript, html: string, unsafe: string | undefined): boolean {
+  const sourcePattern = script.findRegex;
+  const sourceName = /状态栏|status/i.test(script.scriptName);
+  const legacyStatus = sourceName && isSfwStatusSourcePattern(sourcePattern) && /\\\{/.test(sourcePattern);
+  const customDashboard = !unsafe &&
+    html.toLowerCase().includes("status-panel") &&
+    isStatusJsonSourcePattern(sourcePattern);
+  return containsHtml(html) &&
+    (legacyStatus || customDashboard);
 }
 
 function isStateUpdateCleanup(script: RegexScript, html: string): boolean {

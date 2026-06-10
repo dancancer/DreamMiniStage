@@ -9,6 +9,13 @@ export {
 } from "./store";
 
 export {
+  assertStoryBranchOperationSupported,
+  getStoryBranchOperationUnsupportedMessage,
+  getStoryBranchOperationUnsupportedReason,
+  type StoryBranchOperation,
+} from "./branch-policy";
+
+export {
   createStoryAgentCharacterData,
   createStorySessionForCharacter,
   readStoryBlueprintId,

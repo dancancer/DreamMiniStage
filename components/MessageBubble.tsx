@@ -34,6 +34,7 @@ interface Props {
   characterId?: string;
   isLoading?: boolean;
   enableStreaming?: boolean;
+  renderMode?: "story" | "legacy";
   renderIntents?: RenderIntent[];
   onAppendInput?: (value: string) => void;
 }
@@ -47,6 +48,7 @@ function MessageBubbleInner({
   characterId,
   isLoading = false,
   enableStreaming = false,
+  renderMode = "legacy",
   renderIntents = [],
   onAppendInput,
 }: Props) {
@@ -62,6 +64,7 @@ function MessageBubbleInner({
     html: displayHtml,
     characterId,
     enableStreaming,
+    renderMode,
   });
   const hasRenderableContent = displayHtml.trim() !== "" || renderMatches.length > 0;
   const shouldShowLoading = (
@@ -129,6 +132,7 @@ const MessageBubble = memo(MessageBubbleInner, (prev, next) => {
 
   // 流式预览/完整解析切换 → 必须重渲染
   if (prev.enableStreaming !== next.enableStreaming) return false;
+  if (prev.renderMode !== next.renderMode) return false;
   
   if ((prev.renderIntents?.length ?? 0) !== (next.renderIntents?.length ?? 0)) return false;
   

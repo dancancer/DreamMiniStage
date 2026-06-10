@@ -23,7 +23,10 @@ import {
   compileProfileOpenings,
   diagnoseProfileOpenings,
 } from "./profile/openings";
-import { compileInitialState } from "./initial-state";
+import {
+  compileInitialState,
+  diagnoseInitialStateSources,
+} from "./initial-state";
 import {
   SESSION_BLUEPRINT_SCHEMA_VERSION,
   type AgentProfile,
@@ -50,6 +53,7 @@ export function compileSessionBlueprint(
 ): SessionBlueprint {
   const profile = compileProfile(bundle);
   const renderRules = compileRenderRules(bundle.regexScripts);
+  const initialState = compileInitialState(bundle);
   const core = {
     schemaVersion: SESSION_BLUEPRINT_SCHEMA_VERSION as typeof SESSION_BLUEPRINT_SCHEMA_VERSION,
     profile,
@@ -61,10 +65,11 @@ export function compileSessionBlueprint(
     promptTransforms: compileTransforms(bundle.regexScripts, "prompt"),
     contentRules: compileContentRules(bundle.regexScripts),
     renderRules,
-    initialState: compileInitialState(bundle),
+    initialState,
     memoryPolicy: defaultMemoryPolicy(),
     diagnostics: [
       ...diagnoseImportedAssetBundle(bundle),
+      ...diagnoseInitialStateSources(bundle),
       ...diagnoseUnsupportedRenderContracts(bundle, renderRules),
       ...diagnoseProfileOpenings({
         name: bundle.character.name,

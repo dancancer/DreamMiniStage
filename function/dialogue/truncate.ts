@@ -1,5 +1,5 @@
 /**
- * @input  lib/data/roleplay/character-dialogue-operation, function/dialogue/processed-dialogue
+ * @input  lib/data/roleplay/character-dialogue-operation, function/dialogue/processed-dialogue, lib/story-agent/session
  * @output switchDialogueBranch
  * @pos    对话分支切换 - 切换到指定的对话节点
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
@@ -7,6 +7,7 @@
 
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { buildProcessedDialogue } from "@/function/dialogue/processed-dialogue";
+import { assertStoryBranchOperationSupported } from "@/lib/story-agent/session";
 
 interface SwitchDialogueBranchOptions {
   dialogueId: string;  // 对话树 ID（sessionId）
@@ -14,6 +15,7 @@ interface SwitchDialogueBranchOptions {
 }
 
 export async function switchDialogueBranch({ dialogueId, nodeId }: SwitchDialogueBranchOptions) {
+  await assertStoryBranchOperationSupported(dialogueId, "branch-switch");
 
   try {
     const updated = await LocalCharacterDialogueOperations.switchBranch(dialogueId, nodeId);

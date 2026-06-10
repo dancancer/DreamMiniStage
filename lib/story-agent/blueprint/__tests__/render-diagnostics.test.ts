@@ -51,6 +51,35 @@ describe("Story Agent render contract diagnostics", () => {
       ]),
     );
   });
+
+  it("does not warn when a custom status dashboard source tag is covered by a RenderIntent", () => {
+    const blueprint = compileSessionBlueprint(createBundle({
+      description: "<StatusDashboard>{\"sections\":[],\"meters\":[]}</StatusDashboard>",
+      regexScripts: [{
+        scriptName: "战术终端",
+        findRegex: "<StatusDashboard>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StatusDashboard>",
+        replaceString: "<div class=\"status-panel\"><div data-field=\"资源\">$1</div></div>",
+        placement: [2],
+        markdownOnly: true,
+      }],
+    }));
+
+    expect(blueprint.renderRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "status-panel",
+          sourcePattern: "<StatusDashboard>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StatusDashboard>",
+        }),
+      ]),
+    );
+    expect(blueprint.diagnostics).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "render.status_contract_unsupported",
+        }),
+      ]),
+    );
+  });
 });
 
 function createBundle(input: {

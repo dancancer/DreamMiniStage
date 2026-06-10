@@ -137,10 +137,11 @@ function applyCommand(
   if (command.op === "add") {
     const delta = Number(parseValue(command.args[1]));
     if (!Number.isFinite(delta)) return { error: `add: ${path} delta is not numeric` };
-    const current = Number(readPathValue(variables, path) ?? 0);
-    if (!Number.isFinite(current)) return { error: `add: ${path} current value is not numeric` };
+    const currentValue = readPathValue(variables, path) ?? 0;
+    const current = readNumericStateValue(currentValue);
+    if (current === undefined) return { error: `add: ${path} current value is not numeric` };
     const value = current + delta;
-    writePathValue(variables, path, value);
+    writePathValue(variables, path, Array.isArray(currentValue) ? [value, ...currentValue.slice(1)] : value);
     return { event: { op: command.op, path, value } };
   }
 
@@ -270,10 +271,27 @@ function parseJsonLike(value: string): unknown {
   return JSON.parse(json);
 }
 
+function readNumericStateValue(value: unknown): number | undefined {
+  const parsed = Number(Array.isArray(value) ? value[0] : value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
 function extractVisibleStoryText(text: string): string {
   const gameText = extractLastTagBlock(text, "gametxt");
-  if (gameText !== undefined) return cleanVisibleText(gameText);
-  return cleanVisibleText(HIDDEN_TAGS.reduce(stripTag, text));
+  // gametxt 分支也要剥离 HIDDEN_TAGS（如 <thinking>），否则内嵌的 reasoning 会泄漏到 screen。
+  return cleanVisibleText(stripHiddenTags(gameText ?? text));
+}
+
+function stripHiddenTags(text: string): string {
+  return HIDDEN_TAGS.reduce(stripTag, text);
+}
+
+// 把模型按约定吐出的可见 reasoning/planning 文本（<thinking> 块）捕获为 thinkingContent，
+// 而不是连同 HIDDEN_TAGS 一起丢弃——screen 仍剥离它，但运行时把它折叠保留。
+export function extractStoryThinkingContent(text: string): string {
+  return extractTagBlocks(text, "thinking")
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 function stripTag(result: string, tag: string): string {

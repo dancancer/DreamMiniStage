@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { parseContentAsync } from "@/lib/utils/content-parser";
+import { parseContent, parseContentAsync } from "@/lib/utils/content-parser";
 import type { ContentSegment } from "@/types/content-segment";
 import type { MessageRenderPipelineState } from "./render-types";
 
@@ -9,12 +9,13 @@ interface UseMessageRenderPipelineInput {
   html: string;
   characterId?: string;
   enableStreaming: boolean;
+  renderMode: "story" | "legacy";
 }
 
 export function useMessageRenderPipeline(
   input: UseMessageRenderPipelineInput,
 ): MessageRenderPipelineState {
-  const { html, characterId, enableStreaming } = input;
+  const { html, characterId, enableStreaming, renderMode } = input;
   const [segments, setSegments] = useState<ContentSegment[]>([]);
   const [isParsing, setIsParsing] = useState(true);
   const [isTransitioningFromStreaming, setIsTransitioningFromStreaming] = useState(false);
@@ -40,7 +41,9 @@ export function useMessageRenderPipeline(
 
     async function parse() {
       setIsParsing(true);
-      const result = await parseContentAsync(html, characterId);
+      const result = renderMode === "story"
+        ? parseContent(html)
+        : await parseContentAsync(html, characterId);
       if (!cancelled) {
         setSegments(result);
         setIsParsing(false);
@@ -53,7 +56,7 @@ export function useMessageRenderPipeline(
     return () => {
       cancelled = true;
     };
-  }, [characterId, enableStreaming, html]);
+  }, [characterId, enableStreaming, html, renderMode]);
 
   return useMemo(() => {
     if (enableStreaming) {

@@ -33,7 +33,9 @@ const FEATURE_LOSS_PRIORITY: Record<string, number> = {
   "character.instruction_only_opening": 0,
   "regex.ui_html_unsupported": 1,
   "render.status_contract_unsupported": 2,
-  "extension.unsupported": 3,
+  "story.initial_state.dynamic_source_unsupported": 3,
+  "story.initial_state.template_only": 4,
+  "extension.unsupported": 5,
 };
 
 const FEATURE_LOSS_CODES = new Set(Object.keys(FEATURE_LOSS_PRIORITY));

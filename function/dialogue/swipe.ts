@@ -1,5 +1,5 @@
 /**
- * @input  lib/data/roleplay/character-dialogue-operation, function/dialogue/processed-dialogue, lib/dialogue/swipe-variants
+ * @input  lib/data/roleplay/character-dialogue-operation, function/dialogue/processed-dialogue, lib/dialogue/swipe-variants, lib/story-agent/session
  * @output switchSwipe
  * @pos    滑动切换 - 在同一节点的多个响应变体间切换
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
@@ -8,6 +8,7 @@
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
 import { buildProcessedDialogue } from "@/function/dialogue/processed-dialogue";
 import { resolveSwipeTargetNodeId } from "@/lib/dialogue/swipe-variants";
+import { assertStoryBranchOperationSupported } from "@/lib/story-agent/session";
 
 interface SwitchSwipeOptions {
   dialogueId: string;
@@ -28,6 +29,8 @@ export async function switchSwipe({ dialogueId, nodeId, target }: SwitchSwipeOpt
       dialogue: buildProcessedDialogue(dialogueTree),
     };
   }
+
+  await assertStoryBranchOperationSupported(dialogueId, "swipe");
 
   const swipeTarget =
     typeof target === "number"
@@ -61,4 +64,3 @@ export async function switchSwipe({ dialogueId, nodeId, target }: SwitchSwipeOpt
     dialogue: buildProcessedDialogue(updatedDialogueTree),
   };
 }
-

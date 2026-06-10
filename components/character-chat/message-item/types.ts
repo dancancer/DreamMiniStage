@@ -31,6 +31,7 @@ export interface MessageCharacter {
   name: string;
   avatar_path?: string;
   extensions?: {
+    storyBlueprintId?: string;
     storyRenderIntents?: RenderIntent[];
     [key: string]: unknown;
   };

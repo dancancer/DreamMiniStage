@@ -11,15 +11,24 @@ import {
   type ImportedWorldBookEntry,
   type ImportDiagnostic,
 } from "./bundle-types";
+import type { ImportDiagnosticCode } from "./bundle-diagnostics";
 import { importPreset } from "./preset-import";
 import { importRegexScripts } from "./regex-import";
 import { importWorldBookEntries } from "./worldbook-import";
+
+// MVU replay 序列字段：首轮只编译静态 initial，update/insert/expect 不执行（见 ADR-0010 / ADR-0007）。
+const REPLAY_MUTATION_FIELDS = ["update", "insert", "expect"] as const;
 
 interface AssetInput {
   id: string;
   name: string;
   raw: unknown;
   source: AssetSource;
+}
+
+interface ExtensionVariables {
+  field: string;
+  value: Record<string, unknown>;
 }
 
 export interface CreateImportedAssetBundleInput {
@@ -250,29 +259,119 @@ function createExtensionArtifacts(
 
   return Object.entries(extensions)
     .filter(([key]) => key !== "regex_scripts")
-    .map(([key, payload]) => ({
-      id: `extension.${key}`,
+    .flatMap(([key, payload]) => createExtensionArtifact(key, payload, source));
+}
+
+function createExtensionArtifact(
+  key: string,
+  payload: unknown,
+  source: AssetSource,
+): ImportedExtensionArtifact[] {
+  const kind = classifyExtension(key);
+  const variables = readExtensionVariables(payload);
+  const needsUnsupportedArtifact = shouldPreserveUnsupportedExtension(kind, payload, variables);
+  const unsupportedCode: ImportDiagnosticCode =
+    kind === "variable-convention" && hasReplayMutationFields(payload)
+      ? "extension.mvu_replay_mutation_unsupported"
+      : "extension.unsupported";
+  const unsupportedArtifact: ImportedExtensionArtifact = {
+    id: `extension.${key}`,
+    source,
+    extensionKey: key,
+    kind,
+    payloadHash: hashPayload(payload),
+    summary: `Unsupported imported extension: ${key}`,
+    supported: false,
+    diagnostics: [unsupportedExtensionDiagnostic(key, unsupportedCode)],
+  };
+
+  if (variables) {
+    const variableArtifact: ImportedExtensionArtifact = {
+      id: `extension.${key}.${variables.field}`,
       source,
-      extensionKey: key,
-      kind: classifyExtension(key),
-      payloadHash: hashPayload(payload),
-      summary: `Unsupported imported extension: ${key}`,
-      supported: false,
-      diagnostics: [unsupportedExtensionDiagnostic(key)],
-    }));
+      extensionKey: `${key}.${variables.field}`,
+      kind: "variable-convention",
+      payloadHash: hashPayload(variables.value),
+      summary: `Imported variable convention from extension: ${key}`,
+      supported: true,
+      payload: variables.value,
+      diagnostics: [],
+    };
+    return kind === "variable-convention" && !needsUnsupportedArtifact
+      ? [variableArtifact]
+      : [unsupportedArtifact, variableArtifact];
+  }
+
+  return [unsupportedArtifact];
 }
 
 function classifyExtension(key: string): ExtensionArtifactKind {
   if (key === "depth_prompt") return "prompt-convention";
+  if (/mvu|variable/i.test(key)) return "variable-convention";
   if (key.includes("TavernHelper") || key === "tavern_helper") return "script";
   return "unknown";
 }
 
-function unsupportedExtensionDiagnostic(key: string): ImportDiagnostic {
+function readExtensionVariables(payload: unknown): ExtensionVariables | undefined {
+  const direct = asOptionalRecord(payload);
+  if (direct) {
+    const initial = readVariableRecord(direct.initial);
+    if (initial) return { field: "initial", value: initial };
+    const variables = readVariableRecord(direct.variables);
+    if (variables) return { field: "variables", value: variables };
+  }
+
+  const pairs = readEntryPairs(payload);
+  const variables = pairs ? readVariableRecord(pairs.variables) : undefined;
+  return variables ? { field: "variables", value: variables } : undefined;
+}
+
+function readVariableRecord(value: unknown): Record<string, unknown> | undefined {
+  const record = asOptionalRecord(value);
+  return record && Object.keys(record).length > 0 ? record : undefined;
+}
+
+function readEntryPairs(value: unknown): Record<string, unknown> | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const entries = value
+    .filter((item): item is [string, unknown] =>
+      Array.isArray(item) && typeof item[0] === "string" && item.length >= 2,
+    )
+    .map(([key, entryValue]) => [key, entryValue] as const);
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+}
+
+function shouldPreserveUnsupportedExtension(
+  kind: ExtensionArtifactKind,
+  payload: unknown,
+  variables: ExtensionVariables | undefined,
+): boolean {
+  if (kind !== "variable-convention" || !variables) return true;
+  const record = asOptionalRecord(payload);
+  if (!record) return false;
+  const supportedFields = new Set([variables.field, "name", "description", "scope"]);
+  return Object.keys(record).some((key) => !supportedFields.has(key));
+}
+
+function hasReplayMutationFields(payload: unknown): boolean {
+  // 归一化 object 与 pair-list 两种形态（与 readExtensionVariables 对齐），避免 pair-list
+  // 形态的 MVU replay 漏检后退回通用 extension.unsupported。
+  const record = asOptionalRecord(payload) ?? readEntryPairs(payload);
+  if (!record) return false;
+  return REPLAY_MUTATION_FIELDS.some((field) => field in record);
+}
+
+function unsupportedExtensionDiagnostic(
+  key: string,
+  code: ImportDiagnosticCode = "extension.unsupported",
+): ImportDiagnostic {
+  const message = code === "extension.mvu_replay_mutation_unsupported"
+    ? `Extension "${key}" declares MVU replay mutation (update/insert/expect); only static initial variables are compiled.`
+    : `Extension "${key}" is preserved as an unsupported artifact.`;
   return {
-    code: "extension.unsupported",
+    code,
     severity: "warning",
-    message: `Extension "${key}" is preserved as an unsupported artifact.`,
+    message,
     sourceField: `data.extensions.${key}`,
   };
 }

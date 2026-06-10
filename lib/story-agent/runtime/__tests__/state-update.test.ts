@@ -72,4 +72,34 @@ describe("StoryState UpdateVariable runtime", () => {
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
     expect(result.errors[0]).toContain("unsafe path");
   });
+
+  it("adds numeric tuple values while preserving variable descriptions", () => {
+    const state = createEmptyStoryState("2026-05-30T00:00:00.000Z");
+    state.variables = {
+      长崎素世: {
+        好感度: [0, "relationship toward user"],
+      },
+    };
+
+    const result = applyStoryStateUpdate([
+      "素世轻轻点头。",
+      "<UpdateVariable>",
+      "_.add('长崎素世.好感度', 3);",
+      "</UpdateVariable>",
+    ].join("\n"), state, {
+      now: "2026-05-30T00:00:01.000Z",
+      emitSourceTag: true,
+    });
+
+    expect(result.state.variables).toEqual({
+      长崎素世: {
+        好感度: [3, "relationship toward user"],
+      },
+    });
+    expect(result.appliedEvents).toEqual([
+      { op: "add", path: "长崎素世.好感度", value: 3 },
+    ]);
+    expect(result.errors).toEqual([]);
+    expect(result.screenText).toContain("\"好感度\":[3,\"relationship toward user\"]");
+  });
 });

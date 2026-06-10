@@ -31,6 +31,7 @@
 - `dialogue-turn.ts` 成为 Dialogue Turn lifecycle 的入口，`chat.ts` 不再直接知道 prepare 与 response transport 的调用顺序。
 - `init.ts` 的初始化 Interface 只保留 `dialogueId/characterId/language/username`，开场初始化不再携带未使用的模型配置字段。
 - `story-turn-lifecycle.ts` 收口 Story turn 的建树、开场节点、pending user turn 与 story runtime prepare；`chat.ts` 只保留请求归一、错误响应和 transport 调用。
+- Story Agent 当前按 dialogue 维护单一 `StorySession`，尚未实现分支状态 replay；`regenerate`、`swipe` 和 branch switch 会 fail-fast，避免静默污染 `StoryState`。
 
 ## 之前变更（2026-03-09）
 

@@ -229,6 +229,7 @@ function AssistantMessage({
   onAppendInput,
 }: AssistantMessageProps) {
   const { enabled, targetIndex, isSending, activeMessageId } = streamingIntent;
+  const isStoryAgent = typeof character.extensions?.storyBlueprintId === "string";
   const showRegenerateButton = !isSending && isLastMessage;
   const isStreamingCandidate = enabled && index >= targetIndex;
   const isActivelyStreaming = (
@@ -278,6 +279,7 @@ function AssistantMessage({
         key={message.id}
         html={message.content}
         characterId={character.id}
+        renderMode={isStoryAgent ? "story" : "legacy"}
         renderIntents={character.extensions?.storyRenderIntents || []}
         onAppendInput={onAppendInput}
         isLoading={isSending && isLastMessage && message.content.trim() === ""}

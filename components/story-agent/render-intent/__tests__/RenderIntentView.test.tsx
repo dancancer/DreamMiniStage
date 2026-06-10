@@ -176,6 +176,50 @@ describe("RenderIntentView", () => {
     cleanup(rendered);
   });
 
+  it("renders custom dashboard sections and meters from captured status data", () => {
+    const rendered = renderIntent({
+      schemaVersion: 1,
+      id: "status-dashboard",
+      kind: "status-panel",
+      sourceScriptId: "script",
+      title: "Tactical Terminal",
+      confidence: 0.8,
+      fields: [],
+      dataTemplate: "$1",
+      sourcePattern: "<StatusDashboard>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StatusDashboard>",
+    }, {
+      1: JSON.stringify({
+        date: "2026-06-01",
+        location: "后台走廊",
+        sections: [{
+          title: "Resources",
+          fields: [
+            { label: "EP", value: "5000" },
+            { label: "Alert", value: "<script>bad()</script>" },
+          ],
+        }],
+        meters: [{
+          label: "HP",
+          value: 85,
+          max: 100,
+          unit: "%",
+          description: "Main unit integrity",
+        }],
+      }),
+    });
+
+    expect(rendered.container.textContent).toContain("Tactical Terminal");
+    expect(rendered.container.textContent).toContain("Resources");
+    expect(rendered.container.textContent).toContain("EP");
+    expect(rendered.container.textContent).toContain("5000");
+    expect(rendered.container.textContent).toContain("HP");
+    expect(rendered.container.textContent).toContain("85/100%");
+    expect(rendered.container.textContent).toContain("<script>bad()</script>");
+    expect(rendered.container.querySelector("script")).toBeNull();
+
+    cleanup(rendered);
+  });
+
   it("renders a state panel from safe StoryState data", () => {
     const rendered = renderIntent({
       schemaVersion: 1,
@@ -195,14 +239,24 @@ describe("RenderIntentView", () => {
         }],
         snapshot: {
           当前地点: "后台走廊",
+          长崎素世: {
+            $meta: { extensible: false },
+            好感度: [6, "对User的好感度"],
+          },
         },
         errors: [],
       }),
     });
 
+    const text = rendered.container.textContent ?? "";
     expect(rendered.container.textContent).toContain("Story State");
     expect(rendered.container.textContent).toContain("当前地点");
     expect(rendered.container.textContent).toContain("后台走廊");
+    expect(text).toContain("长崎素世.好感度");
+    expect(text).toContain("6");
+    expect(text).toContain("对User的好感度");
+    expect(text).not.toContain("$meta");
+    expect(text).not.toContain("{\"$meta\"");
     expect(rendered.container.querySelector("script")).toBeNull();
 
     cleanup(rendered);

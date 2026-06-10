@@ -20,7 +20,9 @@
 
 - `CharacterChatPanel.tsx` 不再接线 `useScriptBridge`，也不再把最新消息广播给脚本 runtime；`/session` Story runtime 的脚本执行 Seam 已从故事消息链路移除。
 - `MessageBubble.tsx` 不再组合 `ScriptSandbox`，parser 产出的 `sandbox` segment 在故事消息里会被忽略，只保留 HTML 与 RenderIntent 渲染。
+- `MessageBubble.tsx` 新增显式 `renderMode`：Story Agent 消息走 narrative + `RenderIntent` parser，不再调用 legacy `RegexProcessor`；普通角色消息继续走 legacy parser。
 - `ScriptSandbox.tsx` 继续作为显式迁移/调试 Adapter 存在，不再由普通故事消息自动触发。
 - `CharacterChatPanel.tsx` 现在以 `OpeningSelection` 透传开场选择状态，避免 UI 装配层继续拆传 `openingMessages/openingIndex/openingLocked`。
 - `CharacterChatPanel.tsx` 不再接收 Session host capability callback 组；聊天面板只保留真实使用的 `onSwipe` 与 `hostDebug` 快照。
 - `WorldBookEditor.tsx` 现在通过 `world-book-keys.ts` 生成 `character:` / `dialogue:` record key；`ImportWorldBookModal.tsx` 接收明确的 `worldBookKey`，不再把 record key 伪装成 character id。
+- Story Agent `StoryState` 面板拆出独立 renderer，嵌套变量会按 `角色.字段` 展示并过滤 `$meta`，避免 raw JSON 泄漏到消息 UI。

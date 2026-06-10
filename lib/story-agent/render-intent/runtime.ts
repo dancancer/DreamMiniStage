@@ -162,6 +162,8 @@ function isStatusPayload(value: unknown): boolean {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const record = value as Record<string, unknown>;
   return Array.isArray(record.characters) ||
+    Array.isArray(record.sections) ||
+    Array.isArray(record.meters) ||
     (typeof record.mode === "string" && hasStatusMeta(record));
 }
 

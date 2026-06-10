@@ -82,6 +82,27 @@ describe("regex RenderIntent classification", () => {
     expect(intents.every((intent) => intent.schemaVersion === 1)).toBe(true);
   });
 
+  it("extracts safe custom status dashboard JSON sources", () => {
+    const script = importRegexScripts([{
+      scriptKey: "dashboard",
+      scriptName: "战术终端",
+      findRegex: "<StatusDashboard>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StatusDashboard>",
+      replaceString: "<div class=\"status-panel\"><div data-field=\"资源\">$1</div></div>",
+      markdownOnly: true,
+      placement: [2],
+    }])[0];
+
+    const conversion = convertRegexToRenderIntent(script);
+
+    expect(conversion.intent).toEqual(
+      expect.objectContaining({
+        kind: "status-panel",
+        dataTemplate: "$1",
+        sourcePattern: "<StatusDashboard>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StatusDashboard>",
+      }),
+    );
+  });
+
   it("keeps malicious or complex HTML out of the UI execution path", () => {
     const malicious = importRegexScripts([{
       scriptKey: "malicious",
@@ -98,6 +119,23 @@ describe("regex RenderIntent classification", () => {
     expect(conversion.classification.kind).toBe("unsupported");
     expect(conversion.fallback?.allowedActions).toEqual(["disable", "plain-text"]);
     expect(conversion.fallback?.plainText).not.toContain("<script>");
+  });
+
+  it("does not let unsafe status dashboard HTML bypass the whitelist", () => {
+    const unsafe = importRegexScripts([{
+      scriptKey: "unsafe-dashboard",
+      scriptName: "状态终端",
+      findRegex: "<StatusDashboard>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StatusDashboard>",
+      replaceString: "<div class=\"status-panel\"><script>window.parent.postMessage('x','*')</script></div>",
+      markdownOnly: true,
+      placement: [2],
+    }])[0];
+
+    const conversion = convertRegexToRenderIntent(unsafe);
+
+    expect(conversion.intent).toBeUndefined();
+    expect(conversion.classification.kind).toBe("unsupported");
+    expect(conversion.fallback?.reason).toBe("script tag is not allowed");
   });
 
   it("classifies theater UpdateVariable cleanup apart from unsafe HTML widgets", () => {

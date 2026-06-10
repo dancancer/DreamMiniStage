@@ -1,10 +1,14 @@
 "use client";
 
-import type React from "react";
-import { Activity, ChevronDown, Clock, Database, MapPin, Users } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ChoiceOption, RenderIntent } from "@/lib/story-agent/render-intent";
+import {
+  parseStatusPanelData,
+  StatusPanelView,
+} from "./StatusPanelView";
+import { parseStoryStatePanelData, StoryStatePanelView } from "./state/StoryStatePanelView";
 
 interface RenderIntentViewProps {
   intent: RenderIntent;
@@ -66,16 +70,16 @@ export function RenderIntentView({
   }
 
   if (intent.kind === "state-panel") {
-    const stateData = parseStatePanelData(resolveTemplate(intent.dataTemplate, values));
-    if (stateData) return <StoryStatePanel data={stateData} intent={intent} />;
+    const stateData = parseStoryStatePanelData(resolveTemplate(intent.dataTemplate, values));
+    if (stateData) return <StoryStatePanelView data={stateData} intent={intent} />;
     return null;
   }
 
   const statusData = intent.kind === "status-panel" && intent.dataTemplate
-    ? parseStatusData(resolveTemplate(intent.dataTemplate, values))
+    ? parseStatusPanelData(resolveTemplate(intent.dataTemplate, values))
     : null;
   if (intent.kind === "status-panel" && statusData) {
-    return <StatusPanel intent={intent} data={statusData} />;
+    return <StatusPanelView intent={intent} data={statusData} />;
   }
 
   return (
@@ -96,160 +100,11 @@ export function RenderIntentView({
   );
 }
 
-interface StatusCharacter {
-  name?: string;
-  status?: string;
-  relation?: string;
-  pose?: string;
-  clothing?: string;
-  location?: string;
-  thought?: string;
-}
-
-interface StatusData {
-  date?: string;
-  time?: string;
-  location?: string;
-  characters: StatusCharacter[];
-}
-
-interface StatePanelUpdate {
-  op?: string;
-  path?: string;
-  value?: unknown;
-}
-
-interface StatePanelData {
-  updated: StatePanelUpdate[];
-  snapshot: Record<string, unknown>;
-  errors: string[];
-}
-
-function StoryStatePanel({ intent, data }: { intent: RenderIntent; data: StatePanelData }) {
-  const snapshotEntries = Object.entries(data.snapshot);
-  return (
-    <section className="rounded-md border border-primary/25 bg-card/85 p-4 text-card-foreground shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-3">
-        <div>
-          <div className="text-xs uppercase text-muted-foreground">Story State</div>
-          <h3 className="mt-1 text-sm font-semibold">{intent.title}</h3>
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <StatusMeta icon={<Activity className="h-3.5 w-3.5" />} value={`${data.updated.length} updates`} />
-          <StatusMeta icon={<Database className="h-3.5 w-3.5" />} value={`${snapshotEntries.length} fields`} />
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-3">
-        {data.updated.length > 0 ? (
-          <div className="grid gap-2">
-            {data.updated.map((item, index) => (
-              <div
-                className="grid gap-1 rounded-md border border-border/75 bg-background/45 px-3 py-2 text-sm sm:grid-cols-[5rem_1fr]"
-                key={`${item.op ?? "update"}-${item.path ?? index}`}
-              >
-                <span className="font-medium uppercase text-primary">{item.op ?? "set"}</span>
-                <span className="min-w-0 break-words text-muted-foreground">
-                  {item.path}
-                  {item.value !== undefined ? ` = ${formatPanelValue(item.value)}` : ""}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : null}
-
-        {snapshotEntries.length > 0 ? (
-          <dl className="grid gap-2 border-t border-border/60 pt-3 text-sm">
-            {snapshotEntries.map(([key, value]) => (
-              <div className="grid gap-1 sm:grid-cols-[8rem_1fr]" key={key}>
-                <dt className="text-muted-foreground">{key}</dt>
-                <dd className="min-w-0 break-words">{formatPanelValue(value)}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : null}
-
-        {data.errors.length > 0 ? (
-          <p className="rounded-md border border-destructive/25 px-3 py-2 text-sm text-destructive">
-            {data.errors.slice(0, 3).join(" / ")}
-          </p>
-        ) : null}
-      </div>
-    </section>
-  );
-}
-
-function StatusPanel({ intent, data }: { intent: RenderIntent; data: StatusData }) {
-  return (
-    <section className="rounded-md border border-primary/25 bg-card/85 p-4 text-card-foreground shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-3">
-        <div>
-          <div className="text-xs uppercase text-muted-foreground">Story Status</div>
-          <h3 className="mt-1 text-sm font-semibold">{intent.title}</h3>
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <StatusMeta icon={<Clock className="h-3.5 w-3.5" />} value={[data.date, data.time].filter(Boolean).join(" ")} />
-          <StatusMeta icon={<MapPin className="h-3.5 w-3.5" />} value={data.location} />
-          <StatusMeta icon={<Users className="h-3.5 w-3.5" />} value={`${data.characters.length} characters`} />
-        </div>
-      </div>
-      <div className="mt-4 grid gap-3">
-        {data.characters.map((character, index) => (
-          <article
-            className="rounded-md border border-border/75 bg-background/45 p-3"
-            key={`${character.name ?? "character"}-${index}`}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h4 className="text-sm font-semibold">{character.name || `Character ${index + 1}`}</h4>
-              {character.relation ? (
-                <span className="rounded-md border border-primary/20 px-2 py-0.5 text-xs text-primary">
-                  {character.relation}
-                </span>
-              ) : null}
-            </div>
-            <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-              <StatusField label="状态" value={character.status} />
-              <StatusField label="位置" value={character.location} />
-              <StatusField label="姿态" value={character.pose} />
-              <StatusField label="服装" value={character.clothing} />
-            </dl>
-            {character.thought ? (
-              <p className="mt-3 border-t border-border/60 pt-3 text-sm italic text-muted-foreground">
-                {character.thought}
-              </p>
-            ) : null}
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function StatusMeta({ icon, value }: { icon: React.ReactNode; value?: string }) {
-  if (!value) return null;
-  return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1">
-      {icon}
-      {value}
-    </span>
-  );
-}
-
-function StatusField({ label, value }: { label: string; value?: string }) {
-  if (!value) return null;
-  return (
-    <div className="grid grid-cols-[3rem_1fr] gap-2">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd>{value}</dd>
-    </div>
-  );
-}
-
 function resolveTemplate(template: string, values: Record<string, string>): string {
   return template
     .replace(/\$json\.([a-zA-Z0-9_]+)/g, (match, key: string) => {
-      const data = parseStatusData(values[1] ?? "");
-      const value = data?.[key as keyof StatusData];
+      const data = parseStatusPanelData(values[1] ?? "");
+      const value = data ? (data as unknown as Record<string, unknown>)[key] : undefined;
       return typeof value === "string" ? value : match;
     })
     .replace(/\$(\d+)/g, (match, index: string) => values[index] ?? match);
@@ -291,74 +146,6 @@ function normalizeChoiceOption(value: unknown, index: number): ChoiceOption | nu
   };
 }
 
-function parseStatusData(value: string): StatusData | null {
-  try {
-    const parsed = JSON.parse(value) as Record<string, unknown>;
-    const characters = Array.isArray(parsed.characters)
-      ? parsed.characters.map(normalizeCharacter)
-      : [];
-    return {
-      date: readString(parsed.date),
-      time: readString(parsed.time),
-      location: readString(parsed.location),
-      characters,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function parseStatePanelData(value: string): StatePanelData | null {
-  try {
-    const parsed = JSON.parse(value) as Record<string, unknown>;
-    return {
-      updated: Array.isArray(parsed.updated)
-        ? parsed.updated.map(normalizeStateUpdate)
-        : [],
-      snapshot: normalizeSnapshot(parsed.snapshot),
-      errors: Array.isArray(parsed.errors)
-        ? parsed.errors.filter((item): item is string => typeof item === "string")
-        : [],
-    };
-  } catch {
-    return null;
-  }
-}
-
-function normalizeStateUpdate(value: unknown): StatePanelUpdate {
-  const record = value && typeof value === "object" ? value as Record<string, unknown> : {};
-  return {
-    op: readString(record.op),
-    path: readString(record.path),
-    value: record.value,
-  };
-}
-
-function normalizeSnapshot(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
-}
-
-function normalizeCharacter(value: unknown): StatusCharacter {
-  const record = value && typeof value === "object" ? value as Record<string, unknown> : {};
-  return {
-    name: readString(record.name),
-    status: readString(record.status),
-    relation: readString(record.relation),
-    pose: readString(record.pose),
-    clothing: readString(record.clothing),
-    location: readString(record.location),
-    thought: readString(record.thought),
-  };
-}
-
 function readString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim().length > 0 ? value : undefined;
-}
-
-function formatPanelValue(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (value === undefined) return "";
-  return JSON.stringify(value) ?? String(value);
 }

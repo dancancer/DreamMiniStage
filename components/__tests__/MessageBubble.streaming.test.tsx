@@ -163,6 +163,44 @@ describe("MessageBubble streaming", () => {
     unmountBubble(rendered);
   });
 
+  it("uses the story parser mode without running legacy async regex parsing", async () => {
+    const rendered = renderBubble(
+      <MessageBubble
+        html="story **content**"
+        characterId="story-agent"
+        renderMode="story"
+      />,
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(contentParser.parseContent).toHaveBeenCalledWith("story **content**");
+    expect(contentParser.parseContentAsync).not.toHaveBeenCalled();
+
+    unmountBubble(rendered);
+  });
+
+  it("uses the legacy async regex pipeline in legacy render mode", async () => {
+    const rendered = renderBubble(
+      <MessageBubble
+        html="legacy **content**"
+        characterId="legacy-character"
+        renderMode="legacy"
+      />,
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(contentParser.parseContentAsync).toHaveBeenCalled();
+    expect(contentParser.parseContent).not.toHaveBeenCalled();
+
+    unmountBubble(rendered);
+  });
+
   it("re-renders with parsed content when streaming mode turns off", async () => {
     const rendered = renderBubble(
       <MessageBubble

@@ -110,7 +110,8 @@ export interface ImportedExtensionArtifact {
   kind: ExtensionArtifactKind;
   payloadHash: string;
   summary: string;
-  supported: false;
+  supported: boolean;
+  payload?: unknown;
   diagnostics: ImportDiagnostic[];
 }
 

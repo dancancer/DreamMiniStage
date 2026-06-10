@@ -247,6 +247,40 @@ describe("SAC-Phase 6a StorySession runtime", () => {
     });
   });
 
+  it("injects dashboard sections and meters into custom status render contracts", () => {
+    const blueprint = {
+      ...createBlueprint(),
+      renderRules: [{
+        schemaVersion: 1 as const,
+        id: "dashboard",
+        kind: "status-panel" as const,
+        sourceScriptId: "dashboard-script",
+        title: "Tactical Terminal",
+        confidence: 0.8,
+        fields: [],
+        dataTemplate: "$1",
+        sourcePattern: "<StatusDashboard>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StatusDashboard>",
+      }],
+    };
+    const session = createStorySession({ dialogueId: "dialogue-dashboard-contract", blueprint });
+    const turn = prepareStoryTurn({
+      blueprint,
+      session,
+      userInput: "continue",
+      model: { ...modelInput(), contextWindow: 1 },
+    });
+    const renderText = turn.promptMessages
+      .filter((message) => message.source === "render")
+      .map((message) => message.content)
+      .join("\n");
+
+    expect(renderText).toContain("<StatusDashboard>");
+    expect(renderText).toContain("\"mode\":\"statusdashboard\"");
+    expect(renderText).toContain("\"sections\"");
+    expect(renderText).toContain("\"meters\"");
+    expect(renderText).not.toContain("<SFW>");
+  });
+
   it("keeps prompt provenance granular but sends a compact semantic system block to the model", () => {
     const blueprint = {
       ...createBlueprint(),

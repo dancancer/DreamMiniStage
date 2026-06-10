@@ -10,6 +10,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { extractNodeIdFromMessageId } from "@/utils/message-id";
 import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-dialogue-operation";
+import { getStoryBranchOperationUnsupportedReason } from "@/lib/story-agent/session";
 import { emitAssistantMessageReceived, emitGenerationEnded, emitUserMessageSent } from "./dialogue-event-emitter";
 import {
   finalizeBufferedAssistantMessage,
@@ -236,6 +237,13 @@ export async function regenerateMessage(
   }
 
   const { onError, ...llmParams } = params;
+  const unsupportedReason = await getStoryBranchOperationUnsupportedReason(dialogueKey, "regenerate");
+  if (unsupportedReason) {
+    console.warn(`[regenerateMessage] ${unsupportedReason}`);
+    onError?.(unsupportedReason);
+    return;
+  }
+
   const newNodeId = uuidv4();
 
   await runGenerationLifecycle({

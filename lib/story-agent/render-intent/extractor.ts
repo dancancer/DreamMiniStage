@@ -1,5 +1,6 @@
 import type { RegexScript } from "@/lib/models/regex-script-model";
 import { classifyRegexScript, containsHtml, stripCodeFence } from "./classifier";
+import { isSfwStatusSourcePattern, isStatusJsonSourcePattern } from "./status-pattern";
 import {
   RENDER_INTENT_SCHEMA_VERSION,
   type ChoiceOption,
@@ -47,8 +48,7 @@ export function convertRegexScriptsToRenderIntents(
 function extractJsonStatusPanel(script: RegexScript, html: string): RenderIntent | undefined {
   if (
     !containsHtml(html) ||
-    !isStatusSourcePattern(script.findRegex) ||
-    !/状态栏|status/i.test(script.scriptName)
+    !canExtractJsonStatusPanel(script, html)
   ) {
     return undefined;
   }
@@ -97,8 +97,13 @@ function extractChoiceList(script: RegexScript, html: string): RenderIntent | un
   };
 }
 
-function isStatusSourcePattern(pattern: string): boolean {
-  return /<SFW>|<NSFW>/i.test(pattern) && /\\\{/.test(pattern);
+function canExtractJsonStatusPanel(script: RegexScript, html: string): boolean {
+  const sourcePattern = script.findRegex;
+  const sourceName = /状态栏|status/i.test(script.scriptName);
+  const legacyStatus = sourceName && isSfwStatusSourcePattern(sourcePattern) && /\\\{/.test(sourcePattern);
+  const customDashboard = html.toLowerCase().includes("status-panel") &&
+    isStatusJsonSourcePattern(sourcePattern);
+  return legacyStatus || customDashboard;
 }
 
 function extractCollapsiblePanel(script: RegexScript, html: string): RenderIntent | undefined {
@@ -136,6 +141,8 @@ function extractStatusPanel(script: RegexScript, html: string): RenderIntent | u
     title: extractTitle(html) ?? script.scriptName,
     confidence: 0.78,
     fields,
+    dataTemplate: isStatusJsonSourcePattern(script.findRegex) ? "$1" : undefined,
+    sourcePattern: isStatusJsonSourcePattern(script.findRegex) ? script.findRegex : undefined,
   };
 }
 

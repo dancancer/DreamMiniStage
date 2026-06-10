@@ -1,5 +1,5 @@
 /**
- * @input  function/dialogue/chat-shared, function/dialogue/opening, lib/data/roleplay/character-dialogue-operation, lib/generation-runtime
+ * @input  function/dialogue/chat-shared, function/dialogue/opening, lib/data/roleplay/character-dialogue-operation, lib/generation-runtime, lib/story-agent/session
  * @output prepareStoryDialogueTurn
  * @pos    Story turn lifecycle - 建树、落盘用户 turn、准备 story runtime
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
@@ -11,6 +11,7 @@ import { LocalCharacterDialogueOperations } from "@/lib/data/roleplay/character-
 import { prepareDialogueExecution } from "@/lib/generation-runtime/prepare/prepare-dialogue-execution";
 import type { PreparedDialogueExecution } from "@/lib/generation-runtime/types";
 import { ParsedResponse } from "@/lib/models/parsed-response";
+import { getStoryBranchOperationUnsupportedMessage } from "@/lib/story-agent/session";
 import {
   resolveModelAdvancedSettings,
   type ModelAdvancedSettings,
@@ -51,6 +52,8 @@ interface TurnModelSettings {
 export async function prepareStoryDialogueTurn(
   input: StoryTurnLifecycleInput,
 ): Promise<PreparedStoryDialogueTurn> {
+  assertLinearStoryTurn(input);
+
   const settings = resolveTurnModelSettings(input);
   await ensureDialogueTreeWithOpening(input);
   await appendPendingUserTurn(input);
@@ -62,6 +65,12 @@ export async function prepareStoryDialogueTurn(
     responseStreaming: settings.responseStreaming,
     preparedExecution: await prepareStoryRuntimeExecution(input, settings),
   };
+}
+
+function assertLinearStoryTurn(input: StoryTurnLifecycleInput): void {
+  if (!input.parentNodeId) return;
+
+  throw new Error(getStoryBranchOperationUnsupportedMessage("regenerate"));
 }
 
 function resolveTurnModelSettings(input: StoryTurnLifecycleInput): TurnModelSettings {

@@ -12,6 +12,7 @@ export type ImportDiagnosticCode =
   | "character.missing_description"
   | "character.missing_first_message"
   | "extension.unsupported"
+  | "extension.mvu_replay_mutation_unsupported"
   | "preset.empty_enabled_prompt"
   | "preset.empty_prompt_set"
   | "regex.invalid_pattern"

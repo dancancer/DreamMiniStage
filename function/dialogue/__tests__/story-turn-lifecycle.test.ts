@@ -113,6 +113,19 @@ describe("prepareStoryDialogueTurn", () => {
       streamUsage: false,
     }));
   });
+
+  it("rejects branch regeneration before mutating the dialogue tree", async () => {
+    await expect(prepareStoryDialogueTurn(baseInput({
+      parentNodeId: "previous-turn",
+    }))).rejects.toThrow(
+      "Story Agent regenerate is disabled until StoryState branch replay is implemented.",
+    );
+
+    expect(mocks.getDialogueTreeById).not.toHaveBeenCalled();
+    expect(mocks.createDialogueTree).not.toHaveBeenCalled();
+    expect(mocks.addNodeToDialogueTree).not.toHaveBeenCalled();
+    expect(mocks.prepareDialogueExecution).not.toHaveBeenCalled();
+  });
 });
 
 function baseInput(

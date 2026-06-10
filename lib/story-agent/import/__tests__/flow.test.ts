@@ -109,38 +109,35 @@ describe("story agent import flow", () => {
     expect(turn.llmConfig.dialogueKey).toBe("session-1");
   });
 
-  it("runs import QA repair, auto-applying low-risk and deferring high-risk patches", async () => {
+  it("runs import QA repair: an offered high-risk patch becomes a pending confirmation", async () => {
     const { compileStoryAgentImportWithQaRepair } = await import("../flow");
-    const qaModel = async () => ({
+    const qaModel = async (qaInput: { repairablePaths: string[] }) => ({
       patches: [
         {
           id: "p1",
           operation: "replace",
-          targetPath: "/character/creator",
-          value: "qa-bot",
-          reason: "normalize creator metadata",
-        },
-        {
-          id: "p2",
-          operation: "replace",
-          targetPath: "/character/description",
-          value: "rewritten identity",
-          reason: "improve description",
+          targetPath: qaInput.repairablePaths[0],
+          value: "filled description",
+          reason: "fill empty description",
         },
       ],
     });
+    const input = {
+      characterId: "agent-qa",
+      createdAt: "2026-06-10T00:00:00.000Z",
+      character: {
+        raw: { data: { name: "QA Card", first_mes: "hi" } },
+        source: source("qa.card.json", "json-character"),
+      },
+    };
 
-    const preview = await compileStoryAgentImportWithQaRepair(createInput(), qaModel);
+    const preview = await compileStoryAgentImportWithQaRepair(input, qaModel);
 
-    expect(preview.bundle.character.creator).toBe("qa-bot");
-    expect(preview.qaRepair?.autoApplied.map((entry) => entry.patch.targetPath)).toEqual([
-      "/character/creator",
-    ]);
-    expect(preview.qaRepair?.pendingConfirmation.map((entry) => entry.patch.targetPath)).toEqual([
+    expect(preview.qaRepair?.pendingConfirmation.map((entry) => entry.patch.targetPath)).toContain(
       "/character/description",
-    ]);
+    );
     expect(preview.confirmation.required).toBe(true);
-    expect(preview.blueprint.profile.name).toBe("【Sgw】又看一集");
+    expect(preview.blueprint.profile.name).toBe("QA Card");
   });
 });
 

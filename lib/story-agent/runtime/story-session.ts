@@ -34,6 +34,7 @@ import {
 } from "./world-module";
 import {
   applyStoryStateUpdate,
+  extractStoryThinkingContent,
   formatStoryStateMessages,
   type StoryStateData,
 } from "./state/update";
@@ -238,7 +239,7 @@ export async function finalizeStoryTurn(
   return {
     screenContent,
     fullResponse: llmResponse,
-    thinkingContent: "",
+    thinkingContent: extractStoryThinkingContent(output.text),
     parsedContent: { nextPrompts: [] },
     event: "",
     isPostProcessed: true,
