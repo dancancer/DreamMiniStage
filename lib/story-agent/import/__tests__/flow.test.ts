@@ -140,6 +140,34 @@ describe("story agent import flow", () => {
     expect(preview.blueprint.profile.name).toBe("QA Card");
   });
 
+  it("re-runs QA repair on an already-compiled preview's bundle", async () => {
+    const { compileStoryAgentImport, repairImportPreview } = await import("../flow");
+    const preview = compileStoryAgentImport({
+      characterId: "agent-qa2",
+      createdAt: "2026-06-10T00:00:00.000Z",
+      character: {
+        raw: { data: { name: "QA Card", first_mes: "hi" } },
+        source: source("qa2.card.json", "json-character"),
+      },
+    });
+    const qaModel = async (qaInput: { repairablePaths: string[] }) => ({
+      patches: [{
+        id: "p1",
+        operation: "replace",
+        targetPath: qaInput.repairablePaths[0],
+        value: "filled description",
+        reason: "fill empty description",
+      }],
+    });
+
+    const next = await repairImportPreview(preview, qaModel);
+
+    expect(next.qaRepair?.pendingConfirmation.map((entry) => entry.patch.targetPath)).toContain(
+      "/character/description",
+    );
+    expect(next.confirmation.required).toBe(true);
+  });
+
   it("synthesizes an unsupported UI widget into an extra render rule", async () => {
     const { compileStoryAgentImport, synthesizeImportWidgets } = await import("../flow");
     const preview = compileStoryAgentImport(widgetInput());

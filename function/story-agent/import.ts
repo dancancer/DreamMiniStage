@@ -1,21 +1,26 @@
 /**
  * @input  utils/character-parser, lib/story-agent/import
- * @output previewStoryAgentFromFiles, commitStoryAgentFromPreview, importStoryAgentFromFiles
+ * @output previewStoryAgentFromFiles, enrichStoryAgentPreview, commitStoryAgentFromPreview, importStoryAgentFromFiles
  * @pos    Story Agent 导入 - 将角色卡/世界书/预设/正则一次性编译为 blueprint session
  * @update 一旦我被更新，务必更新我的开头注释，以及所属文件夹的 README.md
  */
 
 import { parseCharacterCard } from "@/utils/character-parser";
-import type { AssetSource, AssetSourceKind } from "@/lib/adapters/import";
+import { createQaModelAdapter, type AssetSource, type AssetSourceKind } from "@/lib/adapters/import";
 import {
   commitStoryAgentImport,
   compileStoryAgentImport,
   importStoryAgentSession,
+  repairImportPreview,
+  synthesizeImportWidgets,
   type StoryAgentImportPreview,
   type StoryAgentImportResult,
   type StoryAgentRawAsset,
 } from "@/lib/story-agent/import";
 import type { SessionBlueprint } from "@/lib/story-agent/blueprint";
+import { createWidgetSynthesisModel } from "@/lib/story-agent/render-intent";
+import { LLMNodeTools } from "@/lib/nodeflow/LLMNode/LLMNodeTools";
+import type { LLMConfig } from "@/lib/nodeflow/LLMNode/llm-config";
 
 export interface StoryAgentImportFiles {
   characterFile: File;
@@ -30,6 +35,20 @@ export async function previewStoryAgentFromFiles(
 ): Promise<StoryAgentImportPreview> {
   const assets = await readStoryAgentFiles(files);
   return compileStoryAgentImport(assets);
+}
+
+// 导入期 LLM 富化（向导「AI 增强」触发，客户端执行）：用 active 会话模型同时做 QA 修复与
+// 富 UI 复现。invokeLLM 默认走 LLMNodeTools，测试可注入 fake。baseConfig 由调用方从当前
+// 模型配置映射（modelName/apiKey/baseUrl/llmType + advanced）；adapter 内部 sanitize 后非流式调用。
+export async function enrichStoryAgentPreview(
+  preview: StoryAgentImportPreview,
+  baseConfig: LLMConfig,
+  invokeLLM: (config: LLMConfig) => Promise<string> = (config) => LLMNodeTools.invokeLLM(config),
+): Promise<StoryAgentImportPreview> {
+  const qaModel = createQaModelAdapter({ invokeLLM, baseConfig });
+  const widgetModel = createWidgetSynthesisModel({ invokeLLM, baseConfig });
+  const repaired = await repairImportPreview(preview, qaModel);
+  return synthesizeImportWidgets(repaired, widgetModel);
 }
 
 export async function commitStoryAgentFromPreview(params: {

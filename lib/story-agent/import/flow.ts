@@ -59,6 +59,22 @@ export async function compileStoryAgentImportWithQaRepair(
   });
 }
 
+// 在已编译 preview 的 bundle 上重跑 QA-repair（不重建 bundle）。供向导客户端在拿到确定性
+// 预览后，用 active 会话模型做导入期 LLM 修复——LLM 调用必须客户端发起（apiKey 在客户端），
+// 故以 preview 为入口而非 StoryAgentImportInput。与 synthesizeImportWidgets 对称、可串联。
+export async function repairImportPreview(
+  preview: StoryAgentImportPreview,
+  qaModel: QaModelPort,
+): Promise<StoryAgentImportPreview> {
+  const qaRepair = await runImportQaRepair(preview.bundle, qaModel, {
+    extraDiagnostics: diagnoseInitialStateSources(preview.bundle),
+  });
+  return previewFromBundle(qaRepair.bundle, preview.blueprint.id, preview.blueprint.createdAt, {
+    autoApplied: qaRepair.autoApplied,
+    pendingConfirmation: qaRepair.pendingConfirmation,
+  });
+}
+
 // NS-Phase 4.2 富 UI 复现（ADR-0011）：把 classifier 标 unsupported 的 script-widget 交给注入的
 // widget 合成模型，复现为白名单 RenderIntent 追加进 blueprint.renderRules；无法安全复现的落
 // Import Diagnostic（render.widget_synthesis_failed）。全程不执行任何 script（INV-3）。模型端口

@@ -3,6 +3,7 @@ export {
   compileStoryAgentImport,
   compileStoryAgentImportWithQaRepair,
   importStoryAgentSession,
+  repairImportPreview,
   synthesizeImportWidgets,
 } from "./flow";
 

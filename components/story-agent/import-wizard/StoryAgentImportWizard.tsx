@@ -9,6 +9,7 @@ import {
   FileText,
   Regex,
   SlidersHorizontal,
+  Sparkles,
   UploadCloud,
 } from "lucide-react";
 import { useLanguage } from "@/app/i18n";
@@ -17,12 +18,15 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   commitStoryAgentFromPreview,
+  enrichStoryAgentPreview,
   previewStoryAgentFromFiles,
 } from "@/function/story-agent/import";
 import type {
   StoryAgentImportPreview,
   StoryAgentImportResult,
 } from "@/lib/story-agent/import";
+import type { LLMConfig } from "@/lib/nodeflow/LLMNode/llm-config";
+import { useModelStore } from "@/lib/store/model-store";
 import { toast } from "@/lib/store/toast-store";
 import { cn } from "@/lib/utils";
 import {
@@ -53,6 +57,7 @@ export function StoryAgentImportWizard() {
   const [result, setResult] = useState<StoryAgentImportResult | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
   const copy = useMemo(() => labels(language), [language]);
   const characterFile = characterFiles[0] ?? null;
@@ -80,6 +85,28 @@ export function StoryAgentImportWizard() {
       toast.error(error instanceof Error ? error.message : copy.previewFailed);
     } finally {
       setIsPreviewing(false);
+    }
+  };
+
+  const runEnrichment = async () => {
+    if (!preview) return;
+    const baseConfig = activeModelBaseConfig();
+    if (!baseConfig) {
+      toast.error(copy.modelRequired);
+      return;
+    }
+
+    setIsEnriching(true);
+    setConfirmed(false);
+    try {
+      const enriched = await enrichStoryAgentPreview(preview, baseConfig);
+      setPreview(enriched);
+      toast.success(copy.enrichDone);
+    } catch (error) {
+      console.error("Story Agent enrich failed:", error);
+      toast.error(error instanceof Error ? error.message : copy.enrichFailed);
+    } finally {
+      setIsEnriching(false);
     }
   };
 
@@ -164,15 +191,24 @@ export function StoryAgentImportWizard() {
           <Button
             type="button"
             onClick={runPreview}
-            disabled={!characterFile || isPreviewing || isCommitting}
+            disabled={!characterFile || isPreviewing || isEnriching || isCommitting}
           >
             {isPreviewing ? copy.previewing : copy.preview}
           </Button>
           <Button
             type="button"
+            variant="secondary"
+            onClick={runEnrichment}
+            disabled={!preview || isPreviewing || isEnriching || isCommitting}
+          >
+            <Sparkles className="mr-1.5 h-4 w-4" />
+            {isEnriching ? copy.enriching : copy.enrich}
+          </Button>
+          <Button
+            type="button"
             variant="outline"
             onClick={commit}
-            disabled={!preview || isCommitting || isPreviewing}
+            disabled={!preview || isCommitting || isPreviewing || isEnriching}
           >
             {isCommitting ? copy.creating : copy.create}
           </Button>
@@ -315,11 +351,16 @@ function labels(language: string) {
     regex: zh ? "正则" : "Regex",
     preview: zh ? "检查资产" : "Inspect Assets",
     previewing: zh ? "检查中..." : "Inspecting...",
+    enrich: zh ? "AI 增强" : "AI Enhance",
+    enriching: zh ? "增强中..." : "Enhancing...",
     create: zh ? "创建 Agent" : "Create Agent",
     creating: zh ? "创建中..." : "Creating...",
     enterSession: zh ? "进入会话" : "Enter Session",
     previewReady: zh ? "资产检查完成" : "Preview ready",
     previewFailed: zh ? "资产检查失败" : "Preview failed",
+    enrichDone: zh ? "AI 增强完成（QA 修复 + 富 UI 复现）" : "AI enhancement done (QA repair + rich-UI synthesis)",
+    enrichFailed: zh ? "AI 增强失败" : "AI enhancement failed",
+    modelRequired: zh ? "请先在模型设置里配置并启用一个模型" : "Configure and activate a model first",
     commitFailed: zh ? "创建失败" : "Creation failed",
     characterRequired: zh ? "请先选择角色卡" : "Select a character card first",
     confirmRequired: zh ? "请先确认高风险变更" : "Confirm high-risk changes first",
@@ -340,4 +381,17 @@ function labels(language: string) {
 function repairSummary(preview: StoryAgentImportPreview): string {
   const report = preview.blueprint.repairReport;
   return `${report.appliedPatches.length} / ${report.manualPatches.length} / ${report.rejectedPatches.length}`;
+}
+
+// 把当前 active 模型配置映射成导入期 LLM 调用所需的 baseConfig；adapter 内部再 sanitize。
+function activeModelBaseConfig(): LLMConfig | null {
+  const config = useModelStore.getState().getActiveConfig();
+  if (!config?.model) return null;
+  return {
+    modelName: config.model,
+    apiKey: config.apiKey,
+    baseUrl: config.baseUrl,
+    llmType: config.type,
+    ...config.advanced,
+  } as LLMConfig;
 }
