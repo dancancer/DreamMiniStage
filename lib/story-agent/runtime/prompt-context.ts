@@ -222,6 +222,11 @@ function fitBudget(
   maxTokens: number,
   requiredIds: string[] = [],
 ): AssemblePromptContextResult {
+  // 入参 messages 已是最终期望顺序（prompt-stack → world → render → memory → history，
+  // 各块内按插入顺序）。记录该原始下标，预算选择后据此还原顺序——绝不能靠 id 字符串排序，
+  // 否则 history:10 会排到 history:2 之前（字典序），10 轮后对话历史被打乱、prompt 永远以
+  // 第 9 条结尾，模型每轮都续写同一处（剧情卡死）。
+  const originalOrder = new Map(messages.map((message, index) => [message.id, index]));
   const selected: PromptContextMessage[] = [];
   const omitted: AssemblePromptContextResult["omitted"] = [];
   const requiredSet = new Set(requiredIds);
@@ -248,7 +253,9 @@ function fitBudget(
   }
 
   return {
-    messages: selected.sort(compareOriginalOrder),
+    messages: selected.sort(
+      (left, right) => (originalOrder.get(left.id) ?? 0) - (originalOrder.get(right.id) ?? 0),
+    ),
     omitted,
     totalTokens,
   };
@@ -276,25 +283,14 @@ function latestUserHistoryId(messages: PromptContextMessage[]): string | undefin
     ?.id;
 }
 
+// 预算驱逐的选择顺序：低优先级 source 先被考虑丢弃。tie-break 用 numeric-aware 比较，
+// 使同 source 内按数字下标稳定（history:2 在 history:10 之前），与最终原始顺序一致。
 function comparePriority(left: PromptContextMessage, right: PromptContextMessage): number {
   return priority(left.source) - priority(right.source) ||
-    left.id.localeCompare(right.id);
-}
-
-function compareOriginalOrder(left: PromptContextMessage, right: PromptContextMessage): number {
-  return sourceOrder(left.source) - sourceOrder(right.source) ||
-    left.id.localeCompare(right.id);
+    left.id.localeCompare(right.id, undefined, { numeric: true });
 }
 
 function priority(source: PromptContextSource): number {
-  if (source === "prompt-stack") return 0;
-  if (source === "world") return 1;
-  if (source === "render") return 2;
-  if (source === "memory") return 3;
-  return 4;
-}
-
-function sourceOrder(source: PromptContextSource): number {
   if (source === "prompt-stack") return 0;
   if (source === "world") return 1;
   if (source === "render") return 2;

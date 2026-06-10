@@ -209,6 +209,25 @@ describe("SAC-Phase 4 blueprint runtime harness", () => {
     expect(result.omitted.map((message) => message.source)).toEqual(["memory", "history"]);
   });
 
+  it("preserves conversation order beyond 10 turns (numeric, not lexicographic id sort)", () => {
+    const blueprint = shortPromptBlueprint();
+    const history = Array.from({ length: 14 }, (_, index) => ({
+      role: (index % 2 === 0 ? "user" : "assistant") as "user" | "assistant",
+      content: `turn-${index}`,
+    }));
+
+    const result = assemblePromptContext({ blueprint, history, maxTokens: Infinity });
+
+    const historyContents = result.messages
+      .filter((message) => message.source === "history")
+      .map((message) => message.content);
+
+    // 全部 14 条历史必须保持原始顺序；回归前 history:10 会排到 history:2 之前，
+    // 导致 prompt 永远以 turn-9 结尾（剧情卡在第 10 条）。
+    expect(historyContents).toEqual(history.map((message) => message.content));
+    expect(historyContents.at(-1)).toBe("turn-13");
+  });
+
   it("POC-4.4 keeps sticky cooldown and delay in activation state", () => {
     const blueprint = statefulBlueprint();
     const first = matchWorldModules(blueprint, "alpha beta later");
