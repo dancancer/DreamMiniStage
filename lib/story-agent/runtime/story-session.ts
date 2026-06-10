@@ -52,6 +52,27 @@ export interface StoryRenderState {
   updatedAt: string;
 }
 
+/** 单条预设提示词条目的会话级覆盖。 */
+export interface StorySessionPromptOverride {
+  /** 关闭/开启该条目（缺省沿用预设的 enabled）。 */
+  enabled?: boolean;
+  /** 改写该条目内容（缺省沿用预设内容）。 */
+  content?: string;
+}
+
+/**
+ * 会话级设置覆盖（最高优先级，叠加在导入预设 / 全局默认之上）。三者皆为可选——
+ * 只存「被改过的项」，未设的回落到导入预设、再回落到全局默认。旧会话无该字段即无覆盖。
+ */
+export interface StorySessionSettings {
+  /** 采样/模型参数覆盖（temperature / contextWindow / maxTokens / topP 等）。 */
+  modelPolicy?: Partial<ModelAdvancedSettings>;
+  /** 指定本会话使用的全局模型配置 id（覆盖当前 active 模型；Phase 2 接线）。 */
+  modelConfigId?: string;
+  /** 按 promptStack 条目 id 的提示词覆盖（开关/改写）。 */
+  promptOverrides?: Record<string, StorySessionPromptOverride>;
+}
+
 export interface StorySessionState {
   id: string;
   dialogueId: string;
@@ -61,6 +82,8 @@ export interface StorySessionState {
   renderState: StoryRenderState;
   storyState: StoryStateData;
   memory: StoryMemoryState;
+  /** 会话级设置覆盖；缺省表示完全沿用导入预设 + 全局默认。 */
+  settings?: StorySessionSettings;
   updatedAt: string;
 }
 
@@ -145,8 +168,9 @@ export function prepareStoryTurn(params: {
   const modelPolicy = resolveStoryModelPolicy({
     modelName: params.model.modelName,
     baseUrl: params.model.baseUrl,
-    request: params.model,
+    sessionOverride: params.session.settings?.modelPolicy,
     blueprint: params.blueprint.modelPolicy,
+    globalDefault: params.model,
     responseLength: params.model.responseLength,
   });
   const world = matchWorldModules(
@@ -168,6 +192,7 @@ export function prepareStoryTurn(params: {
       { role: "user", content: input.text },
     ],
     requiredHistoryIndexes: seededOpening.length > 0 ? [0] : [],
+    promptOverrides: params.session.settings?.promptOverrides,
     macroContext: {
       charName: params.blueprint.profile.name,
       userName: params.model.username,

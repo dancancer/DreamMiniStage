@@ -1,5 +1,6 @@
 export {
   assemblePromptMessages,
+  type PromptMessageOverride,
 } from "./assembler";
 
 export {

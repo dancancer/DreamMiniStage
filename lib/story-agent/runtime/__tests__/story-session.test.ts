@@ -97,7 +97,7 @@ describe("SAC-Phase 6a StorySession runtime", () => {
     expect(JSON.stringify(turn.promptMessages)).not.toMatch(/"(prompt_order|placement)":/);
   });
 
-  it("uses responseLength as the per-turn output cap", () => {
+  it("lets the imported preset output cap override the global response length", () => {
     const blueprint = {
       ...createBlueprint(),
       modelPolicy: {
@@ -120,10 +120,31 @@ describe("SAC-Phase 6a StorySession runtime", () => {
       },
     });
 
+    // 新优先级：导入预设 > 全局默认（responseLength），故预设的 65535 生效（在 deepseek 上限内）。
     expect(turn.llmConfig.contextWindow).toBe(1_000_000);
-    expect(turn.llmConfig.maxTokens).toBe(200);
+    expect(turn.llmConfig.maxTokens).toBe(65_535);
     expect(turn.llmConfig.temperature).toBeUndefined();
     expect(turn.llmConfig.topP).toBeUndefined();
+  });
+
+  it("applies a session settings override above the imported preset", () => {
+    const blueprint = {
+      ...createBlueprint(),
+      modelPolicy: { contextWindow: 841_394, maxTokens: 65_535 },
+    };
+    const session = {
+      ...createStorySession({ dialogueId: "dialogue-override", blueprint }),
+      settings: { modelPolicy: { maxTokens: 1024 } },
+    };
+    const turn = prepareStoryTurn({
+      blueprint,
+      session,
+      userInput: "alpha",
+      model: { modelName: "deepseek-v4-pro", apiKey: "key", llmType: "openai", responseLength: 200 },
+    });
+
+    // 会话覆盖最高：1024 盖过预设 65535 与全局 200。
+    expect(turn.llmConfig.maxTokens).toBe(1024);
   });
 
   it("keeps the current user input in the final request and resolves prompt macros", () => {

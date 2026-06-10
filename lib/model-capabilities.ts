@@ -25,8 +25,13 @@ interface ModelCapability {
 export interface StoryModelPolicyInput {
   modelName: string;
   baseUrl?: string;
-  request?: Partial<ModelAdvancedSettings>;
+  /** 会话级覆盖（最高优先）。 */
+  sessionOverride?: Partial<ModelAdvancedSettings>;
+  /** 导入预设的采样策略（中优先）。 */
   blueprint?: Partial<ModelAdvancedSettings>;
+  /** 全局默认采样（含全局模型 advanced；最低优先）。 */
+  globalDefault?: Partial<ModelAdvancedSettings>;
+  /** 全局默认输出长度，并入全局默认层的 maxTokens。 */
   responseLength?: number;
 }
 
@@ -53,20 +58,23 @@ export function inferModelCapability(input: {
 
 export function resolveStoryModelPolicy(input: StoryModelPolicyInput): ModelAdvancedSettings {
   const capability = inferModelCapability(input);
-  const defaults = normalizeModelAdvancedSettings({
+  // 全局默认（最低层）：story 兜底 + 模型能力默认 + 全局 advanced，输出长度并入 maxTokens。
+  const globalDefault = normalizeModelAdvancedSettings({
     contextWindow: STORY_DEFAULT_CONTEXT_WINDOW,
-    maxTokens: STORY_DEFAULT_MAX_TOKENS,
     streamUsage: true,
     ...capability?.defaults,
+    ...input.globalDefault,
+    maxTokens:
+      input.responseLength ??
+      input.globalDefault?.maxTokens ??
+      capability?.defaults?.maxTokens ??
+      STORY_DEFAULT_MAX_TOKENS,
   });
-  const request = normalizeModelAdvancedSettings({
-    ...input.request,
-    maxTokens: input.responseLength ?? input.request?.maxTokens,
-  });
+  // 叠加顺序：会话覆盖 > 导入预设 > 全局默认。
   const resolved = resolveModelAdvancedSettings({
-    request,
+    request: input.sessionOverride,
     session: input.blueprint,
-    preset: defaults,
+    preset: globalDefault,
   });
 
   return stripIgnoredSampling(capModelPolicy(resolved, capability), capability);

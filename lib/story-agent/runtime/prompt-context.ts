@@ -1,6 +1,7 @@
 import {
   assemblePromptMessages,
   type CompiledPromptMessage,
+  type PromptMessageOverride,
   type SessionBlueprint,
 } from "@/lib/story-agent/blueprint";
 import type { WorldHit } from "./world-module";
@@ -34,6 +35,8 @@ export interface AssemblePromptContextInput {
   requiredHistoryIndexes?: number[];
   macroContext?: PromptMacroContext;
   maxTokens?: number;
+  /** 会话级提示词条目覆盖（按 promptStack 条目 id）。 */
+  promptOverrides?: Record<string, PromptMessageOverride>;
 }
 
 export interface AssemblePromptContextResult {
@@ -46,7 +49,7 @@ export function assemblePromptContext(
   input: AssemblePromptContextInput,
 ): AssemblePromptContextResult {
   const messages = renderPromptMacros([
-    ...assemblePromptMessages(input.blueprint).map(fromPromptStack),
+    ...assemblePromptMessages(input.blueprint, input.promptOverrides).map(fromPromptStack),
     ...(input.worldHits ?? []).map(fromWorldHit),
     ...(input.renderMessages ?? []).map(fromRender),
     ...(input.memoryMessages ?? []).map(fromMemory),
