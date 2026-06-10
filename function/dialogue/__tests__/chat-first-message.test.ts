@@ -136,7 +136,7 @@ describe("handleCharacterChatRequest 首条消息建树并写入开场", () => {
       dialogueId: "session-1",
       originalMessage: "hi",
       nodeId: "assistant-1",
-    }), expect.any(Object));
+    }), expect.any(Object), expect.any(Function));
   });
 
   it("story runtime 失败时仍先持久化用户输入节点", async () => {

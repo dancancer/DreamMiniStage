@@ -3,15 +3,6 @@ import { createBufferedSink } from "@/lib/generation-runtime/sinks/create-buffer
 import { runDialogueGeneration } from "@/lib/generation-runtime/run-dialogue-generation";
 import { LLMNodeTools } from "@/lib/nodeflow/LLMNode/LLMNodeTools";
 import { finalizeDialogueResult } from "@/lib/generation-runtime/postprocess/finalize-dialogue-result";
-import * as chatShared from "@/function/dialogue/chat-shared";
-
-vi.mock("@/function/dialogue/chat-shared", async () => {
-  const actual = await vi.importActual<typeof import("@/function/dialogue/chat-shared")>("@/function/dialogue/chat-shared");
-  return {
-    ...actual,
-    processPostResponseAsync: vi.fn().mockResolvedValue(undefined),
-  };
-});
 
 describe("runDialogueGeneration", () => {
   afterEach(() => {
@@ -40,6 +31,7 @@ describe("runDialogueGeneration", () => {
     });
 
     const sink = createBufferedSink();
+    const persistTurn = vi.fn();
     await runDialogueGeneration({
       dialogueId: "dialogue-1",
       originalMessage: "hi",
@@ -48,7 +40,7 @@ describe("runDialogueGeneration", () => {
         context: {} as never,
         llmConfig: { streaming: true },
       },
-    }, sink);
+    }, sink, persistTurn);
 
     expect(sink.getResult()).toEqual({
       type: "complete",
@@ -58,10 +50,10 @@ describe("runDialogueGeneration", () => {
       parsedContent: { nextPrompts: ["next"] },
       isRegexProcessed: true,
     });
-    expect(vi.mocked(chatShared.processPostResponseAsync)).toHaveBeenCalledWith(expect.objectContaining({
-      screenContent: "Visible reply",
-      fullResponse: "Hello",
-    }));
+    expect(persistTurn).toHaveBeenCalledWith(
+      expect.objectContaining({ dialogueId: "dialogue-1", nodeId: "node-1" }),
+      expect.objectContaining({ screenContent: "Visible reply", fullResponse: "Hello" }),
+    );
   });
 
   it("falls back to streamed content when finalization fails after tokens", async () => {
