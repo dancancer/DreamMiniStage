@@ -1,0 +1,24 @@
+{
+  "source": "story-agent-browser-state-render-e2e",
+  "description": "Safe custom status dashboard fixture for Story Agent browser E2E",
+  "scripts": [
+    {
+      "id": "story-agent-e2e-status-dashboard",
+      "scriptName": "E2E Status Dashboard",
+      "disabled": false,
+      "runOnEdit": true,
+      "findRegex": "<StatusDashboard>\\s*(\\{[\\s\\S]*?\\})\\s*<\\/StatusDashboard>",
+      "replaceString": "<div class=\"status-panel\"><div data-field=\"dashboard\">$1</div></div>",
+      "trimStrings": [],
+      "placement": [
+        1,
+        2
+      ],
+      "substituteRegex": 0,
+      "minDepth": null,
+      "maxDepth": null,
+      "markdownOnly": true,
+      "promptOnly": false
+    }
+  ]
+}

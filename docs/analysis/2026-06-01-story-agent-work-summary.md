@@ -1,6 +1,7 @@
 # Story Agent work summary
 
 Date: 2026-06-01
+Last updated: 2026-06-04
 
 ## 背景
 
@@ -94,12 +95,106 @@ Commit: pending
 - Blueprint 编译期新增 `render.status_contract_unsupported` 诊断：当导入内容声明
   status-like JSON source tag 但没有对应的 compiled `RenderIntent` 时，导入预览会把它当作
   feature-loss 展示。
+- RenderIntent 白名单现在支持安全的 custom status dashboard JSON source，例如
+  `<StatusDashboard>{...}</StatusDashboard>`；前提是 replacement 命中安全 `status-panel`
+  HTML，且不包含 script/iframe/inline handler/DOM access。
+- `StatusPanelView` 支持结构化 `sections` 和 `meters`，custom dashboard 不再需要执行
+  上游 HTML 才能展示多段状态和数值条。
+- render contract 会按实际 source tag 注入，例如 `<StatusDashboard>`，并明确要求把
+  dashboard 字段放入 `sections`、数值条放入 `meters`。
+- status fallback 会沿用 custom status tag 合成 JSON，不再强制回退到 `<SFW>`。
 
 价值：
 
 - status/render contract 的失败模式从“用户看到裸 JSON”收敛为“运行时不渲染 raw source，
   导入时给出可审计诊断”。
 - 已支持的 `<SFW>` status panel 仍走结构化 `RenderIntent`，不会被误报为 unsupported。
+- custom status dashboard 的安全路径从“unsupported 或吞字段”推进到“JSON source -> 结构化
+  `RenderIntent` -> sections/meters UI”，仍拒绝不安全 HTML。
+
+### Story Agent render pipeline split
+
+Commit: pending
+
+完成内容：
+
+- `MessageBubble` 新增显式 `renderMode`。
+- Story Agent 消息由 `MessageItem` 根据 `character.extensions.storyBlueprintId` 进入 `story`
+  render mode。
+- `story` render mode 只走本地 narrative parser 和 `RenderIntentView`，不再调用 legacy async
+  `RegexProcessor`。
+- 普通角色消息继续使用 legacy render mode，保留既有 regex/html 行为边界。
+- `ScriptSandbox` segments 仍被消息渲染链忽略，不会重新挂载脚本执行路径。
+
+价值：
+
+- Story Agent 输出现在和 legacy HTML/script processor 有明确运行时边界。
+- 结构化 `RenderIntent` 继续承担 UI 语义，unsupported HTML/script assets 仍应留在 import
+  diagnostics，而不是进入 runtime 执行。
+
+### MVU static variable convention extraction
+
+Commit: pending
+
+完成内容：
+
+- Import bundle 现在区分 supported / unsupported extension artifacts。
+- 静态 extension variable convention 会被提取为 supported `variable-convention` artifact。
+- 支持从 MVU replay-style `initial` object 编译初始变量。
+- 支持从 TavernHelper pair-list 的 `variables` object 编译初始变量。
+- 带 `update` / `insert` 等 replay mutation 字段的 MVU artifact 仍保留 unsupported diagnostic；
+  本轮只支持初始静态变量，不执行后续 mutation/replay 语义。
+
+价值：
+
+- 非 `[InitVar]` 的静态变量源现在也能 seed 到 `StorySession.storyState`。
+- `status_current_variables` 仍由 DreamMiniStage runtime 注入，不回退到 TavernHelper/MVU 脚本。
+- 未支持的 replay/update 语义不会被静默吞掉。
+
+### Static state snapshot tags and state-source diagnostics
+
+Commit: pending
+
+完成内容：
+
+- 支持从 `<status_current_variables>{...}</status_current_variables>` 静态 JSON 快照编译初始变量。
+- 支持从 `<StoryState>{...}</StoryState>` 静态 JSON 快照编译初始变量。
+- `{{get_message_variable::stat_data}}` 这类动态宏状态源会被识别为
+  `story.initial_state.dynamic_source_unsupported`，不会被误当 JSON 解析。
+- origin 这类 `<StatusDashboard>` / `<UnitCard>` 状态模板会被识别为
+  `story.initial_state.template_only`，明确说明它只包含模板，没有静态初始变量值。
+- 这些 state-source diagnostics 已进入导入预览 feature-loss 排序。
+
+价值：
+
+- 有真实 JSON 状态快照时可以导入；只有模板或动态宏时只诊断，不制造假状态。
+- theater/origin 的状态源边界更清楚：runtime 仍只注入 DreamMiniStage 自己持有的
+  `status_current_variables`。
+
+### Browser state/render E2E evidence
+
+Commit: pending
+
+完成内容：
+
+- 新增 `scripts/story-agent-browser-state-render-e2e.mjs`，覆盖真实浏览器导入、创建
+  Story Agent、进入会话、连续三轮发送消息、捕获三次 model gateway request body。
+- E2E 使用 Sgw3 card、明月秋青 preset、Sgw baseline regex 和一个安全 custom
+  `<StatusDashboard>` regex fixture。
+- mock model response 同时返回 narrative marker、`<SFW>`、`<StatusDashboard>` 和
+  `<UpdateVariable>`，让浏览器路径验证 prompt contract、state update 和 UI rendering。
+- `_.add` 现在支持 `[value, description]` tuple 变量，更新数值时保留描述文本。
+- 相关证据沉淀在：
+  `docs/analysis/2026-06-04-story-agent-browser-state-render-e2e.md`
+
+价值：
+
+- 长会话 state continuity 不再只停留在 runtime 单测，而是有浏览器级 request body 和
+  screenshot 证据。
+- `<SFW>`、custom dashboard `sections`、multi-section `meters` 都走 Story Agent
+  结构化 renderer 展示。
+- raw source tags、legacy `stat_data` echo、provider `apiKey` / `baseUrl` 都没有进入
+  最终可见 UI 或浏览器请求体。
 
 ## 验证结果
 
@@ -116,14 +211,25 @@ pnpm verify:stage
 - `lint`: pass
 - `typecheck`: pass
 - `test`: pass
-  - 246 test files
-  - 1997 tests
+  - 255 test files
+  - 2035 tests
 - `build`: pass
 
 本轮新增/定向验证：
 
 - `pnpm vitest run lib/story-agent/render-intent/__tests__/runtime.test.ts components/__tests__/MessageBubble.streaming.test.tsx lib/story-agent/blueprint/__tests__/render-diagnostics.test.ts components/story-agent/import-wizard/__tests__/PreviewDetails.test.tsx`
 - `pnpm vitest run lib/story-agent/blueprint/__tests__/compiler.test.ts lib/story-agent/runtime/__tests__/story-session.test.ts lib/story-agent/runtime/render/__tests__/status-fallback.test.ts lib/story-agent/runtime/__tests__/state-update.test.ts`
+- `pnpm vitest run components/__tests__/MessageBubble.streaming.test.tsx components/__tests__/CharacterChatPanel.bridge.test.tsx components/__tests__/CharacterChatPanel.streaming.test.tsx components/__tests__/opening-selection.test.ts`
+- `pnpm vitest run lib/story-agent/render-intent/__tests__/runtime.test.ts components/story-agent/render-intent/__tests__/RenderIntentView.test.tsx lib/story-agent/runtime/__tests__/story-session.test.ts lib/story-agent/runtime/render/__tests__/status-fallback.test.ts`
+- `pnpm vitest run lib/adapters/import/__tests__/bundle-builder.test.ts lib/story-agent/blueprint/__tests__/initial-state.test.ts lib/story-agent/blueprint/__tests__/compiler.test.ts lib/adapters/import/__tests__/bundle-diagnostics.test.ts`
+- `pnpm vitest run lib/story-agent/blueprint/__tests__/initial-state.test.ts lib/story-agent/blueprint/__tests__/compiler.test.ts components/story-agent/import-wizard/__tests__/PreviewDetails.test.tsx`
+- `pnpm vitest run lib/story-agent/blueprint/__tests__/render-diagnostics.test.ts lib/story-agent/render-intent/__tests__/regex-classifier.test.ts components/story-agent/render-intent/__tests__/RenderIntentView.test.tsx lib/story-agent/render-intent/__tests__/runtime.test.ts lib/story-agent/runtime/render/__tests__/status-fallback.test.ts lib/story-agent/runtime/__tests__/story-session.test.ts`
+- `pnpm vitest run lib/story-agent/runtime/__tests__/story-session-state-continuity.test.ts lib/story-agent/runtime/__tests__/story-session.test.ts`
+- `pnpm vitest run function/dialogue/__tests__/story-turn-lifecycle.test.ts function/dialogue/__tests__/story-branch-policy.test.ts`
+- `pnpm vitest run lib/story-agent/runtime/__tests__/state-update.test.ts`
+- `APP_URL=http://localhost:3303 node scripts/story-agent-browser-state-render-e2e.mjs`
+- `pnpm typecheck`
+- `pnpm lint`
 
 ### Browser E2E
 
@@ -159,6 +265,27 @@ E2E 目标：
 - `docs/analysis/artifacts/2026-06-01-story-agent-initial-state-request-body.json`
 - `docs/analysis/artifacts/2026-06-01-story-agent-initial-state-e2e-summary.json`
 
+长会话 state/render 浏览器 E2E 已补充：
+
+- 三轮真实 request body 中 `status_current_variables` block count 均为 `1`。
+- `长崎素世.好感度` 在 request 前置状态中按 `0 -> 3 -> 5` 延续，第三轮响应后最终
+  UI state snapshot 显示 `[6, description]`。
+- `<SFW>` 和 custom `<StatusDashboard>` render contract 均进入 prompt。
+- custom dashboard 的 `sections` / `meters` 在最终截图中可见。
+- raw `<SFW>` / `<StatusDashboard>` / `<UpdateVariable>` tags 没有裸露到可见 UI。
+- Story State snapshot 中的 tuple 变量以 `长崎素世.好感度` 可读字段展示，不再把
+  `{"$meta": ...}` raw JSON 裸露到 UI。
+
+证据：
+
+- `docs/analysis/2026-06-04-story-agent-browser-state-render-e2e.md`
+- `docs/analysis/artifacts/2026-06-04-story-agent-browser-state-render-initial.png`
+- `docs/analysis/artifacts/2026-06-04-story-agent-browser-state-render-final.png`
+- `docs/analysis/artifacts/2026-06-04-story-agent-browser-state-render-summary.json`
+- `docs/analysis/artifacts/2026-06-04-story-agent-browser-state-render-request-1.json`
+- `docs/analysis/artifacts/2026-06-04-story-agent-browser-state-render-request-2.json`
+- `docs/analysis/artifacts/2026-06-04-story-agent-browser-state-render-request-3.json`
+
 ## 当前状态
 
 已经关闭的 gap：
@@ -169,6 +296,19 @@ E2E 目标：
 - 世界上下文中的旧 `stat_data` 宏会和 runtime state memory 重复表达状态。
 - unsupported status-like JSON source tags 会作为 feature-loss diagnostic 暴露。
 - status-like source JSON 和 loose status JSON 不再进入 legacy HTML/parser 展示路径。
+- Story Agent 助手消息不再调用 legacy async `RegexProcessor` 渲染路径。
+- MVU replay-style `initial` object 和 TavernHelper `variables` object 会进入
+  `StoryInitialState`。
+- 静态 `<status_current_variables>` / `<StoryState>` JSON 快照会进入 `StoryInitialState`。
+- 动态状态宏和状态模板现在会给 feature-loss diagnostic，不再静默忽略。
+- 安全 custom status dashboard JSON source 能进入结构化 `RenderIntent`，并以 `sections` /
+  `meters` 展示。
+- 多轮 `<UpdateVariable>` state continuity 已有 runtime contract 覆盖：action-driven 输入、
+  连续两轮状态更新、summary/memory 压缩后状态单次注入和最新值保持均已验证。
+- 浏览器级长会话 state/render E2E 已覆盖 `<SFW>`、custom status dashboard、
+  multi-section meters、三轮真实 prompt state continuity 和最终截图证据。
+- regenerate/swipe/branch switch 策略已明确：当前 Story Agent 没有 branch-state replay，
+  因此这些分支操作会 fail-fast，不允许在已有 `StorySession` 上静默污染 `StoryState`。
 
 仍然保留的本地工作区状态：
 
@@ -181,14 +321,16 @@ E2E 目标：
 
 ### 1. Broaden MVU state schema extraction
 
-当前 Sgw `[InitVar]` 路径已打通，但 MVU 生态不止一种变量声明方式。
+当前 Sgw `[InitVar]` 路径已打通，静态 extension `initial` / `variables`、静态
+`<status_current_variables>` / `<StoryState>` JSON snapshot 也已能编译进 runtime state。
+但 MVU 生态不止一种变量声明方式。
 
 后续需要：
 
 - 覆盖更多 card-specific variable schema。
-- 识别 theater/origin 等卡族是否有非 `[InitVar]` 的变量定义模式。
+- 将 theater/origin 的纯模板状态源继续保留为诊断，除非出现真实静态初始值。
 - 保持 `status_current_variables` runtime-owned，不回退到上游宏或插件执行。
-- 对无法解析的变量定义给 import diagnostics，而不是静默忽略。
+- 支持或明确诊断 MVU `update` / `insert` replay mutation 的长期语义。
 
 ### 2. Continue status/render contract coverage
 
@@ -197,36 +339,43 @@ E2E 目标：
 - Sgw `<SFW>` status contract 已验证。
 - origin collapsible dashboard 已验证。
 - unsupported status-like JSON source tags 已有 import diagnostic 和 runtime strip 兜底。
-- theater 有 state/action UI，但 custom status contract 仍不完整。
+- custom status dashboard JSON source 已有安全白名单、prompt contract、fallback 和 UI
+  sections/meters 覆盖。
+- `<SFW>`、custom status dashboard 和 multi-section meters 已有浏览器级 E2E 截图证据。
+- theater 的纯 HTML/script dashboard 仍不会进入 runtime 执行路径。
 
 后续需要：
 
-- 扩展 RenderIntent whitelist，但保持安全边界清楚。
-- 为 `<SFW>`、custom status dashboard、multi-section meters 增加更系统的 E2E。
+- 继续把不安全 HTML/script dashboard 保留在 import diagnostics。
 
-### 3. Split Story Agent renderer from legacy HTML/script rendering
+### 3. Guard Story Agent renderer isolation
 
 现状：
 
-- Story Agent 消息仍会经过 `MessageBubble` 的 legacy render pipeline。
-- `RenderIntent` 是结构化且可控的，但旧 HTML/tag/script 路径仍在同一条渲染链附近。
+- Story Agent 消息已通过 `story` render mode 和 legacy async parser 分离。
+- `RenderIntent` 是结构化且可控的，legacy regex/html 行为保留在普通角色消息路径。
 
 后续需要：
 
-- Story Agent 输出只进入 narrative + `RenderIntent` renderer。
-- legacy HTML/script 行为保持在非 Story Agent 路径。
+- 新增 Story Agent 展示入口时继续显式传入 `story` render mode。
 - unsupported HTML/script assets 留在 import diagnostics，不进入 runtime 执行。
+- 为 renderer boundary 保留回归测试，防止后续 UI 复用时重新走 legacy processor。
 
 ### 4. Strengthen long-session state behavior
 
-本轮验证的是 first-turn bootstrap。
+现状：
+
+- first-turn bootstrap 已验证。
+- 多轮 `<UpdateVariable>` 应用后的 state continuity 已验证。
+- action button 输入和 state update 的组合路径已验证。
+- summary/memory 压缩后，`status_current_variables` 仍只注入一次且保持最新值。
+- 浏览器级三轮 E2E 已验证真实 prompt 中 state snapshot 的连续性和最终 UI state snapshot。
+- regenerate、swipe 和 branch switch 已接入 Story Agent branch policy：没有
+  StoryState branch replay 前禁止影响当前 `StorySession`。
 
 后续需要：
 
-- 多轮验证 `<UpdateVariable>` 应用后的 state continuity。
-- 验证 regenerated/swiped message 对 story state 的影响策略。
-- 验证 summary/memory 压缩后状态不丢失、不重复。
-- 验证 action button 输入和 state update 的组合路径。
+- 实现 StoryState branch replay/rebase 后，重新打开 regenerate/swipe/branch switch。
 
 ### 5. Clean repository hygiene items
 
@@ -238,10 +387,10 @@ E2E 目标：
 
 ## 建议下一步优先级
 
-1. 先做 unmatched status/render contract 的 hardening，避免裸 JSON 或 unsupported UI
-   混入故事正文。
-2. 再扩展 MVU schema extraction，覆盖非 Sgw 卡族。
-3. 然后拆 Story Agent renderer 和 legacy HTML/script renderer。
-4. 最后补多轮 state continuity E2E，把 first-turn bootstrap 扩展成长会话稳定性验证。
+1. 处理 MVU `update` / `insert` replay mutation 的长期语义。
+2. 实现 StoryState branch replay/rebase，届时才能重新打开 regenerate/swipe/branch switch。
+3. 继续把不安全 HTML/script dashboard 保留在 import diagnostics，不进入 runtime 执行。
+4. 保持 renderer boundary 的回归测试，防止新增 Story Agent surface 时回流到 legacy processor。
 
-这个顺序的原因很简单：先封住用户可见的输出污染，再扩大语义覆盖，最后降低架构层面的长期耦合。
+这个顺序的原因很简单：用户可见的输出污染和 renderer coupling 已经封住核心路径，
+浏览器级状态 UI 证据也已补齐。下一步应该处理需要真实 replay 语义的长期状态问题。

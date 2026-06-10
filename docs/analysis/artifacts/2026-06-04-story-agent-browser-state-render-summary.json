@@ -1,0 +1,87 @@
+{
+  "appUrl": "http://localhost:3303",
+  "card": "Sgw3",
+  "mockedRoute": "**/api/model-gateway/chat-completions",
+  "requestCount": 3,
+  "requestSummaries": [
+    {
+      "model": "deepseek-v4-pro",
+      "stream": false,
+      "maxTokens": 8192,
+      "messageCount": 3,
+      "roleCounts": {
+        "system": 1,
+        "assistant": 1,
+        "user": 1
+      },
+      "browserBodyHasApiKey": false,
+      "browserBodyHasBaseUrl": false,
+      "currentInputIsLastUserMessage": true,
+      "stateBlockCount": 1,
+      "soyoAffinity": 0,
+      "renderContractMentionsSfw": true,
+      "renderContractMentionsCustomDashboard": true,
+      "rawLegacyStatEcho": false
+    },
+    {
+      "model": "deepseek-v4-pro",
+      "stream": false,
+      "maxTokens": 8192,
+      "messageCount": 5,
+      "roleCounts": {
+        "system": 1,
+        "assistant": 2,
+        "user": 2
+      },
+      "browserBodyHasApiKey": false,
+      "browserBodyHasBaseUrl": false,
+      "currentInputIsLastUserMessage": true,
+      "stateBlockCount": 1,
+      "soyoAffinity": 3,
+      "renderContractMentionsSfw": true,
+      "renderContractMentionsCustomDashboard": true,
+      "rawLegacyStatEcho": false
+    },
+    {
+      "model": "deepseek-v4-pro",
+      "stream": false,
+      "maxTokens": 8192,
+      "messageCount": 7,
+      "roleCounts": {
+        "system": 1,
+        "assistant": 3,
+        "user": 3
+      },
+      "browserBodyHasApiKey": false,
+      "browserBodyHasBaseUrl": false,
+      "currentInputIsLastUserMessage": true,
+      "stateBlockCount": 1,
+      "soyoAffinity": 5,
+      "renderContractMentionsSfw": true,
+      "renderContractMentionsCustomDashboard": true,
+      "rawLegacyStatEcho": false
+    }
+  ],
+  "ui": {
+    "statusPanelCount": 7,
+    "sfwCharacterVisible": true,
+    "customSectionsVisible": true,
+    "metersVisible": true,
+    "rawTagsVisible": false,
+    "stateTupleVisible": true,
+    "rawStateJsonVisible": false,
+    "finalMarkerVisible": true
+  },
+  "failures": [],
+  "artifacts": {
+    "initialScreenshot": "docs/analysis/artifacts/2026-06-04-story-agent-browser-state-render-initial.png",
+    "finalScreenshot": "docs/analysis/artifacts/2026-06-04-story-agent-browser-state-render-final.png",
+    "customRegex": "docs/analysis/artifacts/2026-06-04-story-agent-browser-state-render-dashboard-regex.json",
+    "requests": [
+      "docs/analysis/artifacts/2026-06-04-story-agent-browser-state-render-request-1.json",
+      "docs/analysis/artifacts/2026-06-04-story-agent-browser-state-render-request-2.json",
+      "docs/analysis/artifacts/2026-06-04-story-agent-browser-state-render-request-3.json"
+    ],
+    "summary": "docs/analysis/artifacts/2026-06-04-story-agent-browser-state-render-summary.json"
+  }
+}
