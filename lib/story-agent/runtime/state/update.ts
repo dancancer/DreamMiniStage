@@ -275,10 +275,22 @@ function readNumericStateValue(value: unknown): number | undefined {
   const parsed = Number(Array.isArray(value) ? value[0] : value);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
+// 某些预设（如「夏瑾」）把思维模板作为变量注入，要求模型先输出「## 构思」规划段、
+// 再用「## 正式创作」分隔正文。模型偶尔会把这段无标签的规划直接吐进 content（reasoning
+// 通道之外）。约定：若出现「正式创作」分隔标记，其之前的内容一律是规划前导，丢弃。
+// 无该标记时（其他预设/模型）原样返回，不误伤正文。
+const FORMAL_OUTPUT_DELIMITER = /(?:^|\n)\s*#{0,6}\s*正式创作\s*(?:#{0,6})?\s*(?:\n|$)/;
+
+function stripPlanningPreamble(text: string): string {
+  const match = FORMAL_OUTPUT_DELIMITER.exec(text);
+  if (!match) return text;
+  return text.slice(match.index + match[0].length);
+}
+
 function extractVisibleStoryText(text: string): string {
   const gameText = extractLastTagBlock(text, "gametxt");
   // gametxt 分支也要剥离 HIDDEN_TAGS（如 <thinking>），否则内嵌的 reasoning 会泄漏到 screen。
-  return cleanVisibleText(stripHiddenTags(gameText ?? text));
+  return cleanVisibleText(stripPlanningPreamble(stripHiddenTags(gameText ?? text)));
 }
 
 function stripHiddenTags(text: string): string {
