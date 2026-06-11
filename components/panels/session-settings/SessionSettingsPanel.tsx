@@ -57,6 +57,8 @@ export function SessionSettingsPanel() {
       </p>
 
       <SamplingFields
+        // key 随 scope 重挂，避免从「本会话」切到「预设」时 stale DOM 值被 blur 写入共享 blueprint。
+        key={scope}
         scope={scope}
         values={samplingValues}
         onChange={(patch) => (isSession ? setSessionSampling(patch) : setPresetSampling(patch))}

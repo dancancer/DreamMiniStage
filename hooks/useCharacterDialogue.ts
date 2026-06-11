@@ -52,25 +52,26 @@ export function useCharacterDialogue({
   t,
 }: UseCharacterDialogueOptions) {
   const { language, readLlmConfig, responseLength, fastModelEnabled } = useDialoguePreferences();
-  const readModelProfile = useCallback(
-    () => buildDialogueModelProfile({
-      language,
-      llmConfig: readLlmConfig(),
-      responseLength,
-      fastModelEnabled,
-    }),
-    [language, readLlmConfig, responseLength, fastModelEnabled],
-  );
 
   // ═══════════════════════════════════════════════════════════════
   // 计算实际的对话索引 Key
-  // 
+  //
   // 【设计】使用统一的 resolveDialogueKey 解析器
   // 优先级：dialogueKey > sessionId > characterId
   // ═══════════════════════════════════════════════════════════════
   const storeKey = useMemo(
     () => resolveDialogueKey({ dialogueKey, sessionId, characterId }),
     [dialogueKey, sessionId, characterId],
+  );
+
+  const readModelProfile = useCallback(
+    () => buildDialogueModelProfile({
+      language,
+      llmConfig: readLlmConfig(storeKey),
+      responseLength,
+      fastModelEnabled,
+    }),
+    [language, readLlmConfig, responseLength, fastModelEnabled, storeKey],
   );
 
   // ═══════════════════════════════════════════════════════════════

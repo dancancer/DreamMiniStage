@@ -24,6 +24,7 @@ export {
 
 export {
   mergeStorySessionSettings,
+  normalizePromptOverride,
   resolveSessionModelConfig,
   setStoryBlueprintPromptOverride,
   updateStoryBlueprintModelPolicy,

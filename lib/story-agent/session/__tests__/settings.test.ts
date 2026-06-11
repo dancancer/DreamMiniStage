@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { APIConfig } from "@/lib/model-runtime";
-import { mergeStorySessionSettings, resolveSessionModelConfig } from "../settings";
+import {
+  mergeStorySessionSettings,
+  normalizePromptOverride,
+  resolveSessionModelConfig,
+} from "../settings";
 
 describe("mergeStorySessionSettings", () => {
   it("deep-merges modelPolicy and promptOverrides without dropping untouched keys", () => {
@@ -25,6 +29,20 @@ describe("mergeStorySessionSettings", () => {
     );
     expect(merged.modelPolicy?.temperature).toBeUndefined();
     expect("temperature" in (merged.modelPolicy ?? {})).toBe(false);
+  });
+});
+
+describe("normalizePromptOverride", () => {
+  it("treats blank content as 'no content override' so it does not disable the entry", () => {
+    expect(normalizePromptOverride({ content: "   " })).toEqual({});
+    expect(normalizePromptOverride({ content: "" })).toEqual({});
+  });
+
+  it("keeps a real content rewrite and an explicit enabled flag", () => {
+    expect(normalizePromptOverride({ enabled: false, content: "hi" })).toEqual({
+      enabled: false,
+      content: "hi",
+    });
   });
 });
 

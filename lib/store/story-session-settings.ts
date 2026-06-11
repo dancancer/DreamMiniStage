@@ -8,6 +8,7 @@ import type {
 import {
   getStoryBlueprint,
   getStorySession,
+  normalizePromptOverride,
   setStoryBlueprintPromptOverride,
   updateStoryBlueprintModelPolicy,
   updateStorySessionSettings,
@@ -69,16 +70,19 @@ export const useStorySessionSettings = create<StorySessionSettingsState>((set, g
   modelConfigId: undefined,
 
   load: async (dialogueId) => {
-    set({ loading: true });
+    // 立刻把当前 dialogueId 标定为目标，并清掉上一会话的 pin，避免慢 load 期间旧 pin 泄漏；
+    // 异步结果回写前再校验 get().dialogueId，防止切到别的会话后被旧请求覆盖（代际守卫）。
+    set({ dialogueId, modelConfigId: undefined, settings: EMPTY_SETTINGS, promptEntries: [], blueprintId: null, loading: true });
     try {
       const session = await getStorySession(dialogueId);
+      if (get().dialogueId !== dialogueId) return;
       if (!session) {
-        set({ dialogueId, blueprintId: null, settings: EMPTY_SETTINGS, promptEntries: [], loading: false, modelConfigId: undefined });
+        set({ loading: false });
         return;
       }
       const blueprint = await getStoryBlueprint(session.blueprintId);
+      if (get().dialogueId !== dialogueId) return;
       set({
-        dialogueId,
         blueprintId: session.blueprintId,
         settings: session.settings ?? EMPTY_SETTINGS,
         promptEntries: blueprint ? toPromptEntries(blueprint) : [],
@@ -86,7 +90,9 @@ export const useStorySessionSettings = create<StorySessionSettingsState>((set, g
         loading: false,
       });
     } catch {
-      set({ loading: false });
+      if (get().dialogueId === dialogueId) {
+        set({ settings: EMPTY_SETTINGS, promptEntries: [], modelConfigId: undefined, loading: false });
+      }
     }
   },
 
@@ -116,7 +122,9 @@ export const useStorySessionSettings = create<StorySessionSettingsState>((set, g
   setSessionPromptOverride: async (promptId, override) => {
     const { dialogueId } = get();
     if (!dialogueId) return;
-    const next = await updateStorySessionSettings(dialogueId, { promptOverrides: { [promptId]: override } });
+    const next = await updateStorySessionSettings(dialogueId, {
+      promptOverrides: { [promptId]: normalizePromptOverride(override) },
+    });
     set({ settings: next.settings ?? EMPTY_SETTINGS });
   },
 

@@ -60,9 +60,13 @@ export const useDialoguePreferences = () => {
     [storedLanguage],
   );
 
-  const readLlmConfig = useCallback((): LLMConfig => {
+  const readLlmConfig = useCallback((expectedDialogueId?: string | null): LLMConfig => {
     // 会话级模型锁定优先：当前会话若 pin 了某配置则用它，否则回落 active 配置。
-    const pinnedId = useStorySessionSettings.getState().modelConfigId;
+    // 仅当 settings store 已加载到「正是这次派发的会话」时才采用 pin——代际守卫，避免
+    // 切换会话时上一会话的慢 load 把旧 pin 泄漏到新会话。
+    const state = useStorySessionSettings.getState();
+    const pinnedId =
+      expectedDialogueId && state.dialogueId === expectedDialogueId ? state.modelConfigId : undefined;
     const config = resolveSessionModelConfig(configs, activeConfigId, pinnedId);
     return buildDialogueLlmConfig(config);
   }, [activeConfigId, configs]);
