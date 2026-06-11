@@ -19,6 +19,8 @@ import type { APIConfig } from "@/lib/model-runtime";
 import { resolveModelAdvancedSettings } from "@/lib/model-runtime";
 import { LLMConfig } from "@/types/character-dialogue";
 import { useModelStore } from "@/lib/store/model-store";
+import { useStorySessionSettings } from "@/lib/store/story-session-settings";
+import { resolveSessionModelConfig } from "@/lib/story-agent/session";
 import {
   useLocalStorageBoolean,
   useLocalStorageNumber,
@@ -59,8 +61,10 @@ export const useDialoguePreferences = () => {
   );
 
   const readLlmConfig = useCallback((): LLMConfig => {
-    const activeConfig = configs.find((config) => config.id === activeConfigId);
-    return buildDialogueLlmConfig(activeConfig);
+    // 会话级模型锁定优先：当前会话若 pin 了某配置则用它，否则回落 active 配置。
+    const pinnedId = useStorySessionSettings.getState().modelConfigId;
+    const config = resolveSessionModelConfig(configs, activeConfigId, pinnedId);
+    return buildDialogueLlmConfig(config);
   }, [activeConfigId, configs]);
 
   return { language, readLlmConfig, responseLength, fastModelEnabled };

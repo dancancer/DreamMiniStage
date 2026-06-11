@@ -21,3 +21,11 @@ export {
   readStoryBlueprintId,
   type CreateStorySessionForCharacterOptions,
 } from "./create";
+
+export {
+  mergeStorySessionSettings,
+  resolveSessionModelConfig,
+  setStoryBlueprintPromptOverride,
+  updateStoryBlueprintModelPolicy,
+  updateStorySessionSettings,
+} from "./settings";

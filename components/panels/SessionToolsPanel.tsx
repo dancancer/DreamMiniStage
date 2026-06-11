@@ -30,6 +30,7 @@ import {
   dispatchOpenUserNameModalEvent,
 } from "@/app/session/session-ui-events";
 import { PanelCard, PanelShell } from "@/components/panels/shared/PanelShell";
+import { SessionSettingsPanel } from "@/components/panels/session-settings/SessionSettingsPanel";
 
 const LazyPromptViewerButton = dynamic(
   () => import("@/components/prompt-viewer/PromptViewerButton"),
@@ -152,6 +153,8 @@ export function SessionToolsPanel() {
           <LazyPromptViewerButton dialogueKey={dialogueId} characterId={characterId} />
         </PanelCard>
       ) : null}
+
+      <SessionSettingsPanel />
 
       <QuickReplyPanel dialogueId={dialogueId} />
       <GroupMemberPanel dialogueId={dialogueId} />

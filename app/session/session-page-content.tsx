@@ -26,6 +26,7 @@ import {
   useSessionToolModesStore,
   type SessionToolModes,
 } from "@/lib/store/session-tool-modes";
+import { useStorySessionSettings } from "@/lib/store/story-session-settings";
 import { useSessionPageActions } from "@/app/session/use-session-page-actions";
 import SessionPageLayout from "@/app/session/session-page-layout";
 import { useSessionHostDebug } from "@/app/session/use-session-host-debug";
@@ -89,6 +90,8 @@ function SessionPageContent() {
   const activeModes = useSessionToolModesStore((state) => state.activeModes);
   const setActiveModes = useSessionToolModesStore((state) => state.setActiveModes);
   const resetModes = useSessionToolModesStore((state) => state.resetModes);
+  const loadSessionSettings = useStorySessionSettings((state) => state.load);
+  const resetSessionSettings = useStorySessionSettings((state) => state.reset);
   const setActiveModesBridge = useCallback(
     (updater: React.SetStateAction<Record<string, unknown>>) => {
       setActiveModes((prev) => {
@@ -124,6 +127,15 @@ function SessionPageContent() {
   useEffect(() => {
     resetModes();
   }, [resetModes, sessionId]);
+
+  useEffect(() => {
+    if (sessionId) {
+      void loadSessionSettings(sessionId);
+    } else {
+      resetSessionSettings();
+    }
+    return () => resetSessionSettings();
+  }, [sessionId, loadSessionSettings, resetSessionSettings]);
 
   const handleOpenBranches = useCallback(() => {
     setIsBranchOpen(true);
